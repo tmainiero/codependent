@@ -8,9 +8,9 @@ The goal is CTAN-publishable quality.
 - **Internal macros**: `\semtex@name`. Always `@`-guarded.
   Never leak into the user namespace.
 - **Public macros**: `\semtex` prefix or short documented names
-  (e.g., `\atomlabel`, `\backrefinline`). Minimal public API.
-- **Counters**: `semtex@atom`, `semtex@section`, etc.
-  User-visible counter name: `atom`.
+  (e.g., `\semtextrack`, `\semtexsuppress`). Minimal public API.
+- **Counters**: user-visible counter is `atom`.  Internal
+  counters use `\semtex@nestlevel`, etc.
 - **Booleans**: `\ifsemtex@backrefs`, `\ifsemtex@appendix`, etc.
 - **Lengths/skips**: `\semtex@backrefskip`, etc.
 - **Token registers**: `\semtex@toks@...`
@@ -23,13 +23,13 @@ The `.sty` file follows this section order:
 ```
 1. Identification (\ProvidesPackage, date, version, description)
 2. Required packages (\RequirePackage)
-3. Options (pgfkeys or kvoptions, \ProcessOptions)
+3. Options (pgfkeys, \ProcessOptions)
 4. Internal state (counters, booleans, registers)
 5. Core numbering machinery
-6. Theorem environment hooks (thmtools integration)
+6. Theorem environment hooks (etoolbox patching)
 7. Paragraph numbering (\AddToHook{para/begin})
-8. Back-reference display (inline + appendix modes)
-9. Data file I/O (reading semtex-generated .backrefs.tex)
+8. Back-reference emission (\AddToHook{para/end})
+9. Data file I/O (reading .sbr file)
 10. User-facing API
 11. Compatibility guards and warnings
 ```
@@ -54,7 +54,8 @@ Each section separated by a comment block:
 - Internal macros: one-line comment above explaining purpose.
 - No commented-out dead code. Delete it or don't write it.
 - Eventually target dtx format, but start as a clean .sty
-  with thorough comments.
+  with thorough comments.  dtx is a pre-submission
+  requirement for CTAN.
 
 ## Error handling
 
@@ -74,14 +75,16 @@ Each section separated by a comment block:
 ## Dependencies
 
 - `\RequirePackage` only. Never `\usepackage` inside a .sty.
-- Required: `etoolbox`, `thmtools`, `pgfkeys`.
+- Required: `etoolbox`, `pgfkeys`.
 - Optional (detected at load): `hyperref`.
-- Do NOT require `amsthm` or `ntheorem` directly.
-  `thmtools` abstracts this. Detect which backend is loaded.
+- Do NOT require `amsthm`, `ntheorem`, or `thmtools`.
+  Hook into theorem environments by name via `etoolbox`,
+  regardless of which backend defines them.
 
 ## Compatibility
 
-- Target LaTeX kernel October 2020+ (for `\AddToHook`).
+- Target LaTeX kernel TeX Live 2021+ (stable `\AddToHook`,
+  including `para/begin`, `para/end`, `para/after`).
 - Test with `article`, `book`, `report` document classes.
 - Do not assume any particular font setup.
 - Do not redefine standard LaTeX commands unless absolutely
@@ -130,20 +133,23 @@ All tools available in nixpkgs via TeX Live.
 
 ## Testing
 
-- Provide a minimal test document (`test-semtex.tex`) that
-  exercises all features.
+Use l3build regression tests (.lvt files).  See DESIGN.md
+for the full test file list.  At minimum:
+
 - Test with and without hyperref loaded.
 - Test with both amsthm and ntheorem backends.
 - Test the three backrefs modes (inline, appendix, none).
+- Test all depth settings (1, 2, 3).
 - Test edge cases: empty sections, atoms with no back-refs,
-  atoms referenced 10+ times.
+  atoms referenced 10+ times, nested tracked environments.
 
 ## What NOT to do
 
 - Do not use `\everypar` directly. Use `\AddToHook{para/begin}`.
+- Do not patch `\par` directly. Use `\AddToHook{para/end}`.
 - Do not hardcode font sizes. Use relative commands (`\small`,
   `\footnotesize`) or length parameters.
-- Do not define theorem environments. Hook into `thmtools`.
+- Do not define theorem environments. Hook via `etoolbox`.
 - Do not handle math rendering. That is the preamble's job.
 - Do not assume a specific numbering depth (some documents
   may not use subsections).
