@@ -161,6 +161,10 @@
     \expandafter\let\csname c@theorem\endcsname\c@atom
   }%
   \semtex@configuredepth
+  % Sync theorem display format with atom display format.
+  \@ifundefined{c@theorem}{}{%
+    \let\thetheorem\theatom
+  }%
 }
 
 % \semtex@configuredepth
@@ -336,39 +340,26 @@
 
 % \semtex@suppresssectioning
 %   Suppress atom numbering for sectioning heading paragraphs.
-%   Wraps \@startsection (section, subsection, etc.) to set a
-%   one-shot flag checked by para/begin.  For book/report
-%   classes, patches \@makechapterhead and \@makeschapterhead
-%   to suppress all paragraphs within chapter headings.
-%   Deferred to begindocument/end so hyperref and other
-%   packages have finished redefining sectioning internals.
+%   Wraps \@startsection (used by \section, \subsection, etc.
+%   across all standard classes) to set a one-shot flag checked
+%   by para/begin.  For chapter headings, suppresses paragraphs
+%   inside \@makechapterhead / \@makeschapterhead (present in
+%   book, report, memoir, KOMA-Script).  Deferred to
+%   begindocument/end so all packages have finished loading.
 \newcommand*{\semtex@suppresssectioning}{%
   \AddToHook{begindocument/end}{%
     \makeatletter
-    % Section/subsection: thin wrapper sets one-shot flag.
     \let\semtex@orig@startsection\@startsection
     \def\@startsection{%
       \global\booltrue{semtex@sectioning}%
       \semtex@orig@startsection
     }%
-    % Chapter headings: suppress via nestlevel inside the
-    % head-building macros (handles multi-paragraph heads).
-    \ifcsname @makechapterhead\endcsname
-      \pretocmd{\@makechapterhead}{%
-        \advance\semtex@nestlevel by 1\relax
-      }{}{}%
-      \apptocmd{\@makechapterhead}{%
-        \advance\semtex@nestlevel by -1\relax
-      }{}{}%
-    \fi
-    \ifcsname @makeschapterhead\endcsname
-      \pretocmd{\@makeschapterhead}{%
-        \advance\semtex@nestlevel by 1\relax
-      }{}{}%
-      \apptocmd{\@makeschapterhead}{%
-        \advance\semtex@nestlevel by -1\relax
-      }{}{}%
-    \fi
+    \@ifundefined{@makechapterhead}{}{%
+      \semtex@suppresscmd{\@makechapterhead}%
+    }%
+    \@ifundefined{@makeschapterhead}{}{%
+      \semtex@suppresscmd{\@makeschapterhead}%
+    }%
     \makeatother
   }%
 }
