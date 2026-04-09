@@ -200,6 +200,92 @@ rounds of adversarial review before settling:
 The reviews are archived verbatim; they are not the
 living design but they are the audit trail.
 
+## Renameability of the project token
+
+The project name token throughout this codebase is the
+literal lowercase string `semtex`.  Should the project be
+renamed in the future, this section documents how to
+perform the rename and which tokens stay independent.
+
+### One-sed rename (covers ~99%)
+
+```sh
+# In the project root, applied to all relevant source:
+git ls-files | xargs sed -i 's/semtex/<newname>/g'
+```
+
+This handles, in one pass:
+
+- Public API macros: `\semtextrack`, `\semtextag`,
+  `\semtexsuppress`, `\semtexappendix`,
+  `\semtexNewCommand`, `\semtexNewDocumentCommand`
+- Internal namespace: every `\semtex@*` macro and
+  every `\semtex@sbl@*` record (the `semtex` part
+  renames; the `sbl` part is independent — see below)
+- LaTeXML CSS class contract: `semtex-usedby`,
+  `semtex-usedby-label`, `semtex-usedby-list`,
+  `semtex-usedby-ref`, `semtex-usedby-trailer`,
+  `semtex-atomnum`, `semtex-atomnum-value`
+- File paths: `tools/semtex-sty/`, `tools/semtex-cli/`
+- Source files: `semtex.sty`, `semtex.ltxml`
+- Package option family names like `semtex-foo`
+- Documentation prose references to "semtex"
+
+### Tokens that do NOT auto-rename (independent)
+
+The following tokens are intentionally decoupled from
+the project name and **will survive a rename unchanged**:
+
+- **`.sbl` file extension.**  Three-letter sidecar
+  extension; follows the TeX convention of independent
+  3-letter extensions (`.bbl` for biblatex, `.nav` for
+  beamer, `.aux` for the kernel).  A future rename
+  may keep `.sbl` or change it to a new acronym in a
+  separate sed pass.
+- **`sbl` token inside `\semtex@sbl@*` records.**  The
+  `sbl` substring is the sidecar acronym, not the
+  project name.  After a `s/semtex/foobar/g` rename
+  the records become `\foobar@sbl@*` — readable but
+  with `sbl` now standing for whatever the new
+  project's acronym is, or staying as historical
+  baggage.
+- **`.ltxml` extension.**  LaTeXML convention, not
+  ours to change.
+- **`.sty` extension.**  LaTeX kernel convention.
+- **`.aux` extension.**  LaTeX kernel convention.
+
+### Canonical-token discipline
+
+To keep the rename single-sed-clean, this codebase
+commits to using the literal lowercase string `semtex`
+wherever the project name appears.  No abbreviations:
+
+- ✗ `\stx@foo`, `\smt@foo`, `\Smtex@foo`
+- ✗ `Sx`, `St`, mixed-case partials
+- ✓ `\semtex`, `\semtex@`, `\Semtex` (CamelCase form
+  reserved for documentation prose, not code)
+
+A reviewer who finds an abbreviation that violates this
+discipline should treat it as a defect and rename to the
+canonical token before committing.
+
+### Two-step rename (full)
+
+If you also want to rename the `.sbl` extension (e.g.,
+to `.fbl` for a `foobar` rename):
+
+```sh
+git ls-files | xargs sed -i 's/semtex/foobar/g'
+git ls-files | xargs sed -i 's/\.sbl\b/.fbl/g; s/\bsbl\b/fbl/g'
+git mv tools/foobar-sty/test-output.sbl tools/foobar-sty/test-output.fbl  # if test artifacts exist
+```
+
+The second sed targets the `.sbl` extension as a literal
+string and the `sbl` token in records.  This is a
+deliberate second pass because most renames will leave
+the file extension alone (matching the kernel-extension
+convention), so we don't bake it into the primary sed.
+
 ## License text pointer
 
 This file is part of a package distributed under **GNU

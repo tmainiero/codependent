@@ -1446,7 +1446,7 @@ DefConstructor('\lxML@semtex@atomnum{}',
   . "<ltx:text class='semtex-atomnum-value'>#1</ltx:text>"
   . "</ltx:text>");
 
-# ---- .sbl / \semtextag / \newmath --------------------------
+# ---- .sbl / \semtextag / \semtexNewCommand etc. -----------
 #
 # These produce no typeset output under pdflatex (they are
 # write-only sidecar records -- see Section 9a).  Under
@@ -1455,8 +1455,13 @@ DefConstructor('\lxML@semtex@atomnum{}',
 # file is still written because LaTeXML honours
 # \immediate\write.
 DefMacro('\semtextag{}{}', '');
-# \newmath is handled in the .sty itself (not in this file)
-# because its wrapper must generate TeX tokens.
+# \semtexNewCommand and \semtexNewDocumentCommand are
+# handled in the .sty itself (not in this file) because
+# their wrappers must generate TeX tokens to define the
+# wrapped command at LaTeXML parse time.  LaTeXML honours
+# \newcommand and \NewDocumentCommand normally, so the
+# wrapped commands will exist and behave correctly under
+# LaTeXML once their bodies are emitted.
 
 1;
 ```
@@ -1532,7 +1537,8 @@ complexity.
 
 ### Cross-reference to `.sbl` and the semantic CLI
 
-`.sbl` records, `\semtextag`, and `\newmath` metadata do
+`.sbl` records, `\semtextag`, and `\semtexNewCommand` /
+`\semtexNewDocumentCommand` metadata do
 **not** need LaTeXML bindings, because they produce no
 typeset output.  They are write-only sidecar data consumed
 by `semtex-cli` (Layer 2).  LaTeXML processes `.tex`
@@ -1651,10 +1657,12 @@ arguments.  The CLI parses N `{}`-groups and stops.
 \semtex@sbl@tag{1.2.4}{type}{Cat}
 \semtex@sbl@use{1.2.5}{Hom}
 \semtex@sbl@use{1.2.5}{circ}
-\semtex@sbl@newmath{Hom}{arity}{2}
-\semtex@sbl@newmath{Hom}{src}{main.tex:15:1}
-\semtex@sbl@newmath{circ}{arity}{2}
-\semtex@sbl@newmath{circ}{src}{main.tex:16:1}
+\semtex@sbl@cmddef{Hom}{kind}{newcommand}
+\semtex@sbl@cmddef{Hom}{arity}{2}
+\semtex@sbl@cmddef{Hom}{src}{main.tex:15:1}
+\semtex@sbl@cmddef{Cite}{kind}{NewDocumentCommand}
+\semtex@sbl@cmddef{Cite}{argspec}{s o m}
+\semtex@sbl@cmddef{Cite}{src}{main.tex:18:1}
 \semtex@sbl@end{OK}
 ```
 
@@ -1668,8 +1676,8 @@ arguments.  The CLI parses N `{}`-groups and stops.
 | `\semtex@sbl@meta{num}{k}{v}` | 3 | Per-atom metadata pair. Keys: `src` (file:line:col), `env`, `depth`. Extensible. |
 | `\semtex@sbl@label{num}{key}` | 2 | Each `\label{key}` inside atom `num`. |
 | `\semtex@sbl@tag{num}{kind}{value}` | 3 | User `\semtextag{kind}{value}` record. Free-form. |
-| `\semtex@sbl@use{num}{cmd}` | 2 | Invocation of a `\newmath`-wrapped command inside atom `num`. |
-| `\semtex@sbl@newmath{cmd}{k}{v}` | 3 | `\newmath` declaration metadata (one per property). NOT per-atom; global. |
+| `\semtex@sbl@use{num}{cmd}` | 2 | Invocation of a `\semtexNewCommand`/`\semtexNewDocumentCommand`-wrapped command inside atom `num`. |
+| `\semtex@sbl@cmddef{cmd}{k}{v}` | 3 | Command-definition metadata (one record per property). Keys: `kind` (always present, value `newcommand` or `NewDocumentCommand`), `arity` (integer, only when `kind=newcommand`), `argspec` (xparse string, only when `kind=NewDocumentCommand`), `src` (always present). NOT per-atom; global. |
 | `\semtex@sbl@end{OK}` | 1 | Sentinel at `\AtEndDocument`. |
 
 **End marker** (per REVIEW_C finding #7).  The **last line**
@@ -1754,8 +1762,9 @@ records.
 | `\semtex@installparahook`, normal paragraph branch after `\refstepcounter` | `\semtex@sbl@atom{num}{paragraph}` + `\semtex@sbl@meta{num}{src}{...}` |
 | `\label` wrap (new `\pretocmd{\label}` site) | `\semtex@sbl@label{num}{key}` — one per `\label` call inside a current atom |
 | `\semtextag{kind}{value}` | `\semtex@sbl@tag{num}{kind}{value}` |
-| `\newmath` declaration (new public command; definition time) | `\semtex@sbl@newmath{cmd}{arity}{n}` + `\semtex@sbl@newmath{cmd}{src}{...}` — NOT atom-scoped (global record) |
-| `\newmath`-wrapped command, every invocation inside an atom | `\semtex@sbl@use{num}{cmd}` |
+| `\semtexNewCommand{\cmd}[n]{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{newcommand}` + `\semtex@sbl@cmddef{cmd}{arity}{n}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
+| `\semtexNewDocumentCommand{\cmd}{spec}{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{NewDocumentCommand}` + `\semtex@sbl@cmddef{cmd}{argspec}{spec}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped |
+| Wrapped command (either kind), every invocation inside an atom | `\semtex@sbl@use{num}{cmd}` |
 
 The `src` metadata is built from LaTeX's
 `\currfilename`, `\the\inputlineno`, and a column counter
@@ -1765,7 +1774,7 @@ writer; the `:0` suffix means "unknown column").
 ### Guard pattern
 
 All emission points route through one of two helpers.
-Atom-scoped records (everything except `\semtex@sbl@newmath`)
+Atom-scoped records (everything except `\semtex@sbl@cmddef`)
 use `\semtex@sblwrite@atom`, which drops the write if
 `\semtex@currentatom` is empty:
 
@@ -1790,7 +1799,7 @@ use `\semtex@sblwrite@atom`, which drops the write if
 }
 ```
 
-Global records (`\semtex@sbl@newmath`) bypass the
+Global records (`\semtex@sbl@cmddef`) bypass the
 atom guard and go through `\semtex@sblwrite` directly.
 The `\semtex@sblwrite@warnonce` branch exists to catch
 the debugging nightmare REVIEW_C finding #5 calls out;
@@ -1816,110 +1825,251 @@ It is a pure sidecar channel for semantic metadata that
 does not belong in `.aux`.  Authors who do not use the
 semantic CLI can ignore `\semtextag` entirely.
 
-### User API: `\newmath` (per REVIEW_D finding #6)
+### User API: `\semtexNewCommand` and `\semtexNewDocumentCommand`
 
-The second new public command introduces a math command
-and registers it with the semantic CLI in one step.
+Two new public commands replace the original `\newmath`
+proposal (REVIEW_D finding #6 was the trigger; subsequent
+discussion broadened scope).  They mirror LaTeX's two
+canonical command-definition primitives one-for-one and
+add semantic tracking on top.  Opt-in only: existing
+`\newcommand` and `\NewDocumentCommand` calls are
+unaffected unless you explicitly migrate them.
 
-**Signature.**
+| Public macro | Wraps | Argument syntax mirror |
+|---|---|---|
+| `\semtexNewCommand` | `\newcommand` | `[n]` integer arity (LaTeX 2e) |
+| `\semtexNewDocumentCommand` | `\NewDocumentCommand` | `{spec}` xparse arg-spec string |
 
-```tex
-\newmath{<cmd>}{<arity>}{<body>}
-```
+**Naming convention** (per user direction 2026-04-09):
+lowercase `semtex` prefix to match the existing public
+API (`\semtextrack`, `\semtexsuppress`, `\semtextag`),
+CamelCase suffix to mirror the LaTeX kernel command being
+wrapped.  Migration is a literal find-and-replace per
+file: `s/\\newcommand/\\semtexNewCommand/` and
+`s/\\NewDocumentCommand/\\semtexNewDocumentCommand/`,
+with manual review for helpers you want to leave
+untracked.
 
-- `<cmd>` is the command name **without** the leading
-  backslash (e.g. `Hom`, `circ`, `otimes`).  The `.sty`
-  internally creates `\<cmd>` from this token.  The
-  bare-name convention is intentional: it avoids the cost
-  of stripping a backslash before writing the name into
-  `.sbl` records, where a literal `\` would need to be
-  re-escaped on every emission.
-- `<arity>` is a non-negative integer giving the number of
-  required arguments (0, 1, 2, ...).  Required, not
-  optional.  Used both by the command definition and by
-  the `.sbl` `\semtex@sbl@newmath{cmd}{arity}{n}` record.
-- `<body>` is the math-mode expansion.  Uses `#1`..`#N`
-  for arguments as usual.
+**No `\providecommand`, `\DeclareDocumentCommand`, or
+`\renewcommand` mirrors in the first pass.**  Add later
+if real use cases appear.  The two macros above cover the
+common case (definitive command introduction).
 
-**Example.**
-
-```tex
-\newmath{Hom}{2}{\mathrm{Hom}(#1,#2)}
-\newmath{id}{0}{\mathrm{id}}
-```
-
-defines `\Hom{X}{Y}` to typeset `\mathrm{Hom}(X,Y)` and
-`\id` to typeset `\mathrm{id}`.
-
-**Side effects at declaration time.**  The `.sty` emits
-two `.sbl` records per `\newmath` call, both global (not
-atom-scoped):
+#### Signature: `\semtexNewCommand`
 
 ```tex
-\semtex@sbl@newmath{Hom}{arity}{2}
-\semtex@sbl@newmath{Hom}{src}{main.tex:15:1}
+\semtexNewCommand{<\cmd>}[<arity>]{<body>}
 ```
 
-The arity record lets the CLI verify usage signatures.
-The src record gives the CLI a source location for IDE
-integration and "go to definition" lookups.
+- `<\cmd>` is the command, **with leading backslash**
+  (e.g. `\Hom`, `\Cat`).  Identical to `\newcommand`.
+- `<arity>` is the optional integer argument count, in
+  square brackets, default 0.  Identical to `\newcommand`.
+- `<body>` is the expansion.  Uses `#1`..`#N`.  Identical
+  to `\newcommand`.  Body is **not** required to be
+  math-mode; any TeX content works.
 
-**Side effects at invocation time.**  The defined command
-is wrapped so that every invocation inside an atom emits
+The `.sty` strips the leading backslash from `<\cmd>` at
+record-write time via `\@gobble\string`, so the `.sbl`
+records carry the bare name.  This keeps the user-facing
+syntax identical to `\newcommand` while keeping the
+sidecar records readable.
+
+#### Signature: `\semtexNewDocumentCommand`
+
+```tex
+\semtexNewDocumentCommand{<\cmd>}{<argspec>}{<body>}
+```
+
+- `<\cmd>` is the command with leading backslash.
+- `<argspec>` is the xparse argument specification string
+  (e.g. `s o m m`, `D<>{} O{default} m`, `r() m`).
+  Verbatim from `\NewDocumentCommand`.
+- `<body>` is the expansion.  Uses `#1`..`#N` and the
+  xparse inspection macros (`\IfBooleanTF`,
+  `\IfNoValueTF`, etc.).  Identical to
+  `\NewDocumentCommand`.
+
+Same backslash-stripping convention as above.
+
+#### Examples
+
+```tex
+% \newcommand-style (math notation):
+\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexNewCommand{\id}{\mathrm{id}}
+
+% \newcommand-style (text macro):
+\semtexNewCommand{\TheoremOfX}{Theorem of X}
+
+% NewDocumentCommand-style (with optional arg):
+\semtexNewDocumentCommand{\Cat}{O{}}{%
+  \mathsf{Cat}\IfValueT{#1}{_{#1}}%
+}
+
+% NewDocumentCommand-style (with star variant):
+\semtexNewDocumentCommand{\Cite}{s o m}{%
+  \IfBooleanTF{#1}{[\textbf{#3}]}{[#3]}%
+}
+```
+
+All four work in math mode, text mode, or both, depending
+purely on what `<body>` contains.  The `.sty` does **not**
+auto-`\ensuremath` the body; the user controls that.
+
+#### Side effects at declaration time
+
+For `\semtexNewCommand`, two global (not atom-scoped)
+`.sbl` records:
+
+```tex
+\semtex@sbl@cmddef{Hom}{kind}{newcommand}
+\semtex@sbl@cmddef{Hom}{arity}{2}
+\semtex@sbl@cmddef{Hom}{src}{main.tex:15:1}
+```
+
+For `\semtexNewDocumentCommand`, the parallel set with
+`argspec` instead of `arity`:
+
+```tex
+\semtex@sbl@cmddef{Cat}{kind}{NewDocumentCommand}
+\semtex@sbl@cmddef{Cat}{argspec}{O{}}
+\semtex@sbl@cmddef{Cat}{src}{main.tex:18:1}
+```
+
+The `kind` record always comes first; the CLI's parser
+keys on it to decide whether to expect `arity` (integer)
+or `argspec` (string).  `src` is universal.
+
+#### Side effects at invocation time
+
+Identical for both kinds.  The defined command is wrapped
+so every invocation inside an atom emits
 
 ```tex
 \semtex@sbl@use{<current-atom>}{Hom}
 ```
 
 via `\semtex@sblwrite@atom`.  The wrapper guards on
-`\ifx\semtex@currentatom\@empty`: invocations OUTSIDE any
-atom (e.g. in a section heading, caption, or
-non-tracked environment) emit **no** `\semtex@sbl@use`
-record.  Rationale: such invocations cannot be attributed
-to any atom, and the CLI has no useful inference to make
-from the orphaned record; the alternative of emitting a
+`\ifx\semtex@currentatom\@empty`: invocations OUTSIDE
+any atom (section heading, caption, untracked
+environment) emit **no** `\semtex@sbl@use` record.
+Rationale: such invocations cannot be attributed to any
+atom and the CLI has no useful inference to make from
+the orphaned record; the alternative of emitting a
 `@global` use record was considered and rejected as
 adding noise without analytic value.
 
-**Optionality.**  `\newmath` is purely optional.  A
-project that does not use the semantic CLI never needs to
-call it; ordinary `\newcommand` works fine and produces
-no `.sbl` records.  The `.sty` must not enforce usage of
-`\newmath` over `\newcommand`.
+#### Optionality and migration
 
-**Implementation sketch.**
+Both macros are purely optional.  A project that does not
+use the semantic CLI never needs to call them; ordinary
+`\newcommand` and `\NewDocumentCommand` work fine and
+produce no `.sbl` records.  The `.sty` does **not**
+enforce usage of the semtex variants.
+
+Migration from a vanilla preamble to a tracked one is
+literal find-and-replace per file:
+
+```
+sed -i 's/\\newcommand/\\semtexNewCommand/g' main.tex
+sed -i 's/\\NewDocumentCommand/\\semtexNewDocumentCommand/g' main.tex
+```
+
+with manual review for any internal helper macros you
+want to leave untracked (e.g. `\newcommand{\@semtex@helper}...`
+inside a package).  Two-line sed script, one git commit.
+
+#### Implementation sketch
 
 ```tex
-\newcommand*{\newmath}[3]{%
-  % 1. Define the command \<cmd> with arity #2.
-  \expandafter\newcommand
-    \csname #1\endcsname[#2]{%
-      \semtex@sblwrite@atom{%
-        \string\semtex@sbl@use
-        {\semtex@currentatom}{#1}}%
-      #3%
-    }%
+% \semtexNewCommand{\cmd}[arity]{body}
+\NewDocumentCommand{\semtexNewCommand}{m O{0} m}{%
+  % #1 = \cmd (with backslash), #2 = arity, #3 = body.
+  \edef\semtex@tmp@name{\expandafter\@gobble\string#1}%
+  % 1. Define the command via \newcommand, body wrapped
+  %    with the use-recording prelude.
+  \expandafter\newcommand\expandafter#1\expandafter[%
+    \number#2\expandafter]\expandafter{%
+      \expandafter\semtex@sblwrite@atom\expandafter{%
+        \string\semtex@sbl@use{\semtex@currentatom}%
+        {\semtex@tmp@name}}%
+      #3}%
   % 2. Emit the global declaration records.
   \semtex@sblwrite{%
-    \string\semtex@sbl@newmath{#1}{arity}{#2}}%
+    \string\semtex@sbl@cmddef{\semtex@tmp@name}{kind}{newcommand}}%
   \semtex@sblwrite{%
-    \string\semtex@sbl@newmath{#1}{src}%
+    \string\semtex@sbl@cmddef{\semtex@tmp@name}{arity}{\number#2}}%
+  \semtex@sblwrite{%
+    \string\semtex@sbl@cmddef{\semtex@tmp@name}{src}%
+    {\@currfilename:\the\inputlineno:1}}%
+}
+
+% \semtexNewDocumentCommand{\cmd}{argspec}{body}
+\NewDocumentCommand{\semtexNewDocumentCommand}{m m m}{%
+  \edef\semtex@tmp@name{\expandafter\@gobble\string#1}%
+  % 1. Define the command via \NewDocumentCommand, body
+  %    wrapped with the use-recording prelude.
+  \NewDocumentCommand{#1}{#2}{%
+    \semtex@sblwrite@atom{%
+      \string\semtex@sbl@use{\semtex@currentatom}%
+      {\semtex@tmp@name}}%
+    #3}%
+  % 2. Emit the global declaration records.
+  \semtex@sblwrite{%
+    \string\semtex@sbl@cmddef{\semtex@tmp@name}{kind}%
+    {NewDocumentCommand}}%
+  \semtex@sblwrite{%
+    \string\semtex@sbl@cmddef{\semtex@tmp@name}{argspec}{#2}}%
+  \semtex@sblwrite{%
+    \string\semtex@sbl@cmddef{\semtex@tmp@name}{src}%
     {\@currfilename:\the\inputlineno:1}}%
 }
 ```
 
-The `\@currfilename` and `\inputlineno` are LaTeX
-kernel primitives giving the current file and line number
-at declaration time, respectively.  The column is hard-
-coded to `1` because `\inputlineno` does not give column
+The two macros share the use-recording prelude pattern
+(prepend a `\semtex@sblwrite@atom` call to the body).
+Production code should factor that into a single helper;
+the sketch keeps them separate for readability.
+
+The `\@gobble\string` trick converts `\Hom` to the bare
+string `Hom` exactly once at definition time; the
+captured `\semtex@tmp@name` is then used in all three
+record emissions and in the use-recording prelude.
+
+The `\@currfilename` and `\inputlineno` are LaTeX kernel
+primitives giving the current file and line number at
+declaration time, respectively.  The column is hard-coded
+to `1` because `\inputlineno` does not give column
 information; a future revision might wrap the macro at a
 later point in the lexer to capture columns, but this
 matches the precision LaTeX itself uses for warnings.
 
-The `\semtex@sblwrite` call (without `@atom`) bypasses the
-currentatom guard because `\semtex@sbl@newmath` records
+The `\semtex@sblwrite` calls (without `@atom`) bypass the
+currentatom guard because `\semtex@sbl@cmddef` records
 are global, not atom-scoped.  See the "Guard pattern"
 subsection above.
+
+#### Why no `\providecommand` / `\DeclareDocumentCommand` mirrors?
+
+`\providecommand` and `\DeclareDocumentCommand` differ
+from their `\new*` siblings only in error-handling
+behaviour (silently no-op if already defined; redefine
+without error).  The semantic-tracking machinery is the
+same in all four cases.  Adding `\semtexProvideCommand`
+and `\semtexDeclareDocumentCommand` is a ~20-line
+addition to the implementation and a parallel pair of
+table rows in this section; it has been deferred to a
+follow-up commit because real use cases haven't appeared
+yet.  When they do, the pattern is mechanical.
+
+`\renewcommand` and `\RenewDocumentCommand` are more
+interesting because they imply a *re-tracking* event:
+should the new definition replace the old `.sbl`
+records, or append?  The clean answer is "replace the
+records and leave existing `.sbl@use` records as-is
+since they referred to the old definition at the time
+they fired".  Defer until needed.
 
 ### Relationship to `.aux`
 
