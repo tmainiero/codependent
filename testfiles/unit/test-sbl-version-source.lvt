@@ -1,0 +1,40 @@
+%% TEST-NAME: test-sbl-version-source
+%% TEST-WHAT: Verify the first two records of the .sbl sidecar are
+%%            \semtex@sbl@version{1} and \semtex@sbl@source{<jobname>.tex},
+%%            written from the begindocument/before hook.
+%% TEST-SOURCE: DESIGN.md §9a "Open timing", §9a "Record format"
+%% TEST-SECTION: DESIGN.md §9a Semantic sidecar (.sbl) writer
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@version{1}
+%% TEST-SBL-CONTAINS: \semtex@sbl@source{test-sbl-version-source.tex}
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Pins the .sbl header protocol. The writer opens at
+%% begindocument/before (NOT \AtBeginDocument, per REVIEW_C #5,
+%% because user hooks may emit atoms from \AtBeginDocument
+%% blocks). The very first two \write calls must produce:
+%%   \semtex@sbl@version{1}
+%%   \semtex@sbl@source{<jobname>.tex}
+%% If either is missing, CLI-side parsing fails immediately
+%% with "unrecognized sidecar format".
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Header records}
+
+One body paragraph to ensure the .sbl has at least one atom
+record between the version/source header and the end marker.
+
+\END
+\end{document}

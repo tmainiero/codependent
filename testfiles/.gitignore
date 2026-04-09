@@ -1,0 +1,26 @@
+# Test runner inspect-on-failure dirs (created by --keep-temp)
+tmp/
+
+# Real-world arxiv corpus: fetched tarballs and generated wrappers
+# are NOT committed (license, size). Only the manifest and the
+# fetch/wrap scripts live in git.
+real-world/papers/
+real-world/wrappers/
+real-world/.fetched
+
+# pdflatex artifacts that may leak from interactive runs
+*.aux
+*.log
+*.out
+*.sbl
+*.fls
+*.fdb_latexmk
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+
+# Editor cruft
+.DS_Store
+*.swp
+*~

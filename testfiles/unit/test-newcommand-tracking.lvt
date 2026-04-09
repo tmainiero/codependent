@@ -1,0 +1,44 @@
+%% TEST-NAME: test-newcommand-tracking
+%% TEST-WHAT: Verify \semtexNewCommand{\Hom}[2]{...} emits the expected
+%%            \semtex@sbl@cmddef records (kind=newcommand, arity, src)
+%%            and that the defined \Hom command works in the body.
+%% TEST-SOURCE: DESIGN.md §9a User API: \semtexNewCommand
+%% TEST-SECTION: DESIGN.md §9a User API
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{arity}{2}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{src}
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% \semtexNewCommand mirrors \newcommand exactly: takes a backslash-
+%% prefixed command, optional bracketed arity, mandatory braced body.
+%% At declaration time it must emit three .sbl records (kind, arity,
+%% src). At invocation time inside an atom, the wrapped command must
+%% emit a \semtex@sbl@use record per call.
+%%
+%% This test verifies the declaration-side records. See
+%% test-cmd-uses.lvt for the invocation-side use records.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexNewCommand{\id}{\mathrm{id}}
+
+\begin{document}
+\START
+
+\section{Test}
+
+A paragraph using $\Hom{X}{Y}$ and $\id$. The wrapped commands
+must produce correct typeset output AND emit \semtex@sbl@use
+records to the sidecar (verified separately by test-cmd-uses).
+
+\END
+\end{document}

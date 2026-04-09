@@ -1,0 +1,37 @@
+%% TEST-NAME: test-label-kernel
+%% TEST-WHAT: Verify a plain \label{key} inside a tracked atom produces
+%%            a \semtex@sbl@label{<num>}{key} record in the sidecar.
+%% TEST-SOURCE: DESIGN.md §9a "Label wrap" emission site
+%% TEST-SECTION: DESIGN.md §9a Emission points (label wrap)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@label{1.1}{thm:foo}
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Baseline label-wrap regression. A plain \label{thm:foo}
+%% inside a tracked theorem environment must be captured and
+%% mirrored as a \semtex@sbl@label record in the .sbl. The
+%% record's first argument is the atom number (1.1 here) and
+%% the second is the label key. No optional-arg branch is
+%% exercised in this baseline; see test-label-cleveref-opt.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Label kernel}
+
+\begin{theorem}\label{thm:foo}
+  Statement.
+\end{theorem}
+
+\END
+\end{document}

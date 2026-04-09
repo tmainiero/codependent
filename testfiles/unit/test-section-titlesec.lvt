@@ -1,0 +1,36 @@
+%% TEST-NAME: test-section-titlesec
+%% TEST-WHAT: Verify \section{Foo} heading paragraph is NOT numbered as
+%%            an atom under article + titlesec, which replaces
+%%            \@startsection at load time.
+%% TEST-SOURCE: REVIEW_E #5 (BLOCKER), DESIGN.md §8a.6 sectioning
+%% TEST-SECTION: DESIGN.md §Paragraph numbering, sectioning suppression
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: titlesec,amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% REVIEW_E finding #5 BLOCKER, companion to test-section-koma.
+%% titlesec also replaces \@startsection at load time (see
+%% titlesec.sty), so the old \@startsection wrapper is a no-op.
+%% The cmd/section/before hook-based fix in §8a.6 must catch this.
+
+\documentclass{article}
+\usepackage{titlesec}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Foo}
+
+Body paragraph under the titlesec-managed section. Expected atom 1.1.
+
+\END
+\end{document}

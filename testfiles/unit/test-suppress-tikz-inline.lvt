@@ -1,0 +1,41 @@
+%% TEST-NAME: test-suppress-tikz-inline
+%% TEST-WHAT: Verify an inline \tikz{\node ...;} call does NOT inject
+%%            an atom number into the surrounding paragraph flow.
+%% TEST-SOURCE: REVIEW_E #9 (MINOR)
+%% TEST-SECTION: DESIGN.md §8a.6 inline tikz suppression
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: tikz,amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% REVIEW_E finding #9. The inline form \tikz{...} opens a
+%% group, builds a single-node picture, and closes it, all
+%% within the host paragraph. If \tikz's begin/end triggers
+%% the paragraph hook inside the picture, a spurious atom
+%% number appears at the \tikz location. \semtexsuppresscmd
+%% must patch the inline \tikz command, not just the
+%% tikzpicture environment.
+
+\documentclass{article}
+\usepackage{tikz}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Inline tikz}
+
+A paragraph with an inline diagram \tikz{\node[draw,circle] {A};}
+embedded in the middle. Exactly one atom expected (the whole
+paragraph itself, atom 1.1) and no spurious atom from the
+\tikz expansion.
+
+\END
+\end{document}

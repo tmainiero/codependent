@@ -1,0 +1,41 @@
+%% TEST-NAME: test-numbering-depth3
+%% TEST-WHAT: depth=3 option produces section.subsection.subsubsection.atom
+%%            display numbers (e.g. "1.1.2.1") under the article class.
+%% TEST-SOURCE: DESIGN.md §Numbering "Depth"
+%% TEST-SECTION: DESIGN.md §Numbering, semtex.sty lines 200-204
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1.1.1}{paragraph} = 1
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1.2.1}{paragraph} = 1
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Pins depth=3: atom resets on \subsubsection. Display format is
+%% section.subsection.subsubsection.atom. Two subsubsections under
+%% one subsection, one paragraph each, yields 1.1.1.1 and 1.1.2.1.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[depth=3]{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Sec}
+\subsection{Sub}
+
+\subsubsection{SubSubA}
+
+Paragraph under subsubsection A. Expected atom 1.1.1.1.
+
+\subsubsection{SubSubB}
+
+Paragraph under subsubsection B. Expected atom 1.1.2.1.
+
+\END
+\end{document}

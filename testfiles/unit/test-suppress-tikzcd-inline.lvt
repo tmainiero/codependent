@@ -1,0 +1,40 @@
+%% TEST-NAME: test-suppress-tikzcd-inline
+%% TEST-WHAT: Verify an inline \tikzcd{...} call does NOT inject an
+%%            atom number. tikz-cd is heavy use in category theory
+%%            docs, so this is the user's primary diagram tool.
+%% TEST-SOURCE: REVIEW_E #9 (MINOR)
+%% TEST-SECTION: DESIGN.md §8a.6 inline tikz suppression
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: tikz-cd,amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% REVIEW_E finding #9 companion to test-suppress-tikz-inline.
+%% Since the target user writes category theory with tikzcd
+%% for every commutative diagram, this regression specifically
+%% pins the \tikzcd inline suppression. A morphism inside an
+%% inline diagram must not push the surrounding prose's atom
+%% counter.
+
+\documentclass{article}
+\usepackage{tikz-cd}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Inline tikzcd}
+
+A paragraph with an inline commutative diagram
+$\tikzcd{A \arrow{r} & B}$ embedded mid-sentence.
+Exactly one atom (atom 1.1 for the whole paragraph) expected.
+
+\END
+\end{document}

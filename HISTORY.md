@@ -211,6 +211,75 @@ because the user does category theory and uses `tikzcd` heavily),
 ntheorem testing, tcolorbox/mdframed suppression, listings/minted
 catcode hazards, subfiles standalone-vs-master `.sbl` divergence.
 
+### v1.0-test — Test fixtures + runner before implementation (2026-04-09)
+
+After the design phase closed (commit 2e1fc2a), the user requested
+test files BEFORE implementation so the implementer has concrete
+TDD targets. Built in one parallel-dispatch session:
+
+- **35 unit fixtures** under `tools/semtex-sty/testfiles/unit/`
+  covering numbering, reference recording (kernel/cleveref/hyperref/
+  autoref/eqref/ref-star), KOMA/memoir/titlesec sectioning, suppression
+  envs (trivlist/enumitem/tcolorbox/tikz/tikzcd), equations (separate
+  + pinned-broken shared), `.sbl` writer (version/source/end-marker/
+  flat-records), `\label` patching (kernel + cleveref opt-arg), the
+  new public API (`\semtexNewCommand`/`\semtexNewDocumentCommand`/
+  `\semtextag`/cmd-uses), hook & load ordering, engine matrix
+  (pdflatex/lualatex), `\restatable`, `\semtex@currentatom` clearing.
+
+- **1 integration fixture** at
+  `tools/semtex-sty/testfiles/integration/test-integration-kitchen-sink.lvt`
+  exercising every semtex feature in a single document with a realistic
+  preamble stack (~200 lines).
+
+- **Real-world arxiv corpus infrastructure** under
+  `tools/semtex-sty/testfiles/real-world/`: a Python `fetch.py` script
+  that downloads arxiv source tarballs with SHA-256 verification, a
+  `wrap.py` that injects `\usepackage{semtex}\semtextrack{...}` into
+  each paper's preamble for tracked-mode compilation, a JSON
+  `corpus.lock` manifest of 8 hand-curated math.* papers (3 math.CT,
+  2 math.AG, 1 math.AT, 1 math.RT, 1 free) with REVIEW_E coverage
+  matrix, and a README. Papers themselves are NOT committed
+  (license, size); only the manifest + scripts. All SHA-256s start
+  pinned to PENDING_FETCH because the dispatching agent had no
+  internet access; manual verification required before first use.
+  This is the smaller, fixed-corpus version of the broader
+  arxiv-fuzz plan documented in
+  `~/.claude/projects/.../memory/project_semtex_arxiv_fuzz.md`.
+
+- **Test runner** at `tools/semtex-sty/testfiles/run-tests.py`
+  (~430 lines, Python 3 stdlib only). Reads machine-readable
+  `%% TEST-*:` metadata headers from each `.lvt` fixture, compiles
+  via pdflatex (configurable engine), reads `.aux`/`.sbl`/`.log`,
+  applies assertions (exit code, log patterns, sidecar substring/
+  count, atom min count), produces a per-category summary, exits
+  non-zero on real failures while exempting `TEST-PINS-KNOWN-BROKEN`
+  fixtures.
+
+- **README + .gitignore** for the test suite. README documents the
+  fixture format, the runner CLI, the categories, what "passing"
+  means before implementation, and the system-wide texlive-full
+  one-time exception (the project's Nix flake doesn't yet include
+  all required packages: thmtools, scrbook, tcolorbox, tikz-cd,
+  etc.; future runs should go through `nix develop` once the flake
+  is updated).
+
+**Pre-implementation TDD signal**: All 36 fixtures FAIL today
+because semtex.sty v0.1 doesn't have the v1.0 features. This is
+the intended state. As the implementer lands each spec section
+(Section 8a, 8a.5, 8a.5.a, 8a.6, 8b, 9a), the corresponding
+fixtures turn green. Implementation is "done" when the runner
+reports zero real failures on all engines.
+
+**Standalone-project framing**: The user noted that semtex.sty
+is now considered its own project, only living in the mwablab
+repo by historical accident. Test infrastructure is path-
+independent: every script uses paths relative to
+`tools/semtex-sty/`, so a future
+`git mv tools/semtex-sty/ <new-repo>/` is a single move with
+no broken paths. mwablab will eventually call semtex as a
+dependency rather than embed it.
+
 ### v1.0 — REVIEW_E findings applied + REVIEW_F spot-check (2026-04-09)
 
 Proposer round 3 applied all 3 BLOCKERs + 5 MAJORs + 6 MINORs

@@ -1,0 +1,80 @@
+%% TEST-NAME: test-currentatom-clear
+%% TEST-WHAT: Verify a \ref AFTER an atom but BEFORE the next atom does
+%%            NOT get attributed to the just-ended atom. The \ref fires
+%%            in a between-atoms gap (e.g., section heading, caption,
+%%            footnote) where \semtex@currentatom must be \@empty.
+%% TEST-SOURCE: REVIEW_A finding 3 (LIVE DEFECT in current semtex.sty),
+%%              REVIEW_C #4 (MAJOR), REVIEW_E reaffirmation
+%% TEST-SECTION: DESIGN.md §8a.5 currentatom state management
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-AUX-NOT-CONTAINS: \semtex@atomref{1.1.2}{thm:A}
+%% TEST-PACKAGES: hyperref,amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Current semtex.sty (v0.1, lines 244-255 area) sets
+%% \semtex@currentatom on theorem-begin and on para/begin but
+%% does NOT clear it on atom-end. As a result, a \ref fired
+%% between atoms (in a section heading, caption, or after the
+%% paragraph but before another paragraph starts) gets
+%% attributed to the LAST atom, producing a wrong-source edge
+%% in the backref graph.
+%%
+%% The fix in §8a.5 adds \let\semtex@currentatom\@empty to
+%% three sites:
+%%   1. \AtEndEnvironment for tracked theorem envs (after the
+%%      backref flush)
+%%   2. \AtEndEnvironment{proof} (after the flush)
+%%   3. \AddToHook{para/end} after \semtex@flushbackref
+%%
+%% With the fix: the \ref{thm:A} in the section heading below
+%% fires with \semtex@currentatom = \@empty, so the
+%% \@setref/\HyRef@autosetref/\cref@getlabel patches
+%% short-circuit and DO NOT write \semtex@atomref records.
+%% The expected result: zero atomref edges from atom 1.1.2
+%% (the section heading paragraph, which itself is suppressed)
+%% to thm:A.
+%%
+%% Without the fix: there would be a stale \semtex@atomref
+%% record attributing the section-heading \ref to whichever
+%% paragraph finished last.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{First}
+
+A paragraph in the first section.
+
+\begin{theorem}\label{thm:A}
+  Statement of theorem A.
+\end{theorem}
+
+% After the theorem ends, \semtex@currentatom must be cleared.
+% A paragraph follows, which sets a new currentatom.
+
+A second paragraph in the first section.
+
+% Now another paragraph ends. The next thing is a section
+% heading whose \ref must NOT carry the just-ended paragraph
+% as currentatom.
+
+\section{Reference test \ref{thm:A}}
+
+% The \ref above fires INSIDE \section's heading body, after
+% the previous paragraph ended and before the new section's
+% first paragraph begins. \semtex@currentatom must be empty
+% at that point.
+
+A paragraph in the second section. This one IS a real atom.
+
+\END
+\end{document}

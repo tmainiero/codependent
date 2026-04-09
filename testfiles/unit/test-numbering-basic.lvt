@@ -1,0 +1,40 @@
+%% TEST-NAME: test-numbering-basic
+%% TEST-WHAT: Minimal atom counter sanity: one plain paragraph + one tracked
+%%            theorem produces exactly two atoms.
+%% TEST-SOURCE: DESIGN.md §Numbering "Shared counter", REVIEW_F baseline
+%% TEST-SECTION: DESIGN.md §Numbering, §Theorem environment numbering
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.2}{theorem} = 1
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% The smallest possible exercise of the atom counter: a single
+%% numbered paragraph followed by a single tracked theorem environment
+%% must produce two distinct atom display numbers in the .sbl, both
+%% rooted at section 1, with monotonically increasing atom index.
+%% If this fixture fails, no downstream numbering test can pass.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Basic}
+
+One paragraph here. This is atom 1.1 (paragraph).
+
+\begin{theorem}
+  This is atom 1.2 (theorem).
+\end{theorem}
+
+\END
+\end{document}

@@ -1,0 +1,47 @@
+%% TEST-NAME: test-load-cleveref-after-semtex
+%% TEST-WHAT: Verify cleveref loaded AFTER semtex still has all its
+%%            \cref calls tracked: the \cref@getlabel patch (§8a.0
+%%            site 2) installs at begindocument/before, after
+%%            cleveref has had time to load.
+%% TEST-SOURCE: REVIEW_E #2 context, DESIGN.md §8a.0 install timing
+%% TEST-SECTION: DESIGN.md §8a.0 Reference interception
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-AUX-CONTAINS: \semtex@atomref{1.2}{thm:A}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: hyperref,amsthm,semtex,cleveref
+%% TEST-RERUN: 2
+%%
+%% The three-site reference patch in §8a.0 uses
+%% \@ifpackageloaded{cleveref} at begindocument/before, which
+%% fires AFTER the preamble has finished and all \usepackage
+%% calls have run. So the patch sees cleveref loaded even if
+%% the user writes \usepackage{semtex} before
+%% \usepackage{cleveref}. This fixture is the reverse-order
+%% counterpart to test-setref-cleveref.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\usepackage{cleveref}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Cleveref after semtex}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}
+  By \cref{thm:A}, done.
+\end{theorem}
+
+\END
+\end{document}

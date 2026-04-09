@@ -1,0 +1,56 @@
+%% TEST-NAME: test-equations-shared-align
+%% TEST-WHAT: Pin the KNOWN-BROKEN behaviour of equations=shared mode
+%%            inside align/gather: the atom counter advances once per
+%%            equation line, which is rarely what the author wants.
+%% TEST-SOURCE: REVIEW_E #6 (MAJOR), REVIEW_F R2, DESIGN.md open issues
+%% TEST-SECTION: DESIGN.md §Equation numbering, §Package options
+%% TEST-EXIT: 0
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-PACKAGES: amsmath,amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% REVIEW_E finding #6 (MAJOR) identifies equations=shared as a
+%% hazard in align/gather/split/\subequations. In shared mode
+%% the equation counter is \let-aliased to the atom counter,
+%% so every \\ line in an align that triggers an equation
+%% number also steps the atom counter. The fixture documents
+%% this known-broken behaviour so the runner can warn but not
+%% fail. Recommended user default remains equations=separate.
+%%
+%% This test is INTENTIONALLY documenting a hazard, not
+%% enforcing a "correct" count. TEST-PINS-KNOWN-BROKEN: yes
+%% tells the runner to tolerate whatever the count turns out
+%% to be so long as compilation exits 0 and the sbl end marker
+%% fires.
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[equations=shared]{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Equations shared hazard}
+
+Lead paragraph. In shared mode this is atom 1.something; the
+exact number depends on whether pdflatex has yet triggered
+\refstepcounter via the para/begin hook.
+
+\begin{align}
+  a_1 &= b_1, \label{eq:line1} \\
+  a_2 &= b_2, \label{eq:line2} \\
+  a_3 &= b_3. \label{eq:line3}
+\end{align}
+
+Trailing paragraph. In shared mode, multiple atom counter
+ticks will have fired between the lead and trailing paras
+(one per align line). This behaviour is documented, not
+tested for a specific count.
+
+\END
+\end{document}

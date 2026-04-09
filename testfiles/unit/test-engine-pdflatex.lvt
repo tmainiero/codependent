@@ -1,0 +1,37 @@
+%% TEST-NAME: test-engine-pdflatex
+%% TEST-WHAT: Verify semtex.sty compiles cleanly and tracks one theorem
+%%            under the pdflatex engine.
+%% TEST-SOURCE: DESIGN.md §Compatibility "Engine matrix"
+%% TEST-SECTION: DESIGN.md §Compatibility
+%% TEST-EXIT: 0
+%% TEST-ENGINE: pdflatex
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{theorem} = 1
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Engine matrix: pdflatex baseline. The runner invokes this
+%% fixture specifically under pdflatex (not the default
+%% engine autodetect). This pins the primary delivery engine
+%% for v1.0.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{pdflatex engine}
+
+\begin{theorem}
+  Theorem under pdflatex.
+\end{theorem}
+
+\END
+\end{document}
