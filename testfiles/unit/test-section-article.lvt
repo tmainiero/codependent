@@ -8,7 +8,7 @@
 %% TEST-LOG-NOT: Package semtex Warning
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
 %% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
-%% TEST-SBL-NOT: \semtex@sbl@meta{1.1}{env}{heading}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@meta{1.1}{env}{heading}
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsthm,semtex
 %% TEST-RERUN: 2

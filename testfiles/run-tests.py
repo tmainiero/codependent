@@ -71,6 +71,7 @@ METADATA_KEYS = {
     "TEST-SBL-CONTAINS": "sbl_contains",  # may repeat
     "TEST-SBL-NOT-CONTAINS": "sbl_not_contains",  # may repeat
     "TEST-SBL-COUNT": "sbl_count",  # "<pattern> = <n>", may repeat
+    "TEST-SBL-LAST-RECORD": "sbl_last_record",  # last non-empty line must contain this
     "TEST-AUX-CONTAINS": "aux_contains",  # may repeat
     "TEST-AUX-NOT-CONTAINS": "aux_not_contains",  # may repeat
     "TEST-ATOMS-MIN": "atoms_min",
@@ -99,6 +100,7 @@ class Fixture:
     sbl_contains: list = dataclasses.field(default_factory=list)
     sbl_not_contains: list = dataclasses.field(default_factory=list)
     sbl_count: list = dataclasses.field(default_factory=list)
+    sbl_last_record: str = ""
     aux_contains: list = dataclasses.field(default_factory=list)
     aux_not_contains: list = dataclasses.field(default_factory=list)
     atoms_min: int = 0
@@ -311,6 +313,26 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
             if atom_count < fix.atoms_min:
                 result.failures.append(
                     f"atom count: expected >= {fix.atoms_min}, got {atom_count}"
+                )
+
+        # 8. sbl_last_record: the last NON-EMPTY line of .sbl must
+        #    contain the specified string. Stronger than sbl_contains
+        #    because it pins position. Used by test-sbl-end-marker to
+        #    enforce that the sentinel is the file-final record, not
+        #    just present somewhere in the file.
+        if fix.sbl_last_record:
+            non_empty_lines = [
+                line for line in sbl_text.splitlines()
+                if line.strip()
+            ]
+            if not non_empty_lines:
+                result.failures.append(
+                    f"sbl last-record check: file is empty, expected {fix.sbl_last_record!r}"
+                )
+            elif fix.sbl_last_record not in non_empty_lines[-1]:
+                result.failures.append(
+                    f"sbl last-record: expected {fix.sbl_last_record!r}, "
+                    f"got last non-empty line: {non_empty_lines[-1]!r}"
                 )
 
         if keep_temp:

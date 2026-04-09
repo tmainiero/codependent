@@ -89,6 +89,7 @@ Each fixture is a `.lvt` file with two layers:
 | `TEST-SBL-CONTAINS` | * | substring that MUST appear in `.sbl` |
 | `TEST-SBL-NOT-CONTAINS` | * | substring that must NOT appear in `.sbl` |
 | `TEST-SBL-COUNT` | * | `<substring> = <n>` count assertion |
+| `TEST-SBL-LAST-RECORD` | 1 | substring that MUST appear in the LAST non-empty line of `.sbl` (stronger than `CONTAINS`; used to pin the end-marker sentinel position) |
 | `TEST-AUX-CONTAINS` | * | substring that MUST appear in `.aux` |
 | `TEST-AUX-NOT-CONTAINS` | * | substring that must NOT appear in `.aux` |
 | `TEST-ATOMS-MIN` | 1 | minimum count of `\semtex@sbl@atom{` records |

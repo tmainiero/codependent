@@ -9,7 +9,7 @@
 %% TEST-LOG-NOT: Package semtex Warning
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
 %% TEST-SBL-CONTAINS: \semtex@sbl@tag{1.1}{uid}{cat:category theory}
-%% TEST-SBL-NOT: \semtex@sbl@tag{1.1}{uid=cat:category theory}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@tag{1.1}{uid=cat:category theory}
 %% TEST-PACKAGES: amsthm,semtex
 %% TEST-RERUN: 2
 %%

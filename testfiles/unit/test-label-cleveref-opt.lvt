@@ -9,7 +9,7 @@
 %% TEST-LOG-NOT: Package semtex Warning
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
 %% TEST-SBL-CONTAINS: \semtex@sbl@label{1.1}{thm:foo}
-%% TEST-SBL-NOT: \semtex@sbl@label{1.1}{[theorem]thm:foo}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@label{1.1}{[theorem]thm:foo}
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,semtex
 %% TEST-RERUN: 2
 %%
