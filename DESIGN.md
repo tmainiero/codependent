@@ -421,6 +421,14 @@ tools/semtex-sty/
 - Does not handle UID assignment.
 - Does not auto-generate labels.
 
+## TODO
+
+- **Margin-only numbering style.** Add `style=margin` option that
+  puts ALL atom numbers (including theorems/definitions) as
+  superscript margin numbers, removing the number from theorem
+  headers.  Gives a visually uniform margin column.  Current
+  behavior becomes `style=inline` (default for now).
+
 ## Credit
 
 Inspired by Dmitri Pavlov's dpmac (Plain TeX, GNU GPLv3,
