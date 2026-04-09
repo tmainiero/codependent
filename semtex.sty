@@ -1,0 +1,662 @@
+%% ===================================================================
+%% Section 1: Identification
+%% ===================================================================
+\NeedsTeXFormat{LaTeX2e}[2021/06/01]
+\ProvidesPackage{semtex}[2026/04/08 v0.1 %
+  Pavlov-style atom numbering and back-reference display]
+
+%% ===================================================================
+%% Section 2: Required packages
+%% ===================================================================
+\RequirePackage{etoolbox}
+\RequirePackage{pgfkeys}
+
+%% ===================================================================
+%% Section 3: Options
+%% ===================================================================
+
+% Depth: how many sectioning levels in the atom display number.
+\newcommand*{\semtex@depth}{1}
+
+% Equations: separate (default) or shared counter.
+\newbool{semtex@eqshared}
+\boolfalse{semtex@eqshared}
+
+% Back-references: inline (default), appendix, or none.
+\newcommand*{\semtex@backrefmode}{inline}
+\newbool{semtex@backrefs}
+\booltrue{semtex@backrefs}
+\newbool{semtex@appendix}
+\boolfalse{semtex@appendix}
+
+% Proofs: numbered (default) or unnumbered.
+\newbool{semtex@proofsnumbered}
+\booltrue{semtex@proofsnumbered}
+
+\pgfkeys{%
+  /semtex/.is family,%
+  /semtex/.cd,%
+  depth/.store in = \semtex@depth,%
+  depth/.default = 1,%
+  equations/.is choice,%
+  equations/separate/.code = {\boolfalse{semtex@eqshared}},%
+  equations/shared/.code = {\booltrue{semtex@eqshared}},%
+  equations/.default = separate,%
+  backrefs/.is choice,%
+  backrefs/inline/.code = {%
+    \booltrue{semtex@backrefs}%
+    \boolfalse{semtex@appendix}%
+    \renewcommand*{\semtex@backrefmode}{inline}%
+  },%
+  backrefs/appendix/.code = {%
+    \booltrue{semtex@backrefs}%
+    \booltrue{semtex@appendix}%
+    \renewcommand*{\semtex@backrefmode}{appendix}%
+  },%
+  backrefs/none/.code = {%
+    \boolfalse{semtex@backrefs}%
+    \boolfalse{semtex@appendix}%
+    \renewcommand*{\semtex@backrefmode}{none}%
+  },%
+  backrefs/.default = inline,%
+  proofs/.is choice,%
+  proofs/numbered/.code = {\booltrue{semtex@proofsnumbered}},%
+  proofs/unnumbered/.code = {\boolfalse{semtex@proofsnumbered}},%
+  proofs/.default = numbered,%
+}
+
+% Collect all options and forward to pgfkeys.
+\def\semtex@rawopts{}%
+\DeclareOption*{%
+  \ifx\semtex@rawopts\@empty
+    \edef\semtex@rawopts{\CurrentOption}%
+  \else
+    \edef\semtex@rawopts{\semtex@rawopts,\CurrentOption}%
+  \fi
+}%
+\ProcessOptions\relax
+\ifx\semtex@rawopts\@empty\else
+  \edef\semtex@tmp@opts{%
+    \noexpand\pgfkeys{/semtex/.cd,\semtex@rawopts}%
+  }%
+  \semtex@tmp@opts
+\fi
+
+%% ===================================================================
+%% Section 4: Internal state
+%% ===================================================================
+
+% Suppression nesting depth.  When > 0, para/begin skips numbering.
+\newcount\semtex@nestlevel
+\semtex@nestlevel=0\relax
+
+% Pending back-reference text (flushed at para/end or env end).
+\newtoks\semtex@pendingbr
+
+% Current atom display number (set when atom is created).
+\newcommand*{\semtex@currentatom}{}
+
+% Flag: true inside a tracked theorem environment.
+\newbool{semtex@intheorem}
+\boolfalse{semtex@intheorem}
+
+% Flag: true when \semtextrack has been called.
+\newbool{semtex@tracked}
+\boolfalse{semtex@tracked}
+
+% Flag: true when a sectioning heading paragraph is pending.
+% Set by the \@startsection wrapper, cleared after one para/begin.
+\newbool{semtex@sectioning}
+\boolfalse{semtex@sectioning}
+
+% Flag: true when a standalone proof's margin number is pending.
+% Set by the proof hook, cleared after one para/begin emission.
+\newbool{semtex@proofpending}
+\boolfalse{semtex@proofpending}
+
+% Accumulated appendix data (token register).
+\newtoks\semtex@appendixdata
+
+% Hash for staleness detection (read from .aux on pass 2).
+\newcommand*{\semtex@auxhash}{}
+
+%% ===================================================================
+%% Section 5: Core numbering machinery
+%% ===================================================================
+
+% \semtex@removefromreset{counter}{parent}
+%   Remove counter from parent's reset list.
+\newcommand*{\semtex@removefromreset}[2]{%
+  \@ifundefined{@removefromreset}{%
+    % Manual: rewrite \cl@parent without #1.
+    \begingroup
+      \expandafter\let\expandafter\semtex@resetlist
+        \csname cl@#2\endcsname%
+      \expandafter\global\expandafter\let
+        \csname cl@#2\endcsname\@empty%
+      \def\@elt##1{%
+        \def\semtex@cur{##1}%
+        \def\semtex@tgt{#1}%
+        \ifx\semtex@cur\semtex@tgt\else
+          \expandafter\g@addto@macro
+            \csname cl@#2\endcsname{\@elt{##1}}%
+        \fi
+      }%
+      \semtex@resetlist
+    \endgroup
+  }{%
+    \@removefromreset{#1}{#2}%
+  }%
+}
+
+% \semtex@setupcounter
+%   Create the atom counter and wire it to the theorem counter.
+%   Called by \semtextrack.
+\newcommand*{\semtex@setupcounter}{%
+  \newcounter{atom}%
+  % Copy current theorem counter value (if theorem exists).
+  \@ifundefined{c@theorem}{}{%
+    \setcounter{atom}{\value{theorem}}%
+    % Alias: \c@theorem -> \c@atom.
+    \expandafter\let\csname c@theorem\endcsname\c@atom
+  }%
+  \semtex@configuredepth
+}
+
+% \semtex@configuredepth
+%   Set up counter resets and display format based on depth option
+%   and document class.
+\newcommand*{\semtex@configuredepth}{%
+  % Remove theorem from any existing reset parent.
+  \@ifundefined{c@theorem}{}{%
+    \@ifundefined{cl@section}{}{%
+      \semtex@removefromreset{theorem}{section}%
+    }%
+    \@ifundefined{cl@chapter}{}{%
+      \semtex@removefromreset{theorem}{chapter}%
+    }%
+  }%
+  \@ifundefined{chapter}{%
+    \semtex@configuredepth@article
+  }{%
+    \semtex@configuredepth@book
+  }%
+}
+
+% Article-class depth configuration.
+\newcommand*{\semtex@configuredepth@article}{%
+  \ifnum\semtex@depth=1\relax
+    \@addtoreset{atom}{section}%
+    \renewcommand*{\theatom}{\thesection.\arabic{atom}}%
+  \else\ifnum\semtex@depth=2\relax
+    \@addtoreset{atom}{subsection}%
+    \renewcommand*{\theatom}{%
+      \thesection.\arabic{subsection}.\arabic{atom}}%
+  \else\ifnum\semtex@depth=3\relax
+    \@addtoreset{atom}{subsubsection}%
+    \renewcommand*{\theatom}{%
+      \thesection.\arabic{subsection}.%
+      \arabic{subsubsection}.\arabic{atom}}%
+  \else
+    \PackageError{semtex}{Invalid depth '\semtex@depth'}{%
+      The depth option must be 1, 2, or 3.}%
+  \fi\fi\fi
+}
+
+% Book/report-class depth configuration.
+\newcommand*{\semtex@configuredepth@book}{%
+  \ifnum\semtex@depth=1\relax
+    \@addtoreset{atom}{chapter}%
+    \renewcommand*{\theatom}{\thechapter.\arabic{atom}}%
+  \else\ifnum\semtex@depth=2\relax
+    \@addtoreset{atom}{section}%
+    \renewcommand*{\theatom}{%
+      \thechapter.\arabic{section}.\arabic{atom}}%
+  \else\ifnum\semtex@depth=3\relax
+    \@addtoreset{atom}{subsection}%
+    \renewcommand*{\theatom}{%
+      \thechapter.\arabic{section}.%
+      \arabic{subsection}.\arabic{atom}}%
+  \else
+    \PackageError{semtex}{Invalid depth '\semtex@depth'}{%
+      The depth option must be 1, 2, or 3.}%
+  \fi\fi\fi
+}
+
+%% ===================================================================
+%% Section 6: Theorem environment hooks
+%% ===================================================================
+
+% \semtex@hooktheorem{envname}
+%   Install begin/end hooks for a tracked theorem environment.
+\newcommand*{\semtex@hooktheorem}[1]{%
+  \AtBeginEnvironment{#1}{%
+    \ifnum\semtex@nestlevel>0\relax
+      % Nested inside another tracked env: undo the counter
+      % advance that \newtheorem performed automatically.
+      \addtocounter{atom}{-1}%
+    \fi
+    \advance\semtex@nestlevel by 1\relax
+    \booltrue{semtex@intheorem}%
+    \edef\semtex@currentatom{\theatom}%
+    \semtex@queuebackref{\semtex@currentatom}%
+  }%
+  \AtEndEnvironment{#1}{%
+    \semtex@flushbackref
+    \advance\semtex@nestlevel by -1\relax
+    \ifnum\semtex@nestlevel=0\relax
+      \boolfalse{semtex@intheorem}%
+    \fi
+  }%
+}
+
+% \semtex@hookproof
+%   Install hooks for the proof environment.
+%   Standalone proofs defer margin emission to para/begin so the
+%   number appears on the "Proof." line, not on a separate line.
+\newcommand*{\semtex@hookproof}{%
+  \@ifundefined{proof}{}{%
+    \AtBeginEnvironment{proof}{%
+      \ifbool{semtex@proofsnumbered}{%
+        \ifnum\semtex@nestlevel>0\relax
+          % Inside a tracked env: just suppress.
+          \advance\semtex@nestlevel by 1\relax
+        \else
+          % Standalone proof: advance counter and defer margin
+          % emission to para/begin so it lands on the same line
+          % as the proof heading.
+          \refstepcounter{atom}%
+          \advance\semtex@nestlevel by 1\relax
+          \edef\semtex@currentatom{\theatom}%
+          \global\booltrue{semtex@proofpending}%
+          \semtex@queuebackref{\semtex@currentatom}%
+        \fi
+      }{%
+        % Unnumbered: just suppress paragraph numbering.
+        \advance\semtex@nestlevel by 1\relax
+      }%
+    }%
+    \AtEndEnvironment{proof}{%
+      \ifbool{semtex@proofsnumbered}{%
+        \semtex@flushbackref
+      }{}%
+      \advance\semtex@nestlevel by -1\relax
+    }%
+  }%
+}
+
+%% ===================================================================
+%% Section 7: Paragraph numbering
+%% ===================================================================
+
+% \semtex@emitmargin{number}
+%   Typeset a superscript atom number in the left margin.
+\newcommand*{\semtex@emitmargin}[1]{%
+  \leavevmode%
+  \smash{%
+    \llap{%
+      {\scriptsize\textsuperscript{#1}\kern0.5em}%
+    }%
+  }%
+}
+
+% \semtex@suppressenv{envname}
+%   Increment nestlevel on entry, decrement on exit.
+\newcommand*{\semtex@suppressenv}[1]{%
+  \AtBeginEnvironment{#1}{%
+    \advance\semtex@nestlevel by 1\relax
+  }%
+  \AtEndEnvironment{#1}{%
+    \advance\semtex@nestlevel by -1\relax
+  }%
+}
+
+% \semtex@suppresscmd{command}
+%   Patch a command to suppress numbering in its body.
+\newcommand*{\semtex@suppresscmd}[1]{%
+  \pretocmd{#1}{\advance\semtex@nestlevel by 1\relax}{}{}%
+  \apptocmd{#1}{\advance\semtex@nestlevel by -1\relax}{}{}%
+}
+
+% \semtex@installsuppress
+%   Hook suppression for standard environments.
+\newcommand*{\semtex@installsuppress}{%
+  \semtex@suppressenv{enumerate}%
+  \semtex@suppressenv{itemize}%
+  \semtex@suppressenv{description}%
+  \semtex@suppressenv{quote}%
+  \semtex@suppressenv{quotation}%
+  \semtex@suppressenv{figure}%
+  \semtex@suppressenv{table}%
+  \semtex@suppressenv{minipage}%
+  \semtex@suppressenv{tabular}%
+  \semtex@suppressenv{tabularx}%
+  \semtex@suppressenv{longtable}%
+}
+
+% \semtex@suppresssectioning
+%   Suppress atom numbering for sectioning heading paragraphs.
+%   Wraps \@startsection (section, subsection, etc.) to set a
+%   one-shot flag checked by para/begin.  For book/report
+%   classes, patches \@makechapterhead and \@makeschapterhead
+%   to suppress all paragraphs within chapter headings.
+%   Deferred to begindocument/end so hyperref and other
+%   packages have finished redefining sectioning internals.
+\newcommand*{\semtex@suppresssectioning}{%
+  \AddToHook{begindocument/end}{%
+    \makeatletter
+    % Section/subsection: thin wrapper sets one-shot flag.
+    \let\semtex@orig@startsection\@startsection
+    \def\@startsection{%
+      \global\booltrue{semtex@sectioning}%
+      \semtex@orig@startsection
+    }%
+    % Chapter headings: suppress via nestlevel inside the
+    % head-building macros (handles multi-paragraph heads).
+    \ifcsname @makechapterhead\endcsname
+      \pretocmd{\@makechapterhead}{%
+        \advance\semtex@nestlevel by 1\relax
+      }{}{}%
+      \apptocmd{\@makechapterhead}{%
+        \advance\semtex@nestlevel by -1\relax
+      }{}{}%
+    \fi
+    \ifcsname @makeschapterhead\endcsname
+      \pretocmd{\@makeschapterhead}{%
+        \advance\semtex@nestlevel by 1\relax
+      }{}{}%
+      \apptocmd{\@makeschapterhead}{%
+        \advance\semtex@nestlevel by -1\relax
+      }{}{}%
+    \fi
+    \makeatother
+  }%
+}
+
+% \semtex@suppresscommands
+%   Suppress numbering inside footnote, parbox, caption.
+\newcommand*{\semtex@suppresscommands}{%
+  \semtex@suppresscmd{\footnote}%
+  \semtex@suppresscmd{\parbox}%
+  \@ifundefined{caption}{}{%
+    \semtex@suppresscmd{\caption}%
+  }%
+}
+
+% \semtex@installparahook
+%   Install the para/begin hook for paragraph numbering.
+%   Checks three suppression conditions:
+%   - semtex@sectioning: one-shot flag for heading paragraphs
+%   - semtex@proofpending: deferred proof margin emission
+%   - semtex@nestlevel > 0: inside a suppressed env/command
+\newcommand*{\semtex@installparahook}{%
+  \AddToHook{para/begin}{%
+    \ifbool{semtex@tracked}{%
+      % Sectioning heading paragraph: skip entirely.
+      \ifbool{semtex@sectioning}{%
+        \global\boolfalse{semtex@sectioning}%
+      }{%
+        % Proof pending: emit deferred margin number on the
+        % proof's first line (the "Proof." heading).
+        \ifbool{semtex@proofpending}{%
+          \global\boolfalse{semtex@proofpending}%
+          \semtex@emitmargin{\semtex@currentatom}%
+        }{%
+          % Normal paragraph (not suppressed).
+          \ifnum\semtex@nestlevel>0\relax\else
+            \refstepcounter{atom}%
+            \edef\semtex@currentatom{\theatom}%
+            \semtex@emitmargin{\semtex@currentatom}%
+            \semtex@queuebackref{\semtex@currentatom}%
+          \fi
+        }%
+      }%
+    }{}%
+  }%
+}
+
+%% ===================================================================
+%% Section 8: Back-reference emission
+%% ===================================================================
+
+% \semtex@queuebackref{atomnumber}
+%   Look up back-refs for the given atom and queue for emission.
+\newcommand*{\semtex@queuebackref}[1]{%
+  \ifbool{semtex@backrefs}{%
+    \semtex@pendingbr={}%
+    \@ifundefined{semtex@br@#1}{}{%
+      \ifbool{semtex@appendix}{}{%
+        % Inline mode: store ref list for flush.
+        \semtex@pendingbr=\expandafter{%
+          \csname semtex@br@#1\endcsname
+        }%
+      }%
+    }%
+  }{}%
+}
+
+% \semtex@flushbackref
+%   Emit the pending back-reference and clear it.
+\newcommand*{\semtex@flushbackref}{%
+  \ifbool{semtex@backrefs}{%
+    \ifbool{semtex@appendix}{}{%
+      \edef\semtex@tmp{\the\semtex@pendingbr}%
+      \ifx\semtex@tmp\@empty\else
+        \semtex@renderinline{\semtex@tmp}%
+      \fi
+    }%
+    \semtex@pendingbr={}%
+  }{}%
+}
+
+% \semtex@renderinline{reflist}
+%   Render "Used in X, Y." at the end of the current atom.
+%   Redefined at \begin{document} when hyperref is loaded.
+\newcommand*{\semtex@renderinline}[1]{%
+  \par\nopagebreak
+  \begingroup
+    \small\sffamily
+    \rightline{Used in #1.}%
+  \endgroup
+}
+
+% \semtex@installparendhook
+%   Install the para/end hook for flushing back-refs.
+\newcommand*{\semtex@installparendhook}{%
+  \AddToHook{para/end}{%
+    \ifbool{semtex@tracked}{%
+      \ifbool{semtex@intheorem}{}{%
+        \semtex@flushbackref
+      }%
+    }{}%
+  }%
+}
+
+%% ===================================================================
+%% Section 9: Data file I/O
+%% ===================================================================
+
+% \semtex@backref{atomnumber}{atomname}{reflist}
+%   Callback used by .sbr file entries.  Stores data for lookup.
+\newcommand*{\semtex@backref}[3]{%
+  \@namedef{semtex@br@#1}{#3}%
+  \@namedef{semtex@brname@#1}{#2}%
+  \ifbool{semtex@appendix}{%
+    \semtex@appendixdata=\expandafter{%
+      \the\semtex@appendixdata
+      \semtex@appendixentry{#1}{#2}{#3}%
+    }%
+  }{}%
+}
+
+% \semtex@section{number}{title}
+%   Section header in .sbr file.  Used for appendix grouping.
+\newcommand*{\semtex@section}[2]{%
+  \ifbool{semtex@appendix}{%
+    \semtex@appendixdata=\expandafter{%
+      \the\semtex@appendixdata
+      \semtex@appendixsection{#1}{#2}%
+    }%
+  }{}%
+}
+
+% \semtex@sbrversion{hash}
+%   Version/hash marker in .sbr file for staleness detection.
+\newcommand*{\semtex@sbrversion}[1]{%
+  \def\semtex@sbrhash{#1}%
+}
+
+% \semtex@readsbr
+%   Attempt to read the .sbr file.  Called at \AtBeginDocument.
+\newcommand*{\semtex@readsbr}{%
+  \IfFileExists{\jobname.sbr}{%
+    \PackageInfo{semtex}{Reading \jobname.sbr}%
+    \input{\jobname.sbr}%
+    % Staleness check: compare .sbr hash with .aux hash.
+    \@ifundefined{semtex@sbrhash}{}{%
+      \ifx\semtex@auxhash\@empty\else
+        \ifx\semtex@sbrhash\semtex@auxhash\else
+          \PackageWarning{semtex}{%
+            .sbr is stale, rerun semtex backrefs}%
+        \fi
+      \fi
+    }%
+  }{%
+    \PackageInfo{semtex}{%
+      No \jobname.sbr found (backrefs disabled this pass)}%
+  }%
+}
+
+% \semtex@writeauxhash
+%   Write a version hash to .aux for staleness detection.
+\newcommand*{\semtex@writeauxhash}{%
+  \edef\semtex@auxhash{%
+    \the\value{atom}:\the\year\the\month\the\day
+  }%
+  \if@filesw
+    \immediate\write\@auxout{%
+      \string\semtex@auxversion{\semtex@auxhash}%
+    }%
+  \fi
+}
+
+% \semtex@auxversion{hash}
+%   Callback read from .aux on pass 2 (written by pass 1).
+%   Providecommand so it is safe to read from .aux.
+\providecommand*{\semtex@auxversion}[1]{%
+  \gdef\semtex@auxhash{#1}%
+}
+
+%% ===================================================================
+%% Section 10: User-facing API
+%% ===================================================================
+
+% \semtextrack{env1,env2,...}
+%   Post-hoc alias theorem counters to atom counter and install
+%   all hooks.  Must be called AFTER all \newtheorem declarations.
+%   env1, env2, ... -- comma-separated environment names to track
+\newcommand*{\semtextrack}[1]{%
+  \booltrue{semtex@tracked}%
+  \semtex@setupcounter
+  % Hook each listed environment and its starred variant.
+  \@for\semtex@tmp:=#1\do{%
+    \ifx\semtex@tmp\@empty\else
+      \semtex@hooktheorem{\semtex@tmp}%
+      % Auto-register starred variant (amsthm creates foo*).
+      \edef\semtex@starred{\semtex@tmp*}%
+      \expandafter\@ifundefined\expandafter{%
+        \semtex@starred
+      }{}{%
+        \expandafter\semtex@hooktheorem
+          \expandafter{\semtex@starred}%
+      }%
+    \fi
+  }%
+  \semtex@hookproof
+  % Equation sharing.
+  \ifbool{semtex@eqshared}{%
+    \expandafter\let\csname c@equation\endcsname\c@atom
+  }{}%
+  % Install suppression and paragraph hooks.
+  \semtex@installsuppress
+  \semtex@suppresssectioning
+  \semtex@suppresscommands
+  \semtex@installparahook
+  \semtex@installparendhook
+  % Read .sbr file at begin document.
+  \AtBeginDocument{\semtex@readsbr}%
+  % Write aux hash at end document.
+  \AtEndDocument{\semtex@writeauxhash}%
+}
+
+% \semtexsuppress{envname}
+%   Register a user environment for paragraph-number suppression.
+%   envname -- environment name to suppress
+\newcommand*{\semtexsuppress}[1]{%
+  \semtex@suppressenv{#1}%
+}
+
+% \semtexsuppresscmd{\command}
+%   Register a user command for paragraph-number suppression.
+%   \command -- command to patch
+\newcommand*{\semtexsuppresscmd}[1]{%
+  \semtex@suppresscmd{#1}%
+}
+
+% \semtexappendix
+%   Typeset the dependency index (appendix mode only).
+%   Call this where you want the index to appear.
+\newcommand*{\semtexappendix}{%
+  \ifbool{semtex@appendix}{%
+    \section*{Dependency Index}%
+    \begingroup
+      \small
+      \the\semtex@appendixdata
+    \endgroup
+  }{%
+    \PackageWarning{semtex}{%
+      \string\semtexappendix\space ignored: %
+      backrefs mode is not 'appendix'}%
+  }%
+}
+
+% Appendix rendering helpers.
+% \semtex@appendixsection{number}{title}
+\newcommand*{\semtex@appendixsection}[2]{%
+  \par\medskip\noindent
+  \textbf{#1\quad #2}\par
+}
+
+% \semtex@appendixentry{atomnumber}{atomname}{reflist}
+\newcommand*{\semtex@appendixentry}[3]{%
+  \par\noindent
+  \hspace{1.5em}%
+  #1\quad #2\quad\dotfill\quad
+  \begin{minipage}[t]{0.45\linewidth}%
+    \raggedright #3%
+  \end{minipage}%
+}
+
+%% ===================================================================
+%% Section 11: Compatibility guards
+%% ===================================================================
+
+% Guard: require LaTeX2e kernel with hook management.
+\@ifundefined{AddToHook}{%
+  \PackageError{semtex}{%
+    LaTeX kernel too old (need 2021+)}{%
+    semtex requires \string\AddToHook\space
+    (TeX Live 2021 or later).%
+  }%
+}{}
+
+% Hyperref detection: when loaded, the CLI can emit \hyperref
+% commands in .sbr reflist fields that render as clickable links.
+% The renderer is redefined to use \sffamily consistently.
+\AtBeginDocument{%
+  \@ifpackageloaded{hyperref}{%
+    \PackageInfo{semtex}{hyperref detected, enabling links}%
+  }{}%
+}
+
+\endinput

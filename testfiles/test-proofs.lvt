@@ -1,0 +1,43 @@
+% test-proofs.lvt
+% Verifies: proof environments (amsthm's non-\newtheorem environment)
+% receive atom numbers in proofs=numbered mode (the default).
+% The "Proof." heading from amsthm is preserved; the atom number
+% appears as a superscript margin number.
+
+\documentclass{article}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+% Default: proofs=numbered
+\usepackage{semtex}
+\semtextrack{theorem,lemma}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- lemma
+\begin{lemma}\label{lem:trivial}
+  The empty set is a subset of every set.
+\end{lemma}
+
+% Atom 1.2 -- proof of lemma (gets its own atom number)
+\begin{proof}
+  Vacuously true: the condition is satisfied for all $x \in \emptyset$.
+\end{proof}
+
+% Atom 1.3 -- theorem
+\begin{theorem}\label{thm:union}
+  The union of two sets is a set.
+\end{theorem}
+
+% Atom 1.4 -- proof of theorem
+\begin{proof}
+  By the axiom of union in ZFC.
+\end{proof}
+
+\END
+\end{document}

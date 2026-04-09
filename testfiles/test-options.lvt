@@ -1,0 +1,46 @@
+% test-options.lvt
+% Verifies: package options depth=1, depth=2, equations=shared,
+% backrefs=none all load without error and produce output.
+% Each sub-test is in a group to isolate state.
+
+\documentclass{article}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+
+% Test depth=2, equations=shared, backrefs=none together.
+% (A single .lvt exercises one configuration; split into separate
+%  .lvt files if isolation is needed.  This file tests the option
+%  surface area quickly without requiring multiple runs.)
+\usepackage[depth=2,equations=shared,backrefs=none]{semtex}
+\semtextrack{definition,theorem}
+
+\begin{document}
+\START
+
+\section{Section One}
+\subsection{Subsection A}
+
+% With depth=2 the atom number should be section.subsection.atom = 1.1.1
+\begin{definition}
+  First definition in subsection 1.1.
+\end{definition}
+
+% equations=shared: the equation below should consume an atom number,
+% not an independent equation number.
+\begin{equation}
+  f \circ g = h
+\end{equation}
+
+\subsection{Subsection B}
+
+% Atom counter resets at the subsection level with depth=2.
+\begin{definition}
+  First definition in subsection 1.2.
+\end{definition}
+
+% backrefs=none: no "Used in" text should appear anywhere in the output.
+
+\END
+\end{document}

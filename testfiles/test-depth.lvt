@@ -1,0 +1,48 @@
+% test-depth.lvt
+% Verifies: depth=2 produces section.subsection.atom format and the
+% counter resets at the subsection boundary (not the section boundary).
+
+\documentclass{article}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+
+\usepackage[depth=2]{semtex}
+\semtextrack{definition,theorem}
+
+\begin{document}
+\START
+
+\section{First Section}
+\subsection{First Subsection}
+
+% Expected atom number: 1.1.1
+\begin{definition}
+  Definition in section 1, subsection 1.
+\end{definition}
+
+% Expected atom number: 1.1.2
+\begin{theorem}
+  Theorem in section 1, subsection 1.
+\end{theorem}
+
+\subsection{Second Subsection}
+
+% Counter resets at subsection boundary.
+% Expected atom number: 1.2.1
+\begin{definition}
+  Definition in section 1, subsection 2.
+\end{definition}
+
+\section{Second Section}
+\subsection{Only Subsection}
+
+% Counter resets again at subsection.
+% Expected atom number: 2.1.1
+\begin{definition}
+  Definition in section 2, subsection 1.
+\end{definition}
+
+\END
+\end{document}

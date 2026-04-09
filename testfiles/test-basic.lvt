@@ -1,0 +1,36 @@
+% test-basic.lvt
+% Verifies: atom counter advances through paragraphs, definitions, and
+% theorems in the correct order.  No back-refs, no hyperref.
+
+\documentclass{article}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+
+\usepackage{semtex}
+\semtextrack{definition,theorem}
+
+\begin{document}
+\START
+
+\section{First Section}
+
+% Paragraph 1 should get atom 1.1
+A paragraph before any definition.
+
+% Definition should get atom 1.2
+\begin{definition}
+  A morphism is a structure-preserving map.
+\end{definition}
+
+% Paragraph after definition should get atom 1.3
+A paragraph after the definition.
+
+% Theorem should get atom 1.4
+\begin{theorem}
+  Every identity morphism is an isomorphism.
+\end{theorem}
+
+\END
+\end{document}

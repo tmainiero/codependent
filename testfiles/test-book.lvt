@@ -1,0 +1,49 @@
+% test-book.lvt
+% Verifies: book document class with chapters.  With depth=1,
+% atom numbers should be chapter.atom (e.g., 1.1).
+% Auto-detection of \chapter means the top-level sectioning
+% shifts from \section to \chapter.
+
+\documentclass{book}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{definition}[theorem]{Definition}
+
+% depth=1 in a book class: chapter.atom
+\usepackage[depth=1]{semtex}
+\semtextrack{definition,theorem}
+
+\begin{document}
+\START
+
+\chapter{Categories}
+
+% Atom 1.1 -- paragraph
+A category is a fundamental structure in mathematics.
+
+% Atom 1.2 -- definition
+\begin{definition}
+  A \textbf{category} $\mathcal{C}$ consists of objects and morphisms
+  satisfying identity and associativity laws.
+\end{definition}
+
+% Atom 1.3 -- theorem
+\begin{theorem}
+  In any category, identity morphisms are unique.
+\end{theorem}
+
+\chapter{Functors}
+
+% Counter resets at chapter boundary.
+% Atom 2.1 -- paragraph
+Functors are maps between categories.
+
+% Atom 2.2 -- definition
+\begin{definition}
+  A \textbf{functor} $F \colon \mathcal{C} \to \mathcal{D}$ preserves
+  composition and identities.
+\end{definition}
+
+\END
+\end{document}

@@ -1,0 +1,22 @@
+# latexindent configuration for semtex.sty
+# Run: latexindent -w semtex.sty
+
+# Global indent: 2 spaces, no tabs
+defaultIndent: "  "
+
+# Remove trailing whitespace
+removeTrailingWhitespace:
+  beforeProcessing: 1
+  afterProcessing: 1
+
+# Braces: opening brace stays on same line
+onlyOneBackUp: 1
+
+# Indent after \begin{...}
+indentRules:
+  document: "  "
+
+# Do not add blank lines
+modifyLineBreaks:
+  oneSentencePerLine:
+    manipulateSentences: 0
