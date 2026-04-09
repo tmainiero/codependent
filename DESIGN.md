@@ -1355,6 +1355,121 @@ the conditional is idempotent against `\c@theorem`
 aliasing state, which is the same check at begin and
 end, and no stack is required.
 
+#### Save / clear / restore of `\semtex@currentatom` on the restate branch
+
+> Upstream motivation: **Section 8a.9 concept-aware
+> forward references.**  The inline guard above correctly
+> skips the atom-numbering, `.sbl@atom`, and back-ref
+> queue work on the restate branch.  But it does NOT
+> touch `\semtex@currentatom`, which still holds whatever
+> value the enclosing context left behind — typically the
+> atom number of the intro paragraph that surrounds a
+> `\restate{thm:main}` teaser, or of the appendix
+> paragraph that surrounds an appendix restate.  Any
+> semantic command inside the restated body
+> (`\Hom`, `\Hom*`, `\semtextag`, `\label`) would then
+> register against that STALE currentatom instead of
+> no-op'ing.  For `\Hom*` in particular this is a
+> correctness bug: the def site would be recorded as the
+> teaser paragraph rather than the original
+> `\restatable{theorem}{thm:main}{...}` declaration's
+> atom number.
+
+The fix extends the else-branch of the guard with a
+save-clear-restore of `\semtex@currentatom`.  On restate
+begin, save the current value onto a counter-indexed
+stack and clear to `\@empty`.  On restate end, pop from
+the stack.  The enclosing paragraph's currentatom is
+restored verbatim, so nothing outside the restated body
+is perturbed.  Inside the restated body, every atom-scoped
+emission helper (`\semtex@sblwrite@atom`, the
+`\Hom`/`\Hom*` dispatcher, the `\label` wrap, the
+`\semtextag` macro) guards on
+`\ifx\semtex@currentatom\@empty` and silently drops — the
+restated body becomes a semantic-command no-op zone.
+
+**Why a counter-indexed stack, not a single save slot:**
+nested restates (a teaser inside a theorem body that is
+itself restated later) must restore in LIFO order.  A
+single `\let` save slot would clobber the outer value
+when the inner restate begins.  The counter makes the
+stack trivially LIFO-correct.
+
+```tex
+\newcount\semtex@restate@depth
+% depth starts at 0; every push increments, every pop
+% decrements. The saved value lives at csname
+% semtex@saved@currentatom@<depth>.
+
+\newcommand*{\semtex@pushcurrentatom}{%
+  \global\advance\semtex@restate@depth1\relax
+  \expandafter\xdef
+    \csname semtex@saved@currentatom@%
+      \the\semtex@restate@depth\endcsname
+    {\semtex@currentatom}%
+  \global\let\semtex@currentatom\@empty}
+
+\newcommand*{\semtex@popcurrentatom}{%
+  \global\let\semtex@currentatom
+    \csname semtex@saved@currentatom@%
+      \the\semtex@restate@depth\endcsname
+  \global\expandafter\let
+    \csname semtex@saved@currentatom@%
+      \the\semtex@restate@depth\endcsname\@undefined
+  \global\advance\semtex@restate@depth-1\relax}
+```
+
+Hook wiring.  The existing else-branch of the theorem
+hook becomes:
+
+```tex
+\AtBeginEnvironment{#1}{%
+  \ifx\c@theorem\c@atom
+    %% Original occurrence: normal hook body (unchanged).
+    ...existing \semtex@hooktheorem body...
+  \else
+    %% Restate occurrence: guard body + save/clear currentatom.
+    \advance\semtex@nestlevel by 1\relax
+    \semtex@pushcurrentatom
+  \fi
+}
+\AtEndEnvironment{#1}{%
+  \ifx\c@theorem\c@atom
+    ...existing \semtex@hooktheorem end body...
+  \else
+    %% Matching end guard for the restate branch.
+    \semtex@popcurrentatom
+    \advance\semtex@nestlevel by -1\relax
+  \fi
+}
+```
+
+The `\semtex@pushcurrentatom` call comes AFTER the
+nestlevel advance on begin, and `\semtex@popcurrentatom`
+comes BEFORE the nestlevel decrement on end, so nested
+restates see both state pieces in consistent LIFO order.
+
+**Effect on concept registration (cross-reference §8a.9).**
+A `\Hom*` call inside a restated body now sees
+`\semtex@currentatom = \@empty` and silently no-ops —
+the concept-def record is NOT written against the
+teaser/appendix atom.  The ONLY firing that registers the
+def site is the original declaration (first firing, alias
+intact, normal hook body), where `\semtex@currentatom`
+holds the restatable theorem's own atom number.  Teaser
+uses of `\Hom` in the intro correctly forward-resolve (at
+pass 2 via the concept -> atom map) to the main-body
+declaration atom.
+
+**Effect on `\semtex@sblwrite@atom` generally.**  Any
+`.sbl` record routed through `\semtex@sblwrite@atom` —
+not just the concept machinery — is dropped inside a
+restated body.  `\semtex@sbl@label`, `\semtex@sbl@use`,
+`\semtex@sbl@tag`, and a hypothetical future atom-scoped
+record all become no-ops on the restate branch.  This is
+the intended semantics: the restate is a visual
+rerender, not a semantic re-declaration.
+
 #### Regression fixture: `test-restatable.lvt`
 
 ```tex
@@ -1841,7 +1956,503 @@ Net change: roughly **+200 lines** on the current
 REVIEW_E fixes add ~60 lines beyond the REVIEW_D
 baseline, primarily in the three-site reference
 interception (Section 8a.0) and the `\restatable`
-guard (Section 8a.5.a).
+guard (Section 8a.5.a).  Section 8a.9 (concept-aware
+forward references) adds another ~40 lines of .sty
+code on top of that baseline.
+
+### Section 8a.9 — Concept-aware forward references
+
+> Upstream motivation: **user direction 2026-04-09,
+> post-v1.0-test.**  In any serious math paper, the
+> introduction and early sections routinely mention
+> terminology and symbols BEFORE they are formally
+> defined.  Auto-backref schemes that pick "first
+> occurrence wins" as the defining site produce WRONG
+> backref graphs on ~90% of real papers.  Pavlov's
+> manual marking of the defining site was a feature, not
+> a kludge.  This subsection specifies the `\Hom*`
+> starred-variant machinery that lets the author mark
+> the def site explicitly and lets the `.sty` resolve
+> forward references correctly in pass 2 without CLI
+> involvement.
+
+#### The forward-reference problem
+
+Concrete example.  Consider the opening of a category-
+theory monograph:
+
+```latex
+\section{Introduction}
+In this paper we study the $\Hom{X}{Y}$ functor of
+objects in a \textbf{category}. This will be made
+precise in \cref{sec:categories}.
+
+\section{Categories}\label{sec:categories}
+\begin{definition}
+  A \textbf{category} consists of objects and
+  morphisms, with a $\Hom{X}{Y}$ set for each pair.
+\end{definition}
+
+Later, in any chapter: "the $\Hom{A}{B}$ set..."
+```
+
+The `\Hom` command fires THREE times.  The first firing
+is in the intro (a forward gesture), the second is in
+the definition (the true defining site), the third is a
+backward-pointing use.  A naive "first occurrence wins"
+rule would pick the intro as the defining site — wrong —
+and every subsequent use, including the actual
+definition firing, would back-reference to the intro
+paragraph.  On a typical 300-page monograph this is
+wrong for 90%+ of concepts.
+
+The ONLY signal the tool has to distinguish a forward
+gesture from a definition is the author's intent.  There
+is no lexical hint.  The author must mark explicitly.
+
+#### User API: star dispatch inside `\semtexNewCommand`
+
+`\semtexNewCommand{\Hom}[2]{body}` now defines TWO
+variants of the command for the price of one
+declaration:
+
+- `\Hom{A}{B}` — normal use.  Typesets the body, emits
+  a `\semtex@sbl@use` record and a `\semtex@conceptref`
+  aux record under the current atom.
+- `\Hom*{A}{B}` — defining-site marker.  Typesets the
+  body IDENTICALLY to the unstarred form; the star is
+  purely metadata saying "this atom is the defining
+  site for concept `Hom`".  Emits a `\semtex@sbl@def`
+  record and a `\semtex@concept` aux record.
+
+Exactly ONE `\Hom*` call per defined concept is
+permitted (enforced by error).  Zero `\Hom*` calls plus
+any `\Hom` uses is a warning (concept backrefs
+disabled).  See "Error handling" below.
+
+The same dispatch applies to `\semtexNewDocumentCommand`:
+a star is prepended to whatever argspec the user
+supplies, and the wrapped command dispatches on
+`\IfBooleanTF`.  See §9a's implementation sketch.
+
+Author source looks like:
+
+```latex
+\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+
+\section{Introduction}
+We study the $\Hom{X}{Y}$ functor...     % use, forward
+
+\section{Categories}
+\begin{definition}
+  The $\Hom*{X}{Y}$ set is defined as...  % def site
+\end{definition}
+
+Later: $\Hom{A}{B}$...                    % use, backward
+```
+
+All three `\Hom` uses — the two non-star uses and the
+one star use — typeset to the same visual output.  The
+difference is purely in the backref metadata.
+
+#### Architecture: hybrid, Option C
+
+Concept-tracking records are written to BOTH sidecars.
+Each sidecar serves a different consumer:
+
+- **`.aux`** (read by `semtex.sty` itself at pass 2).
+  Two new record types allow the .sty to resolve
+  concept references in TeX-time without any CLI
+  involvement.  The typeset PDF's "Used in X, Y" lists
+  at each def atom are complete after a normal pdflatex
+  run cycle.
+- **`.sbl`** (read by the semantic CLI, Layer 2).  One
+  new record type (`\semtex@sbl@def`) gives the CLI
+  source-location-grounded concept def sites; the
+  existing `\semtex@sbl@use` record is reused for
+  non-star concept uses.  The CLI can build a richer
+  concept graph with source locations, JSON exports,
+  dot renderings, and whatever else Layer 2 wants to
+  do — but the .sty's typeset output is independent of
+  whether the CLI ever runs.
+
+This hybrid (records duplicated across both sidecars
+for different consumers) is deliberately simpler than
+an architecture where the .sty depends on the CLI for
+backref resolution.  Each sidecar is self-sufficient
+for its own consumer.
+
+#### New `.aux` records
+
+Two new record types.  Both are `\providecommand`-safe
+no-ops at package load so that reading a pre-existing
+`.aux` on pass 1 (when the real callbacks are not yet
+defined) is harmless.  On pass 2 the real callbacks are
+installed at `\AtEndPreamble` — the same hook site as
+the existing `\@setref`/`\cref@getlabel` patches in
+§8a.0 — before LaTeX's `\@input{\jobname.aux}` fires at
+`\begin{document}`.
+
+```tex
+% Written by \Hom*  (emitted via \semtex@emit@def).
+\semtex@concept{Hom}{<def-atom-num>}
+
+% Written by \Hom (emitted via \semtex@emit@use).
+\semtex@conceptref{<use-atom-num>}{Hom}
+```
+
+Package-load-time no-op defaults (in `semtex.sty`'s
+startup code, before any `.aux` is read):
+
+```tex
+\providecommand*{\semtex@concept}[2]{}
+\providecommand*{\semtex@conceptref}[2]{}
+```
+
+Real callbacks (installed at `\AtEndPreamble` / hook
+`begindocument/before`, labelled `semtex/backref/install`
+for ordering; see §8a.7):
+
+```tex
+\AddToHook{begindocument/before}[semtex/concept/install]{%
+  % Concept def-site map: csname semtex@conceptdef@<name>
+  % holds the atom number of the def site.
+  \def\semtex@concept##1##2{%
+    \@ifundefined{semtex@conceptdef@##1}%
+      {\expandafter\gdef
+         \csname semtex@conceptdef@##1\endcsname{##2}}%
+      {% Second def record for same concept from aux.
+       % This can happen if the author is editing and a
+       % stale aux record lingers; prefer the latest
+       % firing (overwrite).  The in-TeX emitter
+       % \semtex@emit@def catches the duplicate at
+       % source-emit time via the same csname check and
+       % issues the PackageError there; by the time the
+       % aux is read, a duplicate can only come from a
+       % stale prior-run aux, which will be refreshed
+       % on the next pass.  Overwrite silently at
+       % aux-read time.
+       \expandafter\gdef
+         \csname semtex@conceptdef@##1\endcsname{##2}}%
+  }%
+  % Concept use: feed the edge into the existing backref
+  % defer queue.  The src atom is ##1 (the atom where
+  % \Hom fired); the target atom is the def atom stored
+  % under csname semtex@conceptdef@##2.  If the def
+  % site is not yet known at aux-read time (forward
+  % reference on a missing def), the resolve call
+  % defers to a second-pass retry: we push a pending
+  % record into \semtex@conceptpending and retry after
+  % the full aux read completes.
+  \def\semtex@conceptref##1##2{%
+    \@ifundefined{semtex@conceptdef@##2}%
+      {% Def site not yet seen in this aux read.  It
+       % may appear later in the same aux (the aux is
+       % not sorted by document order after the first
+       % pass).  Push onto the pending list and retry
+       % at \AtBeginDocument.
+       \g@addto@macro\semtex@conceptpending{%
+         \semtex@resolveconcept{##1}{##2}}}%
+      {\semtex@resolveconcept{##1}{##2}}%
+  }%
+  % The resolver feeds a resolved (src, tgt) edge into
+  % the existing \semtex@recordbr linked-list queue
+  % from §8a.1.  The target is the def atom's number,
+  % looked up in the concept map.
+  \def\semtex@resolveconcept##1##2{%
+    \edef\semtex@tmp@tgt{%
+      \csname semtex@conceptdef@##2\endcsname}%
+    \semtex@recordbr{##1}{\semtex@tmp@tgt}%
+  }%
+}
+\gdef\semtex@conceptpending{}
+```
+
+The pending-list retry handles the case where the aux
+file order does not match document order — specifically,
+the case where a `\semtex@conceptref` record is read
+before its matching `\semtex@concept` record.  This can
+happen because LaTeX's aux file is written in the order
+the aux-writing calls fire during typesetting; if a
+forward-ref use (intro) precedes the def site (§3) in
+source order, the `.aux` will have the `\semtex@conceptref`
+line BEFORE the `\semtex@concept` line.  On a first
+aux-read pass we cannot resolve; we defer to the pending
+queue and flush at `\AtBeginDocument`, by which time the
+full aux has been read and the concept map is complete.
+
+The flush is a simple expansion of the saved pending
+list:
+
+```tex
+\AddToHook{begindocument/end}[semtex/concept/flush]{%
+  \semtex@conceptpending
+  \global\let\semtex@conceptpending\@empty
+}
+```
+
+The resolved edges feed into `\semtex@recordbr` exactly
+like the edges from `\@setref`, `\cref@getlabel`, and
+`\HyRef@autosetref`.  Downstream, `\semtex@flushbrqueue`
+and `\semtex@collapsebr` (§8a.1, §8a.3) do not care
+whether an edge came from a `\ref`, a `\cref`, or a
+concept resolution — they all flow through the same
+per-target linked list and the same "Used in X, Y"
+display path.
+
+#### New `.sbl` records
+
+One new record type, plus reuse of an existing one.
+
+```
+\semtex@sbl@def{<atom>}{Hom}     % NEW: emitted by \Hom*
+\semtex@sbl@use{<atom>}{Hom}     % EXISTING: emitted by \Hom
+```
+
+`\semtex@sbl@def` is a new record added to the §9a
+schema table.  It is atom-scoped (routed through
+`\semtex@sblwrite@atom`).  It has the same shape as
+`\semtex@sbl@use` (two arguments: atom number, concept
+name) but different semantics — `def` is the unique
+def site, `use` is any (non-star) use.
+
+The existing `\semtex@sbl@use` record is **reused
+verbatim** for non-star `\Hom` uses.  No schema change
+to `@use` itself; the CLI already parses it and builds
+per-command use lists.  What the CLI now additionally
+consumes is the `\semtex@sbl@def` record, which lets
+it mark the def-site atom specifically.  For any
+concept `C`, the CLI computes:
+
+- `def_site(C)` = the unique `\semtex@sbl@def{_}{C}`
+  record's atom number (or warning/error per below).
+- `use_sites(C)` = all `\semtex@sbl@use{_}{C}` records'
+  atom numbers.
+
+This gives a per-concept def/use split without any new
+parsing machinery beyond the one-line addition of the
+`@def` record type to the CLI's grammar.
+
+#### Pass-2 concept resolution (walkthrough)
+
+1. **Pass 1.** User's `\Hom*` fires inside the
+   definition environment.  At emit time,
+   `\semtex@emit@def` writes
+   `\semtex@concept{Hom}{<def-atom>}` to the current
+   `.aux` file and `\semtex@sbl@def{<def-atom>}{Hom}`
+   to the `.sbl`.  User's `\Hom` uses (intro and
+   later) each fire `\semtex@emit@use`, which writes
+   `\semtex@conceptref{<use-atom>}{Hom}` to aux and
+   `\semtex@sbl@use{<use-atom>}{Hom}` to sbl.  Pass 1
+   finishes with aux containing all these records.
+2. **Pass 2 preamble.** `semtex.sty` is loaded.  The
+   `\providecommand*{\semtex@concept}[2]{}` defaults
+   install so that if the aux is read early for any
+   reason, the records are harmless no-ops.  At
+   `\AtEndPreamble`, the `semtex/concept/install` hook
+   runs and replaces the no-op defaults with the real
+   callbacks above.  Ordering rule (§8a.7):
+   `semtex/concept/install` fires AFTER
+   `semtex/backref/install` but BEFORE the aux read at
+   `\@input{\jobname.aux}`.
+3. **Pass 2 aux read.** LaTeX's `\@input{\jobname.aux}`
+   runs inside `\document`.  Every `\semtex@concept`
+   call populates the concept map
+   `\csname semtex@conceptdef@<name>\endcsname`.  Every
+   `\semtex@conceptref` call either resolves immediately
+   (if the def record has already been seen during this
+   aux read) or pushes onto `\semtex@conceptpending`
+   for the end-of-read flush.
+4. **Pass 2 begindocument/end flush.** The pending list
+   is expanded.  Each deferred `\semtex@resolveconcept`
+   looks up the now-complete concept map and feeds the
+   resolved edge into `\semtex@recordbr`.  The linked-
+   list defer queue from §8a.1 holds the edges until
+   the per-target `\semtex@collapsebr` is called at
+   each def atom's "Used in" display site.
+5. **Pass 2 typeset.** The def atom's "Used in X, Y"
+   list now naturally includes the atom numbers of
+   every `\Hom` use in the document — both forward-
+   pointing (intro) and backward-pointing (later
+   sections) — because they all resolved to the same
+   def atom and all flowed through the same backref
+   display pipeline.
+
+#### Error handling
+
+- **Missing def site** (`\Hom` used but no `\Hom*`
+  anywhere in the document).  Detected at
+  `\AtEndDocument` by scanning the concept-use set
+  against the concept-def map.  Action:
+
+  ```tex
+  \PackageWarning{semtex}{%
+    \string\Hom\space used N times but no
+    \string\Hom*\space definition site found;
+    backrefs for \string\Hom\space are disabled}
+  ```
+
+  No fallback to first-occurrence (explicitly rejected
+  by user as 90% wrong).  The concept's use records
+  still appear in the `.sbl`, and the CLI can mark the
+  concept as "undefined" in its own output, but the
+  `.sty` typeset PDF has no "Used in" line at any atom
+  for this concept.  Exit code is 0 (warning, not
+  error) — the document still compiles and renders.
+
+- **Duplicate def site** (`\Hom*` fires twice or more,
+  at different atoms).  Detected in `\semtex@emit@def`
+  via `\@ifundefined{semtex@concept@Hom}`: if already
+  defined, error and halt:
+
+  ```tex
+  \PackageError{semtex}{%
+    \string\\Hom* defined at atoms X and Y}{%
+    Exactly one definition site is permitted per
+    concept.  Use \string\\Hom\space (without star) at
+    the non-definitional site.}
+  ```
+
+  This halts the build.  The author must resolve the
+  ambiguity: either one of the two atoms is the "real"
+  def site and the other should drop its star, or the
+  author has two definitions that should be two
+  separately-named concepts.
+
+  Implementation note: the check uses
+  `\@ifundefined{semtex@concept@Hom}` where
+  `semtex@concept@Hom` is a csname set the first time
+  `\semtex@emit@def` fires for `Hom`.  On subsequent
+  firings the csname is already defined, triggering
+  the error branch.  This is a TeX-time check, not a
+  pass-2 aux-read check: the error fires during pass 1
+  at the second `\Hom*` invocation's typeset time.
+
+- **Def site in empty-currentatom context** (`\Hom*`
+  fires with `\semtex@currentatom = \@empty`, e.g.,
+  inside a footnote, caption, or orphaned paragraph
+  that semtex does not track).  Silent no-op.  The
+  author may legitimately have `\Hom*` inside a
+  footnote or caption where atom numbering is
+  suppressed; in that case there is no atom to register
+  against.  The concept will later trigger the
+  "missing def site" warning above if any `\Hom` use
+  exists, which correctly surfaces the problem to the
+  author without false-alarm errors from the footnote.
+
+- **Def site inside a restated body** (`\Hom*` inside
+  `\restate{thm:main}`).  Silent no-op by construction:
+  the extended §8a.5.a guard saves and clears
+  `\semtex@currentatom` on the restate branch, so
+  `\semtex@emit@def` sees the empty currentatom and
+  takes the silent-no-op branch above.  The original
+  declaration firing (where `\Hom*` lives in the
+  restatable body with the counter alias still intact)
+  is the one that registers the def site.  See
+  "Interaction with restatable" below.
+
+#### Interaction with `\semtex@currentatom` clearing (cross-reference §8a.5)
+
+§8a.5 clears `\semtex@currentatom` at every atom-end
+site (theorem end, proof end, paragraph end) and after
+the three-site reference-interception helpers run.
+This is what makes the "empty-currentatom silent no-op"
+branch of the emit helpers meaningful: a `\Hom*` or
+`\Hom` call that fires in a section heading, caption,
+or inter-paragraph remark sees the cleared currentatom
+and correctly drops the record rather than registering
+against whatever atom happened to precede the
+orphaned call.
+
+The concept machinery inherits this correctness for
+free — it uses the same `\semtex@currentatom` guard
+pattern as every other atom-scoped emitter in §9a.
+
+#### Interaction with restatable (cross-reference §8a.5.a)
+
+§8a.5.a's extended guard saves and clears
+`\semtex@currentatom` at the start of a restated
+theorem body and restores it at the end.  Inside the
+restated body, every semantic-command emitter sees the
+empty currentatom and no-ops.  Consequences:
+
+- **Intro-teaser pattern.**  Author writes
+  `\restate{thm:main}` in the introduction as a teaser,
+  containing `\Hom*` inside the restated body.  The
+  restate branch of the theorem hook clears
+  currentatom; `\Hom*` sees empty and no-ops; the
+  teaser does NOT register a def site.  Later, when
+  `\restatable{theorem}{thm:main}{body with \Hom*}`
+  fires in the main body for the first time (alias
+  intact, normal hook body), `\Hom*` sees the main-body
+  atom as currentatom and registers that atom as the
+  def site.  Result: `\Hom` forward-references from
+  the intro correctly resolve to the main-body atom.
+- **Appendix-restate pattern.**  The opposite: the
+  `\restatable{theorem}{thm:main}{body with \Hom*}` is
+  in the main body (declaration fires, registers def
+  site), and `\restate{thm:main}` in the appendix
+  silently no-ops the `\Hom*` inside the restated body.
+  Again, the def site is the main-body declaration
+  atom.  Backward uses from main and forward uses from
+  intro both resolve correctly.
+- **Nested restates.**  The depth counter in §8a.5.a
+  ensures LIFO-correct restore even when a restated
+  body itself contains a nested restate.
+
+In both patterns, the author writes `\Hom*` exactly
+once (inside the theorem body they intend to restate),
+and the combination of the §8a.5.a guard and the
+§8a.9 emit helpers ensures the def site is registered
+against the original declaration's atom — never
+against the teaser or appendix invocation atom.
+
+#### Implementation sketch
+
+The TeX-time emit helpers and the pass-2 aux callbacks
+are shown in §9a's implementation sketch for
+`\semtexNewCommand` (the `\semtex@emit@def` /
+`\semtex@emit@use` helpers) and in the
+`semtex/concept/install` hook code block above
+(the `\semtex@concept` / `\semtex@conceptref` aux
+callbacks and the pending-list retry).  See those
+code blocks for the full detail.
+
+The split is:
+
+- **§9a sketch.** Per-command machinery: how a
+  `\semtexNewCommand`-defined macro dispatches on the
+  star, how emit-time records are written to aux and
+  sbl, how duplicate def sites and empty-currentatom
+  contexts are handled.
+- **§8a.9 sketch (this section).** Pass-2 aux-read
+  machinery: how the concept map is populated, how
+  forward references are deferred, how resolved edges
+  feed into `\semtex@recordbr`.
+
+Both sides are ~20 lines of TeX each.  The split
+mirrors the existing design: §9a owns the user API and
+the declaration-time wrappers, §8a owns the backref
+pipeline and the aux-read callbacks.
+
+#### Regression fixtures
+
+Five fixtures under `tools/semtex-sty/testfiles/unit/`,
+each pinning a distinct correctness case of the
+concept machinery.  See the fixture files themselves
+for header metadata and assertion specifics:
+
+| Fixture | Tests |
+|---|---|
+| `test-concept-forward-ref.lvt` | Basic `\Hom` in intro + `\Hom*` in later definition; aux/sbl records; forward resolution |
+| `test-concept-def-site-required.lvt` | `\Hom` used with no `\Hom*`: warning, no crash |
+| `test-concept-duplicate-def-site.lvt` | Two `\Hom*` calls: error, build halts |
+| `test-concept-in-restatable-intro-teaser.lvt` | `\Hom*` inside `\restate{thm:main}` teaser in intro; def site must be main-body declaration, not intro |
+| `test-concept-in-restatable-appendix.lvt` | `\Hom*` inside main-body `\restatable{theorem}{thm:main}{...}`; `\restate` in appendix; def site must be main-body declaration, not appendix |
+
+All five fixtures FAIL today (the concept machinery is
+unimplemented); they turn green as §8a.9 lands in
+`semtex.sty`.
 
 ### Load order
 
@@ -2955,20 +3566,63 @@ inside a package).  Two-line sed script, one git commit.
 
 #### Implementation sketch
 
+The wrapped command is defined via `\NewDocumentCommand`
+with an `s` (star) specifier prepended to the user's
+argspec.  At call time, `\IfBooleanTF` dispatches: the
+star branch emits a `\semtex@sbl@def` record (and the
+`\semtex@concept` aux callback via §8a.9), the non-star
+branch emits a `\semtex@sbl@use` record (and the
+`\semtex@conceptref` aux callback).  Both branches
+typeset the same body.  Because the star occupies `#1`
+inside the wrapper, the user's own arguments are shifted
+by one position: the user writes `#1..#N` in their body
+but the wrapper sees them at `#2..#(N+1)`.  xparse's
+`\IfBooleanTF` dispatch idiom handles this naturally —
+the sketch below uses a temporary `\def` helper so the
+user body can keep its natural `#1..#N` numbering.
+
+For `\semtexNewCommand`, the integer arity is translated
+to a repeated-`m` argspec via `\semtex@build@argspec`
+(arity 0 -> empty, arity 1 -> `m`, arity 2 -> `m m`, and
+so on up to 9).
+
 ```tex
+% Helper: integer -> repeated xparse "m" spec.
+% \semtex@build@argspec{0} -> (empty)
+% \semtex@build@argspec{2} -> m m
+\newcommand*{\semtex@build@argspec}[1]{%
+  \ifcase\number#1\relax
+    \or m%
+    \or m m%
+    \or m m m%
+    \or m m m m%
+    \or m m m m m%
+    \or m m m m m m%
+    \or m m m m m m m%
+    \or m m m m m m m m%
+    \or m m m m m m m m m%
+  \else
+    \PackageError{semtex}%
+      {\string\semtexNewCommand\space arity \number#1\space
+       out of range (max 9)}%
+      {\string\newcommand\space itself is limited to arity 9;
+       use \string\semtexNewDocumentCommand\space for more.}%
+  \fi}
+
 % \semtexNewCommand{\cmd}[arity]{body}
 \NewDocumentCommand{\semtexNewCommand}{m O{0} m}{%
   % #1 = \cmd (with backslash), #2 = arity, #3 = body.
   \edef\semtex@tmp@name{\expandafter\@gobble\string#1}%
-  % 1. Define the command via \newcommand, body wrapped
-  %    with the use-recording prelude.
-  \expandafter\newcommand\expandafter#1\expandafter[%
-    \number#2\expandafter]\expandafter{%
-      \expandafter\semtex@sblwrite@atom\expandafter{%
-        \string\semtex@sbl@use{\semtex@currentatom}%
-        {\semtex@tmp@name}}%
-      #3}%
-  % 2. Emit the global declaration records.
+  % 1. Define the command via \NewDocumentCommand with a
+  %    star prepended, so \Hom*  dispatches separately
+  %    from \Hom.  The user's body (#3) is wrapped in a
+  %    \semtex@wrapcmd helper that (a) checks the star
+  %    boolean at call time, (b) emits the def/use record
+  %    under the currentatom guard, (c) typesets #3.
+  \expandafter\semtex@definewrapped
+    \expandafter{\semtex@tmp@name}{#1}%
+    {\semtex@build@argspec{#2}}{#3}%
+  % 2. Emit the global declaration records (unchanged).
   \semtex@sblwrite{%
     \string\semtex@sbl@cmddef{\semtex@tmp@name}{kind}{newcommand}}%
   \semtex@sblwrite{%
@@ -2981,14 +3635,15 @@ inside a package).  Two-line sed script, one git commit.
 % \semtexNewDocumentCommand{\cmd}{argspec}{body}
 \NewDocumentCommand{\semtexNewDocumentCommand}{m m m}{%
   \edef\semtex@tmp@name{\expandafter\@gobble\string#1}%
-  % 1. Define the command via \NewDocumentCommand, body
-  %    wrapped with the use-recording prelude.
-  \NewDocumentCommand{#1}{#2}{%
-    \semtex@sblwrite@atom{%
-      \string\semtex@sbl@use{\semtex@currentatom}%
-      {\semtex@tmp@name}}%
-    #3}%
-  % 2. Emit the global declaration records.
+  % Prepend an "s" to the user's argspec.  User's #1..#N
+  % inside the body become #2..#(N+1) after the shift; the
+  % \semtex@definewrapped helper handles the renumbering
+  % via a \def indirection so the user body is written
+  % against the natural numbering.
+  \expandafter\semtex@definewrapped
+    \expandafter{\semtex@tmp@name}{#1}{#2}{#3}%
+  % Global declaration records (argspec is the user's raw
+  % spec, NOT including the injected star).
   \semtex@sblwrite{%
     \string\semtex@sbl@cmddef{\semtex@tmp@name}{kind}%
     {NewDocumentCommand}}%
@@ -2998,12 +3653,122 @@ inside a package).  Two-line sed script, one git commit.
     \string\semtex@sbl@cmddef{\semtex@tmp@name}{src}%
     {\@currfilename:\the\inputlineno:1}}%
 }
+
+% Shared helper: define \cmd with star-dispatch wrapper.
+%   #1 = bare name (string, e.g. "Hom")
+%   #2 = \cmd       (backslashed token)
+%   #3 = user argspec (xparse string, possibly empty)
+%   #4 = user body  (referring to #1..#N per the user's
+%                    argspec, natural numbering)
+\newcommand*{\semtex@definewrapped}[4]{%
+  % Store the user body in a helper csname so we can pass
+  % the natural argument numbering through.  The helper
+  % takes exactly as many arguments as the user's argspec
+  % consumed positional slots.
+  \expandafter\long\expandafter\def
+    \csname semtex@body@#1\endcsname{#4}%
+  % Define the wrapped command.  xparse argspec is
+  %   s <user-spec>
+  % so the star lives at ##1 and the user's slots start
+  % at ##2.  We dispatch on the star and, in either branch,
+  % call \semtex@emit@def / \semtex@emit@use with the bare
+  % name, then invoke the user-body helper with all of
+  % ##2..##(1+N).  xparse's own \BODY forwarding would be
+  % cleaner; the sketch below uses an explicit
+  % \semtex@forwardargs helper to make the renumbering
+  % visible.
+  \NewDocumentCommand{#2}{s #3}{%
+    \IfBooleanTF{##1}%
+      {\semtex@emit@def{#1}}%
+      {\semtex@emit@use{#1}}%
+    % Forward ##2..##(N+1) to the user body helper.  In
+    % practice this is written with xparse's argument-
+    % reflection primitives; see the body-helper pattern
+    % used by xparse itself in ltcmd.dtx.
+    \csname semtex@body@#1\expandafter\endcsname
+      \semtex@forwardargs}%
+}
+
+% \semtex@emit@def: fires on the STAR branch.
+%   Records the current atom as the defining site for the
+%   concept and emits both aux and .sbl records.  See §8a.9
+%   for the aux-record callbacks and the pass-2 concept map.
+\newcommand*{\semtex@emit@def}[1]{%
+  \ifx\semtex@currentatom\@empty
+    % No atom context (inside footnote, caption, orphan):
+    % silent no-op per §8a.9 error model.  The concept will
+    % later warn as "missing def site" if \cmd is used.
+  \else
+    % Duplicate detection: if semtex@concept@<name> is
+    % already defined, we have a second def-site in a
+    % different atom.  Error (halts build) per §8a.9.
+    \@ifundefined{semtex@concept@#1}%
+      {\expandafter\gdef
+         \csname semtex@concept@#1\endcsname
+         {\semtex@currentatom}%
+       \if@filesw
+         \immediate\write\@auxout{%
+           \string\semtex@concept{#1}{\semtex@currentatom}}%
+       \fi
+       \semtex@sblwrite@atom{%
+         \string\semtex@sbl@def{\semtex@currentatom}{#1}}%
+      }%
+      {\PackageError{semtex}%
+        {\string\\#1* defined at atoms
+         \csname semtex@concept@#1\endcsname\space and
+         \semtex@currentatom}%
+        {Exactly one definition site is permitted per
+         concept.  Use \string\\#1\space (without star)
+         at the non-definitional site.}%
+      }%
+  \fi}
+
+% \semtex@emit@use: fires on the non-star branch.
+%   Records a use of the concept under the current atom,
+%   to be resolved to the def atom in pass 2 via §8a.9's
+%   concept map.
+\newcommand*{\semtex@emit@use}[1]{%
+  \ifx\semtex@currentatom\@empty\else
+    \if@filesw
+      \immediate\write\@auxout{%
+        \string\semtex@conceptref{\semtex@currentatom}{#1}}%
+    \fi
+    \semtex@sblwrite@atom{%
+      \string\semtex@sbl@use{\semtex@currentatom}{#1}}%
+  \fi}
 ```
 
-The two macros share the use-recording prelude pattern
-(prepend a `\semtex@sblwrite@atom` call to the body).
-Production code should factor that into a single helper;
-the sketch keeps them separate for readability.
+The two public macros share the star-dispatch wrapper
+(`\semtex@definewrapped`) and the two emit helpers
+(`\semtex@emit@def`, `\semtex@emit@use`).  For
+`\semtexNewCommand`, the arity is compiled to a repeated
+`m` argspec first; for `\semtexNewDocumentCommand`, the
+user's argspec is passed through verbatim.  In both
+cases a star is prepended so every wrapped command
+answers to both `\cmd` (use) and `\cmd*` (def site).
+
+**Argument-renumbering note.**  This sketch is
+deliberately not expansion-valid at every token level;
+the implementer should use xparse's standard
+body-helper pattern (see `ltcmd.dtx` for the reference
+implementation of argument forwarding through a csname
+body helper).  The key invariants are:
+
+1. The wrapper's argspec is literally `s <user-spec>`.
+2. The star boolean is `##1`.
+3. The user's positional arguments are `##2..##(N+1)`.
+4. The user's body is written against its natural
+   `#1..#N` numbering; a def-time helper csname stores
+   the body and is called with the forwarded arguments
+   in natural order.
+
+The `\semtex@forwardargs` token used in the sketch is a
+placeholder for xparse's actual forwarding mechanism
+(`\expandafter`-chain over the numbered arguments).
+Implementers familiar with xparse internals can inline
+this directly.  The correctness of the dispatch does NOT
+depend on how the forwarding is expressed — only that
+the star is consumed at `##1` and the user's args follow.
 
 The `\@gobble\string` trick converts `\Hom` to the bare
 string `Hom` exactly once at definition time; the

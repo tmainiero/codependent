@@ -280,6 +280,64 @@ independent: every script uses paths relative to
 no broken paths. mwablab will eventually call semtex as a
 dependency rather than embed it.
 
+### v1.0-concept — Concept-aware forward references (2026-04-09)
+
+After the test phase (v1.0-test, commit 031a8db) landed, the user
+raised a critical practical issue with the backref architecture:
+forward references. In any serious math paper, the introduction
+and early sections routinely mention concepts BEFORE they are
+formally defined. Auto-backref schemes that pick "first occurrence
+wins" produce wrong backref graphs on ~90% of real papers. Pavlov's
+manual marking was a feature, not a kludge.
+
+Added:
+
+- Section 8a.9 "Concept-aware forward references" (~500 lines):
+  `\Hom*` starred variant inside `\semtexNewCommand` marks the def
+  site explicitly. New `.aux` records `\semtex@concept` /
+  `\semtex@conceptref` feed into the existing backref pipeline via
+  the `.sty`'s pass-2 rerun. New `.sbl` record `\semtex@sbl@def`
+  gives the CLI source-grounded concept metadata. Hybrid
+  architecture (Option C): both sidecars carry the info, the `.sty`
+  typeset PDF is complete without the CLI.
+
+- §8a.5.a extended with save/clear/restore semantics on
+  `\semtex@currentatom` during restated theorem bodies. Nested
+  restates use a counter for LIFO-safe stack. Ensures `\Hom*`
+  inside a restated body NEVER registers against the enclosing
+  atom's stale currentatom; only the original declaration firing
+  (with alias intact) registers the def site.
+
+- §9a `\semtexNewCommand` implementation sketch updated to
+  dispatch star vs non-star via `\IfBooleanTF`. Same for
+  `\semtexNewDocumentCommand`. Shared helpers `\semtex@emit@def`
+  and `\semtex@emit@use` handle the concept record emissions;
+  `\semtex@definewrapped` factors the star-dispatch wrapping so
+  both public macros share one code path.
+
+- 5 new regression fixtures under `testfiles/unit/`:
+  `test-concept-forward-ref`, `test-concept-def-site-required`,
+  `test-concept-duplicate-def-site`,
+  `test-concept-in-restatable-intro-teaser`,
+  `test-concept-in-restatable-appendix`.
+
+Error model:
+
+- Missing `\Hom*` (with `\Hom` used): warning, backrefs for that
+  concept disabled. No fallback to first-occurrence.
+- Duplicate `\Hom*` (fired in multiple atoms): error, halts build.
+- `\Hom*` with empty currentatom (inside footnote/caption or
+  inside a restated body): silent no-op.
+
+User direction: "Pavlov's manual indication of the first instance
+was a feature not a kludge. Yes, there is more manual work, but
+this is far better than incorrect referencing, one has to rely on
+the human."
+
+Ergonomic `^{words}` notation (Pavlov-style inline concept tagging
+without requiring macro definitions) flagged as a future add-on;
+deferred to v1.1+.
+
 ### v1.0 — REVIEW_E findings applied + REVIEW_F spot-check (2026-04-09)
 
 Proposer round 3 applied all 3 BLOCKERs + 5 MAJORs + 6 MINORs
@@ -359,6 +417,14 @@ accepted as live limitations:
 - **License: GPLv3.** The dpmac port creates a derivative
   work. Planned outreach to Pavlov for an optional LPPL 1.3c
   dual-license courtesy.
+- **Ergonomic `^{words here}` inline notation (v1.1+)**: Pavlov's
+  dpmac provides inline concept tagging via `^{words}` (in math)
+  and similar forms (in text) that work without requiring the
+  author to define a macro first. Syntactic sugar over the
+  `\semtex@concept` / `\semtex@conceptref` machinery added in
+  v1.0-concept (Section 8a.9). Deferred pending user feedback;
+  the core concept-map infrastructure is in place so the sugar
+  is a pure lexer add-on.
 
 ## What did NOT work (failure register)
 
@@ -446,17 +512,36 @@ agents should not propose these without re-litigating:
 
 ## How to read this file as a future agent
 
+**If you are a FRESH ORCHESTRATOR being asked to work on
+semtex.sty for the first time in a new session, STOP and read
+`IMPLEMENTATION_PICKUP.md` (same directory) FIRST, then the
+canonical agent-memory pickup doc at
+`~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_semtex_next_steps.md`.**
+That pickup doc has the full mandatory-reading list, the
+verification checkpoint, and the forbidden-actions list. This
+HISTORY file is ONE of the mandatory documents but not the
+only one.
+
 If you are coming back to this project and want to:
 
+- **Pick up the implementation phase from cold** -> read
+  `IMPLEMENTATION_PICKUP.md` (top-level, same directory as
+  this file) and follow its reading order. The pickup doc
+  routes you through HISTORY.md + DESIGN.md + CREDITS.md +
+  the six adversarial reviews + the test suite, in the right
+  order, with a verification checkpoint that makes sure you
+  actually absorbed the design context before editing.
 - **Understand the current state** -> read `DESIGN.md`, then
   this file's "Open issues" section to know what's
   intentionally deferred.
 - **Avoid repeating a known failure** -> grep the "What did
-  NOT work" section.
+  NOT work" section (11+ items).
 - **Propose a new feature** -> first check if it appears in
   the failure register, then check the open-issues list, then
   read the relevant REVIEW file from the appropriate version.
 - **Understand a design decision** -> trace it back through
-  the version history, then read the cited REVIEW file.
+  the version history, then read the cited REVIEW file under
+  `../semtex-cli/reviews/`.
 - **Contribute lessons to other LaTeX projects** -> see the
-  cross-referenced `lessons_latex_package_evolution.md`.
+  cross-referenced `lessons_latex_package_evolution.md` in
+  user-global agent memory.
