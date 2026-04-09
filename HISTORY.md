@@ -211,12 +211,50 @@ because the user does category theory and uses `tikzcd` heavily),
 ntheorem testing, tcolorbox/mdframed suppression, listings/minted
 catcode hazards, subfiles standalone-vs-master `.sbl` divergence.
 
-### v1.0 — Round 3 fixes incorporating REVIEW_E (in progress)
+### v1.0 — REVIEW_E findings applied + REVIEW_F spot-check (2026-04-09)
 
-Proposer round 3 dispatched, applying all 3 BLOCKERs + 5
-MAJORs + 6 MINORs (skipping the 2 NITPICKs which are absorbed
-into the BLOCKER 1 prose). Adds 10 new regression test fixtures
-to the testing section. Expected commit hash: TBD.
+Proposer round 3 applied all 3 BLOCKERs + 5 MAJORs + 6 MINORs
+from REVIEW_E (skipping the 2 NITPICKs absorbed into BLOCKER 1
+prose). DESIGN.md grew from 2208 to 3188 lines (+980).
+
+Round 3 self-flagged 5 judgment calls and 2 residual risks for
+critic verification. REVIEW_F (focused spot-check, sixth and
+final adversarial round) verified all 5 judgment calls and
+refuted both residual risks against actual TeX Live 2025
+sources:
+
+- **J3 (PRIMARY: label-wrap double-wrap ordering)** — VERIFIED.
+  Walked cleveref.sty lines 66-97. cleveref strips the optional
+  arg before forwarding to its captured target (= semtex's
+  dispatcher); semtex's no-optional-arg branch fires with the
+  correct mandatory key; `\semtex@currentatom` is live.
+- **J1 (hook-rule centralisation)** — VERIFIED.
+- **J2 (`\ifx\c@theorem\c@atom` guard)** — VERIFIED against
+  thm-restate.sty lines 103-184, theoremref, ntheorem.
+- **J4 (trivlist suppression breadth)** — VERIFIED with caveat.
+  Real blast radius from latex.ltx: `center`, `flushleft`,
+  `flushright`, `verbatim`, plus amsthm envs. Acceptable for
+  Pavlov-style math docs but documented in user caveats.
+- **J5 (§8a.7 DeclareHookRule deduplication vs E#8 biblatex)**
+  — VERIFIED.
+- **R1 (`\@makechapterhead` may not exist under KOMA)** —
+  REFUTED. scrbook.cls line 4132 keeps the kernel name live
+  via `\@namedef{@make#1head}{\scr@makechapterhead{#1}}`.
+- **R2 (test-equations-shared-align pinning)** — adequately
+  documented at DESIGN.md lines 237 + 3128-3129.
+
+REVIEW_F also surfaced 5 NITPICKs (documentation polish):
+prose clarification on the J3 double-wrap mechanism,
+`\@ifnextchar[` lookahead caveat, sbl/labelwrap missing
+ordering rule comment, trivlist blast-radius user caveat,
+and converting the R1 risk note to a "verified" note. All 5
+applied in the same finishing pass before commit.
+
+Plus one structural blip fix: `8a.6.h` summary subsection
+renamed to `8a.6.m` for sequential ordering after the new
+8a.6.i/j/k/l subsections from REVIEW_E.
+
+**Design phase closed.**
 
 ## Open issues, deferred decisions, known limitations
 
@@ -330,7 +368,7 @@ agents should not propose these without re-litigating:
   Layer 2)
 - **License & attribution**: `tools/semtex-sty/CREDITS.md`
 - **Adversarial reviews**: `tools/semtex-cli/reviews/`
-  (REVIEW_A, REVIEW_ARCH, REVIEW_C, REVIEW_D, REVIEW_E)
+  (REVIEW_A, REVIEW_ARCH, REVIEW_C, REVIEW_D, REVIEW_E, REVIEW_F)
 - **arxiv-fuzz validation plan**:
   `~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_semtex_arxiv_fuzz.md`
 - **Transferable lessons for other LaTeX-package projects**:

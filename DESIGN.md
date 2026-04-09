@@ -170,6 +170,74 @@ In `separate` mode, there is no ambiguity in "Used in" lists
 because those only reference atom numbers, never equation
 numbers.
 
+#### Hazards of `equations=shared` mode (REVIEW_E #6)
+
+> Upstream motivation: **REVIEW_E finding #6 (MAJOR).**
+> Under `equations=shared`, `\c@equation` is aliased to
+> `\c@atom`.  Several amsmath constructs call
+> `\refstepcounter{equation}` in ways that surprise the
+> atom-counter model.
+
+- **`align` / `gather` / `flalign` / `eqnarray`.**  Each
+  labelled line in these environments calls
+  `\refstepcounter{equation}` independently.  Under
+  `shared`, that means each line advances the atom
+  counter.  A 5-line `align` block where the author
+  expects "one atom for the whole display" instead
+  consumes 5 atom numbers, and the atom sequence becomes
+  `para 2.4 -> align lines 2.5, 2.6, 2.7, 2.8, 2.9 ->
+  next para 2.10`.  `\semtex@currentatom` is also
+  stamped to the per-line value on each line, so any
+  `\ref{...}` inside the RHS is attributed to the
+  current line's atom number — which may or may not
+  match the author's intent.
+- **`\subequations`.**  amsmath line 1131-1132 begins
+  `\subequations` with `\refstepcounter{equation}`,
+  creating a parent atom.  Nested labelled lines inside
+  then create child atoms.  Display numbers like
+  `(1.2.3a)` may appear that the rest of the pipeline
+  does not parse cleanly.
+- **`\tag{custom}`.**  A tagged line does NOT advance
+  the counter, so a `\tag`'d line is not a new atom,
+  but the next non-tagged line resumes counter
+  advancement — producing an inconsistent visual
+  numbering.
+
+**Recommendation.**  Use `equations=separate` (the
+default) for serious math typesetting.  Authors who
+want a single-number display for a multi-line derivation
+should use `aligned` (no counter) inside a single-numbered
+`equation`, not `align`:
+
+```tex
+\begin{equation}\label{eq:long}
+\begin{aligned}
+f(x) &= x^2 \\
+g(x) &= 2x
+\end{aligned}
+\end{equation}
+```
+
+This consumes one atom number for the whole derivation
+and produces exactly one back-reference target.
+
+**Future work.**  A cleaner `shared` mode would alias
+`\c@equation` to `\c@atom` only at `\refstepcounter{equation}`
+time OUTSIDE an `align`/`gather`/`subequations` scope,
+i.e. when the author writes a top-level
+`\begin{equation}`.  Inside multi-line environments,
+the counter would fall back to an ordinary non-aliased
+equation counter.  Implementation sketched in REVIEW_E
+finding #6's "Proposed fix" — see the TODO section at
+the end of this file.
+
+Regression fixture: `testfiles/test-equations-shared-align.lvt`
+exercising the above hazards and asserting the observed
+atom count for each case.  (The fixture is primarily
+documentation: it pins the current known-broken
+behaviour so an implementer adding the future-work fix
+can see what changed.)
+
 ### Paragraph numbering
 
 Every paragraph gets a number via `\AddToHook{para/begin}`.
@@ -522,20 +590,145 @@ be valid-shape — every brace and `\fi` balances, every
 `\csname` closes, every `\expandafter` has a target.
 2-space indent.
 
+### Section 8a.0 overview — Reference interception (REVIEW_D #3, REVIEW_E #1)
+
+> Upstream motivation: REVIEW_D finding #3 mandated that
+> an aux-WRITE patch exist at all (previous revision
+> referenced one without defining it).  **REVIEW_E finding
+> #2 then proved that the single-`\@setref` patch that
+> REVIEW_D asked for covers only a fraction of real
+> reference traffic: `\cref`/`\Cref`/`\labelcref` bypass
+> `\@setref` via cleveref's `\cref@getlabel`,
+> `\autoref` bypasses via hyperref's
+> `\HyRef@autosetref`, and `\ref*`/`\Ref` bypass via
+> `\HyRef@@StarSetRef`→`\real@setref` (the hyperref
+> saved copy of `\@setref`, which predates our wrap).**
+> A math monograph using cleveref has ~0% back-reference
+> graph coverage from the REVIEW_D single-patch design.
+
+The corrected design installs **three patch sites**, not
+one:
+
+1. Kernel `\@setref` — covers `\ref`, `\eqref`,
+   `\pageref` (via `\@pagesetref` delegation), `\vref`
+   (varioref uses `\ref` internally), and `\nameref`
+   (nameref.sty line 326 calls `\@setref` directly).
+2. cleveref `\cref@getlabel` — covers every cleveref
+   family command (`\cref`, `\Cref`, `\labelcref`,
+   `\cpageref`, `\Cpageref`, `\crefrange`, `\Crefrange`,
+   `\namecref`, `\nameCref`).
+3. hyperref `\HyRef@autosetref` (for `\autoref`) and
+   `\HyRef@@StarSetRef` (for `\ref*`/`\Ref`).
+
+The section opening prose said "ALL reference commands
+eventually call `\@setref`" in previous revisions.  That
+claim is **false**; each reference package built its own
+dispatcher to support package-specific output formatting
+(custom labels for `\cref`, name-lookup for `\autoref`,
+no-hyperlink fallback for `\ref*`) and there is no
+canonical entry point.
+
+#### Coverage table (verbatim from REVIEW_E finding #2)
+
+| Command | Covered by `\@setref` patch alone? | Covered by 3-site design? |
+|---|---|---|
+| `\ref{foo}` | yes | yes |
+| `\eqref{foo}` | yes (goes through `\ref`) | yes |
+| `\pageref{foo}` | partial (via `\@pagesetref`) | partial (good enough; pageref is rarely an atom-reference) |
+| `\vref{foo}`, `\Vref{foo}`, `\vpageref{foo}` | yes (varioref uses `\ref`) | yes |
+| `\nameref{foo}` | yes (nameref.sty line 326) | yes |
+| `\autoref{foo}` | **NO** | yes (via `\HyRef@autosetref`) |
+| `\ref*{foo}` | **NO** | yes (via `\HyRef@@StarSetRef`) |
+| `\Ref{foo}` (hyperref) | **NO** | yes (via `\HyRef@@StarSetRef`) |
+| `\hyperref[foo]{text}` | **NO** | **NO** (deliberately uncovered; see below) |
+| `\cref{foo}`, `\Cref{foo}` | **NO** | yes (via `\cref@getlabel`) |
+| `\crefrange{a}{b}`, `\Crefrange{a}{b}` | **NO** | yes |
+| `\labelcref{foo}` | **NO** | yes |
+| `\cpageref{foo}`, `\Cpageref{foo}` | **NO** | yes |
+| `\namecref{foo}`, `\nameCref{foo}` | **NO** | yes |
+
+Deliberately uncovered: `\hyperref[label]{text}` — see
+the "Deliberately uncovered" subsection below.
+
+#### Why so many patch sites?
+
+The back-reference graph has to record every edge from an
+atom to a labelled target.  Each reference package in
+common use dispatches through its own internal macro:
+
+- **Kernel `\@setref` (latex.ltx).**  The original and
+  simplest: every `\ref`/`\pageref` invocation calls
+  `\@setref{\r@<label>}{<selector>}{<label>}` and we
+  intercept at that point.
+- **cleveref `\cref@getlabel` (cleveref.sty lines
+  1044-1178).**  cleveref reads
+  `\csname r@<label>@cref\endcsname` directly — the
+  `@cref`-suffixed record that cleveref writes to
+  `.aux` alongside the kernel `\newlabel`.  It calls
+  `\cref@getlabel{<label>}{<temp-macro>}` which loads
+  the cref-style fields into `<temp-macro>`.  Every
+  cleveref family command routes through this helper,
+  so patching it once covers the whole family.
+- **hyperref `\HyRef@autosetref` (hyperref.sty line
+  8220-8244).**  `\autoref` reads the cref-style
+  fields from `\csname r@<label>\endcsname` to produce
+  "Theorem 2.5" (with the type-name prefix looked up
+  from `\autoref@name@theorem`).  It never calls
+  `\@setref`.
+- **hyperref `\HyRef@@StarSetRef` (hyperref.sty lines
+  8133-8137).**  `\ref*`/`\Ref` produce the reference
+  text without a hyperlink, by calling
+  `\real@setref` — the copy of `\@setref` that hyperref
+  saved at load time, before any wrapping.  Because
+  our `\@setref` patch sees hyperref's wrapped
+  `\@setref` (not `\real@setref`), `\ref*` bypasses us
+  via the saved copy.  Patching `\HyRef@@StarSetRef`
+  catches both `\ref*` and `\Ref`.
+
+**Load-bearing consequence: `\cref@getlabel` is called
+MULTIPLE TIMES per `\cref` invocation** — once for each
+label in a cref list like `\cref{thm:A,thm:B,thm:C}`.
+Every call produces a `\semtex@atomref` write.  The
+downstream deduplication in `\semtex@processbr`
+(Section 8a.3) must absorb this multiplicity; the
+per-target `\semtex@brlast@<tgt>` consecutive-dedup
+handles the common case (same source atom to same target
+target on the same line) automatically.  For the
+multi-label-list case, deduplication happens on pass 2
+at processing time, so the `.aux` file may contain K
+duplicate records for a K-label `\cref` — harmless but
+visible to anyone who greps `.aux`.
+
+#### Deliberately uncovered: `\hyperref[label]{text}`
+
+Per REVIEW_E finding #16 (NITPICK): `\hyperref[foo]{text}`
+is an author-hand-rolled hyperlink, not a
+cross-reference.  The author is explicitly saying "I
+want a link here, not a semantic reference."  semtex
+does **not** record it as a back-reference edge.  Users
+who want back-ref tracking should write `\cref{label}`
+(or `\ref{label}`) instead.
+
+If a user genuinely wants both the hand-rolled display
+text AND back-ref tracking, they can write
+`\cref{label}` inline with a `\footnote{see ...}` — or
+explicitly call `\semtex@recordmanualref{label}` (a
+helper we may provide in a later revision; not
+promised).
+
+#### Implementation sketch
+
 ```tex
 %% ------------------------------------------------------------
-%% Section 8a.0: Reference interception (\@setref patch).
-%% Per REVIEW_D finding #3, this subsection was absent from
-%% the previous revision and is required for the aux-WRITE
-%% half of the pipeline.  Without it, pass 1 never emits
-%% \semtex@atomref records, pass 2 has nothing to read, and
-%% the back-reference graph stays empty.
-%%
-%% \@setref is LaTeX's kernel dispatcher for \ref, \eqref,
-%% \autoref, \cref, \vref, and every other reference
-%% command (all of them bottom out here, even when hyperref
-%% or cleveref wraps the user-visible entry point).  One
-%% patch point covers the lot.
+%% Section 8a.0: Reference interception (three-site design).
+%% Per REVIEW_E finding #2 (BLOCKER), the previous
+%% single-\@setref patch is insufficient: cleveref, hyperref
+%% \autoref, and hyperref \ref*/\\Ref all bypass \@setref.
+%% This subsection installs THREE patches instead of one.
+%% Per REVIEW_E finding #16, \hyperref[]{} is deliberately
+%% uncovered (manual link, not a cross-reference).
+%% Per REVIEW_E finding #3, \ref* coverage is subsumed by
+%% the \HyRef@@StarSetRef patch below.
 %% ------------------------------------------------------------
 
 % Pass-1 safety: \semtex@atomref must be defined to SOMETHING
@@ -544,29 +737,65 @@ be valid-shape — every brace and `\fi` balances, every
 % aux read does not error.  A \providecommand no-op suits.
 \providecommand*{\semtex@atomref}[2]{}
 
+% Shared aux-write helper called by all patch sites.
+% Guards on \semtex@currentatom per Section 8a.5, and on
+% \if@filesw so --draftmode / -no-aux compiles work.
+\def\semtex@writeatomref#1{%
+  \ifx\semtex@currentatom\@empty\else
+    \if@filesw
+      \protected@write\@auxout{}{%
+        \string\semtex@atomref
+          {\semtex@currentatom}{#1}%
+      }%
+    \fi
+  \fi
+}
+
 % \semtex@installatomrefpatch
-%   Wraps \@setref so each invocation also writes a
-%   \semtex@atomref record to .aux.  Guarded on
-%   \semtex@currentatom being non-empty per Section 8a.5.
-%
-%   NOTE: installed at begindocument/before (Section 8a.7),
-%   AFTER hyperref has had its chance to wrap \@setref.  The
-%   patch operates on whichever \@setref is live at that
-%   point, so hyperref's hyperlinking side-effect is
-%   preserved.
+%   Install all three patch sites.  Called from the
+%   begindocument/before hook (Section 8a.7), AFTER
+%   hyperref/cleveref have finished wrapping their
+%   respective dispatchers.  Patching at this point means
+%   we wrap the OUTERMOST live definition, preserving
+%   every prior hook (hyperlink emission, cref formatting).
 \def\semtex@installatomrefpatch{%
+  %% ---- Patch 1: kernel \@setref ----
+  %% Covers \ref, \eqref, \pageref (via \@pagesetref
+  %% delegation), \vref, \Vref, \vpageref, \nameref.
   \let\semtex@orig@setref\@setref
   \def\@setref##1##2##3{%
     \semtex@orig@setref{##1}{##2}{##3}%
-    \ifx\semtex@currentatom\@empty\else
-      \if@filesw
-        \protected@write\@auxout{}{%
-          \string\semtex@atomref
-            {\semtex@currentatom}{##3}%
-        }%
-      \fi
-    \fi
+    \semtex@writeatomref{##3}%
   }%
+  %% ---- Patch 2: cleveref \cref@getlabel ----
+  %% Covers every cleveref family command.
+  \@ifpackageloaded{cleveref}{%
+    \let\semtex@orig@crefgetlabel\cref@getlabel
+    \def\cref@getlabel##1##2{%
+      \semtex@orig@crefgetlabel{##1}{##2}%
+      \semtex@writeatomref{##1}%
+    }%
+  }{}%
+  %% ---- Patch 3: hyperref \HyRef@autosetref / \HyRef@@StarSetRef ----
+  %% \HyRef@autosetref covers \autoref.
+  %% \HyRef@@StarSetRef covers \ref* and \Ref.
+  %% Subsumes REVIEW_E finding #3 (\ref* bypass).
+  \@ifpackageloaded{hyperref}{%
+    \@ifundefined{HyRef@autosetref}{}{%
+      \let\semtex@orig@HyRefautosetref\HyRef@autosetref
+      \def\HyRef@autosetref##1##2##3{%
+        \semtex@orig@HyRefautosetref{##1}{##2}{##3}%
+        \semtex@writeatomref{##2}%
+      }%
+    }%
+    \@ifundefined{HyRef@@StarSetRef}{}{%
+      \let\semtex@orig@HyRefStarSetRef\HyRef@@StarSetRef
+      \def\HyRef@@StarSetRef##1##2##3{%
+        \semtex@orig@HyRefStarSetRef{##1}{##2}{##3}%
+        \semtex@writeatomref{##2}%
+      }%
+    }%
+  }{}%
 }
 
 %% ------------------------------------------------------------
@@ -859,6 +1088,14 @@ being live.  No label claims `before *` any longer.
 \DeclareHookRule{begindocument/before}{semtex/sbl/open}%
                 {after}{semtex/backref/install}
 
+% Note (REVIEW_F #3): semtex/sbl/labelwrap (defined in §9a)
+% has NO ordering rule and needs none.  It depends on
+% neither backref/install nor sbl/open: the label-wrap
+% machinery only forwards through \semtex@orig@label and
+% emits its sidecar record at user-call time, never at
+% install time.  Documented here so future readers don't
+% wonder about the missing rule.
+
 % External ordering: we want to run before hyperref's
 % \AtBeginDocument-equivalent hooks wrap \@setref a second
 % time.  This rule is best-effort; see the "Load order"
@@ -998,6 +1235,160 @@ Add a test case under `tools/semtex-sty/testfiles/` named
 
 This test pins the three clears in place so an accidental
 regression is caught at the `.lvt` level.
+
+### Section 8a.5.a — Detecting restated theorem environments
+
+> Upstream motivation: **REVIEW_E finding #1 (BLOCKER) and
+> REVIEW_E Section R.**  The `thmtools` `\restatable` /
+> `\restate` mechanism re-fires our
+> `\AtBeginEnvironment{theorem}` hook on every restate,
+> with `\c@theorem` aliased away from `\c@atom` to a dummy
+> counter.  Without a guard, the restated occurrence is
+> attributed to whatever atom was current at the restate
+> site, the back-reference graph gets ghost edges, and
+> the `.sbl` writer emits a duplicate atom record with a
+> conflicting type.
+
+The four bugs documented in REVIEW_E Section R:
+
+- **R-1.** Re-fired theorem hook reads `\theatom` (which
+  expands from `\c@atom`, not the re-aliased
+  `\c@theorem`), so `\semtex@currentatom` gets the atom
+  number of the unrelated previous atom at the restate
+  site.  Back-ref edges from `\@setref` inside the
+  restated body are attributed to the wrong source.
+- **R-2.** amsthm's `\refstepcounter{theorem}` advances
+  `\c@thmt@dummyctr` on the restate branch (harmless to
+  `\c@atom` since the alias is broken), but our hook
+  still calls `\edef\semtex@currentatom{\theatom}` which
+  confirms the R-1 wrong-number attribution.
+- **R-3.** The `.sbl` writer emits a duplicate
+  `\semtex@sbl@atom{<previous-real-atom>}{theorem}` with
+  a conflicting type — the CLI cannot disambiguate.
+- **R-4.** `\label` inside the restated body is gobbled
+  by `thm-restate`'s `\thmt@gobble@label`, and when
+  cleveref is loaded that gobbler takes an optional
+  argument — see Section 9a's `\pretocmd{\label}` wrapper
+  (fixed under REVIEW_E finding #4 / E#4 below).
+
+See REVIEW_E lines 183-270 and 355-414 for the full
+walk of each bug against `thm-restate.sty v0.76` lines
+103-184.
+
+#### The fix: `\ifx\c@theorem\c@atom` guard
+
+On the **original** occurrence of a restatable theorem,
+`\c@theorem` is still aliased to `\c@atom` by
+`\semtex@setupcounter` — exactly as it was at
+`\semtextrack` time.  On the **restate** occurrence,
+`thm-restate.sty` line 132 executes
+`\@xa\let\csname c@#2\endcsname=\c@thmt@dummyctr`,
+breaking the alias.  The guard at the top of the hook
+body therefore distinguishes the two cases with zero
+overhead:
+
+```tex
+\AtBeginEnvironment{#1}{%
+  \ifx\c@theorem\c@atom
+    %% Original occurrence: normal hook body.
+    ...existing \semtex@hooktheorem body...
+  \else
+    %% Restate occurrence (\c@theorem re-let to dummy):
+    %% suppress the whole hook body to avoid
+    %%   (a) reading the wrong \theatom,
+    %%   (b) writing a duplicate \semtex@sbl@atom record,
+    %%   (c) queuing back-refs against a stale atom number.
+    %% Still bump \semtex@nestlevel so inner paragraph
+    %% numbering is suppressed inside the restated body
+    %% (matching the normal theorem semantics).
+    \advance\semtex@nestlevel by 1\relax
+  \fi
+}
+\AtEndEnvironment{#1}{%
+  \ifx\c@theorem\c@atom
+    ...existing \semtex@hooktheorem end body...
+  \else
+    %% Matching end guard for the restate branch.
+    \advance\semtex@nestlevel by -1\relax
+  \fi
+}
+```
+
+This one-conditional fix closes R-1, R-2, and R-3
+simultaneously.  R-4 is addressed separately by E#4
+(Section 9a's `\pretocmd{\label}` wrapper needs an
+optional-argument variant when cleveref is loaded).
+
+#### Alternative: flag-based gate
+
+The above inlines the guard in both the begin and end
+hooks.  An alternative is to set a boolean at begin-time
+and read it at end-time:
+
+```tex
+\newif\ifsemtex@suppressed@hook
+\AtBeginEnvironment{#1}{%
+  \ifx\c@theorem\c@atom
+    \semtex@suppressed@hookfalse
+    ...normal body...
+  \else
+    \semtex@suppressed@hooktrue
+    \advance\semtex@nestlevel by 1\relax
+  \fi
+}
+\AtEndEnvironment{#1}{%
+  \ifsemtex@suppressed@hook
+    \advance\semtex@nestlevel by -1\relax
+  \else
+    ...normal end body...
+  \fi
+}
+```
+
+The flag approach is marginally cleaner (the guard logic
+exists in one conceptual place) but introduces a new
+boolean to maintain across nested theorem environments.
+For nested tracked theorems, the flag must be saved and
+restored via a stack to avoid clobbering.  **Pick the
+inline `\ifx\c@theorem\c@atom` approach** shown above:
+the conditional is idempotent against `\c@theorem`
+aliasing state, which is the same check at begin and
+end, and no stack is required.
+
+#### Regression fixture: `test-restatable.lvt`
+
+```tex
+\documentclass{article}
+\usepackage{amsthm,thmtools}
+\usepackage{semtex}
+\newtheorem{theorem}{Theorem}
+\semtextrack{theorem}
+
+\begin{document}
+\begin{restatable}{theorem}{thmA}\label{thm:A}
+  Statement A.
+\end{restatable}
+
+\section{Appendix}
+A recap follows.  % stray paragraph to advance atom ctr
+\restate{thmA}
+\end{document}
+```
+
+Assertions the fixture must verify:
+
+- `\semtex@sbl@atom{<N>}{theorem}` for `thm:A` appears
+  **exactly once** in the `.sbl` (the original
+  occurrence), never twice.
+- The display number printed for `thm:A` on the first
+  (original) occurrence matches the display number
+  printed on the restate (i.e. `\ref{thm:A}` resolves
+  to the same value in both spots).
+- No `\semtex@atomref` record inside the restated body
+  cites the stray paragraph atom as `src`.
+- The margin atom number on the section heading
+  "Appendix" is absent (verified via PDF text
+  extraction; this also exercises E#3).
 
 ### Section 8a.6 — Edits to existing `semtex.sty` macros
 
@@ -1180,11 +1571,256 @@ The append is O(1) per atom (list grows by one
 `\do{...}` entry); the walk at `\semtexappendix` call
 time is O(N) in the atom count.
 
-#### 8a.6.h — Summary of additions vs. deletions
+#### 8a.6.i — `\semtex@suppresssectioning` (lines 349-365): REPLACE WITH KERNEL HOOKS
+
+> Upstream motivation: **REVIEW_E finding #5 (BLOCKER).**
+> The current implementation wraps `\@startsection`, which
+> is a **no-op under KOMA-Script, memoir, and titlesec**
+> because each of those packages replaces `\@startsection`
+> at load time with its own dispatcher.  Evidence: titlesec
+> lines 1540-1631 install `\ttl@select` and stop calling
+> `\@startsection` at typeset time; scrbook.cls lines
+> 3506-3530 define `\scr@startsection` as KOMA's
+> replacement and sectioning commands route through that,
+> not through the kernel `\@startsection`.  KOMA-Script is
+> the standard math-monograph class, so this issue affects
+> a **majority** of the target audience.
+
+**Delete** the existing `\semtex@suppresssectioning`
+(`.sty` lines 349-365) which wraps `\@startsection` and
+depends on the
+`\AddToHook{begindocument/end}{\makeatletter\let\semtex@orig@startsection\@startsection\def\@startsection{...}\makeatother}`
+pattern.
+
+**Replace** with LaTeX 2021+ generic command hooks on
+each sectioning command directly:
+
+```tex
+\newcommand*{\semtex@suppresssectioning}{%
+  \AddToHook{cmd/section/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/subsection/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/subsubsection/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/chapter/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/paragraph/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/subparagraph/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \@ifundefined{@makechapterhead}{}{%
+    \semtex@suppresscmd{\@makechapterhead}%
+  }%
+  \@ifundefined{@makeschapterhead}{}{%
+    \semtex@suppresscmd{\@makeschapterhead}%
+  }%
+}
+```
+
+**Why `cmd/<level>/before` works across classes.**
+LaTeX 2021+ installs generic command hooks at a layer
+below any user-level redefinition of the sectioning
+command.  Specifically:
+
+- **titlesec (titlesec.sty lines 1540-1631).**
+  titlesec's replacement `\section` is itself defined
+  under the kernel's command-hook infrastructure, so
+  `cmd/section/before` fires before titlesec's
+  `\ttl@select` path.
+- **KOMA-Script (scrbook.cls lines 3506-3530).**
+  KOMA installs `\scr@startsection` via the very
+  same `cmd/@startsection/before` hook mechanism;
+  generic per-command hooks work uniformly.
+  `cmd/section/before` fires before `\scr@startsection`
+  dispatches.
+- **memoir.**  Similar pattern to KOMA; the kernel
+  `cmd/<level>/before` hook dispatch precedes memoir's
+  `\M@sect`.
+- **Plain article / book / report classes.**  The
+  kernel sectioning commands (which do call
+  `\@startsection`) also pass through
+  `cmd/<level>/before` first.
+
+The LaTeX 2021+ generic command hooks are a hard
+dependency of `semtex.sty` already — the package
+requires `[2021/06/01]` in its `\NeedsTeXFormat` line
+and uses `\AddToHook{para/begin}` etc.  No new
+dependency is introduced.
+
+**`\@makechapterhead` / `\@makeschapterhead`.**  These
+are still wrapped via `\semtex@suppresscmd` because
+they are called from inside `\chapter`'s body after
+`cmd/chapter/before` has fired.  `cmd/chapter/before`
+sets the flag for the section-title paragraph; the
+`\@makechapterhead` wrapper keeps `\semtex@nestlevel`
+incremented inside the chapter-head block (for
+multi-line chapter titles in book classes).
+
+**KOMA verification (REVIEW_F R1 refuted).**  Initial
+concern that KOMA-Script might use a renamed
+`\scr@makechapterhead` was investigated and refuted:
+scrbook.cls line 4132 declares
+`\@namedef{@make#1head}{\scr@makechapterhead{#1}}`
+with `#1=chapter`, which keeps the kernel name
+`\@makechapterhead` live and points it at KOMA's
+internal handler.  Our `\@ifundefined{@makechapterhead}`
+guard above resolves to "defined" under KOMA and the
+wrap installs correctly.  Verified against scrbook.cls
+TeX Live 2025.
+
+**`paragraph` / `subparagraph` caveat.**  LaTeX's
+`\paragraph` and `\subparagraph` produce inline headings
+by default in most classes.  Hooking `cmd/paragraph/before`
+catches the heading-paragraph's `para/begin` and sets the
+suppress flag.  Some classes (memoir) give
+`\paragraph` a display-style layout where the heading
+is a separate paragraph, which is also handled
+correctly because the flag is set BEFORE the heading's
+own `para/begin` fires.
+
+#### 8a.6.j — `trivlist` added to `\semtex@installsuppress`
+
+> Upstream motivation: **REVIEW_E finding #7 (MAJOR).**
+> amsthm wraps theorem environments in a `trivlist` for
+> layout purposes (amsthm.sty line 129: `\@thm` is a
+> `\trivlist` wrapper).  Nested-theorem scenarios
+> ("definition containing an example") can leave inner
+> paragraphs exposed to `para/begin` numbering if
+> `trivlist` is not in the suppress list.
+
+In `\semtex@installsuppress` (currently `.sty` lines
+327-339), add:
+
+```tex
+  \semtex@suppressenv{trivlist}%
+```
+
+Tradeoff: this suppresses paragraph numbering inside any
+`trivlist`, not just amsthm's theorem wrappers.  Users
+with their own `trivlist`-based environments that they
+want numbered as atoms would need a manual re-enable —
+but such users are rare, and the amsthm-correctness win
+is more important than the theoretical
+`\trivlist`-as-atom use case.
+
+**Blast radius (REVIEW_F #4 caveat).**  `\trivlist` is the
+underlying primitive for several standard LaTeX2e
+environments beyond amsthm's `proof`/`theorem`:
+
+- `center`, `flushleft`, `flushright` (latex.ltx use a
+  `trivlist`-based mechanism for centred/flushed blocks)
+- `verbatim` (the kernel implementation wraps in a
+  `trivlist`)
+- `quotation`, `quote`, `verse` (also `trivlist`-based
+  in many class implementations)
+- amsmath display environments do NOT use `trivlist`
+  (they use `array`/`tabular` internals)
+- `enumerate`, `itemize`, `description` are `list`,
+  not `trivlist`, and are suppressed separately
+
+In practice this is the **correct behaviour** for a
+Pavlov-style atom-numbering setup: a paragraph inside a
+`center` block, a `flushright` byline, or a `verbatim`
+code listing should NOT be a separately-numbered atom.
+But the breadth is worth documenting for users debugging
+"why is this paragraph not numbered?" — the answer is
+usually "it's inside a `trivlist`".
+
+**Future-work API (TODO).**  If a real use case for
+`\trivlist`-based numbered content appears, expose
+`\semtexuntrack{trivlist}` (or a per-use `\semtexatom`
+explicit-marker command).  Not in v1; flagged so the
+implementer remembers the option exists.
+
+**Why this doesn't double-suppress the theorem body.**
+`\semtex@hooktheorem`'s begin body already increments
+`\semtex@nestlevel` for the theorem environment
+(`semtex.sty` line 243).  The `\trivlist` suppression
+is additive: on theorem begin, nestlevel is incremented
+once by the theorem hook and once by the trivlist
+hook, so inside the body nestlevel is 2.  On theorem
+end, both are decremented and nestlevel returns to 0.
+Correct either way — `para/begin` suppresses iff
+`nestlevel > 0`.
+
+Add a regression fixture:
+`testfiles/test-amsthm-nested.lvt` exercising a
+`theorem` containing a nested `lemma` with a paragraph
+between, and asserting the atom count.
+
+#### 8a.6.k — `enumitem` `\newlist` auto-registration
+
+> Upstream motivation: **REVIEW_E finding #10 (MINOR).**
+> `enumitem`'s `\newlist{name}{base}{levels}` creates
+> user-defined list environments that escape our default
+> suppression list (which only names `enumerate`,
+> `itemize`, `description`).
+
+Inside the `begindocument/before` install path (or inside
+`\semtex@installsuppress`), add:
+
+```tex
+\@ifpackageloaded{enumitem}{%
+  \let\semtex@orig@newlist\newlist
+  \def\newlist#1#2#3{%
+    \semtex@orig@newlist{#1}{#2}{#3}%
+    \semtex@suppressenv{#1}%
+  }%
+}{}
+```
+
+`\newlist`'s signature is verified against
+enumitem.sty line 1730: three mandatory arguments,
+`{name}{base}{levels}`.  No optional arguments.  The
+wrapper forwards the call to enumitem's original
+`\newlist` (which creates the environment) and then
+suppresses the freshly-created environment name.
+
+Install after enumitem has loaded, which means the
+wrapper install site is `begindocument/before` (not
+package-load time, because enumitem may load after
+semtex).
+
+Regression fixture: `testfiles/test-enumitem-newlist.lvt`.
+
+#### 8a.6.l — `tcolorbox` / `mdframed` suppression
+
+> Upstream motivation: **REVIEW_E finding #13 (MINOR).**
+> Both packages create boxed-content environments that
+> naturally contain paragraphs; those paragraphs should
+> not become atoms.
+
+In `\semtex@installsuppress`, conditionally suppress
+these environments only if the respective package is
+loaded:
+
+```tex
+\AddToHook{begindocument/before}[semtex/suppress/boxes]{%
+  \@ifpackageloaded{tcolorbox}{%
+    \semtex@suppressenv{tcolorbox}%
+  }{}%
+  \@ifpackageloaded{mdframed}{%
+    \semtex@suppressenv{mdframed}%
+  }{}%
+}
+```
+
+Note that `tcolorbox` also supports user-defined
+variants via `\newtcolorbox{myname}{...}`.  Parallel to
+`\newlist` above, the long-term fix is to wrap
+`\newtcolorbox` to auto-register the new environment;
+for v0.1 that is deferred.  Users with custom tcolorbox
+variants must manually call
+`\semtexsuppress{myname}` after `\newtcolorbox`.
+
+Regression fixture: `testfiles/test-tcolorbox.lvt`.
+
+#### 8a.6.m — Summary of additions vs. deletions
 
 | Kind | Lines added | Lines deleted |
 |---|---|---|
-| New (Section 8a.0-8a.4, 8a.7, helpers) | ~180 | — |
+| New (Section 8a.0-8a.4, 8a.7, helpers) | ~200 | — |
 | `\semtex@queuebackref` rewrite (8a.6.a) | ~15 | 13 |
 | `\semtex@flushbackref` edit (8a.6.b) | 1 | 0 |
 | `\semtex@readsbr` deletion (8a.6.c) | 0 | 18 |
@@ -1193,12 +1829,19 @@ time is O(N) in the atom count.
 | `\semtex@sbrversion` / `@backref` / `@section` deletion (8a.6.f) | 0 | 27 |
 | `\semtexappendix` re-plumb (8a.6.g) + `\semtex@atomlist` plumbing | ~25 | ~13 |
 | currentatom clears (Section 8a.5) | 3 | 0 |
-| **Total** | **~224** | **~84** |
+| `\restatable` guard (Section 8a.5.a, E#2) | ~20 | 0 |
+| `\semtex@suppresssectioning` replacement (8a.6.i, E#3) | ~20 | 17 |
+| `trivlist` suppress (8a.6.j, E#7) | 1 | 0 |
+| `enumitem \newlist` wrap (8a.6.k, E#10) | ~8 | 0 |
+| `tcolorbox` / `mdframed` suppress (8a.6.l, E#13) | ~8 | 0 |
+| **Total** | **~301** | **~101** |
 
-Net change: roughly **+140 lines** on the current
-`semtex.sty`, bringing it from ~654 to ~794.  Consistent
-with the REVIEW_ARCH_dpmac_port estimate of "~714 lines"
-plus the Section 8a.6 plumbing not originally counted.
+Net change: roughly **+200 lines** on the current
+`semtex.sty`, bringing it from ~654 to ~854.  The
+REVIEW_E fixes add ~60 lines beyond the REVIEW_D
+baseline, primarily in the three-site reference
+interception (Section 8a.0) and the `\restatable`
+guard (Section 8a.5.a).
 
 ### Load order
 
@@ -1256,6 +1899,24 @@ The 15 000-ref figure is the target for a multi-hundred
 page research monograph.  The 100 000-ref figure is a
 worst-case encyclopedia and is still well inside
 interactive build budget.
+
+**Per-`\cref` amplification (per REVIEW_E finding #2).**
+With the three-patch design of Section 8a.0, a cref list
+`\cref{thm:A,thm:B,thm:C}` fires `\cref@getlabel` once
+per label — three times for this example.  Each call
+issues one `\semtex@writeatomref`, so a single cref
+command writes K records where K is the list length.
+At pass 2 the downstream dedup in `\semtex@processbr`
+collapses these correctly: each (src, tgt) edge is
+recorded once via the consecutive-dedup gate.  The
+overhead is therefore K aux-write calls per cref list
+(bounded by LaTeX's `\protected@write` cost, ~microseconds
+each) and zero additional work in the flush.  For a
+document with 5 000 cref lists averaging K=3 labels, the
+extra aux-write cost is ~15 000 writes ~= 50ms of build
+time — imperceptible.  The `.aux` file is roughly 2x
+larger in the cref-heavy case compared to a plain-`\ref`
+document, but still tiny relative to the typeset content.
 
 **Hash-table saturation at very large scale (per REVIEW_D
 finding #13).** At ~100 000 atoms, TeX's csname hash table
@@ -1329,6 +1990,119 @@ the review record:
   `\semtex@installnewlabel`.
 - **Kernels older than `\AddToHook`**: the package already
   errors out at `semtex.sty` line 636-642.
+- **Restated theorems via `\restatable` / `\restate`**
+  (REVIEW_E #1): detected by `\ifx\c@theorem\c@atom`
+  guard at the top of `\semtex@hooktheorem`'s begin/end
+  hooks.  See Section 8a.5.a.
+- **`\@startsection`-wrapping classes (KOMA, memoir,
+  titlesec)** (REVIEW_E #5): suppression now uses
+  `cmd/<level>/before` generic hooks instead of a
+  `\@startsection` wrapper.  See Section 8a.6.i.
+- **Inline `\tikz` / `\tikzcd` inside atom bodies**
+  (REVIEW_E #9): see "Recommended preamble snippets"
+  below.
+- **cref lists `\cref{a,b,c}` producing K aux-writes**:
+  the downstream `\semtex@processbr` dedup absorbs the
+  multiplicity; see Section 8a.0 "Why so many patch
+  sites?" for details.
+
+### Recommended preamble snippets (REVIEW_E #9)
+
+> Upstream motivation: **REVIEW_E finding #9 (MINOR).**
+> The user targets category-theory monographs that use
+> `tikzcd` heavily for diagrams.  Inline
+> `\tikz[baseline]{...}` and `\tikzcd[...]{...}` inside
+> paragraph bodies can cause `para/begin` to fire inside
+> the diagram's internal node structure, producing
+> spurious atom numbers.
+
+The default `\semtex@installsuppress` covers the
+`tikzpicture` environment (when tikz is loaded), but
+**inline** forms are commands, not environments, and
+must be registered via `\semtexsuppresscmd`.  Add to
+your preamble, AFTER `\usepackage{tikz}` /
+`\usepackage{tikz-cd}` and AFTER `\usepackage{semtex}`:
+
+```latex
+% If you use inline tikz or tikzcd in atom bodies,
+% suppress para/begin inside them so nodes do not become
+% sub-atoms:
+\semtexsuppresscmd{\tikz}
+\@ifpackageloaded{tikz-cd}{%
+  \semtexsuppresscmd{\tikzcd}%
+}{}%
+```
+
+For users who define their own tikz wrapper macros
+(e.g., `\newcommand{\smallcd}[1]{\begin{tikzcd}[...]#1\end{tikzcd}}`),
+the underlying environment is already suppressed, so no
+additional action is needed.  For wrappers that use
+inline `\tikz{...}` form, add
+`\semtexsuppresscmd{\smallcd}` after the definition.
+
+Similar wrappers for the other MINOR-class compatibility
+issues:
+
+```latex
+% tcolorbox / mdframed environments (auto-suppressed when
+% the package is loaded; see Section 8a.6.l).  User
+% variants created via \newtcolorbox need manual
+% registration:
+\newtcolorbox{mybox}{...}
+\semtexsuppress{mybox}
+
+% enumitem \newlist variants are auto-suppressed via the
+% \newlist wrapper installed in Section 8a.6.k; no
+% action needed.
+
+% Custom verbatim wrappers (listings, minted user
+% environments) should be suppressed manually:
+\lstnewenvironment{mylisting}{...}{...}
+\semtexsuppress{mylisting}
+```
+
+These snippets are optional for users who do not use
+the corresponding packages.  The core semtex.sty
+package imposes no hard dependencies on tikz,
+tcolorbox, mdframed, listings, or enumitem.
+
+### Regression fixtures (consolidated)
+
+New regression fixtures introduced by REVIEW_D and
+REVIEW_E, in addition to the existing
+`test-basic`/`test-backrefs`/`test-options`/etc. set.
+Each fixture lives under `tools/semtex-sty/testfiles/`
+and runs under `l3build check`.
+
+| Fixture | Tests | Source finding |
+|---|---|---|
+| `test-stale-currentatom.lvt` | Stray ref between atoms does not write ghost edge | REVIEW_A #3 / REVIEW_C #4 (MAJOR) |
+| `test-cleveref.lvt` | `\cref{thm:A}` produces a back-ref edge | REVIEW_E #2 / E#1 (BLOCKER) |
+| `test-hyperref-autoref.lvt` | `\autoref{thm:A}` and `\ref*{thm:A}` produce edges | REVIEW_E #2,#3 / E#1,E#5 (BLOCKER/MAJOR) |
+| `test-restatable.lvt` | `\restatable` + `\restate` does not double-emit atom | REVIEW_E #1 / E#2 (BLOCKER) |
+| `test-koma-titlesec.lvt` | `scrbook` section heading is NOT numbered as atom | REVIEW_E #5 / E#3 (BLOCKER) |
+| `test-amsthm-nested.lvt` | Nested theorem gets one atom number, not three | REVIEW_E #7 / E#7 (MAJOR) |
+| `test-cleveref-label-opt.lvt` | `\label[theorem]{thm:A}` optional arg works | REVIEW_E #4 / E#4 (MAJOR) |
+| `test-equations-shared-align.lvt` | Documents per-line counter-advance hazard | REVIEW_E #6 / E#6 (MAJOR) |
+| `test-enumitem-newlist.lvt` | `\newlist`-created environments auto-suppressed | REVIEW_E #10 / E#10 (MINOR) |
+| `test-ntheorem.lvt` | ntheorem backend works (verifies DESIGN.md claim) | REVIEW_E #12 / E#12 (MINOR) |
+| `test-tcolorbox.lvt` | `tcolorbox` environment is suppressed | REVIEW_E #13 / E#13 (MINOR) |
+| `test-latexml.lvt` | LaTeXML binding emits stable CSS classes | REVIEW_D LaTeXML test / E#11 |
+
+**Test infrastructure helpers.** Several fixtures need a
+small `\semtex@debug@aux` macro (greps the current
+`.aux` file from inside `l3build check`) and a way to
+extract PDF text for the section-heading-not-numbered
+check.  Both are standard `l3build` patterns; no
+custom tooling required.
+
+**Running the suite.** `l3build check` from
+`tools/semtex-sty/` runs every `.lvt` in `testfiles/`.
+Fixtures that depend on optional packages (cleveref,
+hyperref, KOMA, etc.) should `\RequirePackage` with
+`\@ifpackageloaded` guards or use `l3build`'s
+per-fixture support-file mechanism to declare package
+dependencies.
 
 ### License note
 
@@ -1724,8 +2498,46 @@ precedes every atom write.
       \string\semtex@sbl@source{\jobname.tex}}%
   \fi
 }
-\DeclareHookRule{begindocument/before}{semtex/sbl/open}{before}{*}
+% The explicit ordering rule is declared once, centrally, in
+% Section 8a.7 (hook installation).  See that section for
+% the internal ordering between semtex/backref/install and
+% semtex/sbl/open, and the external rule against hyperref.
 ```
+
+#### biblatex hook ordering (REVIEW_E #8)
+
+> Upstream motivation: **REVIEW_E finding #8 (MINOR).**
+> biblatex writes extensive `\abx@aux@*` records to `.aux`
+> via `begindocument/before`-adjacent hooks.  Our `.sbl`
+> writer does NOT collide with these (different
+> namespace), but the relative ordering of
+> `semtex/sbl/open` and biblatex's own install hooks is
+> not pinned.
+
+Our existing ordering rule (`semtex/backref/install`
+declared `before` `hyperref`, and `semtex/sbl/open`
+declared `after` `semtex/backref/install` — see Section
+8a.7) places our install chain at the front of the hook
+firing order, which is safe against biblatex because
+biblatex does not depend on our csname namespace and we
+do not read biblatex's `\abx@aux@*` records.  The
+ordering is effectively "semtex fires first, biblatex
+fires later" — the natural order, with no conflict.
+
+If a future biblatex release installs a hook that
+collides with our label/ref machinery (e.g., wraps
+`\newlabel` in a way that breaks our
+`\semtex@installnewlabel` override chain), add:
+
+```tex
+\@ifpackageloaded{biblatex}{%
+  \DeclareHookRule{begindocument/before}%
+    {semtex/backref/install}{after}{biblatex}%
+}{}
+```
+
+to the Section 8a.7 hook rules.  Unnecessary for current
+biblatex releases; document for forward-compat.
 
 ### Close timing
 
@@ -1760,7 +2572,7 @@ records.
 | `\semtex@hooktheorem`, `\AtBeginEnvironment{<env>}` after setting `\semtex@currentatom` | `\semtex@sbl@atom{num}{<env>}` + `\semtex@sbl@meta{num}{env}{<env>}` + `\semtex@sbl@meta{num}{src}{<file:line:col>}` |
 | `\semtex@hookproof`, `\AtBeginEnvironment{proof}` standalone branch | `\semtex@sbl@atom{num}{proof}` + `\semtex@sbl@meta{num}{src}{...}` |
 | `\semtex@installparahook`, normal paragraph branch after `\refstepcounter` | `\semtex@sbl@atom{num}{paragraph}` + `\semtex@sbl@meta{num}{src}{...}` |
-| `\label` wrap (new `\pretocmd{\label}` site) | `\semtex@sbl@label{num}{key}` — one per `\label` call inside a current atom |
+| `\label` wrap (new site; cleveref-aware, see "Label wrap: cleveref optional argument" below) | `\semtex@sbl@label{num}{key}` — one per `\label` call inside a current atom |
 | `\semtextag{kind}{value}` | `\semtex@sbl@tag{num}{kind}{value}` |
 | `\semtexNewCommand{\cmd}[n]{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{newcommand}` + `\semtex@sbl@cmddef{cmd}{arity}{n}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
 | `\semtexNewDocumentCommand{\cmd}{spec}{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{NewDocumentCommand}` + `\semtex@sbl@cmddef{cmd}{argspec}{spec}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped |
@@ -1770,6 +2582,167 @@ The `src` metadata is built from LaTeX's
 `\currfilename`, `\the\inputlineno`, and a column counter
 (column counter may be approximate or omitted in the v1
 writer; the `:0` suffix means "unknown column").
+
+### Label wrap: cleveref optional argument (REVIEW_E #4)
+
+> Upstream motivation: **REVIEW_E finding #4 (MAJOR).**
+> cleveref's `\label` accepts an optional `[type]`
+> argument, and `thm-restate.sty` line 182 redefines
+> `\thmt@gobble@label` to accept one too when cleveref
+> is loaded.  A naive `\pretocmd{\label}{...}` swallows
+> the optional argument and either errors or emits a
+> corrupted `\semtex@sbl@label{num}{[type]key}` record.
+
+The label wrap must detect the optional argument.  The
+pattern uses `\@ifnextchar[` plus two helper macros,
+one for each branch.  Install at
+`begindocument/before` (after cleveref has loaded if
+present), not at package-load time:
+
+```tex
+%% ------------------------------------------------------------
+%% Section 9a emission: \label wrap (cleveref-aware).
+%% Called from the begindocument/before install hook after
+%% cleveref has had its chance to redefine \label.
+%% ------------------------------------------------------------
+\AddToHook{begindocument/before}[semtex/sbl/labelwrap]{%
+  \let\semtex@orig@label\label
+  \@ifpackageloaded{cleveref}{%
+    %% cleveref path: \label[type]{key}, where [type] is optional.
+    \def\label{%
+      \@ifnextchar[%]
+        \semtex@sbl@label@withopt
+        \semtex@sbl@label@noopt
+    }%
+  }{%
+    %% No cleveref: \label{key} only.
+    \def\label##1{%
+      \semtex@sblwrite@atom{%
+        \string\semtex@sbl@label
+          {\semtex@currentatom}{##1}}%
+      \semtex@orig@label{##1}%
+    }%
+  }%
+}
+
+\def\semtex@sbl@label@withopt[#1]#2{%
+  \semtex@sblwrite@atom{%
+    \string\semtex@sbl@label
+      {\semtex@currentatom}{#2}}%
+  \semtex@orig@label[#1]{#2}%
+}
+
+\def\semtex@sbl@label@noopt#1{%
+  \semtex@sblwrite@atom{%
+    \string\semtex@sbl@label
+      {\semtex@currentatom}{#1}}%
+  \semtex@orig@label{#1}%
+}
+```
+
+**What the wrapper preserves and how the double-wrap works
+(REVIEW_F #1 clarification):**
+
+Our wrapper is installed at `begindocument/before`.  At
+that point cleveref has NOT yet installed its own `\label`
+wrapper (cleveref does that inside its own
+`\AtBeginDocument`, which fires later than
+`begindocument/before`).  So when we capture
+`\semtex@orig@label`, it is the **kernel**
+`\label`/`\@newl@bel` pair, not cleveref's wrapper.
+
+When cleveref's `\AtBeginDocument` runs later, cleveref
+captures the current `\label` (which is OUR wrapper) and
+installs its own outer wrapper around it.  At user-call
+time, cleveref's outer wrapper fires first, processes the
+optional argument, then forwards the mandatory key to its
+captured target — which is our dispatcher.  Our
+dispatcher's `\@ifnextchar[` then sees no bracket
+(cleveref already stripped it) and falls through to the
+no-optional-arg branch, emitting
+`\semtex@sbl@label{num}{key}` with the correct mandatory
+key and forwarding to the kernel `\label` via
+`\semtex@orig@label`.
+
+Net effect:
+
+```
+user: \label[type]{key}
+  -> cleveref's outer wrap: strips [type], records r@key@cref
+       -> semtex's wrap: emits .sbl record with `key`
+            -> kernel \label: writes \newlabel{key}{...}
+```
+
+Cleveref's `\newlabel{key@cref}{...}` write still happens
+in cleveref's outer layer.  Our `.sbl` record fires from
+our middle layer.  The kernel `\newlabel{key}{...}` write
+happens from the bottom layer.  All three artifacts land
+correctly.
+
+- The `.sbl` record always emits only the label KEY
+  (`#2` in the cleveref-direct-call branch, `##1` in the
+  no-cleveref branch), never the `[type]` optional
+  argument — the CLI does not need the type hint because
+  it can derive the type from the enclosing atom's own
+  metadata.
+
+**`\@ifnextchar[` lookahead caveat (REVIEW_F #2).**
+Our dispatcher's `\@ifnextchar[` peeks at the token stream
+AFTER the mandatory argument has been consumed.  If a user
+writes pathological source like
+`\label[theorem]{thm:A}[some stuff]` (where `[some stuff]`
+is an unrelated bracket group following the label),
+semtex's dispatcher would consume `[some stuff]` as a
+spurious optional argument.  This is theoretical only —
+no real document writes this — but it is documented here
+for completeness alongside the `\hyperref[label]{text}`
+deliberate-uncovered note in §8a.0.
+
+**Interaction with `\restatable` (REVIEW_E Section R,
+bug R-4).**  On the restate branch of a restatable
+theorem, `thm-restate.sty` line 135 aliases
+`\label` to `\thmt@gobble@label` (which itself is
+redefined at line 182 to accept a 2-arg `[o m]` form
+when cleveref is loaded).  Our `\pretocmd`-like wrapper
+is installed BEFORE thm-restate's alias fires (because
+we install at `begindocument/before` and thm-restate
+dispatches its alias inside the restate branch at
+typeset time).  Under the `\restate`, `\label` is
+`\thmt@gobble@label`, not our wrapped version — so
+we do NOT emit a duplicate `\semtex@sbl@label` record
+on the restate.  This is the correct behaviour
+(REVIEW_E Section R marks R-4 as "not actually a bug"
+for precisely this reason: the restate occurrence is
+a visual rerender, not a new label site).
+
+#### Regression fixture: `test-cleveref-label-opt.lvt`
+
+```tex
+\documentclass{article}
+\usepackage{amsthm}
+\usepackage{cleveref}
+\usepackage{semtex}
+\newtheorem{theorem}{Theorem}
+\semtextrack{theorem}
+
+\begin{document}
+\begin{theorem}
+  \label[theorem]{thm:A}
+  Statement A with a cleveref-typed label.
+\end{theorem}
+
+Later, \cref{thm:A} is referenced.
+\end{document}
+```
+
+Assertions:
+
+- `.sbl` contains `\semtex@sbl@label{<N>}{thm:A}`
+  (KEY only, no brackets, no `[theorem]` prefix).
+- `.aux` contains both the kernel `\newlabel{thm:A}{...}`
+  and cleveref's `\newlabel{thm:A@cref}{...}`.
+- The `\cref{thm:A}` back-reference edge is correctly
+  recorded (closes the loop with E#1).
 
 ### Guard pattern
 
@@ -2100,6 +3073,52 @@ Section titles, TOC entries, page numbers, rendered
 output, and anything else LaTeX already writes are NOT
 reproduced in `.sbl`.
 
+### Multi-file documents: `subfiles` / `\include` (REVIEW_E #11)
+
+> Upstream motivation: **REVIEW_E finding #11 (MINOR,
+> documentation-only).**  Users who compile subfiles
+> standalone (`\documentclass[../main.tex]{subfiles}`)
+> produce a per-subfile `.sbl` that does not match the
+> master-compile `.sbl`.  The CLI must not confuse them.
+
+`.sbl` is strictly per-`\jobname`, identical to how
+`.aux` is per-`\jobname`.  Consequences:
+
+- `pdflatex main.tex` produces `main.sbl` containing
+  atoms from the entire project (main.tex plus all
+  included subfiles), with continuous atom numbering.
+- `pdflatex chapters/ch1.tex` (run standalone, using
+  `\documentclass[../main.tex]{subfiles}`) produces
+  `chapters/ch1.sbl` containing only ch1's atoms, with
+  **local** atom numbering starting at 1.  This `.sbl`
+  is correct for the standalone compile and does not
+  corrupt the master's `main.sbl`.
+- If both `main.sbl` and `chapters/ch1.sbl` exist on
+  disk simultaneously, they describe **different
+  documents** — the master version and the standalone
+  draft version.  Atom numbers in `chapters/ch1.sbl`
+  are not a subset of `main.sbl`'s numbering.
+
+**CLI contract (per REVIEW_E #11 and the CLI scope
+document).**  `semtex-cli analyse main.tex` reads
+`main.sbl` and nothing else.  It does not discover or
+merge `chapters/ch1.sbl` or any other subfile `.sbl`.
+If the user wants semantic analysis, they must run
+from the master document.  If they are iterating on a
+single subfile for drafting purposes, the standalone
+compile's local backrefs still work (via the per-subfile
+`.aux` rerun) but no semantic analysis happens.
+
+**Recommendation.**  Treat subfile standalone
+compiles as drafting-only.  Run `semtex-cli` only
+against the master.  This matches the normal LaTeX
+workflow where `\ref{thm:A}` across subfiles is only
+guaranteed to resolve in the master build.
+
+No change is required in `semtex.sty` or
+`semtex-cli` to support this; it is purely a user
+documentation point.
+
 ## Package options
 
 ```latex
@@ -2185,6 +3204,56 @@ tools/semtex-sty/
   superscript margin numbers, removing the number from theorem
   headers.  Gives a visually uniform margin column.  Current
   behavior becomes `style=inline` (default for now).
+
+- **`equations=shared` mode rework (REVIEW_E #6).**  Current
+  shared-mode implementation (`\let\c@equation\c@atom`) has
+  surprising interactions with `align`/`gather`/`subequations`:
+  each labelled line calls `\refstepcounter{equation}`
+  independently, consuming N atom numbers instead of 1.
+  Future fix: alias `\c@equation` to `\c@atom` lazily,
+  only at `\refstepcounter{equation}` time OUTSIDE an
+  `align`/`gather`/`subequations` scope.  Inside multi-line
+  environments, fall back to a private equation counter.
+  Regression fixture `test-equations-shared-align.lvt`
+  pins the current known-broken behaviour so the rework
+  can be validated against it.
+
+- **`\newtcolorbox` auto-registration (REVIEW_E #13).**
+  Parallel to `\newlist` wrapping in Section 8a.6.k,
+  wrap `\newtcolorbox` (and `\newtcolorbox[...]{name}{...}`
+  with-options form) to auto-call `\semtex@suppressenv`
+  on the created environment.  Requires inspection of
+  tcolorbox's `\newtcolorbox` signature (complex; may
+  take an `xparse`-style optional-argument probe).
+
+- **Verbatim-environment auto-suppression (REVIEW_E #14).**
+  listings, minted, fancyvrb users currently have to
+  manually `\semtexsuppress{lstlisting}` etc.  A future
+  convenience would auto-suppress common verbatim
+  environment names when the respective package is
+  loaded.  Out of scope for v0.1; documented in
+  "Recommended preamble snippets" above.
+
+- **`\semtex@recordmanualref{label}` helper.**  For
+  authors who use `\hyperref[label]{text}` and want
+  semtex to still track the edge, provide an explicit
+  opt-in helper command.  Currently
+  `\hyperref[label]{text}` is deliberately uncovered
+  (REVIEW_E #16); this helper lets the author opt back
+  in on a per-site basis.
+
+- **biblatex ordering rule** — add
+  `\DeclareHookRule{begindocument/before}{semtex/backref/install}{after}{biblatex}`
+  conditionally if a biblatex interaction bug surfaces
+  (REVIEW_E #8).  Currently unnecessary; kept on the
+  radar for forward-compat.
+
+- **memoir-class regression testing.**  REVIEW_E #5
+  flagged memoir as a BLOCKER candidate (same root
+  cause as KOMA), but the fix via `cmd/<level>/before`
+  hooks should cover it.  Verify with
+  `test-memoir.lvt` fixture once memoir is installed
+  in the test environment.
 
 ## Credit
 
