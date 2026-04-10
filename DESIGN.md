@@ -2286,10 +2286,18 @@ parsing machinery beyond the one-line addition of the
   against the concept-def map.  Action:
 
   ```tex
-  \PackageWarning{semtex}{%
-    \string\Hom\space used N times but no
-    \string\Hom*\space definition site found;
-    backrefs for \string\Hom\space are disabled}
+  \ifsemtex@conceptwarnings
+    \PackageWarning{semtex}{%
+      \string\Hom\space used N times but no
+      \string\Hom*\space definition site found;
+      backrefs for \string\Hom\space are disabled}%
+  \else
+    \PackageInfo{semtex}{%
+      \string\Hom\space used N times but no
+      \string\Hom*\space definition site found;
+      backrefs for \string\Hom\space are disabled
+      (conceptwarnings=off)}%
+  \fi
   ```
 
   No fallback to first-occurrence (explicitly rejected
@@ -2299,6 +2307,23 @@ parsing machinery beyond the one-line addition of the
   `.sty` typeset PDF has no "Used in" line at any atom
   for this concept.  Exit code is 0 (warning, not
   error) — the document still compiles and renders.
+
+  **Quiet mode for smoke-test workflows.**  When the
+  package option `conceptwarnings=off` is in effect,
+  the missing-def-site detection still runs but emits
+  via `\PackageInfo` instead of `\PackageWarning`.
+  The `.log` still records which concepts have no def
+  site (so a CLI / test runner can post-process the
+  info lines), but the standard `Warning|Error` grep
+  used by test runners no longer fires.  This mode is
+  intended for the real-world arxiv corpus under
+  `tools/semtex-sty/testfiles/real-world/`, where
+  wrappers mechanically rewrite the paper's
+  `\newcommand`s into `\semtexNewCommand`s but cannot
+  insert `\Hom*` markers (which would require domain
+  knowledge of which atom is the canonical definition).
+  For hand-authored documents, leave this option at
+  its default value `on`.
 
 - **Duplicate def site** (`\Hom*` fires twice or more,
   at different atoms).  Detected in `\semtex@emit@def`
@@ -2434,6 +2459,31 @@ Both sides are ~20 lines of TeX each.  The split
 mirrors the existing design: §9a owns the user API and
 the declaration-time wrappers, §8a owns the backref
 pipeline and the aux-read callbacks.
+
+The package option is implemented in semtex.sty's
+existing pgfkeys block (Section 3) by adding:
+
+```tex
+  conceptwarnings/.is choice,%
+  conceptwarnings/on/.code =
+    {\booltrue{semtex@conceptwarnings}},%
+  conceptwarnings/off/.code =
+    {\boolfalse{semtex@conceptwarnings}},%
+  conceptwarnings/.default = on,%
+```
+
+with the corresponding boolean declaration in Section 4
+(Internal state):
+
+```tex
+\newbool{semtex@conceptwarnings}
+\booltrue{semtex@conceptwarnings}
+```
+
+The boolean must be declared before the pgfkeys block
+references it.  The `\ifsemtex@conceptwarnings` branch
+in the `\AtEndDocument` scan (see Error handling above)
+is the only call site.
 
 #### Regression fixtures
 
@@ -3564,6 +3614,13 @@ with manual review for any internal helper macros you
 want to leave untracked (e.g. `\newcommand{\@semtex@helper}...`
 inside a package).  Two-line sed script, one git commit.
 
+For automated/batch workflows that rewrite `\newcommand`
+to `\semtexNewCommand` mechanically (e.g., `wrap.py` for
+the arxiv test corpus), pair the rewrite with the
+`conceptwarnings=off` package option to suppress the
+noise from concepts that have no `\Hom*` marker.  See
+Package options below.
+
 #### Implementation sketch
 
 The wrapped command is defined via `\NewDocumentCommand`
@@ -3897,7 +3954,24 @@ documentation point.
 \usepackage[backrefs=none]{semtex}        % numbering only
 \usepackage[proofs=numbered]{semtex}      % proofs get atom numbers (default)
 \usepackage[proofs=unnumbered]{semtex}    % proofs unnumbered
+\usepackage[conceptwarnings=on]{semtex}   % warn on missing \Hom* def site (default)
+\usepackage[conceptwarnings=off]{semtex}  % silent (real-world smoke test mode)
 ```
+
+The `conceptwarnings` option controls whether §8a.9's
+"missing def site" diagnostic for `\semtexNewCommand`-defined
+concepts fires as a `\PackageWarning` (default: `on`) or as
+a quieter `\PackageInfo` (`off`).  The default is the correct
+choice for hand-authored monographs where each tracked
+command should have exactly one `\Hom*` marker.  The `off`
+mode exists for batch / smoke-test workflows where
+`\semtexNewCommand` is generated mechanically (e.g., by
+`tools/semtex-sty/testfiles/real-world/wrap.py` rewriting
+arxiv papers' `\newcommand`s) and the absence of star markers
+is expected, not a defect.  The diagnostic is still emitted —
+it just lands in `.log` at info level instead of warning
+level, so test runners that grep for `Warning|Error` no
+longer trip on it.
 
 ## Dependencies
 
