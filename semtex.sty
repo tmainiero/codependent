@@ -556,15 +556,7 @@
       % previous paragraph's output) without a mode change.
       \ifx\semtex@deferredbr\@empty\else
         \vadjust pre{%
-          \nobreak
-          \vbox{%
-            \hbox to \linewidth{%
-              \hfil
-              {\normalfont\scriptsize\sffamily
-                Used in \semtex@deferredbr.}%
-            }%
-          }%
-          \nobreak
+          \semtex@renderdeferred{\semtex@deferredbr}%
         }%
         \global\let\semtex@deferredbr\@empty
       \fi
@@ -1123,13 +1115,37 @@
   }{}%
 }
 
+% \semtex@formatusedin{reflist}
+%   Shared formatting helper for "Used in" lines.  Both the
+%   inline path (\semtex@renderinline) and the deferred
+%   paragraph path (\vadjust pre in \semtex@installparahook)
+%   call this, so overriding it changes ALL rendering.
+\newcommand*{\semtex@formatusedin}[1]{%
+  {\normalfont\scriptsize\sffamily Used in #1.}}
+
 % \semtex@renderinline{reflist}
 %   Render "Used in X, Y." at the end of the current atom.
+%   Used for theorem/definition/lemma atoms (non-paragraph).
 %   Redefined at \begin{document} when hyperref is loaded.
 \newcommand*{\semtex@renderinline}[1]{%
   \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
-  \quad{\normalfont\scriptsize\sffamily Used in #1.}%
-  \par
+  \quad\semtex@formatusedin{#1}%
+  \par\addvspace{\medskipamount}%
+}
+
+% \semtex@renderdeferred{reflist}
+%   Render "Used in" inside a \vadjust pre context (vertical
+%   mode).  Used for paragraph atoms via the deferred-backref
+%   mechanism.  Calls \semtex@formatusedin for the text.
+\newcommand*{\semtex@renderdeferred}[1]{%
+  \nobreak
+  \vbox{%
+    \hbox to \linewidth{%
+      \hfil\semtex@formatusedin{#1}%
+    }%
+    \vskip\medskipamount
+  }%
+  \nobreak
 }
 
 % Deferred backref: data saved at para/end, emitted at the
