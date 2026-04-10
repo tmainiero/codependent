@@ -23,10 +23,10 @@ below are explicitly marked `UNPINNED` so a future grep
 will catch them.
 
 ```
-UNPINNED: fetch date    TBD (ISO 8601, e.g. 2026-04-12)
-UNPINNED: dpmac.tex SHA-256    TBD (64-char lowercase hex)
-UNPINNED: dpmac.tex line count TBD (`wc -l`)
-UNPINNED: dpmac.tex byte count TBD (`wc -c`)
+fetch date:    2026-04-10
+dpmac.tex SHA-256    871a7e0b99aa1cd253f1d9c3384e19dd789ff3d79d30fefb41846a13e4e24e17
+dpmac.tex line count 1900
+dpmac.tex byte count 74725
 ```
 
 ### Pre-commit checklist for the dpmac port
