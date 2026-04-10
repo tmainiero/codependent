@@ -9,7 +9,8 @@
 %% TEST-SECTION: DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-LOG-NOT: Package semtex Warning(?!.*Nested tracked environment)
+%% TEST-LOG-CONTAINS: Nested tracked environment
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
 %% TEST-SBL-CONTAINS: \semtex@sbl@version{1}
 %% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{kind}{newcommand}

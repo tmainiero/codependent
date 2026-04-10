@@ -121,11 +121,23 @@
 \newcount\semtex@nestlevel
 \semtex@nestlevel=0\relax
 
+% Tracked-env nesting depth.  When > 1, inner tracked envs are
+% suppressed (no atom record, no SBL entry).  Uses \global\advance
+% because hooks may run inside groups.
+\newcount\semtex@trackedlevel
+\semtex@trackedlevel=0\relax
+
 % Pending back-reference text (flushed at para/end or env end).
 \newtoks\semtex@pendingbr
 
 % Current atom display number (set when atom is created).
 \newcommand*{\semtex@currentatom}{}
+
+% Saved atom number for the outermost tracked env.  When nesting
+% occurs, \theatom at end-time reflects the LAST \refstepcounter
+% (the inner env), not the outermost.  This macro captures the
+% correct value after the outermost env's \refstepcounter fires.
+\newcommand*{\semtex@outeratom}{}
 
 % Flag: true inside a tracked theorem environment.
 \newbool{semtex@intheorem}
@@ -339,11 +351,19 @@
   \AddToHook{cmd/#1/before}{%
     \expandafter\ifx\csname c@theorem\endcsname\c@atom
       % Original occurrence: alias intact, normal hook body.
+      \global\advance\semtex@trackedlevel by 1\relax
       \advance\semtex@nestlevel by 1\relax
-      \booltrue{semtex@intheorem}%
-      % Sentinel only — the actual atom number is read at write
-      % time via \theatom (see §8a.5.0).
-      \def\semtex@currentatom{1}%
+      \ifnum\semtex@trackedlevel>1\relax
+        % Nested tracked env: suppress atom creation.
+        \PackageWarning{semtex}{Nested tracked environment '#1'
+          inside another tracked environment. The inner
+          environment will not be assigned its own atom number}%
+      \else
+        \booltrue{semtex@intheorem}%
+        % Sentinel only — the actual atom number is read at write
+        % time via \theatom (see §8a.5.0).
+        \def\semtex@currentatom{1}%
+      \fi
     \else
       % Restate occurrence: \c@theorem re-let to dummy counter
       % by thm-restate.sty.  Suppress the hook body to avoid
@@ -358,29 +378,49 @@
       \semtex@pushcurrentatom
     \fi
   }%
+  % Save \theatom after \refstepcounter fires for the outermost env.
+  % cmd/#1/after fires AFTER amsthm's \refstepcounter (unlike
+  % cmd/#1/before which fires BEFORE it), so \theatom is correct
+  % here.  For nested tracked envs this is a no-op; only
+  % trackedlevel=1 saves.  The restate guard is not needed here
+  % because trackedlevel is only incremented on the original path.
+  \AddToHook{cmd/#1/after}{%
+    \ifnum\semtex@trackedlevel=1\relax
+      \xdef\semtex@outeratom{\theatom}%
+    \fi
+  }%
   \AddToHook{cmd/end#1/before}{%
     \expandafter\ifx\csname c@theorem\endcsname\c@atom
       % Original occurrence: normal end body.
-      % \theatom is now post-\refstepcounter (the env body
-      % has run).
-      \semtex@sblwrite@atom{%
-        \string\semtex@sbl@atom{\theatom}{#1}}%
-      \semtex@sblwrite@atom{%
-        \string\semtex@sbl@meta{\theatom}{env}{#1}}%
-      \semtex@sblwrite@atom{%
-        \string\semtex@sbl@meta{\theatom}{src}%
-          {\jobname.tex:\the\inputlineno:1}}%
-      \xdef\semtex@atomlist{%
-        \semtex@atomlist
-        \noexpand\do{{\theatom}{#1}}}%
-      \semtex@queuebackref{\theatom}%
-      % Backref flush is deferred to env/#1/after so that
-      % "Used in" renders AFTER endmarks (QED symbols, etc.).
-      % §8a.5 atom-end clear of the in-atom sentinel.
-      \let\semtex@currentatom\@empty
-      \advance\semtex@nestlevel by -1\relax
-      \ifnum\semtex@nestlevel=0\relax
-        \boolfalse{semtex@intheorem}%
+      \ifnum\semtex@trackedlevel>1\relax
+        % Nested end: skip SBL/backref, just decrement.
+        \global\advance\semtex@trackedlevel by -1\relax
+        \advance\semtex@nestlevel by -1\relax
+      \else
+        % Outermost end: write SBL records and flush backrefs.
+        % Use \semtex@outeratom (captured after the outermost
+        % env's \refstepcounter) instead of \theatom, because
+        % nested tracked envs may have advanced the counter.
+        \semtex@sblwrite@atom{%
+          \string\semtex@sbl@atom{\semtex@outeratom}{#1}}%
+        \semtex@sblwrite@atom{%
+          \string\semtex@sbl@meta{\semtex@outeratom}{env}{#1}}%
+        \semtex@sblwrite@atom{%
+          \string\semtex@sbl@meta{\semtex@outeratom}{src}%
+            {\jobname.tex:\the\inputlineno:1}}%
+        \xdef\semtex@atomlist{%
+          \semtex@atomlist
+          \noexpand\do{{\semtex@outeratom}{#1}}}%
+        \semtex@queuebackref{\semtex@outeratom}%
+        % Backref flush is deferred to env/#1/after so that
+        % "Used in" renders AFTER endmarks (QED symbols, etc.).
+        % §8a.5 atom-end clear of the in-atom sentinel.
+        \let\semtex@currentatom\@empty
+        \global\advance\semtex@trackedlevel by -1\relax
+        \advance\semtex@nestlevel by -1\relax
+        \ifnum\semtex@nestlevel=0\relax
+          \boolfalse{semtex@intheorem}%
+        \fi
       \fi
     \else
       % Restate end: restore currentatom from the stack, then
