@@ -123,10 +123,9 @@
 \boolfalse{semtex@proofpending}
 
 % Accumulated appendix data (token register).
+% Still referenced by \semtexappendix (Section 10); Wave 3 rewires
+% its population path per §8a.6.g.
 \newtoks\semtex@appendixdata
-
-% Hash for staleness detection (read from .aux on pass 2).
-\newcommand*{\semtex@auxhash}{}
 
 %% ===================================================================
 %% Section 5: Core numbering machinery
@@ -241,20 +240,28 @@
 
 % \semtex@hooktheorem{envname}
 %   Install begin/end hooks for a tracked theorem environment.
+%   Timing note (DESIGN.md §8a.5.0): the AtBeginEnvironment hook
+%   fires BEFORE amsthm's \refstepcounter{theorem}, so \theatom
+%   at begin-time is the PREVIOUS atom's number.  The queuebackref
+%   call is therefore moved to the AtEndEnvironment block, where
+%   the env body has run and \theatom reflects the current atom.
+%   \semtex@currentatom is demoted to a sentinel — its value is
+%   not used, only its emptiness; we set it to a literal "1" on
+%   begin and clear to \@empty on end.
 \newcommand*{\semtex@hooktheorem}[1]{%
   \AtBeginEnvironment{#1}{%
-    \ifnum\semtex@nestlevel>0\relax
-      % Nested inside another tracked env: undo the counter
-      % advance that \newtheorem performed automatically.
-      \addtocounter{atom}{-1}%
-    \fi
     \advance\semtex@nestlevel by 1\relax
     \booltrue{semtex@intheorem}%
-    \edef\semtex@currentatom{\theatom}%
-    \semtex@queuebackref{\semtex@currentatom}%
+    % Sentinel only — the actual atom number is read at write
+    % time via \theatom (see §8a.5.0).
+    \def\semtex@currentatom{1}%
   }%
   \AtEndEnvironment{#1}{%
+    % \theatom is now post-\refstepcounter (the env body has run).
+    \semtex@queuebackref{\theatom}%
     \semtex@flushbackref
+    % §8a.5 atom-end clear of the in-atom sentinel.
+    \let\semtex@currentatom\@empty
     \advance\semtex@nestlevel by -1\relax
     \ifnum\semtex@nestlevel=0\relax
       \boolfalse{semtex@intheorem}%
@@ -281,7 +288,7 @@
           \advance\semtex@nestlevel by 1\relax
           \edef\semtex@currentatom{\theatom}%
           \global\booltrue{semtex@proofpending}%
-          \semtex@queuebackref{\semtex@currentatom}%
+          \semtex@queuebackref{\theatom}%
         \fi
       }{%
         % Unnumbered: just suppress paragraph numbering.
@@ -291,6 +298,8 @@
     \AtEndEnvironment{proof}{%
       \ifbool{semtex@proofsnumbered}{%
         \semtex@flushbackref
+        % §8a.5 atom-end clear of the in-atom sentinel.
+        \let\semtex@currentatom\@empty
       }{}%
       \advance\semtex@nestlevel by -1\relax
     }%
@@ -406,7 +415,7 @@
             \refstepcounter{atom}%
             \edef\semtex@currentatom{\theatom}%
             \semtex@emitmargin{\semtex@currentatom}%
-            \semtex@queuebackref{\semtex@currentatom}%
+            \semtex@queuebackref{\theatom}%
           \fi
         }%
       }%
@@ -441,14 +450,20 @@
 
 % \semtex@writeatomref{target}
 %   Shared aux-write helper called by all patch sites.  Guards
-%   on \semtex@currentatom (no write if no atom is current) and
-%   on \if@filesw so --draftmode / -no-aux compiles work.
+%   on \semtex@currentatom (in-atom sentinel: empty = not inside
+%   a tracked atom, so no write) and on \if@filesw so --draftmode
+%   / -no-aux compiles work.  The src field is read from \theatom
+%   at write time per DESIGN.md §8a.5.0: at hook entry \theatom
+%   is pre-\refstepcounter (wrong number); at \ref time the
+%   refstepcounter has fired and \theatom is the correct enclosing
+%   atom number.  The \semtex@currentatom check is the in-atom
+%   sentinel only; its value is not written.
 \def\semtex@writeatomref#1{%
   \ifx\semtex@currentatom\@empty\else
     \if@filesw
       \protected@write\@auxout{}{%
         \string\semtex@atomref
-          {\semtex@currentatom}{#1}%
+          {\theatom}{#1}%
       }%
     \fi
   \fi
@@ -754,17 +769,27 @@
 
 % \semtex@queuebackref{atomnumber}
 %   Look up back-refs for the given atom and queue for emission.
+%   Lazily materialises \semtex@br@#1 via \semtex@collapsebr
+%   (§8a.3), which walks the per-target linked-list nodes built
+%   from \semtex@atomref aux records.  Collapse is idempotent, so
+%   calling it unconditionally is fine.
 \newcommand*{\semtex@queuebackref}[1]{%
   \ifbool{semtex@backrefs}{%
     \semtex@pendingbr={}%
-    \@ifundefined{semtex@br@#1}{}{%
+    \semtex@collapsebr{#1}%
+    % After collapse, semtex@br@#1 is either \@empty (no refs)
+    % or a comma-joined ref list.  \@ifundefined cannot
+    % distinguish \@empty from real data (collapsebr always
+    % defines the csname), so use \ifx against \@empty instead.
+    \expandafter\ifx\csname semtex@br@#1\endcsname\@empty
+      % No refs to this target (collapsed to \@empty): skip.
+    \else
       \ifbool{semtex@appendix}{}{%
         % Inline mode: store ref list for flush.
         \semtex@pendingbr=\expandafter{%
-          \csname semtex@br@#1\endcsname
-        }%
+          \csname semtex@br@#1\endcsname}%
       }%
-    }%
+    \fi
   }{}%
 }
 
@@ -795,89 +820,18 @@
 
 % \semtex@installparendhook
 %   Install the para/end hook for flushing back-refs.
+%   Per §8a.5, clears \semtex@currentatom after the flush so
+%   that any \ref firing between paragraphs is not attributed to
+%   the just-closed atom.
 \newcommand*{\semtex@installparendhook}{%
   \AddToHook{para/end}{%
     \ifbool{semtex@tracked}{%
       \ifbool{semtex@intheorem}{}{%
         \semtex@flushbackref
+        \let\semtex@currentatom\@empty
       }%
     }{}%
   }%
-}
-
-%% ===================================================================
-%% Section 9: Data file I/O
-%% ===================================================================
-
-% \semtex@backref{atomnumber}{atomname}{reflist}
-%   Callback used by .sbr file entries.  Stores data for lookup.
-\newcommand*{\semtex@backref}[3]{%
-  \@namedef{semtex@br@#1}{#3}%
-  \@namedef{semtex@brname@#1}{#2}%
-  \ifbool{semtex@appendix}{%
-    \semtex@appendixdata=\expandafter{%
-      \the\semtex@appendixdata
-      \semtex@appendixentry{#1}{#2}{#3}%
-    }%
-  }{}%
-}
-
-% \semtex@section{number}{title}
-%   Section header in .sbr file.  Used for appendix grouping.
-\newcommand*{\semtex@section}[2]{%
-  \ifbool{semtex@appendix}{%
-    \semtex@appendixdata=\expandafter{%
-      \the\semtex@appendixdata
-      \semtex@appendixsection{#1}{#2}%
-    }%
-  }{}%
-}
-
-% \semtex@sbrversion{hash}
-%   Version/hash marker in .sbr file for staleness detection.
-\newcommand*{\semtex@sbrversion}[1]{%
-  \def\semtex@sbrhash{#1}%
-}
-
-% \semtex@readsbr
-%   Attempt to read the .sbr file.  Called at \AtBeginDocument.
-\newcommand*{\semtex@readsbr}{%
-  \IfFileExists{\jobname.sbr}{%
-    \PackageInfo{semtex}{Reading \jobname.sbr}%
-    \input{\jobname.sbr}%
-    % Staleness check: compare .sbr hash with .aux hash.
-    \@ifundefined{semtex@sbrhash}{}{%
-      \ifx\semtex@auxhash\@empty\else
-        \ifx\semtex@sbrhash\semtex@auxhash\else
-          \PackageWarning{semtex}{%
-            .sbr is stale, rerun semtex backrefs}%
-        \fi
-      \fi
-    }%
-  }{%
-    \PackageInfo{semtex}{%
-      No \jobname.sbr found (backrefs disabled this pass)}%
-  }%
-}
-
-% \semtex@writeauxhash
-%   Write a version hash to .aux for staleness detection.
-\newcommand*{\semtex@writeauxhash}{%
-  \edef\semtex@auxhash{%
-    \the\value{atom}:\the\year\the\month\the\day
-  }%
-  \if@filesw
-    \immediate\write\@auxout{%
-      \string\semtex@auxversion{\semtex@auxhash}%
-    }%
-  \fi
-}
-
-% \semtex@auxversion{hash}
-%   Callback read from .aux on pass 2 (written by pass 1).
-%   Providecommand so it is safe to read from .aux.
-\providecommand*{\semtex@auxversion}[1]{%
-  \gdef\semtex@auxhash{#1}%
 }
 
 %% ===================================================================
@@ -916,10 +870,6 @@
   \semtex@suppresscommands
   \semtex@installparahook
   \semtex@installparendhook
-  % Read .sbr file at begin document.
-  \AtBeginDocument{\semtex@readsbr}%
-  % Write aux hash at end document.
-  \AtEndDocument{\semtex@writeauxhash}%
 }
 
 % \semtexsuppress{envname}
