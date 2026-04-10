@@ -7,9 +7,9 @@ Runs every .lvt fixture under unit/ and integration/ through pdflatex
 header in each fixture, applies assertions, and produces a summary.
 
 Designed to run BEFORE semtex.sty's implementation phase: assertions
-target observable artifacts (.aux, .sbl, .log, exit code) rather than
-golden .tlg files. l3build can later replace this runner once the
-implementation lands and we can lock in golden output.
+target observable artifacts (.aux, .sbl, .log, exit code, PDF content)
+rather than golden .tlg files. l3build can later replace this runner
+once the implementation lands and we can lock in golden output.
 
 Usage:
 
@@ -78,12 +78,16 @@ METADATA_KEYS = {
     "TEST-PACKAGES": "packages",
     "TEST-RERUN": "rerun",
     "TEST-PINS-KNOWN-BROKEN": "pins_known_broken",  # 'yes' marks intentional pin
+    "TEST-PDF-CONTAINS": "pdf_contains",  # may repeat; text in PDF output
+    "TEST-PDF-NOT": "pdf_not",  # may repeat; text must NOT appear in PDF
+    "TEST-PDF-LINKS": "pdf_links",  # int; minimum number of internal hyperlinks
 }
 
 REPEATING_KEYS = {
     "log_not", "log_contains",
     "sbl_contains", "sbl_not_contains", "sbl_count",
     "aux_contains", "aux_not_contains",
+    "pdf_contains", "pdf_not",
 }
 
 # No-op definitions for l3build regression-test markers.  l3build provides
@@ -124,6 +128,9 @@ class Fixture:
     packages: list = dataclasses.field(default_factory=list)
     rerun: int = 2
     pins_known_broken: bool = False
+    pdf_contains: list = dataclasses.field(default_factory=list)
+    pdf_not: list = dataclasses.field(default_factory=list)
+    pdf_links: int = 0
 
 
 def parse_fixture(path: Path) -> Fixture:
@@ -149,6 +156,11 @@ def parse_fixture(path: Path) -> Fixture:
             if attr == "exit_code":
                 try:
                     fix.exit_code = int(value)
+                except ValueError:
+                    pass
+            elif attr == "pdf_links":
+                try:
+                    fix.pdf_links = int(value)
                 except ValueError:
                     pass
             elif attr == "atoms_min":
@@ -194,6 +206,77 @@ def assert_engine_available(engine: str) -> Path:
         )
         sys.exit(2)
     return bin_path
+
+
+# ----------------------------------------------------------------------
+# PDF tool detection (for TEST-PDF-* directives)
+# ----------------------------------------------------------------------
+
+# Prefer mutool (mupdf); fall back to pdftotext (poppler).
+PDF_TEXT_TOOL: str | None = shutil.which("mutool") or shutil.which("pdftotext")
+PDF_LINK_TOOL: str | None = shutil.which("mutool") or shutil.which("qpdf")
+
+
+def _extract_pdf_text(pdf_path: Path) -> str | None:
+    """Extract plain text from a PDF.  Returns None if no tool available."""
+    if PDF_TEXT_TOOL is None:
+        return None
+    tool_name = Path(PDF_TEXT_TOOL).name
+    try:
+        if tool_name == "mutool":
+            proc = subprocess.run(
+                [PDF_TEXT_TOOL, "draw", "-F", "text", "-o", "-", str(pdf_path)],
+                capture_output=True, text=True, timeout=30,
+            )
+        else:  # pdftotext
+            proc = subprocess.run(
+                [PDF_TEXT_TOOL, str(pdf_path), "-"],
+                capture_output=True, text=True, timeout=30,
+            )
+        if proc.returncode == 0:
+            return proc.stdout
+        return None
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
+def _count_pdf_links(pdf_path: Path) -> int | None:
+    """Count internal hyperlink annotations in a PDF.
+
+    Returns the count, or None if no suitable tool is available.
+    """
+    if PDF_LINK_TOOL is None:
+        return None
+    tool_name = Path(PDF_LINK_TOOL).name
+    try:
+        if tool_name == "mutool":
+            # `mutool show <file> grep` outputs every PDF object in text
+            # form.  We count lines containing "/Subtype /Link".
+            proc = subprocess.run(
+                [PDF_LINK_TOOL, "show", str(pdf_path), "grep"],
+                capture_output=True, text=True, timeout=30,
+            )
+            if proc.returncode != 0:
+                return None
+            return proc.stdout.count("/Subtype /Link")
+        else:  # qpdf
+            proc = subprocess.run(
+                [PDF_LINK_TOOL, str(pdf_path), "--show-pages",
+                 "--with-images"],
+                capture_output=True, text=True, timeout=30,
+            )
+            if proc.returncode != 0:
+                # Fall back to listing all objects and grepping for /Link
+                proc2 = subprocess.run(
+                    [PDF_LINK_TOOL, str(pdf_path), "--list-objects"],
+                    capture_output=True, text=True, timeout=30,
+                )
+                if proc2.returncode != 0:
+                    return None
+                return proc2.stdout.count("/Link")
+            return proc.stdout.count("/Link")
+    except (subprocess.TimeoutExpired, OSError):
+        return None
 
 
 # ----------------------------------------------------------------------
@@ -357,6 +440,63 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                     f"got last non-empty line: {non_empty_lines[-1]!r}"
                 )
 
+        # 9. PDF content assertions (TEST-PDF-CONTAINS, TEST-PDF-NOT,
+        #    TEST-PDF-LINKS).  Only run when at least one PDF directive
+        #    is present.  Skipped with a warning when no PDF extraction
+        #    tool is available on PATH.
+        has_pdf_checks = fix.pdf_contains or fix.pdf_not or fix.pdf_links > 0
+        if has_pdf_checks:
+            pdf_file = tmp_path / f"{fix.name}.pdf"
+            if not pdf_file.exists():
+                result.failures.append(
+                    "pdf assertions present but no PDF was produced"
+                )
+            elif PDF_TEXT_TOOL is None and (fix.pdf_contains or fix.pdf_not):
+                sys.stderr.write(
+                    f"  WARN: skipping PDF text checks for {fix.name} "
+                    f"(no mutool or pdftotext on PATH)\n"
+                )
+            else:
+                # Text-based checks.
+                if fix.pdf_contains or fix.pdf_not:
+                    pdf_text = _extract_pdf_text(pdf_file)
+                    if pdf_text is None:
+                        result.failures.append(
+                            "pdf text extraction failed "
+                            f"(tool: {PDF_TEXT_TOOL})"
+                        )
+                    else:
+                        for s in fix.pdf_contains:
+                            if s not in pdf_text:
+                                result.failures.append(
+                                    f"pdf missing required text: {s!r}"
+                                )
+                        for s in fix.pdf_not:
+                            if s in pdf_text:
+                                result.failures.append(
+                                    f"pdf contains forbidden text: {s!r}"
+                                )
+
+                # Link count check.
+                if fix.pdf_links > 0:
+                    if PDF_LINK_TOOL is None:
+                        sys.stderr.write(
+                            f"  WARN: skipping PDF link check for {fix.name} "
+                            f"(no mutool or qpdf on PATH)\n"
+                        )
+                    else:
+                        link_count = _count_pdf_links(pdf_file)
+                        if link_count is None:
+                            result.failures.append(
+                                "pdf link counting failed "
+                                f"(tool: {PDF_LINK_TOOL})"
+                            )
+                        elif link_count < fix.pdf_links:
+                            result.failures.append(
+                                f"pdf links: expected >= {fix.pdf_links}, "
+                                f"got {link_count}"
+                            )
+
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name
             persistent.parent.mkdir(parents=True, exist_ok=True)
@@ -516,6 +656,23 @@ def main():
         f"      is in use as a one-time exception. Future runs should go\n"
         f"      through `nix develop` once the flake is updated.\n\n"
     )
+
+    # PDF tool notice.
+    if PDF_TEXT_TOOL:
+        sys.stderr.write(f"PDF text extraction: {PDF_TEXT_TOOL}\n")
+    else:
+        sys.stderr.write(
+            "WARN: no PDF text tool found (mutool or pdftotext). "
+            "TEST-PDF-CONTAINS / TEST-PDF-NOT checks will be skipped.\n"
+        )
+    if PDF_LINK_TOOL:
+        sys.stderr.write(f"PDF link counting:   {PDF_LINK_TOOL}\n")
+    else:
+        sys.stderr.write(
+            "WARN: no PDF link tool found (mutool or qpdf). "
+            "TEST-PDF-LINKS checks will be skipped.\n"
+        )
+    sys.stderr.write("\n")
 
     # Discover fixtures.
     if args.unit_only:
