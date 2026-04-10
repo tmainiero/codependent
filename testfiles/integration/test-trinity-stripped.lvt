@@ -3,7 +3,7 @@
 %%            monograph (~16 000 lines). Exercises the full semtex.sty
 %%            feature surface against the package stack found in real math
 %%            papers: amsthm + thmtools (restatable), hyperref, cleveref,
-%%            tikz-cd, custom math macros via \semtexNewCommand, counter-
+%%            tikz-cd, custom math macros via \semtexnewcommand, counter-
 %%            sharing theorem environments, \semtextag, and concept tracking
 %%            with def-site / use-site / forward-reference resolution.
 %% TEST-SOURCE: Three-avatars monograph (Geiko–Mainiero–Moore);
@@ -93,25 +93,25 @@
 \semtextrack{theorem,proposition,lemma,corollary,definition,remark}
 
 %% ---------- Concept-tracked macros ----------
-%% 5 macros converted to \semtexNewCommand, modelled on the source
+%% 5 macros converted to \semtexnewcommand, modelled on the source
 %% paper's operator-algebra notation. Each exercises a different arity.
 
 % \Hom{X}{Y} — arity 2, the canonical concept-tracking example
-\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 % \caty{C} — arity 1, category name formatter (mathsf in the source)
-\semtexNewCommand{\caty}[1]{\mathsf{#1}}
+\semtexnewcommand{\caty}[1]{\mathsf{#1}}
 
 % \Tr — arity 0, trace operator
-\semtexNewCommand{\Tr}[0]{\operatorname{Tr}}
+\semtexnewcommand{\Tr}[0]{\operatorname{Tr}}
 
 % \wtens{A} — arity 1, W*-bimodule tensor product
-\semtexNewCommand{\wtens}[1]{%
+\semtexnewcommand{\wtens}[1]{%
   \mathbin{\mathop{\otimes}\displaylimits^{\mathrm{w}}_{#1}}%
 }
 
 % \bimod{A}{M}{B} — arity 3, bimodule notation
-\semtexNewCommand{\bimod}[3]{{}_{#1}{#2}_{#3}}
+\semtexnewcommand{\bimod}[3]{{}_{#1}{#2}_{#3}}
 
 %% ---------- Equation numbering by section ----------
 \numberwithin{equation}{section}

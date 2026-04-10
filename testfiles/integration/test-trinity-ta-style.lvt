@@ -43,7 +43,7 @@
 %%   - hyperref (\autoref, hypertexnames=false)
 %%   - tikz-cd commutative diagram inside a theorem env
 %%   - Display math (equation, align) inside theorems — no margin numbers
-%%   - \semtexNewCommand concept tracking (def-site / use-site)
+%%   - \semtexnewcommand concept tracking (def-site / use-site)
 %%   - \semtextag semantic sidecar records
 %%   - Cross-section backrefs (section 3 → section 1)
 
@@ -160,10 +160,10 @@
 %% Two macros to exercise def-site / use-site tracking.
 
 % \Funct{F}{C} — arity 2, functor notation
-\semtexNewCommand{\Funct}[2]{\mathrm{#1}\colon #2}
+\semtexnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
 
 % \catname{C} — arity 1, category name formatter
-\semtexNewCommand{\catname}[1]{\mathsf{#1}}
+\semtexnewcommand{\catname}[1]{\mathsf{#1}}
 
 %% ---------- Equation numbering by section ----------
 \numberwithin{equation}{section}

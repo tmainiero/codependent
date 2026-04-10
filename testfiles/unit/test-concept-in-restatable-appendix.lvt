@@ -54,7 +54,7 @@
 \usepackage{semtex}
 \semtextrack{theorem}
 
-\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \begin{document}
 \START

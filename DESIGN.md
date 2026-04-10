@@ -2139,9 +2139,9 @@ The ONLY signal the tool has to distinguish a forward
 gesture from a definition is the author's intent.  There
 is no lexical hint.  The author must mark explicitly.
 
-#### User API: star dispatch inside `\semtexNewCommand`
+#### User API: star dispatch inside `\semtexnewcommand`
 
-`\semtexNewCommand{\Hom}[2]{body}` now defines TWO
+`\semtexnewcommand{\Hom}[2]{body}` now defines TWO
 variants of the command for the price of one
 declaration:
 
@@ -2167,7 +2167,7 @@ supplies, and the wrapped command dispatches on
 Author source looks like:
 
 ```latex
-\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \section{Introduction}
 We study the $\Hom{X}{Y}$ functor...     % use, forward
@@ -2448,7 +2448,7 @@ parsing machinery beyond the one-line addition of the
   intended for the real-world arxiv corpus under
   `tools/semtex-sty/testfiles/real-world/`, where
   wrappers mechanically rewrite the paper's
-  `\newcommand`s into `\semtexNewCommand`s but cannot
+  `\newcommand`s into `\semtexnewcommand`s but cannot
   insert `\Hom*` markers (which would require domain
   knowledge of which atom is the canonical definition).
   For hand-authored documents, leave this option at
@@ -2565,7 +2565,7 @@ against the teaser or appendix invocation atom.
 
 The TeX-time emit helpers and the pass-2 aux callbacks
 are shown in §9a's implementation sketch for
-`\semtexNewCommand` (the `\semtex@emit@def` /
+`\semtexnewcommand` (the `\semtex@emit@def` /
 `\semtex@emit@use` helpers) and in the
 `semtex/concept/install` hook code block above
 (the `\semtex@concept` / `\semtex@conceptref` aux
@@ -2575,7 +2575,7 @@ code blocks for the full detail.
 The split is:
 
 - **§9a sketch.** Per-command machinery: how a
-  `\semtexNewCommand`-defined macro dispatches on the
+  `\semtexnewcommand`-defined macro dispatches on the
   star, how emit-time records are written to aux and
   sbl, how duplicate def sites and empty-currentatom
   contexts are handled.
@@ -3010,7 +3010,7 @@ DefConstructor('\lxML@semtex@atomnum{}',
   . "<ltx:text class='semtex-atomnum-value'>#1</ltx:text>"
   . "</ltx:text>");
 
-# ---- .sbl / \semtextag / \semtexNewCommand etc. -----------
+# ---- .sbl / \semtextag / \semtexnewcommand etc. -----------
 #
 # These produce no typeset output under pdflatex (they are
 # write-only sidecar records -- see Section 9a).  Under
@@ -3019,7 +3019,7 @@ DefConstructor('\lxML@semtex@atomnum{}',
 # file is still written because LaTeXML honours
 # \immediate\write.
 DefMacro('\semtextag{}{}', '');
-# \semtexNewCommand and \semtexNewDocumentCommand are
+# \semtexnewcommand and \semtexNewDocumentCommand are
 # handled in the .sty itself (not in this file) because
 # their wrappers must generate TeX tokens to define the
 # wrapped command at LaTeXML parse time.  LaTeXML honours
@@ -3101,7 +3101,7 @@ complexity.
 
 ### Cross-reference to `.sbl` and the semantic CLI
 
-`.sbl` records, `\semtextag`, and `\semtexNewCommand` /
+`.sbl` records, `\semtextag`, and `\semtexnewcommand` /
 `\semtexNewDocumentCommand` metadata do
 **not** need LaTeXML bindings, because they produce no
 typeset output.  They are write-only sidecar data consumed
@@ -3240,7 +3240,7 @@ arguments.  The CLI parses N `{}`-groups and stops.
 | `\semtex@sbl@meta{num}{k}{v}` | 3 | Per-atom metadata pair. Keys: `src` (file:line:col), `env`, `depth`. Extensible. |
 | `\semtex@sbl@label{num}{key}` | 2 | Each `\label{key}` inside atom `num`. |
 | `\semtex@sbl@tag{num}{kind}{value}` | 3 | User `\semtextag{kind}{value}` record. Free-form. |
-| `\semtex@sbl@use{num}{cmd}` | 2 | Invocation of a `\semtexNewCommand`/`\semtexNewDocumentCommand`-wrapped command inside atom `num`. |
+| `\semtex@sbl@use{num}{cmd}` | 2 | Invocation of a `\semtexnewcommand`/`\semtexNewDocumentCommand`-wrapped command inside atom `num`. |
 | `\semtex@sbl@cmddef{cmd}{k}{v}` | 3 | Command-definition metadata (one record per property). Keys: `kind` (always present, value `newcommand` or `NewDocumentCommand`), `arity` (integer, only when `kind=newcommand`), `argspec` (xparse string, only when `kind=NewDocumentCommand`), `src` (always present). NOT per-atom; global. |
 | `\semtex@sbl@end{OK}` | 1 | Sentinel at `\AtEndDocument`. |
 
@@ -3374,7 +3374,7 @@ records.
 | `\semtex@installparahook`, normal paragraph branch after `\refstepcounter` | `\semtex@sbl@atom{num}{paragraph}` + `\semtex@sbl@meta{num}{src}{...}` |
 | `\label` wrap (new site; cleveref-aware, see "Label wrap: cleveref optional argument" below) | `\semtex@sbl@label{num}{key}` — one per `\label` call inside a current atom |
 | `\semtextag{kind}{value}` | `\semtex@sbl@tag{num}{kind}{value}` |
-| `\semtexNewCommand{\cmd}[n]{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{newcommand}` + `\semtex@sbl@cmddef{cmd}{arity}{n}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
+| `\semtexnewcommand{\cmd}[n]{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{newcommand}` + `\semtex@sbl@cmddef{cmd}{arity}{n}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
 | `\semtexNewDocumentCommand{\cmd}{spec}{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{NewDocumentCommand}` + `\semtex@sbl@cmddef{cmd}{argspec}{spec}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped |
 | Wrapped command (either kind), every invocation inside an atom | `\semtex@sbl@use{num}{cmd}` |
 
@@ -3598,7 +3598,7 @@ It is a pure sidecar channel for semantic metadata that
 does not belong in `.aux`.  Authors who do not use the
 semantic CLI can ignore `\semtextag` entirely.
 
-### User API: `\semtexNewCommand` and `\semtexNewDocumentCommand`
+### User API: `\semtexnewcommand` and `\semtexNewDocumentCommand`
 
 Two new public commands replace the original `\newmath`
 proposal (REVIEW_D finding #6 was the trigger; subsequent
@@ -3610,7 +3610,7 @@ unaffected unless you explicitly migrate them.
 
 | Public macro | Wraps | Argument syntax mirror |
 |---|---|---|
-| `\semtexNewCommand` | `\newcommand` | `[n]` integer arity (LaTeX 2e) |
+| `\semtexnewcommand` | `\newcommand` | `[n]` integer arity (LaTeX 2e) |
 | `\semtexNewDocumentCommand` | `\NewDocumentCommand` | `{spec}` xparse arg-spec string |
 
 **Naming convention** (per user direction 2026-04-09):
@@ -3618,7 +3618,7 @@ lowercase `semtex` prefix to match the existing public
 API (`\semtextrack`, `\semtexsuppress`, `\semtextag`),
 CamelCase suffix to mirror the LaTeX kernel command being
 wrapped.  Migration is a literal find-and-replace per
-file: `s/\\newcommand/\\semtexNewCommand/` and
+file: `s/\\newcommand/\\semtexnewcommand/` and
 `s/\\NewDocumentCommand/\\semtexNewDocumentCommand/`,
 with manual review for helpers you want to leave
 untracked.
@@ -3628,10 +3628,10 @@ untracked.
 if real use cases appear.  The two macros above cover the
 common case (definitive command introduction).
 
-#### Signature: `\semtexNewCommand`
+#### Signature: `\semtexnewcommand`
 
 ```tex
-\semtexNewCommand{<\cmd>}[<arity>]{<body>}
+\semtexnewcommand{<\cmd>}[<arity>]{<body>}
 ```
 
 - `<\cmd>` is the command, **with leading backslash**
@@ -3669,11 +3669,11 @@ Same backslash-stripping convention as above.
 
 ```tex
 % \newcommand-style (math notation):
-\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
-\semtexNewCommand{\id}{\mathrm{id}}
+\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexnewcommand{\id}{\mathrm{id}}
 
 % \newcommand-style (text macro):
-\semtexNewCommand{\TheoremOfX}{Theorem of X}
+\semtexnewcommand{\TheoremOfX}{Theorem of X}
 
 % NewDocumentCommand-style (with optional arg):
 \semtexNewDocumentCommand{\Cat}{O{}}{%
@@ -3692,7 +3692,7 @@ auto-`\ensuremath` the body; the user controls that.
 
 #### Side effects at declaration time
 
-For `\semtexNewCommand`, two global (not atom-scoped)
+For `\semtexnewcommand`, two global (not atom-scoped)
 `.sbl` records:
 
 ```tex
@@ -3745,7 +3745,7 @@ Migration from a vanilla preamble to a tracked one is
 literal find-and-replace per file:
 
 ```
-sed -i 's/\\newcommand/\\semtexNewCommand/g' main.tex
+sed -i 's/\\newcommand/\\semtexnewcommand/g' main.tex
 sed -i 's/\\NewDocumentCommand/\\semtexNewDocumentCommand/g' main.tex
 ```
 
@@ -3754,7 +3754,7 @@ want to leave untracked (e.g. `\newcommand{\@semtex@helper}...`
 inside a package).  Two-line sed script, one git commit.
 
 For automated/batch workflows that rewrite `\newcommand`
-to `\semtexNewCommand` mechanically (e.g., `wrap.py` for
+to `\semtexnewcommand` mechanically (e.g., `wrap.py` for
 the arxiv test corpus), pair the rewrite with the
 `conceptwarnings=off` package option to suppress the
 noise from concepts that have no `\Hom*` marker.  See
@@ -3777,7 +3777,7 @@ but the wrapper sees them at `#2..#(N+1)`.  xparse's
 the sketch below uses a temporary `\def` helper so the
 user body can keep its natural `#1..#N` numbering.
 
-For `\semtexNewCommand`, the integer arity is translated
+For `\semtexnewcommand`, the integer arity is translated
 to a repeated-`m` argspec via `\semtex@build@argspec`
 (arity 0 -> empty, arity 1 -> `m`, arity 2 -> `m m`, and
 so on up to 9).
@@ -3799,14 +3799,14 @@ so on up to 9).
     \or m m m m m m m m m%
   \else
     \PackageError{semtex}%
-      {\string\semtexNewCommand\space arity \number#1\space
+      {\string\semtexnewcommand\space arity \number#1\space
        out of range (max 9)}%
       {\string\newcommand\space itself is limited to arity 9;
        use \string\semtexNewDocumentCommand\space for more.}%
   \fi}
 
-% \semtexNewCommand{\cmd}[arity]{body}
-\NewDocumentCommand{\semtexNewCommand}{m O{0} m}{%
+% \semtexnewcommand{\cmd}[arity]{body}
+\NewDocumentCommand{\semtexnewcommand}{m O{0} m}{%
   % #1 = \cmd (with backslash), #2 = arity, #3 = body.
   \edef\semtex@tmp@name{\expandafter\@gobble\string#1}%
   % 1. Define the command via \NewDocumentCommand with a
@@ -3937,7 +3937,7 @@ so on up to 9).
 The two public macros share the star-dispatch wrapper
 (`\semtex@definewrapped`) and the two emit helpers
 (`\semtex@emit@def`, `\semtex@emit@use`).  For
-`\semtexNewCommand`, the arity is compiled to a repeated
+`\semtexnewcommand`, the arity is compiled to a repeated
 `m` argspec first; for `\semtexNewDocumentCommand`, the
 user's argspec is passed through verbatim.  In both
 cases a star is prepended so every wrapped command
@@ -4098,13 +4098,13 @@ documentation point.
 ```
 
 The `conceptwarnings` option controls whether §8a.9's
-"missing def site" diagnostic for `\semtexNewCommand`-defined
+"missing def site" diagnostic for `\semtexnewcommand`-defined
 concepts fires as a `\PackageWarning` (default: `on`) or as
 a quieter `\PackageInfo` (`off`).  The default is the correct
 choice for hand-authored monographs where each tracked
 command should have exactly one `\Hom*` marker.  The `off`
 mode exists for batch / smoke-test workflows where
-`\semtexNewCommand` is generated mechanically (e.g., by
+`\semtexnewcommand` is generated mechanically (e.g., by
 `tools/semtex-sty/testfiles/real-world/wrap.py` rewriting
 arxiv papers' `\newcommand`s) and the absence of star markers
 is expected, not a defect.  The diagnostic is still emitted —

@@ -189,7 +189,7 @@ def _rewrite_line_newcommand(line: str) -> tuple[str, str | None]:
     # Skip internal helpers (names containing @).
     if "@" in cmd:
         return line, None
-    replacement = f"\\semtexNewCommand{{{cmd}}}"
+    replacement = f"\\semtexnewcommand{{{cmd}}}"
     new_line = line[: m.start()] + replacement + line[m.end() :]
     before = m.group(0).strip()
     return new_line, f"{before} → {replacement}"
@@ -307,7 +307,7 @@ def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
     if do_rewrite:
         preamble, rewrites = rewrite_preamble(preamble, paper_id)
         preamble_note = (
-            "% Commands rewritten: \\newcommand -> \\semtexNewCommand, etc.\n"
+            "% Commands rewritten: \\newcommand -> \\semtexnewcommand, etc.\n"
         )
     else:
         preamble_note = (

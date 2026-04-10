@@ -39,7 +39,7 @@
 %%   - one tikz-cd diagram (inline suppression)
 %%   - one tcolorbox (env suppression)
 %%   - one enumitem list (trivlist suppression)
-%%   - \semtexNewCommand{\Hom}[2]{...} with three invocations
+%%   - \semtexnewcommand{\Hom}[2]{...} with three invocations
 %%   - \semtextag{uid}{...} semantic-sidecar record
 %%
 %% Exclusions (by design):
@@ -68,7 +68,7 @@
 \usepackage{semtex}
 \semtextrack{theorem,proposition,lemma,definition}
 
-\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 \semtexNewDocumentCommand{\Cite}{s o m}{%
   \IfBooleanTF{#1}%
     {[\textbf{#3}\IfValueT{#2}{, #2}]}%

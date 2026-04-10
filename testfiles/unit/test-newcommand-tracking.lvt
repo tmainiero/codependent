@@ -1,8 +1,8 @@
 %% TEST-NAME: test-newcommand-tracking
-%% TEST-WHAT: Verify \semtexNewCommand{\Hom}[2]{...} emits the expected
+%% TEST-WHAT: Verify \semtexnewcommand{\Hom}[2]{...} emits the expected
 %%            \semtex@sbl@cmddef records (kind=newcommand, arity, src)
 %%            and that the defined \Hom command works in the body.
-%% TEST-SOURCE: DESIGN.md §9a User API: \semtexNewCommand
+%% TEST-SOURCE: DESIGN.md §9a User API: \semtexnewcommand
 %% TEST-SECTION: DESIGN.md §9a User API
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
@@ -13,7 +13,7 @@
 %% TEST-PACKAGES: amsthm,semtex
 %% TEST-RERUN: 2
 %%
-%% \semtexNewCommand mirrors \newcommand exactly: takes a backslash-
+%% \semtexnewcommand mirrors \newcommand exactly: takes a backslash-
 %% prefixed command, optional bracketed arity, mandatory braced body.
 %% At declaration time it must emit three .sbl records (kind, arity,
 %% src). At invocation time inside an atom, the wrapped command must
@@ -28,8 +28,8 @@
 \usepackage{semtex}
 \semtextrack{theorem}
 
-\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
-\semtexNewCommand{\id}{\mathrm{id}}
+\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\semtexnewcommand{\id}{\mathrm{id}}
 
 \begin{document}
 \START
