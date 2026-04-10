@@ -37,6 +37,14 @@
 \newbool{semtex@conceptwarnings}
 \booltrue{semtex@conceptwarnings}
 
+% Rendering configuration (backref style, alignment, fonts).
+\newcommand*{\semtex@backrefstyle}{block}
+\newcommand*{\semtex@backrefalign}{right}
+\newcommand*{\semtex@backreffont}{\scriptsize\sffamily}
+\newcommand*{\semtex@backrefprefix}{}
+\newcommand*{\semtex@backreflabel}{Used in}
+\newcommand*{\semtex@marginfont}{\scriptsize}
+
 \pgfkeys{%
   /semtex/.is family,%
   /semtex/.cd,%
@@ -71,6 +79,18 @@
   conceptwarnings/on/.code = {\booltrue{semtex@conceptwarnings}},%
   conceptwarnings/off/.code = {\boolfalse{semtex@conceptwarnings}},%
   conceptwarnings/.default = on,%
+  backref-style/.is choice,%
+  backref-style/block/.code = {\renewcommand*{\semtex@backrefstyle}{block}},%
+  backref-style/inline/.code = {\renewcommand*{\semtex@backrefstyle}{inline}},%
+  backref-style/.default = block,%
+  backref-align/.is choice,%
+  backref-align/left/.code = {\renewcommand*{\semtex@backrefalign}{left}},%
+  backref-align/right/.code = {\renewcommand*{\semtex@backrefalign}{right}},%
+  backref-align/.default = right,%
+  backref-font/.store in = \semtex@backreffont,%
+  backref-prefix/.store in = \semtex@backrefprefix,%
+  backref-label/.store in = \semtex@backreflabel,%
+  margin-font/.store in = \semtex@marginfont,%
 }
 
 % Collect all options and forward to pgfkeys.
@@ -89,6 +109,9 @@
   }%
   \semtex@tmp@opts
 \fi
+
+% \semtexsetup{key=value,...}  Configure semtex in preamble or body.
+\newcommand*{\semtexsetup}[1]{\pgfkeys{/semtex/.cd,#1}}
 
 %% ===================================================================
 %% Section 4: Internal state
@@ -440,7 +463,7 @@
   \leavevmode%
   \smash{%
     \llap{%
-      {\scriptsize\textsuperscript{#1}\kern0.5em}%
+      {\semtex@marginfont\textsuperscript{#1}\kern0.5em}%
     }%
   }%
 }
@@ -1199,32 +1222,63 @@
 %   inline path (\semtex@renderinline) and the deferred
 %   paragraph path (\vadjust pre in \semtex@installparahook)
 %   call this, so overriding it changes ALL rendering.
+%   Reads font/prefix/label from \semtexsetup configuration.
 \newcommand*{\semtex@formatusedin}[1]{%
-  {\normalfont\scriptsize\sffamily Used in #1.}}
+  {\normalfont\semtex@backreffont\semtex@backrefprefix\semtex@backreflabel\space#1.}}
 
 % \semtex@renderinline{reflist}
 %   Render "Used in X, Y." at the end of the current atom.
 %   Used for theorem/definition/lemma atoms (non-paragraph).
-%   Redefined at \begin{document} when hyperref is loaded.
+%   Respects backref-style and backref-align configuration.
 \newcommand*{\semtex@renderinline}[1]{%
-  \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
-  \quad\semtex@formatusedin{#1}%
-  \par\addvspace{\medskipamount}%
+  \def\semtex@tmp@block{block}%
+  \ifx\semtex@backrefstyle\semtex@tmp@block
+    % Block style: separate line after the atom.
+    \def\semtex@tmp@right{right}%
+    \ifx\semtex@backrefalign\semtex@tmp@right
+      \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
+      \quad\semtex@formatusedin{#1}%
+    \else
+      \leavevmode\unskip\par\nobreak
+      \semtex@formatusedin{#1}\hfill\null
+    \fi
+    \par\addvspace{\medskipamount}%
+  \else
+    % Inline style: same line as content, flows with text.
+    \unskip\quad\semtex@formatusedin{#1}%
+  \fi
 }
 
 % \semtex@renderdeferred{reflist}
 %   Render "Used in" inside a \vadjust pre context (vertical
 %   mode).  Used for paragraph atoms via the deferred-backref
 %   mechanism.  Calls \semtex@formatusedin for the text.
+%   Respects backref-style and backref-align configuration.
 \newcommand*{\semtex@renderdeferred}[1]{%
   \nobreak
-  \vbox{%
-    \hbox to \linewidth{%
-      \hfil\semtex@formatusedin{#1}%
+  \def\semtex@tmp@block{block}%
+  \ifx\semtex@backrefstyle\semtex@tmp@block
+    % Block style
+    \def\semtex@tmp@right{right}%
+    \vbox{%
+      \hbox to \linewidth{%
+        \ifx\semtex@backrefalign\semtex@tmp@right
+          \hfil\semtex@formatusedin{#1}%
+        \else
+          \semtex@formatusedin{#1}\hfil
+        \fi
+      }%
+      \vskip\medskipamount
     }%
-    \vskip\medskipamount
-  }%
-  \nobreak
+  \else
+    % Inline style: compact, no extra vertical space
+    \vbox{%
+      \hbox to \linewidth{%
+        \hfil\semtex@formatusedin{#1}%
+      }%
+      \vskip\smallskipamount
+    }%
+  \fi
 }
 
 % Deferred backref: data saved at para/end, emitted at the

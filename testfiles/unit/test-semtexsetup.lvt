@@ -1,0 +1,49 @@
+%% TEST-NAME: test-semtexsetup
+%% TEST-WHAT: Verify that \semtexsetup accepts all rendering configuration
+%%            keys without error, and that a document with backrefs still
+%%            compiles correctly after changing every key.
+%% TEST-SOURCE: DESIGN.md \semtexsetup key-value API
+%% TEST-SECTION: semtex.sty §Options, §Rendering
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{theorem} = 1
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.2}{theorem} = 1
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Exercises every \semtexsetup key: backref-style, backref-align,
+%% backref-font, backref-prefix, backref-label, margin-font.
+%% The document contains two theorems where the second references
+%% the first, so the "Used in" line actually renders.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+% Exercise every key via \semtexsetup.
+\semtexsetup{backref-style=inline}
+\semtexsetup{backref-align=left}
+\semtexsetup{backref-font=\footnotesize\ttfamily}
+\semtexsetup{backref-prefix=$\triangleright$\;}
+\semtexsetup{backref-label=Referenced by}
+\semtexsetup{margin-font=\tiny}
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}\label{thm:A}
+  First result.
+\end{theorem}
+
+\begin{theorem}
+  Second result, which uses Theorem~\ref{thm:A}.
+\end{theorem}
+
+\END
+\end{document}
