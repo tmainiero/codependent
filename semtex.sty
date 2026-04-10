@@ -351,7 +351,8 @@
         \semtex@atomlist
         \noexpand\do{{\theatom}{#1}}}%
       \semtex@queuebackref{\theatom}%
-      \semtex@flushbackref
+      % Backref flush is deferred to env/#1/after so that
+      % "Used in" renders AFTER endmarks (QED symbols, etc.).
       % §8a.5 atom-end clear of the in-atom sentinel.
       \let\semtex@currentatom\@empty
       \advance\semtex@nestlevel by -1\relax
@@ -364,6 +365,17 @@
       \semtex@popcurrentatom
       \advance\semtex@nestlevel by -1\relax
     \fi
+  }%
+  % Flush backrefs AFTER the environment fully closes, so the
+  % "Used in X, Y." line appears after endmarks and QED symbols.
+  % Uses \AfterEndEnvironment (etoolbox) which fires after the
+  % env's \end{} code completes, including endmarks.  For
+  % restatable re-fires (which call \theorem/\endtheorem
+  % directly, bypassing \begin/\end), this hook does not fire —
+  % correct, since the restate guard already skipped backref
+  % queueing in the cmd/end hook above.
+  \AfterEndEnvironment{#1}{%
+    \semtex@flushbackref
   }%
 }
 
@@ -403,11 +415,17 @@
     }%
     \AtEndEnvironment{proof}{%
       \ifbool{semtex@proofsnumbered}{%
-        \semtex@flushbackref
+        % Backref flush deferred to \AfterEndEnvironment so
+        % "Used in" renders after the QED symbol.
         % §8a.5 atom-end clear of the in-atom sentinel.
         \let\semtex@currentatom\@empty
       }{}%
       \advance\semtex@nestlevel by -1\relax
+    }%
+    \AfterEndEnvironment{proof}{%
+      \ifbool{semtex@proofsnumbered}{%
+        \semtex@flushbackref
+      }{}%
     }%
   }%
 }
@@ -1407,6 +1425,18 @@
   % resolve to the wrong name at hook-fire time.
   \@for\semtex@tmp:=#1\do{%
     \ifx\semtex@tmp\@empty\else
+      % Re-alias this env's counter to \c@atom.  When thmtools
+      % declares an env with sibling=theorem, it \let-aliases
+      % \c@<env> to \c@theorem at declaration time.  But
+      % \semtex@setupcounter later replaces \c@theorem with
+      % \c@atom; the sibling counters still point to the old
+      % register.  This re-let ensures every tracked env's
+      % counter is \c@atom, regardless of declaration order.
+      \expandafter\@ifundefined\expandafter{%
+        \expandafter c@\semtex@tmp
+      }{}{%
+        \expandafter\let\csname c@\semtex@tmp\endcsname\c@atom
+      }%
       \expandafter\semtex@hooktheorem
         \expandafter{\semtex@tmp}%
       % Auto-register starred variant (amsthm creates foo*).
