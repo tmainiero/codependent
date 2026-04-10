@@ -1,0 +1,270 @@
+%% TEST-NAME: test-trinity-stripped
+%% TEST-WHAT: Stripped integration fixture modelled on a real category-theory
+%%            monograph (~16 000 lines). Exercises the full semtex.sty
+%%            feature surface against the package stack found in real math
+%%            papers: amsthm + thmtools (restatable), hyperref, cleveref,
+%%            tikz-cd, custom math macros via \semtexNewCommand, counter-
+%%            sharing theorem environments, \semtextag, and concept tracking
+%%            with def-site / use-site / forward-reference resolution.
+%% TEST-SOURCE: Three-avatars monograph (Geiko–Mainiero–Moore);
+%%              DESIGN.md §8a.0–§9a (integration surface);
+%%              REVIEW_E all BLOCKERs composed
+%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@version{1}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{arity}{2}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{caty}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{caty}{arity}{1}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Tr}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Tr}{arity}{0}
+%% TEST-SBL-CONTAINS: \semtex@sbl@use
+%% TEST-SBL-CONTAINS: \semtex@sbl@def
+%% TEST-SBL-CONTAINS: \semtex@sbl@label
+%% TEST-SBL-CONTAINS: \semtex@sbl@tag
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.2}{theorem} = 1
+%% TEST-AUX-CONTAINS: \semtex@atomref
+%% TEST-AUX-CONTAINS: \semtex@concept{Hom}
+%% TEST-AUX-CONTAINS: \semtex@concept{caty}
+%% TEST-AUX-CONTAINS: \semtex@concept{wtens}
+%% TEST-AUX-CONTAINS: \semtex@concept{Tr}
+%% TEST-AUX-CONTAINS: \semtex@concept{bimod}
+%% TEST-AUX-CONTAINS: \semtex@conceptref
+%% TEST-ATOMS-MIN: 8
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,semtex
+%% TEST-RERUN: 2
+%%
+%% Modelled on a real operator-algebra / category-theory paper that uses:
+%%   - thmtools \declaretheorem with counter sharing (sibling=)
+%%   - thm-restate (\restatable + \restate)
+%%   - cleveref (\cref, \Cref, multi-label)
+%%   - hyperref (\autoref, \ref)
+%%   - tikz-cd commutative diagrams (display + inline)
+%%   - ~40 custom \newcommand macros for categories, functors, operators
+%%
+%% This fixture extracts the MINIMUM surface needed to exercise every
+%% semtex feature against that stack. Content is paraphrased, not copied.
+%%
+%% Counter sharing: all theorem-like envs share a single counter named
+%% "theorem" via thmtools sibling= key. This is the dominant pattern in
+%% long math papers and is the primary stress case for atom numbering.
+
+\documentclass{article}
+
+%% ---------- Package stack (mirrors real paper) ----------
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{thmtools}
+\usepackage{thm-restate}
+
+\usepackage{tikz}
+\usetikzlibrary{cd}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=teal,citecolor=darkgray}
+\usepackage{cleveref}
+
+%% ---------- Theorem environments (counter-sharing) ----------
+%% All theorem-like envs share the "theorem" counter, matching the
+%% source paper's \makeTheoremEnv / \makeDefinitionEnv with sibling=.
+\declaretheorem[
+  name=Theorem,
+  style=plain,
+  numberwithin=section
+]{theorem}
+\declaretheorem[name=Proposition, style=plain, sibling=theorem]{proposition}
+\declaretheorem[name=Lemma, style=plain, sibling=theorem]{lemma}
+\declaretheorem[name=Corollary, style=plain, sibling=theorem]{corollary}
+\declaretheorem[
+  name=Definition,
+  style=definition,
+  sibling=theorem
+]{definition}
+\declaretheorem[name=Remark, style=remark, sibling=theorem]{remark}
+
+%% ---------- semtex ----------
+\usepackage{semtex}
+\semtextrack{theorem,proposition,lemma,corollary,definition,remark}
+
+%% ---------- Concept-tracked macros ----------
+%% 5 macros converted to \semtexNewCommand, modelled on the source
+%% paper's operator-algebra notation. Each exercises a different arity.
+
+% \Hom{X}{Y} — arity 2, the canonical concept-tracking example
+\semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+
+% \caty{C} — arity 1, category name formatter (mathsf in the source)
+\semtexNewCommand{\caty}[1]{\mathsf{#1}}
+
+% \Tr — arity 0, trace operator
+\semtexNewCommand{\Tr}[0]{\operatorname{Tr}}
+
+% \wtens{A} — arity 1, W*-bimodule tensor product
+\semtexNewCommand{\wtens}[1]{%
+  \mathbin{\mathop{\otimes}\displaylimits^{\mathrm{w}}_{#1}}%
+}
+
+% \bimod{A}{M}{B} — arity 3, bimodule notation
+\semtexNewCommand{\bimod}[3]{{}_{#1}{#2}_{#3}}
+
+%% ---------- Equation numbering by section ----------
+\numberwithin{equation}{section}
+
+\begin{document}
+\START
+
+%% ====================================================================
+%%  Section 1: Overview (forward references to later definitions)
+%% ====================================================================
+\section{Three avatars of matrix product factors}%
+\label{sec:avatars}
+
+Given a pair of von Neumann algebras $A$ and $B$, one may consider
+three closely related objects: matrix product factors, normal completely
+positive maps, and pointed bimodules. Each is a ``face'' of the same
+underlying categorical structure. Throughout, we write $\Hom{A}{B}$
+for the morphism space in the ambient category $\caty{C}$.
+
+\begin{theorem}\label{thm:equivalence}
+  Let $A$ and $B$ be von Neumann algebras. The 2-categories
+  $\caty*{MPF}^{\mathrm{op}}$ and $\caty{ptWBM}$ are locally adjoint
+  equivalent.
+\end{theorem}
+
+\begin{proof}
+  The identity-on-objects functor is constructed in
+  \cref{def:bimodule_tensor}; see also \cref{lem:adjunction}.
+\end{proof}
+
+An intermediate paragraph after the theorem, referencing
+\cref{thm:equivalence} and equation~\eqref{eq:tensor_compose}
+below.
+
+\begin{proposition}\label{prop:decomposition}
+  Every normal completely positive map $\varphi\colon A \to B$
+  admits a canonical decomposition into inner and outer parts.
+  Specifically, if $\bimod{A}{M}{B}$ is the associated bimodule,
+  we have
+  \begin{equation}\label{eq:inner_outer}
+    \varphi = \varphi_{\mathrm{in}} \circ \varphi_{\mathrm{out}}.
+  \end{equation}
+\end{proposition}
+
+%% ====================================================================
+%%  Section 2: Categorical framework (definitions + restatable)
+%% ====================================================================
+\section{Categorical framework}%
+\label{sec:framework}
+
+\begin{definition}\label{def:bimodule_tensor}
+  Let $A$, $B$, and $C$ be von Neumann algebras. The
+  $\Hom*{A}{B}$ set carries a natural bimodule structure. The
+  \emph{bimodule tensor product} of $\bimod*{A}{M}{B}$ and
+  $\bimod{B}{N}{C}$ over $B$ is the completion
+  \begin{equation}\label{eq:tensor_compose}
+    M \wtens*{B} N
+    \;=\;
+    \overline{M \otimes_B N}^{\,\|\cdot\|}.
+  \end{equation}
+  \semtextag{uid}{cat:bimodule-tensor}%
+\end{definition}
+
+A paragraph that references the definition: by
+\cref{def:bimodule_tensor}, the tensor product is functorial.
+
+\begin{lemma}\label{lem:adjunction}
+  The functors $\mathtt{F}\colon \caty{MPF}^{\mathrm{op}} \to
+  \caty{ptWBM}$ and $\mathtt{G}\colon \caty{ptWBM} \to
+  \caty{MPF}^{\mathrm{op}}$ satisfy $\mathtt{F} \dashv \mathtt{G}$.
+\end{lemma}
+
+\begin{proof}
+  The unit and counit are constructed from the canonical evaluation
+  map; the triangle identities follow from $\Tr(\mathtt{id}) = 1$
+  and the associativity of $\wtens{B}$.
+\end{proof}
+
+%% A tikz-cd display diagram: a commutative square of 2-functors
+\begin{equation}\label{eq:square}
+  \begin{tikzcd}
+    \caty{MPF}^{\mathrm{op}}
+      \arrow[r, "\mathtt{F}"]
+      \arrow[d, "\mathtt{P}"']
+    & \caty{ptWBM}
+      \arrow[d, "\mathtt{K}"]
+    \\
+    \caty{CP}
+      \arrow[r, "\mathtt{R}"']
+    & \caty{WBM}
+  \end{tikzcd}
+\end{equation}
+
+The square~\eqref{eq:square} commutes up to a natural isomorphism;
+see \autoref{thm:equivalence}.
+
+%% Inline tikz-cd diagram inside a paragraph
+A short exact sequence
+$\begin{tikzcd}[cramped, sep=small]
+  0 \arrow[r] & K \arrow[r, hook] & M \arrow[r, two heads] & Q \arrow[r] & 0
+\end{tikzcd}$
+of bimodules witnesses the decomposition of
+\cref{prop:decomposition}.
+
+%% ====================================================================
+%%  Section 3: Restatable theorem + restate
+%% ====================================================================
+\section{Morita product factors}%
+\label{sec:morita}
+
+Morita product factors generalise matrix product factors by replacing
+finite-dimensional on-site spaces with arbitrary von Neumann algebra
+modules.
+
+\begin{restatable}{theorem}{MoritaEquiv}\label{thm:morita_equiv}
+  The 2-category of Morita product factors is locally adjoint
+  equivalent to the 2-category of pointed $W^*$-bimodules.
+  Moreover, the equivalence restricts to the Type~I subcategory
+  and recovers \cref{thm:equivalence}.
+\end{restatable}
+
+\begin{proof}
+  The proof follows from a generalisation of \cref{lem:adjunction}
+  to the Morita setting, combined with the canonical
+  $\bimod{A}{L^2(A)}{A}$ bimodule.
+\end{proof}
+
+\begin{corollary}\label{cor:type_i}
+  Every Type~I Morita product factor is a matrix product factor.
+\end{corollary}
+
+\begin{remark}\label{rem:trace}
+  The trace $\Tr*$ plays a dual role: it normalises the inner product
+  on $L^2(A)$ and defines the ``weight'' of a Morita product factor
+  via $\Tr \circ \varphi$.
+\end{remark}
+
+%% ====================================================================
+%%  Section 4: Restate appendix
+%% ====================================================================
+\section{Restated results}%
+\label{sec:restate}
+
+We collect restated results for the reader's convenience.
+
+\MoritaEquiv*
+
+The restatement above must not produce a duplicate sbl atom record.
+
+A final paragraph referencing multiple labels via cleveref:
+\Cref{thm:equivalence,prop:decomposition,lem:adjunction} together
+establish the main correspondence, and
+\cref{cor:type_i,rem:trace} describe the Type~I specialisation.
+
+\END
+\end{document}
