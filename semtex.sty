@@ -353,32 +353,54 @@
   \semtex@suppressenv{tabular}%
   \semtex@suppressenv{tabularx}%
   \semtex@suppressenv{longtable}%
+  \semtex@suppressenv{trivlist}%
 }
 
 % \semtex@suppresssectioning
 %   Suppress atom numbering for sectioning heading paragraphs.
-%   Wraps \@startsection (used by \section, \subsection, etc.
-%   across all standard classes) to set a one-shot flag checked
-%   by para/begin.  For chapter headings, suppresses paragraphs
-%   inside \@makechapterhead / \@makeschapterhead (present in
-%   book, report, memoir, KOMA-Script).  Deferred to
-%   begindocument/end so all packages have finished loading.
+%   Uses LaTeX 2021+ generic cmd/<level>/before hooks, which
+%   fire universally across standard classes, KOMA-Script,
+%   memoir, and titlesec (unlike the old \@startsection wrapper
+%   which was a no-op under those packages).
 \newcommand*{\semtex@suppresssectioning}{%
-  \AddToHook{begindocument/end}{%
-    \makeatletter
-    \let\semtex@orig@startsection\@startsection
-    \def\@startsection{%
-      \global\booltrue{semtex@sectioning}%
-      \semtex@orig@startsection
+  \AddToHook{cmd/section/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/subsection/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/subsubsection/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/chapter/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/paragraph/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+  \AddToHook{cmd/subparagraph/before}[semtex/sectioning]{%
+    \global\booltrue{semtex@sectioning}}%
+}
+
+% Auto-suppress enumitem \newlist environments.
+%   When enumitem is loaded, wraps \newlist so that every
+%   user-defined list environment is automatically registered
+%   for paragraph-number suppression.
+\AddToHook{begindocument/before}[semtex/suppress/enumitem]{%
+  \@ifpackageloaded{enumitem}{%
+    \let\semtex@orig@newlist\newlist
+    \def\newlist#1#2#3{%
+      \semtex@orig@newlist{#1}{#2}{#3}%
+      \semtex@suppressenv{#1}%
     }%
-    \@ifundefined{@makechapterhead}{}{%
-      \semtex@suppresscmd{\@makechapterhead}%
-    }%
-    \@ifundefined{@makeschapterhead}{}{%
-      \semtex@suppresscmd{\@makeschapterhead}%
-    }%
-    \makeatother
-  }%
+  }{}%
+}
+
+% Auto-suppress tcolorbox / mdframed environments.
+%   Conditionally suppresses boxed-content environments when
+%   the respective package is loaded.
+\AddToHook{begindocument/before}[semtex/suppress/boxes]{%
+  \@ifpackageloaded{tcolorbox}{%
+    \semtex@suppressenv{tcolorbox}%
+  }{}%
+  \@ifpackageloaded{mdframed}{%
+    \semtex@suppressenv{mdframed}%
+  }{}%
 }
 
 % \semtex@suppresscommands
