@@ -117,6 +117,9 @@
 %% Section 4: Internal state
 %% ===================================================================
 
+% Base counter name: auto-detected from the first env in \semtextrack.
+\newcommand*{\semtex@basecounter}{}
+
 % Suppression nesting depth.  When > 0, para/begin skips numbering.
 \newcount\semtex@nestlevel
 \semtex@nestlevel=0\relax
@@ -193,9 +196,10 @@
 % its population path per §8a.6.g.
 \newtoks\semtex@appendixdata
 
-% Accumulated atom list for appendix mode (§8a.6.g).
-% \do-list of {<num>}{<type>} pairs, appended at each atom site.
-\def\semtex@atomlist{}
+% Count-indexed atom array for appendix mode (§8a.6.g).
+% Each \semtex@atom@<n> expands to {<num>}{<type>}.
+% O(1) append via csname array; O(N) walk in \semtexappendix.
+\newcount\semtex@atomcount
 
 % Sidecar (.sbl) stream state (§9a).
 \newbool{semtex@sblopen}
@@ -235,20 +239,23 @@
 }
 
 % \semtex@setupcounter
-%   Create the atom counter and wire it to the theorem counter.
+%   Create the atom counter and wire it to the base counter
+%   (auto-detected from the first env in \semtextrack).
 %   Called by \semtextrack.
 \newcommand*{\semtex@setupcounter}{%
   \newcounter{atom}%
-  % Copy current theorem counter value (if theorem exists).
-  \@ifundefined{c@theorem}{}{%
-    \setcounter{atom}{\value{theorem}}%
-    % Alias: \c@theorem -> \c@atom.
-    \expandafter\let\csname c@theorem\endcsname\c@atom
+  % Copy current base counter value (if it exists).
+  % Note: \@ifundefined uses \csname internally, which expands
+  % \semtex@basecounter automatically.
+  \@ifundefined{c@\semtex@basecounter}{}{%
+    \setcounter{atom}{\value{\semtex@basecounter}}%
+    % Alias: \c@<basecounter> -> \c@atom.
+    \expandafter\let\csname c@\semtex@basecounter\endcsname\c@atom
   }%
   \semtex@configuredepth
-  % Sync theorem display format with atom display format.
-  \@ifundefined{c@theorem}{}{%
-    \let\thetheorem\theatom
+  % Sync base counter display format with atom display format.
+  \@ifundefined{c@\semtex@basecounter}{}{%
+    \expandafter\let\csname the\semtex@basecounter\endcsname\theatom
   }%
 }
 
@@ -256,13 +263,13 @@
 %   Set up counter resets and display format based on depth option
 %   and document class.
 \newcommand*{\semtex@configuredepth}{%
-  % Remove theorem from any existing reset parent.
-  \@ifundefined{c@theorem}{}{%
+  % Remove base counter from any existing reset parent.
+  \@ifundefined{c@\semtex@basecounter}{}{%
     \@ifundefined{cl@section}{}{%
-      \semtex@removefromreset{theorem}{section}%
+      \expandafter\semtex@removefromreset\expandafter{\semtex@basecounter}{section}%
     }%
     \@ifundefined{cl@chapter}{}{%
-      \semtex@removefromreset{theorem}{chapter}%
+      \expandafter\semtex@removefromreset\expandafter{\semtex@basecounter}{chapter}%
     }%
   }%
   \@ifundefined{chapter}{%
@@ -333,14 +340,15 @@
 %   "1" on begin and clear to \@empty on end.
 %
 %   Restatable guard (§8a.5.a): \semtex@setupcounter aliases
-%   \c@theorem to \c@atom.  When thmtools' thm-restate.sty
+%   \c@<basecounter> to \c@atom.  When thmtools' thm-restate.sty
 %   re-fires the env for \restate, it breaks this alias
-%   (\c@theorem -> \c@thmt@dummyctr).  The \ifx guard detects
-%   whether the alias is intact (original occurrence) or broken
-%   (restate occurrence) and skips the hook body on restate,
-%   preventing spurious atom attribution and duplicate .sbl
-%   records.  All envs declared with \newtheorem{...}[theorem]
-%   share \c@theorem, so the guard covers all shared-counter
+%   (\c@<basecounter> -> \c@thmt@dummyctr).  The \ifx guard
+%   detects whether the alias is intact (original occurrence) or
+%   broken (restate occurrence) and skips the hook body on
+%   restate, preventing spurious atom attribution and duplicate
+%   .sbl records.  All envs declared with
+%   \newtheorem{...}[<basecounter>] share
+%   \c@<basecounter>, so the guard covers all shared-counter
 %   envs.  Envs with independent counters are not supported by
 %   this guard and should not be passed to \semtextrack.
 %
@@ -349,7 +357,7 @@
 %   current environment is "restatable", not the theorem type.
 \newcommand*{\semtex@hooktheorem}[1]{%
   \AddToHook{cmd/#1/before}{%
-    \expandafter\ifx\csname c@theorem\endcsname\c@atom
+    \expandafter\ifx\csname c@\semtex@basecounter\endcsname\c@atom
       % Original occurrence: alias intact, normal hook body.
       \global\advance\semtex@trackedlevel by 1\relax
       \advance\semtex@nestlevel by 1\relax
@@ -365,8 +373,8 @@
         \def\semtex@currentatom{1}%
       \fi
     \else
-      % Restate occurrence: \c@theorem re-let to dummy counter
-      % by thm-restate.sty.  Suppress the hook body to avoid
+      % Restate occurrence: \c@<basecounter> re-let to dummy
+      % counter by thm-restate.sty.  Suppress the hook body to avoid
       %   (a) reading the wrong \theatom,
       %   (b) writing a duplicate \semtex@sbl@atom record,
       %   (c) queuing back-refs against a stale atom number.
@@ -390,7 +398,7 @@
     \fi
   }%
   \AddToHook{cmd/end#1/before}{%
-    \expandafter\ifx\csname c@theorem\endcsname\c@atom
+    \expandafter\ifx\csname c@\semtex@basecounter\endcsname\c@atom
       % Original occurrence: normal end body.
       \ifnum\semtex@trackedlevel>1\relax
         % Nested end: skip SBL/backref, just decrement.
@@ -408,9 +416,9 @@
         \semtex@sblwrite@atom{%
           \string\semtex@sbl@meta{\semtex@outeratom}{src}%
             {\jobname.tex:\the\inputlineno:1}}%
-        \xdef\semtex@atomlist{%
-          \semtex@atomlist
-          \noexpand\do{{\semtex@outeratom}{#1}}}%
+        \global\advance\semtex@atomcount by 1\relax
+        \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
+          {\semtex@outeratom}{#1}}%
         \semtex@queuebackref{\semtex@outeratom}%
         % Backref flush is deferred to env/#1/after so that
         % "Used in" renders AFTER endmarks (QED symbols, etc.).
@@ -465,9 +473,9 @@
           \semtex@sblwrite@atom{%
             \string\semtex@sbl@meta{\theatom}{src}%
               {\jobname.tex:\the\inputlineno:1}}%
-          \xdef\semtex@atomlist{%
-            \semtex@atomlist
-            \noexpand\do{{\theatom}{proof}}}%
+          \global\advance\semtex@atomcount by 1\relax
+          \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
+            {\theatom}{proof}}%
           \global\booltrue{semtex@proofpending}%
           \semtex@queuebackref{\theatom}%
         \fi
@@ -656,9 +664,9 @@
             \semtex@sblwrite@atom{%
               \string\semtex@sbl@meta{\theatom}{src}%
                 {\jobname.tex:\the\inputlineno:1}}%
-            \xdef\semtex@atomlist{%
-              \semtex@atomlist
-              \noexpand\do{{\theatom}{paragraph}}}%
+            \global\advance\semtex@atomcount by 1\relax
+            \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
+              {\theatom}{paragraph}}%
             \semtex@emitmargin{\semtex@currentatom}%
             \semtex@queuebackref{\theatom}%
           \fi
@@ -1597,12 +1605,19 @@
 %% Section 10: User-facing API
 %% ===================================================================
 
+% \semtex@extractfirst  env1,env2,...\@nil
+%   Extract the first comma-separated element into \semtex@basecounter.
+\def\semtex@extractfirst#1,#2\@nil{\def\semtex@basecounter{#1}}
+
 % \semtextrack{env1,env2,...}
-%   Post-hoc alias theorem counters to atom counter and install
-%   all hooks.  Must be called AFTER all \newtheorem declarations.
-%   env1, env2, ... -- comma-separated environment names to track
+%   Post-hoc alias base counter to atom counter and install all
+%   hooks.  Must be called AFTER all \newtheorem declarations.
+%   env1, env2, ... -- comma-separated environment names to track.
+%   The first env name is auto-detected as the base counter name.
 \newcommand*{\semtextrack}[1]{%
   \booltrue{semtex@tracked}%
+  % Auto-detect the base counter from the first environment name.
+  \semtex@extractfirst#1,\@nil
   \semtex@setupcounter
   % Hook each listed environment and its starred variant.
   % Note: \expandafter ensures the env name is fully expanded
@@ -1612,9 +1627,9 @@
   \@for\semtex@tmp:=#1\do{%
     \ifx\semtex@tmp\@empty\else
       % Re-alias this env's counter to \c@atom.  When thmtools
-      % declares an env with sibling=theorem, it \let-aliases
-      % \c@<env> to \c@theorem at declaration time.  But
-      % \semtex@setupcounter later replaces \c@theorem with
+      % declares an env with sibling=<base>, it \let-aliases
+      % \c@<env> to \c@<base> at declaration time.  But
+      % \semtex@setupcounter later replaces \c@<base> with
       % \c@atom; the sibling counters still point to the old
       % register.  This re-let ensures every tracked env's
       % counter is \c@atom, regardless of declaration order.
@@ -1623,9 +1638,9 @@
       }{}{%
         \expandafter\let\csname c@\semtex@tmp\endcsname\c@atom
         % Also alias the display macro \the<env> to \theatom.
-        % When thmtools declares an env with sibling=theorem, it
-        % snapshots \thetheorem at declaration time.  If semtex
-        % later rewires \thetheorem to \theatom, the sibling's
+        % When thmtools declares an env with sibling=<base>, it
+        % snapshots \the<base> at declaration time.  If semtex
+        % later rewires \the<base> to \theatom, the sibling's
         % display macro still has the old format.  This re-let
         % ensures every tracked env uses the atom display format.
         \expandafter\let\csname the\semtex@tmp\endcsname\theatom
@@ -1816,7 +1831,7 @@
 
 % \semtexappendix
 %   Typeset the dependency index (appendix mode only).
-%   Walks \semtex@atomlist (populated at each atom site) and
+%   Walks the atom array (populated at each atom site) and
 %   emits an entry for every atom that has at least one
 %   back-reference.
 \newcommand*{\semtexappendix}{%
@@ -1824,10 +1839,13 @@
     \section*{Dependency Index}%
     \begingroup
       \small
-      \def\do##1{%
-        \semtex@appendix@emit##1%
-      }%
-      \semtex@atomlist
+      \count@=\z@
+      \loop
+        \ifnum\count@<\semtex@atomcount
+        \advance\count@ by 1\relax
+        \expandafter\expandafter\expandafter\semtex@appendix@emit
+          \csname semtex@atom@\the\count@\endcsname
+      \repeat
     \endgroup
   }{%
     \PackageWarning{semtex}{%
