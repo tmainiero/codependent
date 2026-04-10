@@ -33,6 +33,10 @@
 \newbool{semtex@proofsnumbered}
 \booltrue{semtex@proofsnumbered}
 
+% Concept warnings: on (default) or off.
+\newbool{semtex@conceptwarnings}
+\booltrue{semtex@conceptwarnings}
+
 \pgfkeys{%
   /semtex/.is family,%
   /semtex/.cd,%
@@ -63,6 +67,10 @@
   proofs/numbered/.code = {\booltrue{semtex@proofsnumbered}},%
   proofs/unnumbered/.code = {\boolfalse{semtex@proofsnumbered}},%
   proofs/.default = numbered,%
+  conceptwarnings/.is choice,%
+  conceptwarnings/on/.code = {\booltrue{semtex@conceptwarnings}},%
+  conceptwarnings/off/.code = {\boolfalse{semtex@conceptwarnings}},%
+  conceptwarnings/.default = on,%
 }
 
 % Collect all options and forward to pgfkeys.
@@ -405,6 +413,340 @@
     }{}%
   }%
 }
+
+%% ===================================================================
+%% Section 8a: Back-reference graph (dpmac port, GPLv3)
+%% ===================================================================
+%%
+%% Portions of this section are derived from dpmac.tex by Dmitri
+%% Pavlov (Copyright 2017, 2018 Dmitri Pavlov, distributed under
+%% GNU GPL version 3).  The derivative is also distributed under
+%% GNU GPL version 3.  See CREDITS.md for the provenance table.
+%%
+
+%% --- Section 8a.0: Reference interception (three-site design) ---
+%% Per REVIEW_E finding #2 (BLOCKER), the single-\@setref patch
+%% covers only \ref/\eqref/\pageref/\vref/\nameref.  cleveref's
+%% \cref@getlabel, hyperref's \HyRef@autosetref (\autoref), and
+%% hyperref's \HyRef@@StarSetRef (\ref*/\Ref) all bypass \@setref.
+%% This subsection installs THREE patch sites.  Per REVIEW_E #16,
+%% \hyperref[]{} is deliberately uncovered (manual link, not a
+%% cross-reference).
+
+% Pass-1 safety: \semtex@atomref must be defined to SOMETHING at
+% package-load time so that if a stale .aux still references it
+% (or a user script injects a record), LaTeX's aux read does not
+% error.  A \providecommand no-op suits.
+\providecommand*{\semtex@atomref}[2]{}
+
+% \semtex@writeatomref{target}
+%   Shared aux-write helper called by all patch sites.  Guards
+%   on \semtex@currentatom (no write if no atom is current) and
+%   on \if@filesw so --draftmode / -no-aux compiles work.
+\def\semtex@writeatomref#1{%
+  \ifx\semtex@currentatom\@empty\else
+    \if@filesw
+      \protected@write\@auxout{}{%
+        \string\semtex@atomref
+          {\semtex@currentatom}{#1}%
+      }%
+    \fi
+  \fi
+}
+
+% \semtex@installatomrefpatch
+%   Install all three patch sites.  Called from the
+%   begindocument/before hook (Section 8a.7), AFTER
+%   hyperref/cleveref have finished wrapping their respective
+%   dispatchers.  Patching at this point wraps the OUTERMOST
+%   live definition, preserving every prior hook (hyperlink
+%   emission, cref formatting).
+\def\semtex@installatomrefpatch{%
+  %% ---- Patch 1: kernel \@setref ----
+  %% Covers \ref, \eqref, \pageref (via \@pagesetref
+  %% delegation), \vref, \Vref, \vpageref, \nameref.
+  \let\semtex@orig@setref\@setref
+  \def\@setref##1##2##3{%
+    \semtex@orig@setref{##1}{##2}{##3}%
+    \semtex@writeatomref{##3}%
+  }%
+  %% ---- Patch 2: cleveref \cref@getlabel ----
+  %% Covers every cleveref family command.
+  \@ifpackageloaded{cleveref}{%
+    \let\semtex@orig@crefgetlabel\cref@getlabel
+    \def\cref@getlabel##1##2{%
+      \semtex@orig@crefgetlabel{##1}{##2}%
+      \semtex@writeatomref{##1}%
+    }%
+  }{}%
+  %% ---- Patch 3: hyperref \HyRef@autosetref / \HyRef@@StarSetRef ----
+  %% \HyRef@autosetref covers \autoref.
+  %% \HyRef@@StarSetRef covers \ref* and \Ref.
+  \@ifpackageloaded{hyperref}{%
+    \@ifundefined{HyRef@autosetref}{}{%
+      \let\semtex@orig@HyRefautosetref\HyRef@autosetref
+      \def\HyRef@autosetref##1##2##3{%
+        \semtex@orig@HyRefautosetref{##1}{##2}{##3}%
+        \semtex@writeatomref{##2}%
+      }%
+    }%
+    \@ifundefined{HyRef@@StarSetRef}{}{%
+      \let\semtex@orig@HyRefStarSetRef\HyRef@@StarSetRef
+      \def\HyRef@@StarSetRef##1##2##3{%
+        \semtex@orig@HyRefStarSetRef{##1}{##2}{##3}%
+        \semtex@writeatomref{##2}%
+      }%
+    }%
+  }{}%
+}
+
+%% --- Section 8a.1: Defer queue (csname linked list) ---
+%% Per REVIEW_C finding #2, the toks-register pattern from dpmac
+%% is O(N^2) at 15k refs; replaced with a csname linked list
+%% keyed by a monotonic \semtex@brid counter.
+
+\newcount\semtex@brid
+\semtex@brid=0\relax
+
+% \semtex@recordbr{src}{tgt}
+%   Enqueue a processbackref call.  O(1) per append.
+\def\semtex@recordbr#1#2{%
+  \global\advance\semtex@brid by 1\relax
+  \expandafter\xdef
+    \csname semtex@brq@\the\semtex@brid\endcsname{%
+      \noexpand\semtex@processbr{#2}{#1}%
+    }%
+}
+
+% \semtex@flushbrqueue
+%   Walk the linked list once, O(N) total.  Called from the
+%   begindocument/end hook (Section 8a.7).
+\def\semtex@flushbrqueue{%
+  \begingroup
+    \count@=\z@
+    \loop
+      \ifnum\count@<\semtex@brid
+        \advance\count@ by 1\relax
+        \csname semtex@brq@\the\count@\endcsname
+        \global\expandafter\let
+          \csname semtex@brq@\the\count@\endcsname\relax
+    \repeat
+  \endgroup
+}
+
+%% --- Section 8a.2: Active aux-record callback ---
+%% The \providecommand no-op from Section 8a.0 is REPLACED by
+%% this active definition at begindocument/before (Section
+%% 8a.7), before LaTeX reads .aux in \begin{document}.  From
+%% that point on, every \semtex@atomref{src}{tgt} that the .aux
+%% read fires lands here and enqueues a processbackref call.
+%%
+%% Per REVIEW_C finding #4, guard on empty src (orphan refs
+%% emitted between atoms).  Belt-and-braces: the \@setref patch
+%% already skips the write when \semtex@currentatom is empty.
+
+\def\semtex@atomref@active#1#2{%
+  \edef\semtex@tmp@src{#1}%
+  \ifx\semtex@tmp@src\@empty\else
+    \semtex@recordbr{#1}{#2}%
+  \fi
+}
+
+%% --- Section 8a.3: Per-target linked list, processbr, collapsebr ---
+%% For each target atom we maintain:
+%%   \semtex@brcount@<num>     -- count of appended refs
+%%   \semtex@brnode@<num>@<k>  -- the k-th ref text
+%% At typeset time the nodes are collapsed into the display
+%% macro \semtex@br@<num>.  Per REVIEW_C finding #2 second half,
+%% this turns O(degree^2) into O(degree).
+
+% \semtex@processbr{tgt}{src}
+%   #1 = target label key (display number via lblnum map)
+%   #2 = source atom display number
+\def\semtex@processbr#1#2{%
+  \expandafter\ifx\csname semtex@lblnum@#1\endcsname\relax
+    % Unknown target: silently drop.
+  \else
+    \edef\semtex@tmp@tgt{\csname semtex@lblnum@#1\endcsname}%
+    \edef\semtex@tmp@src{#2}%
+    % Self-ref guard (REVIEW_C finding #10).
+    \ifx\semtex@tmp@src\semtex@tmp@tgt\else
+      % Dedup against previous append for this target.
+      \edef\semtex@tmp@last{%
+        \csname semtex@brlast@\semtex@tmp@tgt\endcsname}%
+      \ifx\semtex@tmp@last\semtex@tmp@src
+        % Consecutive duplicate: skip.
+      \else
+        \global\expandafter\let
+          \csname semtex@brlast@\semtex@tmp@tgt\endcsname
+          \semtex@tmp@src
+        % Append a new linked-list node.
+        \expandafter\ifx
+            \csname semtex@brcount@\semtex@tmp@tgt\endcsname\relax
+          \global\expandafter\def
+            \csname semtex@brcount@\semtex@tmp@tgt\endcsname{0}%
+        \fi
+        \edef\semtex@tmp@k{%
+          \csname semtex@brcount@\semtex@tmp@tgt\endcsname}%
+        \count@=\semtex@tmp@k\relax
+        \advance\count@ by 1\relax
+        \expandafter\xdef
+          \csname semtex@brcount@\semtex@tmp@tgt\endcsname
+          {\the\count@}%
+        \expandafter\xdef
+          \csname
+            semtex@brnode@\semtex@tmp@tgt @\the\count@%
+          \endcsname
+          {#2}%
+      \fi
+    \fi
+  \fi
+}
+
+% \semtex@collapsebr{targetnum}
+%   Build a comma-joined display macro \semtex@br@<num> from
+%   the per-target node csnames.  Called lazily the first time
+%   \semtex@queuebackref looks up <num>.
+\def\semtex@collapsebr#1{%
+  \expandafter\ifx\csname semtex@brcount@#1\endcsname\relax
+    % No refs to this target.
+    \global\expandafter\let
+      \csname semtex@br@#1\endcsname\@empty
+  \else
+    \begingroup
+      \edef\semtex@tmp@n{\csname semtex@brcount@#1\endcsname}%
+      \def\semtex@tmp@acc{}%
+      \count@=\z@
+      \loop
+        \ifnum\count@<\semtex@tmp@n
+          \advance\count@ by 1\relax
+          \edef\semtex@tmp@node{%
+            \csname semtex@brnode@#1@\the\count@\endcsname}%
+          \ifx\semtex@tmp@acc\@empty
+            \edef\semtex@tmp@acc{\semtex@tmp@node}%
+          \else
+            \edef\semtex@tmp@acc{%
+              \semtex@tmp@acc, \semtex@tmp@node}%
+          \fi
+      \repeat
+      \global\expandafter\let
+        \csname semtex@br@#1\endcsname\semtex@tmp@acc
+    \endgroup
+  \fi
+}
+
+%% --- Section 8a.4: \newlabel / \newlabelxx override + extractor ---
+%% Per REVIEW_C finding #1, use a \@secondoftwo-style grab of
+%% the first braced subgroup.  Per REVIEW_C finding #3, install
+%% at begindocument/before so hyperref's pre-2023 aux-injection
+%% block does not clobber it.  Also override \newlabelxx for
+%% the pre-2023 hyperref pathway.
+
+% \semtex@grabfirst#1#2\@nil -> #1
+%   Grab the first brace group of a delimited argument.
+\def\semtex@grabfirst#1#2\@nil{#1}
+
+% Flag used only inside \semtex@ifcrefkey.
+\newif\ifsemtex@iscref
+
+\def\semtex@installnewlabel{%
+  \let\semtex@orig@newlabel\newlabel
+  \def\newlabel##1##2{%
+    \semtex@orig@newlabel{##1}{##2}%
+    \semtex@extractlblnum{##1}{##2}%
+  }%
+  % Pre-2023 hyperref path: \newlabelxx has 6 args.  Hyperref
+  % installs it in \AtBeginDocument and it races with our
+  % override, so we override it too.
+  \@ifundefined{newlabelxx}{}{%
+    \let\semtex@orig@newlabelxx\newlabelxx
+    \def\newlabelxx##1##2##3##4##5##6{%
+      \semtex@orig@newlabelxx
+        {##1}{##2}{##3}{##4}{##5}{##6}%
+      % ##2 is already the display number for the 6-arg form.
+      \expandafter\gdef
+        \csname semtex@lblnum@##1\endcsname{##2}%
+    }%
+  }%
+}
+
+% \semtex@extractlblnum{key}{value}
+%   value is the raw 2nd arg of \newlabel; after TeX brace-
+%   stripping it is "{num}{page}{...}{...}{...}".  Grab the
+%   first brace group and stash it under the key.  Skip keys
+%   that END in @cref (cleveref internal records).
+\def\semtex@extractlblnum#1#2{%
+  \semtex@ifcrefkey{#1}{%
+    % @cref-suffixed: skip silently.
+  }{%
+    \expandafter\semtex@extractlblnum@ii
+      \expandafter{\semtex@grabfirst#2\@nil}{#1}%
+  }%
+}
+\def\semtex@extractlblnum@ii#1#2{%
+  \expandafter\gdef\csname semtex@lblnum@#2\endcsname{#1}%
+}
+
+% Sentinel used by \semtex@ifcrefkey.
+\def\semtex@ifcrefsentinel{@cref}
+
+% \semtex@ifcrefkey{key}{then}{else}
+%   True iff the label key ENDS in "@cref".  Per REVIEW_D
+%   finding #4, matching "any key containing @cref" incorrectly
+%   dropped keys like "lemma@crefnum".  The delimited-arg probe
+%   splits "<key>@cref\@nil" on the FIRST occurrence of "@cref";
+%   the key ends in @cref iff the tail is exactly "@cref".
+\def\semtex@ifcrefkey#1{%
+  \semtex@iscreffalse
+  \def\semtex@ifcrefkey@probe##1@cref##2\@nil{%
+    \def\semtex@tmp@b{##2}%
+    \ifx\semtex@tmp@b\@empty
+      % No @cref in the key at all; the probe's own trailing
+      % @cref absorbed the split -> NOT a cref key.
+    \else
+      \ifx\semtex@tmp@b\semtex@ifcrefsentinel
+        \semtex@iscreftrue
+      \fi
+    \fi
+  }%
+  \semtex@ifcrefkey@probe#1@cref\@nil
+  \ifsemtex@iscref
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+
+%% --- Section 8a.7: Hook installation ---
+%% Per REVIEW_D finding #2, semtex-owned labels on
+%% begindocument/before get EXPLICIT relative ordering rather
+%% than both claiming "before *".  The \DeclareHookRule below
+%% pins \semtex/backref/install to run before hyperref.
+
+% Install the three \@setref-family patches AND the \newlabel
+% override AND the active \semtex@atomref callback at
+% begindocument/before.  All three belong together because
+% they co-depend on being in place before the .aux read during
+% \begin{document}.
+\AddToHook{begindocument/before}[semtex/backref/install]{%
+  \semtex@installatomrefpatch
+  \semtex@installnewlabel
+  % Swap the providecommand no-op for the active callback.
+  \let\semtex@atomref\semtex@atomref@active
+}
+
+% Flush the queue AFTER aux has been read.  The aux read
+% happens during the kernel's \document macro before any
+% \AtBeginDocument hook fires, so begindocument/end is a safe
+% point.
+\AddToHook{begindocument/end}[semtex/backref/flush]{%
+  \semtex@flushbrqueue
+}
+
+% External ordering: run before hyperref wraps \@setref a
+% second time in its \AtBeginDocument-equivalent hooks.
+\DeclareHookRule{begindocument/before}%
+  {semtex/backref/install}{before}{hyperref}
 
 %% ===================================================================
 %% Section 8: Back-reference emission
