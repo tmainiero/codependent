@@ -122,6 +122,37 @@
 \newbool{semtex@proofpending}
 \boolfalse{semtex@proofpending}
 
+% Restate guard: counter-indexed LIFO stack for save/clear/restore
+% of \semtex@currentatom across restated theorem occurrences
+% (§8a.5.a).  Depth 0 = no active restate; each push increments.
+\newcount\semtex@restate@depth
+\semtex@restate@depth=0\relax
+
+% \semtex@pushcurrentatom
+%   Save \semtex@currentatom onto the restate stack and clear it
+%   to \@empty so semantic commands inside the restated body no-op.
+\newcommand*{\semtex@pushcurrentatom}{%
+  \global\advance\semtex@restate@depth 1\relax
+  \expandafter\xdef
+    \csname semtex@saved@currentatom@%
+      \the\semtex@restate@depth\endcsname
+    {\semtex@currentatom}%
+  \global\let\semtex@currentatom\@empty
+}
+
+% \semtex@popcurrentatom
+%   Restore \semtex@currentatom from the restate stack, undefine
+%   the slot, and decrement the depth counter.
+\newcommand*{\semtex@popcurrentatom}{%
+  \global\let\semtex@currentatom
+    \csname semtex@saved@currentatom@%
+      \the\semtex@restate@depth\endcsname
+  \global\expandafter\let
+    \csname semtex@saved@currentatom@%
+      \the\semtex@restate@depth\endcsname\@undefined
+  \global\advance\semtex@restate@depth -1\relax
+}
+
 % Accumulated appendix data (token register).
 % Still referenced by \semtexappendix (Section 10); Wave 3 rewires
 % its population path per §8a.6.g.
@@ -248,23 +279,59 @@
 %   \semtex@currentatom is demoted to a sentinel — its value is
 %   not used, only its emptiness; we set it to a literal "1" on
 %   begin and clear to \@empty on end.
+%
+%   Restatable guard (§8a.5.a): \semtex@setupcounter aliases
+%   \c@theorem to \c@atom.  When thmtools' thm-restate.sty
+%   re-fires the env for \restate, it breaks this alias
+%   (\c@theorem -> \c@thmt@dummyctr).  The \ifx guard detects
+%   whether the alias is intact (original occurrence) or broken
+%   (restate occurrence) and skips the hook body on restate,
+%   preventing spurious atom attribution and duplicate .sbl
+%   records.  All envs declared with \newtheorem{...}[theorem]
+%   share \c@theorem, so the guard covers all shared-counter
+%   envs.  Envs with independent counters are not supported by
+%   this guard and should not be passed to \semtextrack.
 \newcommand*{\semtex@hooktheorem}[1]{%
   \AtBeginEnvironment{#1}{%
-    \advance\semtex@nestlevel by 1\relax
-    \booltrue{semtex@intheorem}%
-    % Sentinel only — the actual atom number is read at write
-    % time via \theatom (see §8a.5.0).
-    \def\semtex@currentatom{1}%
+    \expandafter\ifx\csname c@theorem\endcsname\c@atom
+      % Original occurrence: alias intact, normal hook body.
+      \advance\semtex@nestlevel by 1\relax
+      \booltrue{semtex@intheorem}%
+      % Sentinel only — the actual atom number is read at write
+      % time via \theatom (see §8a.5.0).
+      \def\semtex@currentatom{1}%
+    \else
+      % Restate occurrence: \c@theorem re-let to dummy counter
+      % by thm-restate.sty.  Suppress the hook body to avoid
+      %   (a) reading the wrong \theatom,
+      %   (b) writing a duplicate \semtex@sbl@atom record,
+      %   (c) queuing back-refs against a stale atom number.
+      % Bump nestlevel so paragraph numbering is suppressed
+      % inside the restated body (matching normal theorem
+      % semantics), and save/clear currentatom so semantic
+      % commands inside the restated body no-op.
+      \advance\semtex@nestlevel by 1\relax
+      \semtex@pushcurrentatom
+    \fi
   }%
   \AtEndEnvironment{#1}{%
-    % \theatom is now post-\refstepcounter (the env body has run).
-    \semtex@queuebackref{\theatom}%
-    \semtex@flushbackref
-    % §8a.5 atom-end clear of the in-atom sentinel.
-    \let\semtex@currentatom\@empty
-    \advance\semtex@nestlevel by -1\relax
-    \ifnum\semtex@nestlevel=0\relax
-      \boolfalse{semtex@intheorem}%
+    \expandafter\ifx\csname c@theorem\endcsname\c@atom
+      % Original occurrence: normal end body.
+      % \theatom is now post-\refstepcounter (the env body
+      % has run).
+      \semtex@queuebackref{\theatom}%
+      \semtex@flushbackref
+      % §8a.5 atom-end clear of the in-atom sentinel.
+      \let\semtex@currentatom\@empty
+      \advance\semtex@nestlevel by -1\relax
+      \ifnum\semtex@nestlevel=0\relax
+        \boolfalse{semtex@intheorem}%
+      \fi
+    \else
+      % Restate end: restore currentatom from the stack, then
+      % decrement nestlevel (LIFO order per §8a.5.a).
+      \semtex@popcurrentatom
+      \advance\semtex@nestlevel by -1\relax
     \fi
   }%
 }
