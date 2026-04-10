@@ -556,16 +556,14 @@
       % previous paragraph's output) without a mode change.
       \ifx\semtex@deferredbr\@empty\else
         \vadjust pre{%
-          \vskip 0.3ex
-          \moveright 0pt \vbox{%
+          \nobreak
+          \vbox{%
             \hbox to \linewidth{%
               \hfil
-              {\small\sffamily
+              {\normalfont\scriptsize\sffamily
                 Used in \semtex@deferredbr.}%
-              \kern 0.5em
             }%
           }%
-          \vskip 0.3ex
           \nobreak
         }%
         \global\let\semtex@deferredbr\@empty
@@ -1129,11 +1127,9 @@
 %   Render "Used in X, Y." at the end of the current atom.
 %   Redefined at \begin{document} when hyperref is loaded.
 \newcommand*{\semtex@renderinline}[1]{%
-  \par\nopagebreak\vskip-\parskip
-  \begingroup
-    \normalfont\footnotesize\sffamily
-    \rightline{Used in #1.}%
-  \endgroup
+  \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
+  \quad{\normalfont\scriptsize\sffamily Used in #1.}%
+  \par
 }
 
 % Deferred backref: data saved at para/end, emitted at the
