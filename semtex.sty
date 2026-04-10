@@ -1129,9 +1129,9 @@
 %   Render "Used in X, Y." at the end of the current atom.
 %   Redefined at \begin{document} when hyperref is loaded.
 \newcommand*{\semtex@renderinline}[1]{%
-  \par\nopagebreak
+  \par\nopagebreak\vskip-\parskip
   \begingroup
-    \small\sffamily
+    \normalfont\footnotesize\sffamily
     \rightline{Used in #1.}%
   \endgroup
 }
