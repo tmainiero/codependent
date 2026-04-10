@@ -299,9 +299,29 @@ When a tracked environment opens:
    environment don't get separate numbers.
 2. Adjust the displayed number to use the atom format.
 
-The counter is NOT advanced by the hook — `\newtheorem`
-already advances the aliased `atom` counter on entry.
-No double-increment.
+The `\AtBeginEnvironment{<env>}` hook (etoolbox) fires
+BEFORE the env's begin command runs, which means BEFORE
+amsthm's `\@thm` calls `\refstepcounter{theorem}`.  At
+hook entry, `\theatom` therefore expands to the
+**previous** atom's display number, not the current one.
+Source: etoolbox.sty:1803-1824 (`\csgappto{@begin@foo@hook}`
+prepended to `\begin`'s expansion); amsthm.sty:129-149
+(`\refstepcounter{#2}` at line 145 of `\@thm`).
+
+Consequence: the hook body cannot reliably *cache* the
+current atom number.  Instead, every site that needs the
+current atom number reads `\theatom` directly at use time
+(e.g. `\semtex@writeatomref` reads `\theatom` when emitting
+the source field of a `\semtex@atomref` record, not the
+cached `\semtex@currentatom`).  The cached
+`\semtex@currentatom` is repurposed as an **in-atom
+sentinel**: empty = no current atom; non-empty = inside a
+tracked atom (specific value irrelevant).
+
+The hook still runs (it sets the in-atom sentinel,
+increments `\semtex@nestlevel`, queues backref display, and
+clears the sentinel at atom end).  What it does NOT do is
+freeze the atom number into a macro.
 
 When it closes, decrement `\semtex@nestlevel`.
 
@@ -1165,6 +1185,107 @@ footnote, or inter-paragraph remark) is attributed to the
 PREVIOUS atom, and the resulting `\semtex@atomref` record
 points at the wrong source.
 
+#### 8a.5.0 — Timing: why the hook-time `\edef` was wrong
+
+> **Critical correction to v0.1.** The version 0.1 stub at
+> `semtex.sty` line 245 contained
+> `\edef\semtex@currentatom{\theatom}` inside an
+> `\AtBeginEnvironment{theorem}` hook body, on the assumption
+> that `\refstepcounter{theorem}` had already fired by the time
+> the hook ran.  **It had not.**  The triage of REVIEW post-Wave 1
+> (2026-04-09) traced the actual timing through etoolbox and
+> amsthm and confirmed the opposite: the hook fires *before*
+> the counter step.
+
+**Mechanism (cited sources).**
+
+- etoolbox.sty:1803-1824 implements
+  `\AtBeginEnvironment{<env>}` via
+  `\csgappto{@begin@<env>@hook}`.  The kernel `\begin` macro
+  is patched to inject `\csuse{@begin@<env>@hook}` *before*
+  calling `\csname<env>\endcsname`.  So the hook body runs in
+  the same mouth as `\begin`, **before** the env macro (e.g.
+  `\theorem`) is even invoked.
+- amsthm.sty:129-149 defines `\@thm`.  The
+  `\refstepcounter{#2}` call sits on line 145, deep inside
+  `\@thm`, after `\trivlist` setup and style hooks.  The
+  caller chain is
+  `\begin{theorem}` → `\theorem` → `\@thm{...}{theorem}{...}` →
+  ... → `\refstepcounter{theorem}`.  The prepended
+  `@begin@theorem@hook` fires strictly **before** this entire
+  chain.
+
+**Consequence.**  At hook entry, `\theatom` expands to the
+previous atom's display number.  Caching it via `\edef`
+(`\edef\semtex@currentatom{\theatom}`) freezes the wrong value
+into the macro for the rest of the atom's body.  Any
+downstream consumer that reads `\semtex@currentatom` —
+`\semtex@writeatomref`, the planned `.sbl` writer, the
+backref-display lookup — picks up the wrong number.
+
+Empirical confirmation under the v0.1 stub plus Wave 1's
+working aux-write patches:
+
+```
+\begin{theorem}\label{thm:A}First.\end{theorem}      % becomes 1.1
+\begin{theorem}By \cref{thm:A}, second.\end{theorem} % becomes 1.2
+%% expected aux record: \semtex@atomref{1.2}{thm:A}
+%% actual   aux record: \semtex@atomref{1.1}{thm:A}  (off by one)
+```
+
+Inside theorem 1's body, the cached `\semtex@currentatom` was
+observed to be `1.0` — a "ghost atom" number that never
+existed in any sense, because the counter step had not yet
+fired and `\theatom` therefore returned the pre-section-reset
+value.
+
+**Fix (folded into Wave 2's §8a.5 edits).**  Two
+complementary changes:
+
+1. **`\semtex@writeatomref` reads `\theatom` at write time**,
+   not the cached `\semtex@currentatom`.  The src argument of
+   the emitted `\semtex@atomref{<src>}{<tgt>}` record is now
+   `\theatom`, which by definition reflects the current
+   atom counter state at the moment the `\ref`/`\cref`/etc.
+   fires inside the user content — i.e. *after* the
+   `\refstepcounter` for the enclosing atom.
+
+2. **`\semtex@currentatom` is demoted to an in-atom
+   sentinel.**  Its semantics become: empty (`\@empty`) means
+   "not currently inside any tracked atom"; any non-empty
+   value means "currently inside an atom".  The specific
+   value is irrelevant.  The three set sites in Section 6/7
+   (theorem hook, proof hook, paragraph hook) can keep their
+   existing structure as `\edef\semtex@currentatom{\theatom}`
+   — the *value* assigned no longer matters, only that it is
+   non-empty.  The clear sites (added per the §8a.5 edit list
+   below) set it to `\@empty`.
+
+**Why the paragraph-atom and standalone-proof sites are
+unaffected.**  Both `\semtex@installparahook` (semtex.sty
+line ~406) and `\semtex@hookproof`'s standalone branch (line
+~280) call `\refstepcounter{atom}` *before* the `\edef`, so
+their `\theatom` reads were already correct.  They were
+accidentally right under the v0.1 misconception.  Only the
+theorem hook path (which depends on amsthm's internal
+`\refstepcounter` happening later) was broken.
+
+**Why `\semtex@queuebackref` callers must also pass
+`\theatom`.**  The three call sites at
+`\semtex@queuebackref{\semtex@currentatom}` (semtex.sty
+lines 254, 284, 409) currently pass the cached value.  Under
+the new sentinel semantics, they must pass `\theatom`
+explicitly so the lookup key matches the per-target node
+csnames built from `\newlabel` display numbers.  Three-line
+edit, included in Wave 2's §8a.5 patch set.
+
+**Latent secondary bug.**  The nest-branch
+`\addtocounter{atom}{-1}` at semtex.sty:249 was a v0.1
+attempt to "undo" amsthm's `\refstepcounter`.  Under the
+correct timing (hook fires *before* the counter step), the
+undo decrements a counter that was never advanced.  Wave 2
+deletes this line as part of the same fix.
+
 #### Sites that set `\semtex@currentatom`
 
 These are the three existing set sites, listed by
@@ -1251,12 +1372,20 @@ regression is caught at the `.lvt` level.
 
 The four bugs documented in REVIEW_E Section R:
 
-- **R-1.** Re-fired theorem hook reads `\theatom` (which
-  expands from `\c@atom`, not the re-aliased
-  `\c@theorem`), so `\semtex@currentatom` gets the atom
-  number of the unrelated previous atom at the restate
-  site.  Back-ref edges from `\@setref` inside the
-  restated body are attributed to the wrong source.
+- **R-1.** On the restate branch, `thm-restate.sty` line 132
+  executes `\@xa\let\csname c@#2\endcsname=\c@thmt@dummyctr`,
+  breaking the `\c@theorem ↔ \c@atom` alias.  The hook body
+  runs in this aliased-away scope.  Even with §8a.5.0's
+  read-at-write-time fix in place, any code that observes
+  the `\c@theorem` counter directly inside the restate-hook
+  body would see the dummy counter, not the live atom
+  counter.  The §8a.5.a guard `\ifx\c@theorem\c@atom`
+  detects this state and skips the entire hook body on the
+  restate branch, so no spurious atom number gets associated
+  with the restated theorem and no duplicate
+  `\semtex@sbl@atom` record is emitted.  (Note: this is a
+  separate concern from §8a.5.0's hook-timing fix; the two
+  interact but address different defects.)
 - **R-2.** amsthm's `\refstepcounter{theorem}` advances
   `\c@thmt@dummyctr` on the restate branch (harmless to
   `\c@atom` since the alias is broken), but our hook
@@ -3227,6 +3356,16 @@ are written.  All calls go through the guarded helper
 `\semtex@sblwrite@atom` (see "Guard pattern" below), which
 checks `\semtex@currentatom` before emitting atom-scoped
 records.
+
+> **Note (per §8a.5.0).**  Atom-scoped emission helpers must
+> pass `\theatom` (not the cached `\semtex@currentatom`
+> sentinel) when the record's payload includes the atom
+> display number, e.g.
+> `\semtex@sbl@atom{\theatom}{paragraph}`.  The
+> `\semtex@sblwrite@atom` guard still uses
+> `\ifx\semtex@currentatom\@empty` to gate emission on "in
+> tracked atom" — only the *value* of the atom number is
+> read fresh from `\theatom` at emit time.
 
 | Hook site (in `semtex.sty`) | Records emitted |
 |---|---|
