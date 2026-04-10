@@ -1,0 +1,362 @@
+%% TEST-NAME: test-trinity-ta-style
+%% TEST-WHAT: Enriched integration fixture combining the trinity-stripped
+%%            scenario with the user's real theorem style (sty-theorems-ta).
+%%            Exercises all 10 theorem env types with custom endmarks,
+%%            counter sharing via thmtools sibling=, restatable, tikz-cd,
+%%            display math inside theorems, heavy \cref cross-referencing,
+%%            cross-section backrefs, concept-tracked macros, and hyperref.
+%% TEST-SOURCE: sty-theorems-ta.sty (Geiko–Mainiero–Moore three-avatars
+%%              monograph); DESIGN.md §8a.0–§9a (integration surface)
+%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Funct}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Funct}{arity}{2}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{catname}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{catname}{arity}{1}
+%% TEST-SBL-CONTAINS: \semtex@sbl@use
+%% TEST-SBL-CONTAINS: \semtex@sbl@def
+%% TEST-SBL-CONTAINS: \semtex@sbl@label
+%% TEST-SBL-CONTAINS: \semtex@sbl@tag
+%% TEST-AUX-CONTAINS: \semtex@atomref
+%% TEST-AUX-CONTAINS: \semtex@concept{Funct}
+%% TEST-AUX-CONTAINS: \semtex@concept{catname}
+%% TEST-AUX-CONTAINS: \semtex@conceptref
+%% TEST-ATOMS-MIN: 15
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,semtex
+%% TEST-RERUN: 3
+%%
+%% This fixture inlines the theorem declarations from sty-theorems-ta.sty
+%% (the three-avatars monograph's real theorem style) to avoid an external
+%% file dependency in the test runner.  The declarations are a faithful
+%% copy of the \makeTheoremEnv / \makeDefinitionEnv pattern plus all 10
+%% environment instantiations with their custom endmark symbols.
+%%
+%% The content exercises the full semtex feature surface:
+%%   - All 10 theorem env types (theorem through question)
+%%   - Custom endmarks via thmtools qed= key
+%%   - Counter sharing via sibling= (sequential 1.1–1.10)
+%%   - thm-restate (\restatable + \restate via star form)
+%%   - cleveref (\cref, \Cref, multi-label)
+%%   - hyperref (\autoref, hypertexnames=false)
+%%   - tikz-cd commutative diagram inside a theorem env
+%%   - Display math (equation, align) inside theorems — no margin numbers
+%%   - \semtexNewCommand concept tracking (def-site / use-site)
+%%   - \semtextag semantic sidecar records
+%%   - Cross-section backrefs (section 3 → section 1)
+
+\documentclass{article}
+
+%% ---------- Package stack (mirrors real paper) ----------
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+\usepackage{graphicx}     % needed for \scalebox in endmark symbols
+
+%% ---------- Theorem infrastructure (inlined from sty-theorems-ta.sty) ----------
+%% Faithful copy of the three-avatars monograph theorem style.
+%% Original file: sty-theorems-ta.sty (READ-ONLY, not modified).
+\usepackage{amsthm}
+\usepackage{thmtools}
+\usepackage{thm-restate}
+\usepackage{xparse}
+\usepackage{fontawesome}
+\usepackage{xcolor}
+
+% Scalebox workaround for the Spock symbol
+\newsavebox{\rescaleBlueSpock}
+\savebox{\rescaleBlueSpock}{\scalebox{0.9}{\textcolor{blue}{\normalfont\faHandSpockO}}}
+
+% Symbol synonyms
+\newcommand{\notesymbol}{\textcolor{blue}{\text{{\normalfont\faPencilSquareO}}}}
+\newcommand{\termsymbolLeft}{\scalebox{-1}[1]{\usebox{\rescaleBlueSpock}}}
+\newcommand{\termsymbolRight}{\usebox{\rescaleBlueSpock}}
+\newcommand{\defsymbolLeft}{\textcolor{blue}{\blacktriangleright}}
+\newcommand{\defsymbolRight}{\textcolor{blue}{\blacktriangleleft}}
+\definecolor{thmcolor}{RGB}{3,105,79}
+\newcommand{\thmsymbol}{\textcolor{thmcolor}{\blacklozenge}}
+\newcommand{\propsymbol}{\lozenge}
+\newcommand{\lemsymbol}{\heartsuit}
+\newcommand{\corsymbol}{\vartriangle}
+
+% Macro creators (exactly as in sty-theorems-ta.sty)
+\NewDocumentCommand{\makeDefinitionEnv}{mmmmo}{%
+  \declaretheoremstyle[
+    spaceabove=6pt,
+    spacebelow=6pt,
+    headfont=\normalfont\bfseries,
+    qed=$#4$,
+    bodyfont=\normalfont,
+    notefont=\mdseries\bfseries,
+    notebraces={(}{)},
+  ]{#1style}
+  \IfValueTF{#5}{
+    \declaretheorem[
+      name = {$#3$ #2},
+      style=#1style,
+      sibling=#5
+    ]{#1}
+  }{%
+    \declaretheorem[
+      name = {$#3$ #2},
+      style=#1style,
+      numberwithin=section
+    ]{#1}
+  }
+}
+\NewDocumentCommand{\makeTheoremEnv}{mmmmo}{%
+  \declaretheoremstyle[
+    spaceabove=6pt,
+    spacebelow=6pt,
+    headfont=\normalfont\bfseries,
+    qed=$#4$,
+    bodyfont=\slshape,
+    notefont=\mdseries\bfseries,
+    notebraces={(}{)},
+  ]{#1style}
+  \IfValueTF{#5}{
+    \declaretheorem[
+      name = {$#3$ #2},
+      style=#1style,
+      sibling=#5
+    ]{#1}
+  }{%
+    \declaretheorem[
+      name = {$#3$ #2},
+      style=#1style,
+      numberwithin=section
+    ]{#1}
+  }
+}
+
+% Theorem-like environments (all share the theorem counter)
+\makeTheoremEnv{theorem}{Theorem}{\thmsymbol}{\thmsymbol}
+\makeTheoremEnv{proposition}{Proposition}{\propsymbol}{\propsymbol}[theorem]
+\makeTheoremEnv{lemma}{Lemma}{\lemsymbol}{\lemsymbol}[theorem]
+\makeTheoremEnv{corollary}{Corollary}{\corsymbol}{\corsymbol}[theorem]
+\makeDefinitionEnv{definition}{Definition}{\defsymbolLeft}{\defsymbolRight}[theorem]
+\makeDefinitionEnv{notation}{Notation}{\notesymbol}{\notesymbol}[theorem]
+\makeDefinitionEnv{terminology}{Terminology}{\termsymbolLeft}{\termsymbolRight}[theorem]
+\makeDefinitionEnv{example}{Example}{\clubsuit}{\clubsuit}[theorem]
+\makeDefinitionEnv{remark}{Remark}{\triangleright}{\triangleleft}[theorem]
+\makeDefinitionEnv{question}{Question}{\boxed{?}}{\boxed{?}}[theorem]
+
+%% ---------- tikz-cd ----------
+\usepackage{tikz}
+\usetikzlibrary{cd}
+
+%% ---------- semtex ----------
+\usepackage{semtex}
+\semtextrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
+
+%% ---------- hyperref + cleveref ----------
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=teal,citecolor=darkgray}
+\usepackage{cleveref}
+
+%% ---------- Concept-tracked macros ----------
+%% Two macros to exercise def-site / use-site tracking.
+
+% \Funct{F}{C} — arity 2, functor notation
+\semtexNewCommand{\Funct}[2]{\mathrm{#1}\colon #2}
+
+% \catname{C} — arity 1, category name formatter
+\semtexNewCommand{\catname}[1]{\mathsf{#1}}
+
+%% ---------- Equation numbering by section ----------
+\numberwithin{equation}{section}
+
+\begin{document}
+\START
+
+%% ====================================================================
+%%  Section 1: Core environments (all 10 types, sequential 1.1–1.10)
+%% ====================================================================
+\section{Core environments}%
+\label{sec:core}
+
+Let $\catname{C}$ be a category with morphisms $\Funct{F}{C}$.
+
+\begin{theorem}\label{thm:main}
+  Let $A$ and $B$ be objects in $\catname*{C}$.
+  The functor $\Funct*{G}{D}$ is fully faithful.
+\end{theorem}
+
+\begin{proof}
+  Immediate from \cref{def:enrichment} and \cref{lem:adjunction}.
+\end{proof}
+
+\begin{proposition}\label{prop:decompose}
+  Every natural transformation $\alpha\colon \Funct{F}{C} \Rightarrow
+  \Funct{G}{D}$ decomposes into horizontal and vertical parts.
+\end{proposition}
+
+\begin{lemma}\label{lem:adjunction}
+  The functors $F \dashv G$ satisfy the triangle identities.
+\end{lemma}
+
+\begin{proof}
+  By the unit-counit formulation; see \cref{thm:main}.
+\end{proof}
+
+\begin{corollary}\label{cor:equiv}
+  If $F \dashv G$ is an adjoint equivalence, then
+  $\catname{C} \simeq \catname{D}$.
+\end{corollary}
+
+\begin{definition}\label{def:enrichment}
+  A $\catname{V}$-enriched category $\catname{C}$ consists of a
+  set of objects $\mathrm{Ob}(\catname{C})$ and, for each pair
+  $(A,B)$, an object $\catname{V}(A,B)$ in $\catname{V}$.
+  \semtextag{uid}{cat:enriched-category}%
+\end{definition}
+
+\begin{notation}\label{not:hom}
+  We write $[A,B]$ for the internal hom in $\catname{V}$.
+\end{notation}
+
+\begin{terminology}\label{term:monoidal}
+  A \emph{monoidal category} is a category $\catname{C}$ equipped with
+  a bifunctor $\otimes$ and a unit object $I$.
+\end{terminology}
+
+\begin{example}\label{ex:vect}
+  The category $\catname{Vect}_k$ of finite-dimensional vector spaces
+  over a field $k$ is monoidal under $\otimes_k$.
+  See \cref{term:monoidal}.
+\end{example}
+
+\begin{remark}\label{rem:day}
+  Day convolution endows the functor category
+  $[\catname{C}^{\mathrm{op}}, \catname{Vect}_k]$
+  with a monoidal structure; see \cref{ex:vect,term:monoidal}.
+\end{remark}
+
+\begin{question}\label{q:coherence}
+  Is every monoidal category (\cref{term:monoidal}) monoidally
+  equivalent to a strict one?  See \cref{thm:main,cor:equiv}.
+\end{question}
+
+%% ====================================================================
+%%  Section 2: Advanced features
+%% ====================================================================
+\section{Advanced features}%
+\label{sec:advanced}
+
+%% --- Restatable theorem ---
+\begin{restatable}{theorem}{CoherenceThm}\label{thm:coherence}
+  Every monoidal category (\cref{term:monoidal}) is monoidally
+  equivalent to a strict monoidal category. Moreover, the
+  equivalence is compatible with the enrichment of
+  \cref{def:enrichment}.
+\end{restatable}
+
+\begin{proof}
+  Follows from Mac Lane's coherence theorem and the fact that
+  the strictification functor $\Funct{S}{C}$ is an equivalence
+  (\cref{lem:adjunction}).
+\end{proof}
+
+%% --- tikz-cd commutative diagram inside a theorem ---
+\begin{proposition}\label{prop:square}
+  The following square of monoidal functors commutes up to
+  natural isomorphism:
+  \begin{equation}\label{eq:square}
+    \begin{tikzcd}
+      \catname{C}
+        \arrow[r, "F"]
+        \arrow[d, "S"']
+      & \catname{D}
+        \arrow[d, "T"]
+      \\
+      \catname{C}_{\mathrm{str}}
+        \arrow[r, "F_{\mathrm{str}}"']
+      & \catname{D}_{\mathrm{str}}
+    \end{tikzcd}
+  \end{equation}
+\end{proposition}
+
+%% --- Display math (equation + align) inside a theorem ---
+\begin{lemma}\label{lem:pentagon}
+  The pentagon identity for the associator $\alpha$ reads
+  \begin{equation}\label{eq:pentagon}
+    (\alpha_{A,B,C} \otimes \mathrm{id}_D)
+    \circ \alpha_{A,B \otimes C,D}
+    \circ (\mathrm{id}_A \otimes \alpha_{B,C,D})
+    = \alpha_{A \otimes B,C,D} \circ \alpha_{A,B,C \otimes D}.
+  \end{equation}
+  Equivalently, using the horizontal composition:
+  \begin{align}\label{eq:assoc-expand}
+    \alpha \circ (\alpha \otimes 1) &= \alpha \circ (1 \otimes \alpha) \circ \alpha \\
+    \label{eq:unit-triangle}
+    (\mathrm{id} \otimes \lambda) \circ \alpha &= \rho \otimes \mathrm{id}.
+  \end{align}
+\end{lemma}
+
+\begin{proof}
+  By direct computation using \cref{def:enrichment} and the
+  naturality of $\alpha$; see \cref{prop:square}.
+\end{proof}
+
+%% --- Inline tikz-cd ---
+An adjunction
+$\begin{tikzcd}[cramped, sep=small]
+  \catname{C} \arrow[r, bend left, "F"] &
+  \catname{D} \arrow[l, bend left, "G"]
+\end{tikzcd}$
+induces a monad $GF$ on $\catname{C}$.
+
+%% ====================================================================
+%%  Section 3: Cross-section backrefs
+%% ====================================================================
+\section{Applications}%
+\label{sec:apps}
+
+%% References back to section 1 trigger "Used in" annotations.
+
+\begin{theorem}\label{thm:strictify}
+  By \cref{thm:main} and the coherence theorem
+  (\cref{thm:coherence}), every $\catname{V}$-enriched category
+  (\cref{def:enrichment}) admits a strictification.
+\end{theorem}
+
+\begin{definition}\label{def:modular}
+  A modular tensor category is a ribbon fusion category
+  $\catname{C}$ (\cref{term:monoidal,cor:equiv}) with a
+  non-degenerate $S$-matrix.
+\end{definition}
+
+\begin{corollary}\label{cor:modular}
+  Combining \cref{thm:strictify,def:modular,lem:pentagon},
+  every modular tensor category has a strict skeleton.
+\end{corollary}
+
+\begin{remark}\label{rem:tqft}
+  The correspondence of \cref{cor:modular} underlies the
+  Reshetikhin--Turaev construction of 3-dimensional TQFTs.
+  This connects to the original equivalence of
+  \cref{thm:main,prop:decompose}.
+\end{remark}
+
+%% ====================================================================
+%%  Section 4: Restated results
+%% ====================================================================
+\section{Restated results}%
+\label{sec:restate}
+
+We collect restated results for the reader's convenience.
+
+\CoherenceThm*
+
+The restatement above must not produce a duplicate sbl atom record.
+
+A final paragraph referencing multiple labels via cleveref:
+\Cref{thm:main,prop:decompose,lem:adjunction} establish the
+core categorical framework, while
+\cref{cor:equiv,def:enrichment,q:coherence} provide the
+foundational vocabulary.  See also \autoref{not:hom}.
+
+\END
+\end{document}
