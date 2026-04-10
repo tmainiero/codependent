@@ -578,9 +578,21 @@
 \providecommand*{\semtex@atomref}[2]{}
 
 % Pass-1 safety for concept-tracking aux records (§9a User API).
-% Active definitions installed in Wave 7 (§8a.9 concept resolution).
+% Active definitions installed at begindocument/before
+% (§8a.9 concept resolution).
 \providecommand*{\semtex@concept}[2]{}
 \providecommand*{\semtex@conceptref}[2]{}
+
+% Concept pending-list: deferred resolveconcept calls for
+% forward refs whose def record has not yet been read.
+% Flushed at begindocument/end after the full aux read.
+\gdef\semtex@conceptpending{}
+
+% Concept name list: each concept whose \semtex@emit@use
+% fires at least once appends \do{name} here.  The
+% \semtex@conceptwarnscan at \AtEndDocument walks this list
+% to detect concepts with uses but no def site.
+\def\semtex@conceptnames{}
 
 % \semtex@writeatomref{target}
 %   Shared aux-write helper called by all patch sites.  Guards
@@ -752,6 +764,49 @@
   \fi
 }
 
+% \semtex@appendbr{tgtnum}{srcnum}
+%   Append a backref edge directly using display numbers
+%   (no lblnum lookup).  Used by concept resolution where
+%   both source and target atom numbers are already known.
+%   Includes self-ref and consecutive-dedup guards.
+\def\semtex@appendbr#1#2{%
+  \edef\semtex@tmp@tgt{#1}%
+  \edef\semtex@tmp@src{#2}%
+  % Self-ref guard.
+  \ifx\semtex@tmp@src\semtex@tmp@tgt\else
+    % Dedup against previous append for this target.
+    \edef\semtex@tmp@last{%
+      \csname semtex@brlast@\semtex@tmp@tgt\endcsname}%
+    \ifx\semtex@tmp@last\semtex@tmp@src
+      % Consecutive duplicate: skip.
+    \else
+      \global\expandafter\let
+        \csname semtex@brlast@\semtex@tmp@tgt\endcsname
+        \semtex@tmp@src
+      \expandafter\ifx
+          \csname semtex@brcount@\semtex@tmp@tgt%
+          \endcsname\relax
+        \global\expandafter\def
+          \csname semtex@brcount@\semtex@tmp@tgt%
+          \endcsname{0}%
+      \fi
+      \edef\semtex@tmp@k{%
+        \csname semtex@brcount@\semtex@tmp@tgt%
+        \endcsname}%
+      \count@=\semtex@tmp@k\relax
+      \advance\count@ by 1\relax
+      \expandafter\xdef
+        \csname semtex@brcount@\semtex@tmp@tgt%
+        \endcsname{\the\count@}%
+      \expandafter\xdef
+        \csname
+          semtex@brnode@\semtex@tmp@tgt @\the\count@%
+        \endcsname
+        {#2}%
+    \fi
+  \fi
+}
+
 % \semtex@collapsebr{targetnum}
 %   Build a comma-joined display macro \semtex@br@<num> from
 %   the per-target node csnames.  Called lazily the first time
@@ -884,12 +939,70 @@
   \let\semtex@atomref\semtex@atomref@active
 }
 
-% Flush the queue AFTER aux has been read.  The aux read
-% happens during the kernel's \document macro before any
-% \AtBeginDocument hook fires, so begindocument/end is a safe
-% point.
+%% --- Section 8a.9: Concept-aware forward-reference resolution ---
+%% Active callbacks for \semtex@concept and \semtex@conceptref.
+%% Defined here (at package-load time, under \makeatletter);
+%% swapped in at begindocument/before by \let, following the
+%% same pattern as \semtex@atomref@active.
+
+% \semtex@concept@active{name}{atomnum}
+%   Populate the concept def-site map.  Per J3, silently
+%   overwrite on duplicate aux records (stale prior-run).
+\def\semtex@concept@active#1#2{%
+  \expandafter\gdef
+    \csname semtex@conceptdef@#1\endcsname{#2}%
+}
+
+% \semtex@conceptref@active{srcatom}{conceptname}
+%   If the def site is already in the concept map, resolve
+%   immediately; otherwise defer to \semtex@conceptpending
+%   for retry after the full aux read completes.
+\def\semtex@conceptref@active#1#2{%
+  \@ifundefined{semtex@conceptdef@#2}%
+    {\g@addto@macro\semtex@conceptpending{%
+       \semtex@resolveconcept{#1}{#2}}}%
+    {\semtex@resolveconcept{#1}{#2}}%
+}
+
+% \semtex@resolveconcept{srcatom}{conceptname}
+%   Look up the def atom for the named concept and feed the
+%   resolved edge directly into the per-target node list via
+%   \semtex@appendbr (bypasses the label lookup in processbr,
+%   since concept edges carry raw atom display numbers).
+%   If the concept has no def site (semtex@conceptdef@<name>
+%   undefined), silently no-op — the missing-def warning
+%   fires at \AtEndDocument via the concept name scan.
+\def\semtex@resolveconcept#1#2{%
+  \@ifundefined{semtex@conceptdef@#2}{}{%
+    \edef\semtex@cr@tgt{%
+      \csname semtex@conceptdef@#2\endcsname}%
+    \edef\semtex@cr@act{%
+      \noexpand\semtex@appendbr
+        {\semtex@cr@tgt}{#1}}%
+    \semtex@cr@act
+  }%
+}
+
+% Swap the providecommand no-ops for the active callbacks
+% at begindocument/before, before the .aux read.
+\AddToHook{begindocument/before}[semtex/concept/install]{%
+  \let\semtex@concept\semtex@concept@active
+  \let\semtex@conceptref\semtex@conceptref@active
+}
+
+% Flush the backref queue AFTER aux has been read.  The aux
+% read happens during the kernel's \document macro before any
+% \AtBeginDocument hook fires, so begindocument/end is safe.
 \AddToHook{begindocument/end}[semtex/backref/flush]{%
   \semtex@flushbrqueue
+}
+
+% Flush the concept pending list AFTER the backref queue
+% flush.  Deferred \semtex@resolveconcept calls expand here;
+% the concept map is now complete from the full aux read.
+\AddToHook{begindocument/end}[semtex/concept/flush]{%
+  \semtex@conceptpending
+  \global\let\semtex@conceptpending\@empty
 }
 
 % External ordering: run before hyperref wraps \@setref a
@@ -900,6 +1013,19 @@
 % Internal dependency: sbl open sees the backref install.
 \DeclareHookRule{begindocument/before}{semtex/sbl/open}%
                 {after}{semtex/backref/install}
+
+% Concept install fires AFTER backref install (needs
+% \semtex@recordbr to be in place).
+\DeclareHookRule{begindocument/before}%
+  {semtex/concept/install}{after}{semtex/backref/install}
+
+% Concept flush fires AFTER backref flush.  Concept edges
+% use \semtex@appendbr (direct node-list append, no queue),
+% so ordering with the queue flush is not critical.  The
+% "after" ordering ensures the backref queue processes first
+% and concept edges are appended on top.
+\DeclareHookRule{begindocument/end}%
+  {semtex/concept/flush}{after}{semtex/backref/flush}
 
 %% ===================================================================
 %% Section 8: Back-reference emission
@@ -1157,9 +1283,17 @@
 % \semtex@emit@use{name}
 %   Non-star-branch handler: fires when \cmd is used (use site).
 %   Emits both .aux and .sbl records under the current atom guard.
+%   Registers the concept name for the missing-def-site scan at
+%   \AtEndDocument (first-use only, guarded by conceptused csname).
 %   name -- bare command name (e.g. "Hom")
 \newcommand*{\semtex@emit@use}[1]{%
   \ifx\semtex@currentatom\@empty\else
+    % Register concept name for end-document missing-def scan.
+    \@ifundefined{semtex@conceptused@#1}{%
+      \expandafter\gdef
+        \csname semtex@conceptused@#1\endcsname{1}%
+      \g@addto@macro\semtex@conceptnames{\do{#1}}%
+    }{}%
     \if@filesw
       \immediate\write\@auxout{%
         \string\semtex@conceptref{\theatom}{#1}}%
@@ -1167,6 +1301,38 @@
     \semtex@sblwrite@atom{%
       \string\semtex@sbl@use{\theatom}{#1}}%
   \fi}
+
+%% --- Section 9a.9: Concept missing-def-site scan ---
+%% At \AtEndDocument, walk the concept name list and check each
+%% concept for a matching def site.  Concepts with uses but no
+%% def site trigger a warning (or info per conceptwarnings option).
+
+% \semtex@conceptwarnscan
+%   Walk \semtex@conceptnames via \do.  For each concept name,
+%   check if semtex@conceptdef@<name> is defined.  If not, the
+%   concept has uses but no \cmd* def-site marker; warn.
+\def\semtex@conceptwarnscan{%
+  \def\do##1{%
+    \@ifundefined{semtex@conceptdef@##1}{%
+      \ifbool{semtex@conceptwarnings}{%
+        \PackageWarning{semtex}{%
+          \expandafter\string\csname ##1\endcsname\space
+          used but no starred definition site found;\MessageBreak
+          backrefs for this concept are disabled}%
+      }{%
+        \PackageInfo{semtex}{%
+          \expandafter\string\csname ##1\endcsname\space
+          used but no starred definition site found
+          (conceptwarnings=off)}%
+      }%
+    }{}%
+  }%
+  \semtex@conceptnames
+}
+
+\AtEndDocument{%
+  \semtex@conceptwarnscan
+}
 
 %% ===================================================================
 %% Section 10: User-facing API
