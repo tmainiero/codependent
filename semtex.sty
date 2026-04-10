@@ -166,6 +166,10 @@
 \newbool{semtex@sblopen}
 \boolfalse{semtex@sblopen}
 
+% Deferred sbl writes: preamble cmddef records accumulate here
+% and flush once the .sbl stream opens at begindocument/before.
+\def\semtex@sbl@deferred{}
+
 %% ===================================================================
 %% Section 5: Core numbering machinery
 %% ===================================================================
@@ -572,6 +576,11 @@
 % (or a user script injects a record), LaTeX's aux read does not
 % error.  A \providecommand no-op suits.
 \providecommand*{\semtex@atomref}[2]{}
+
+% Pass-1 safety for concept-tracking aux records (§9a User API).
+% Active definitions installed in Wave 7 (§8a.9 concept resolution).
+\providecommand*{\semtex@concept}[2]{}
+\providecommand*{\semtex@conceptref}[2]{}
 
 % \semtex@writeatomref{target}
 %   Shared aux-write helper called by all patch sites.  Guards
@@ -1056,6 +1065,109 @@
   \semtex@orig@label{#1}%
 }
 
+%% --- Section 9a concept-tracking helpers ---
+%% Supporting macros for \semtexNewCommand / \semtexNewDocumentCommand.
+%% The public API lives in Section 10; the emit helpers live here
+%% because they write to both .sbl and .aux.
+
+% \semtex@sblwrite@deferred{text}
+%   Accumulate a deferred .sbl write for preamble-time emission.
+%   Records queued here are flushed once the .sbl stream opens.
+%   Used for \semtex@sbl@cmddef records whose declarations occur
+%   in the preamble before the stream is available.
+%   IMPORTANT: the argument must already be fully expanded (no
+%   transient macros like \semtex@tmp@name) because \g@addto@macro
+%   does not expand its argument.  Callers use \edef to pre-build
+%   the record string.
+\newcommand*{\semtex@sblwrite@deferred}[1]{%
+  \ifbool{semtex@sblopen}{%
+    % Stream already open (late declaration): write immediately.
+    \semtex@sblwrite{#1}%
+  }{%
+    \g@addto@macro\semtex@sbl@deferred{%
+      \semtex@sblwrite{#1}}%
+  }%
+}
+
+% Flush deferred sbl writes after the stream opens.
+\AddToHook{begindocument/before}[semtex/sbl/cmddef]{%
+  \semtex@sbl@deferred
+  \global\let\semtex@sbl@deferred\@empty
+}
+% Must run AFTER the sbl open hook.
+\DeclareHookRule{begindocument/before}{semtex/sbl/cmddef}%
+                {after}{semtex/sbl/open}
+
+% \semtex@build@argspec{n}
+%   Convert integer arity 0..9 to a repeated-m xparse spec string.
+%   Arity 0 produces no tokens (empty spec), arity 2 produces "m m",
+%   etc.  Not currently called (the define-let-protected\edef approach
+%   sidesteps argspec construction), but retained per DESIGN.md §9a
+%   as a utility for future xparse-based variants.
+\newcommand*{\semtex@build@argspec}[1]{%
+  \ifcase\number#1\relax
+    \or m%
+    \or m m%
+    \or m m m%
+    \or m m m m%
+    \or m m m m m%
+    \or m m m m m m%
+    \or m m m m m m m%
+    \or m m m m m m m m%
+    \or m m m m m m m m m%
+  \else
+    \PackageError{semtex}%
+      {\string\semtexNewCommand\space arity \number#1\space
+       out of range (max 9)}%
+      {Use \string\semtexNewDocumentCommand\space for more.}%
+  \fi}
+
+% \semtex@emit@def{name}
+%   Star-branch handler: fires when \cmd* is used (defining site).
+%   Records the current atom as the defining site for the named
+%   concept.  Emits both .aux and .sbl records.  Per J2: empty-
+%   currentatom short-circuit fires BEFORE the duplicate-def check.
+%   name -- bare command name (e.g. "Hom")
+\newcommand*{\semtex@emit@def}[1]{%
+  \ifx\semtex@currentatom\@empty
+    % No atom context (footnote, caption, orphan): silent no-op
+    % per §8a.9 error model.
+  \else
+    \@ifundefined{semtex@concept@#1}%
+      {\expandafter\xdef
+         \csname semtex@concept@#1\endcsname
+         {\theatom}%
+       \if@filesw
+         \immediate\write\@auxout{%
+           \string\semtex@concept{#1}{\theatom}}%
+       \fi
+       \semtex@sblwrite@atom{%
+         \string\semtex@sbl@def{\theatom}{#1}}%
+      }%
+      {\PackageError{semtex}%
+        {\string\\#1* defined at atoms
+         \csname semtex@concept@#1\endcsname\space and
+         \theatom}%
+        {Exactly one definition site is permitted per
+         concept.  Use \string\\#1\space (without star)
+         at the non-definitional site.}%
+      }%
+  \fi}
+
+% \semtex@emit@use{name}
+%   Non-star-branch handler: fires when \cmd is used (use site).
+%   Emits both .aux and .sbl records under the current atom guard.
+%   name -- bare command name (e.g. "Hom")
+\newcommand*{\semtex@emit@use}[1]{%
+  \ifx\semtex@currentatom\@empty\else
+    \if@filesw
+      \immediate\write\@auxout{%
+        \string\semtex@conceptref{\theatom}{#1}}%
+    \fi
+    \semtex@sblwrite@atom{%
+      \string\semtex@sbl@use{\theatom}{#1}}%
+  \fi}
+
 %% ===================================================================
 %% Section 10: User-facing API
 %% ===================================================================
@@ -1104,6 +1216,137 @@
   \semtex@sblwrite@atom{%
     \string\semtex@sbl@tag
     {\theatom}{#1}{#2}}%
+}
+
+% \semtexNewCommand{\cmd}[arity]{body}
+%   Define a command with semtex concept tracking.  Mirrors
+%   \newcommand exactly: \cmd with backslash, optional [arity]
+%   (default 0), mandatory {body} using #1..#N.
+%
+%   At declaration time, emits three global .sbl records:
+%     \semtex@sbl@cmddef{name}{kind}{newcommand}
+%     \semtex@sbl@cmddef{name}{arity}{N}
+%     \semtex@sbl@cmddef{name}{src}{file:line:1}
+%
+%   At invocation time, the wrapped command answers both
+%   \cmd (use site) and \cmd* (def site).  Both forms typeset
+%   the same body; the star controls which emit helper fires.
+%
+%   \cmd  -- command to define (with backslash, e.g. \Hom)
+%   arity -- optional integer 0..9 (default 0)
+%   body  -- replacement text, uses #1..#N
+\NewDocumentCommand{\semtexNewCommand}{m O{0} +m}{%
+  % #1 = \cmd (with backslash), #2 = arity, #3 = body.
+  \edef\semtex@tmp@name{%
+    \expandafter\@gobble\string#1}%
+  % 1. Define the command via \newcommand (handles all #-
+  %    numbering naturally).
+  \newcommand#1[#2]{#3}%
+  % 2. Save the original definition.
+  \expandafter\let
+    \csname semtex@body@\semtex@tmp@name\endcsname#1%
+  % 3. Define star/nostar dispatch targets first (the \edef
+  %    expands \csname...\endcsname at def-time, capturing the
+  %    resolved control sequences).
+  \expandafter\edef
+    \csname semtex@star@\semtex@tmp@name\endcsname{%
+      \noexpand\semtex@emit@def{\semtex@tmp@name}%
+      \expandafter\noexpand
+        \csname semtex@body@\semtex@tmp@name\endcsname}%
+  \expandafter\edef
+    \csname semtex@nostar@\semtex@tmp@name\endcsname{%
+      \noexpand\semtex@emit@use{\semtex@tmp@name}%
+      \expandafter\noexpand
+        \csname semtex@body@\semtex@tmp@name\endcsname}%
+  % 4. Redefine the command with star dispatch via \@ifstar.
+  %    \protected\edef makes the wrapper robust so it survives
+  %    expansion in moving arguments (\section titles, captions,
+  %    .aux writes) without premature \@ifstar expansion.
+  \protected\edef#1{%
+    \noexpand\@ifstar
+      \expandafter\noexpand
+        \csname semtex@star@\semtex@tmp@name\endcsname
+      \expandafter\noexpand
+        \csname semtex@nostar@\semtex@tmp@name\endcsname}%
+  % 5. Emit global declaration records (deferred: the .sbl
+  %    stream may not be open yet during the preamble).
+  %    Records are pre-expanded via \edef so transient values
+  %    (\semtex@tmp@name, \inputlineno) are captured eagerly.
+  \edef\semtex@tmp@rec{%
+    \noexpand\semtex@sblwrite@deferred{%
+      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+      {kind}{newcommand}}%
+    \noexpand\semtex@sblwrite@deferred{%
+      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+      {arity}{\number#2}}%
+    \noexpand\semtex@sblwrite@deferred{%
+      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+      {src}{\jobname.tex:\the\inputlineno:1}}%
+  }%
+  \semtex@tmp@rec
+}
+
+% \semtexNewDocumentCommand{\cmd}{argspec}{body}
+%   Define a command with semtex concept tracking, using xparse's
+%   full argument specification.  Mirrors \NewDocumentCommand
+%   exactly: \cmd with backslash, {argspec} string, {body}.
+%
+%   At declaration time, emits three global .sbl records:
+%     \semtex@sbl@cmddef{name}{kind}{NewDocumentCommand}
+%     \semtex@sbl@cmddef{name}{argspec}{<user-spec>}
+%     \semtex@sbl@cmddef{name}{src}{file:line:1}
+%
+%   At invocation time, the wrapped command prepends a semtex
+%   star to the user's argspec.  \cmd* marks a def site; \cmd
+%   marks a use site.  Both typeset the same body.  If the
+%   user's argspec itself starts with "s", the user's star
+%   requires a second "*" at call time (e.g. \cmd** for
+%   semtex-def + user-star).
+%
+%   \cmd    -- command to define (with backslash)
+%   argspec -- xparse argument specification string
+%   body    -- replacement text, uses #1..#N per the spec
+\NewDocumentCommand{\semtexNewDocumentCommand}{m m +m}{%
+  % #1 = \cmd, #2 = argspec, #3 = body.
+  \edef\semtex@tmp@name{%
+    \expandafter\@gobble\string#1}%
+  % 1. Define the command via \NewDocumentCommand (handles
+  %    all xparse arg types and #-numbering naturally).
+  \NewDocumentCommand{#1}{#2}{#3}%
+  % 2. Save the original xparse definition.
+  \expandafter\let
+    \csname semtex@body@\semtex@tmp@name\endcsname#1%
+  % 3. Define star/nostar dispatch targets.
+  \expandafter\edef
+    \csname semtex@star@\semtex@tmp@name\endcsname{%
+      \noexpand\semtex@emit@def{\semtex@tmp@name}%
+      \expandafter\noexpand
+        \csname semtex@body@\semtex@tmp@name\endcsname}%
+  \expandafter\edef
+    \csname semtex@nostar@\semtex@tmp@name\endcsname{%
+      \noexpand\semtex@emit@use{\semtex@tmp@name}%
+      \expandafter\noexpand
+        \csname semtex@body@\semtex@tmp@name\endcsname}%
+  % 4. Redefine with star dispatch (\protected = robust).
+  \protected\edef#1{%
+    \noexpand\@ifstar
+      \expandafter\noexpand
+        \csname semtex@star@\semtex@tmp@name\endcsname
+      \expandafter\noexpand
+        \csname semtex@nostar@\semtex@tmp@name\endcsname}%
+  % 5. Emit global declaration records (deferred, pre-expanded).
+  \edef\semtex@tmp@rec{%
+    \noexpand\semtex@sblwrite@deferred{%
+      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+      {kind}{NewDocumentCommand}}%
+    \noexpand\semtex@sblwrite@deferred{%
+      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+      {argspec}{#2}}%
+    \noexpand\semtex@sblwrite@deferred{%
+      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+      {src}{\jobname.tex:\the\inputlineno:1}}%
+  }%
+  \semtex@tmp@rec
 }
 
 % \semtexsuppress{envname}

@@ -44,7 +44,7 @@
 A paragraph with \Cite{Lurie2009},
 \Cite[p. 12]{Lurie2009}, and
 \Cite*{Lurie2009}.  Each invocation should emit
-\semtex@sbl@use{<atom>}{Cite} to the sidecar.
+sbl use records to the sidecar.
 
 \END
 \end{document}

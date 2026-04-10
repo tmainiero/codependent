@@ -36,9 +36,9 @@
 
 \section{Test}
 
-A paragraph using $\Hom{X}{Y}$ and $\id$. The wrapped commands
-must produce correct typeset output AND emit \semtex@sbl@use
-records to the sidecar (verified separately by test-cmd-uses).
+A paragraph using $\Hom{X}{Y}$ and $\id$.  The wrapped commands
+must produce correct typeset output AND emit sbl use records
+to the sidecar (verified separately by test-cmd-uses).
 
 \END
 \end{document}
