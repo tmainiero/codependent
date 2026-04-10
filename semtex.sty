@@ -158,6 +158,14 @@
 % its population path per §8a.6.g.
 \newtoks\semtex@appendixdata
 
+% Accumulated atom list for appendix mode (§8a.6.g).
+% \do-list of {<num>}{<type>} pairs, appended at each atom site.
+\def\semtex@atomlist{}
+
+% Sidecar (.sbl) stream state (§9a).
+\newbool{semtex@sblopen}
+\boolfalse{semtex@sblopen}
+
 %% ===================================================================
 %% Section 5: Core numbering machinery
 %% ===================================================================
@@ -319,6 +327,17 @@
       % Original occurrence: normal end body.
       % \theatom is now post-\refstepcounter (the env body
       % has run).
+      \semtex@sblwrite@atom{%
+        \string\semtex@sbl@atom{\theatom}{\@currenvir}}%
+      \semtex@sblwrite@atom{%
+        \string\semtex@sbl@meta{\theatom}{env}%
+          {\@currenvir}}%
+      \semtex@sblwrite@atom{%
+        \string\semtex@sbl@meta{\theatom}{src}%
+          {\jobname.tex:\the\inputlineno:1}}%
+      \xdef\semtex@atomlist{%
+        \semtex@atomlist
+        \noexpand\do{{\theatom}{\@currenvir}}}%
       \semtex@queuebackref{\theatom}%
       \semtex@flushbackref
       % §8a.5 atom-end clear of the in-atom sentinel.
@@ -354,6 +373,14 @@
           \refstepcounter{atom}%
           \advance\semtex@nestlevel by 1\relax
           \edef\semtex@currentatom{\theatom}%
+          \semtex@sblwrite@atom{%
+            \string\semtex@sbl@atom{\theatom}{proof}}%
+          \semtex@sblwrite@atom{%
+            \string\semtex@sbl@meta{\theatom}{src}%
+              {\jobname.tex:\the\inputlineno:1}}%
+          \xdef\semtex@atomlist{%
+            \semtex@atomlist
+            \noexpand\do{{\theatom}{proof}}}%
           \global\booltrue{semtex@proofpending}%
           \semtex@queuebackref{\theatom}%
         \fi
@@ -503,6 +530,15 @@
           \ifnum\semtex@nestlevel>0\relax\else
             \refstepcounter{atom}%
             \edef\semtex@currentatom{\theatom}%
+            \semtex@sblwrite@atom{%
+              \string\semtex@sbl@atom
+                {\theatom}{paragraph}}%
+            \semtex@sblwrite@atom{%
+              \string\semtex@sbl@meta{\theatom}{src}%
+                {\jobname.tex:\the\inputlineno:1}}%
+            \xdef\semtex@atomlist{%
+              \semtex@atomlist
+              \noexpand\do{{\theatom}{paragraph}}}%
             \semtex@emitmargin{\semtex@currentatom}%
             \semtex@queuebackref{\theatom}%
           \fi
@@ -852,6 +888,10 @@
 \DeclareHookRule{begindocument/before}%
   {semtex/backref/install}{before}{hyperref}
 
+% Internal dependency: sbl open sees the backref install.
+\DeclareHookRule{begindocument/before}{semtex/sbl/open}%
+                {after}{semtex/backref/install}
+
 %% ===================================================================
 %% Section 8: Back-reference emission
 %% ===================================================================
@@ -924,6 +964,99 @@
 }
 
 %% ===================================================================
+%% Section 9a: Semantic sidecar (.sbl) writer
+%% ===================================================================
+%%
+%% Write-only sidecar file for Layer 2 (semantic CLI).  The .sty
+%% never reads .sbl — it is strictly one-way output.  Record format
+%% is line-oriented: one \semtex@sbl@* control sequence per line
+%% with fixed-arity brace-delimited arguments (no kv blobs).
+%%
+
+% \semtex@sblwrite{text}
+%   Guarded write to the .sbl stream.  No-op when the stream
+%   is not open (e.g. \if@filesw is false).
+\newcommand*{\semtex@sblwrite}[1]{%
+  \ifbool{semtex@sblopen}{%
+    \immediate\write\semtex@sblout{#1}%
+  }{}%
+}
+
+% \semtex@sblwrite@atom{text}
+%   Atom-scoped guard: drops the write when not inside a tracked
+%   atom (\semtex@currentatom is empty).
+\newcommand*{\semtex@sblwrite@atom}[1]{%
+  \ifx\semtex@currentatom\@empty\else
+    \semtex@sblwrite{#1}%
+  \fi
+}
+
+%% --- Section 9a open hook (begindocument/before) ---
+%% Per REVIEW_C finding #5, the stream opens at begindocument/before
+%% (before any \AtBeginDocument hook), so atoms emitted from user
+%% hooks are never silently dropped.
+\AddToHook{begindocument/before}[semtex/sbl/open]{%
+  \if@filesw
+    \newwrite\semtex@sblout
+    \immediate\openout\semtex@sblout=\jobname.sbl\relax
+    \global\booltrue{semtex@sblopen}%
+    \immediate\write\semtex@sblout{%
+      \string\semtex@sbl@version{1}}%
+    \immediate\write\semtex@sblout{%
+      \string\semtex@sbl@source{\jobname.tex}}%
+  \fi
+}
+
+%% --- Section 9a close hook (\AtEndDocument) ---
+%% Write the \semtex@sbl@end{OK} sentinel and close the stream.
+%% Per REVIEW_C finding #7, the sentinel's presence is the CLI's
+%% test for "complete file".
+\AtEndDocument{%
+  \ifbool{semtex@sblopen}{%
+    \immediate\write\semtex@sblout{%
+      \string\semtex@sbl@end{OK}}%
+    \immediate\closeout\semtex@sblout
+    \global\boolfalse{semtex@sblopen}%
+  }{}%
+}
+
+%% --- Section 9a label wrap (cleveref-aware) ---
+%% Installed at begindocument/before so we capture \label BEFORE
+%% cleveref's \AtBeginDocument wrapper installs around us (see
+%% DESIGN.md §9a "Label wrap" double-wrap explanation).
+\AddToHook{begindocument/before}[semtex/sbl/labelwrap]{%
+  \let\semtex@orig@label\label
+  \@ifpackageloaded{cleveref}{%
+    %% cleveref path: \label[type]{key}, optional arg.
+    \def\label{%
+      \@ifnextchar[%]
+        \semtex@sbl@label@withopt
+        \semtex@sbl@label@noopt
+    }%
+  }{%
+    %% No cleveref: \label{key} only.
+    \def\label#1{%
+      \semtex@sblwrite@atom{%
+        \string\semtex@sbl@label
+          {\theatom}{#1}}%
+      \semtex@orig@label{#1}%
+    }%
+  }%
+}
+\def\semtex@sbl@label@withopt[#1]#2{%
+  \semtex@sblwrite@atom{%
+    \string\semtex@sbl@label
+      {\theatom}{#2}}%
+  \semtex@orig@label[#1]{#2}%
+}
+\def\semtex@sbl@label@noopt#1{%
+  \semtex@sblwrite@atom{%
+    \string\semtex@sbl@label
+      {\theatom}{#1}}%
+  \semtex@orig@label{#1}%
+}
+
+%% ===================================================================
 %% Section 10: User-facing API
 %% ===================================================================
 
@@ -961,6 +1094,18 @@
   \semtex@installparendhook
 }
 
+% \semtextag{kind}{value}
+%   Emit a semantic tag record to the .sbl sidecar, scoped to the
+%   current atom.  No visible typesetting effect.  Ignored outside
+%   a tracked atom.
+%   kind  -- tag category (e.g. uid, introduces, type)
+%   value -- tag payload (free-form UTF-8)
+\newcommand*{\semtextag}[2]{%
+  \semtex@sblwrite@atom{%
+    \string\semtex@sbl@tag
+    {\theatom}{#1}{#2}}%
+}
+
 % \semtexsuppress{envname}
 %   Register a user environment for paragraph-number suppression.
 %   envname -- environment name to suppress
@@ -977,19 +1122,35 @@
 
 % \semtexappendix
 %   Typeset the dependency index (appendix mode only).
-%   Call this where you want the index to appear.
+%   Walks \semtex@atomlist (populated at each atom site) and
+%   emits an entry for every atom that has at least one
+%   back-reference.
 \newcommand*{\semtexappendix}{%
   \ifbool{semtex@appendix}{%
     \section*{Dependency Index}%
     \begingroup
       \small
-      \the\semtex@appendixdata
+      \def\do##1{%
+        \semtex@appendix@emit##1%
+      }%
+      \semtex@atomlist
     \endgroup
   }{%
     \PackageWarning{semtex}{%
       \string\semtexappendix\space ignored: %
       backrefs mode is not 'appendix'}%
   }%
+}
+
+% \semtex@appendix@emit{num}{type}
+%   Collapse back-refs for atom num and emit an appendix entry
+%   if any back-references exist.
+\def\semtex@appendix@emit#1#2{%
+  \semtex@collapsebr{#1}%
+  \expandafter\ifx\csname semtex@br@#1\endcsname\@empty\else
+    \semtex@appendixentry{#1}{#2}{%
+      \csname semtex@br@#1\endcsname}%
+  \fi
 }
 
 % Appendix rendering helpers.
