@@ -478,6 +478,18 @@
   \semtex@suppressenv{tabularx}%
   \semtex@suppressenv{longtable}%
   \semtex@suppressenv{trivlist}%
+  % Display math: suppress margin numbers inside displayed equations.
+  \semtex@suppressenv{equation}%
+  \semtex@suppressenv{equation*}%
+  \semtex@suppressenv{displaymath}%
+  \semtex@suppressenv{align}%
+  \semtex@suppressenv{align*}%
+  \semtex@suppressenv{gather}%
+  \semtex@suppressenv{gather*}%
+  \semtex@suppressenv{multline}%
+  \semtex@suppressenv{multline*}%
+  \semtex@suppressenv{flalign}%
+  \semtex@suppressenv{flalign*}%
 }
 
 % \semtex@suppresssectioning
@@ -537,6 +549,7 @@
 \newcommand*{\semtex@suppresscommands}{%
   \semtex@suppresscmd{\footnote}%
   \semtex@suppresscmd{\parbox}%
+  \semtex@suppresscmd{\maketitle}%
 }
 
 % \semtex@installparahook
