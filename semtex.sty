@@ -880,10 +880,12 @@
           \edef\semtex@tmp@node{%
             \csname semtex@brnode@#1@\the\count@\endcsname}%
           \ifx\semtex@tmp@acc\@empty
-            \edef\semtex@tmp@acc{\semtex@tmp@node}%
+            \edef\semtex@tmp@acc{%
+              \noexpand\semtex@brhyper{\semtex@tmp@node}}%
           \else
             \edef\semtex@tmp@acc{%
-              \semtex@tmp@acc, \semtex@tmp@node}%
+              \unexpanded\expandafter{\semtex@tmp@acc}, %
+              \noexpand\semtex@brhyper{\semtex@tmp@node}}%
           \fi
       \repeat
       \global\expandafter\let
@@ -903,6 +905,60 @@
 %   Grab the first brace group of a delimited argument.
 \def\semtex@grabfirst#1#2\@nil{#1}
 
+% \semtex@grab4th#1#2#3#4#5\@nil -> #4
+%   Grab the 4th brace group.  Used to extract hyperref's
+%   anchor name from \newlabel's value ({num}{page}{title}{anchor}{}).
+\def\semtex@grab4th#1#2#3#4#5\@nil{#4}
+
+% \semtex@extractanchor{key}{value}
+%   Extract hyperref's anchor (4th field of \newlabel value)
+%   and store a reverse mapping: atom number -> anchor name.
+%   No-ops for @cref keys or when value has fewer than 4 fields.
+\def\semtex@extractanchor#1#2{%
+  \semtex@ifcrefkey{#1}{}{%
+    \semtex@ifdatakey{#1}{}{%
+      \expandafter\semtex@extractanchor@ii
+        \expandafter{\semtex@grab4th#2{}{}{}{}\@nil}{#1}%
+    }%
+  }%
+}
+\def\semtex@extractanchor@ii#1#2{%
+  % #1 = anchor (4th field or empty), #2 = label key
+  \def\semtex@tmp{#1}%
+  \ifx\semtex@tmp\@empty\else
+    \expandafter\ifx\csname semtex@lblnum@#2\endcsname\relax\else
+      % Resolve atom number first, then define the anchor mapping.
+      % Use \protected@edef to survive non-expandable tokens in
+      % unusual \newlabel values (e.g. thm-restate counter saves).
+      \protected@edef\semtex@tmp@num{%
+        \csname semtex@lblnum@#2\endcsname}%
+      \expandafter\xdef
+        \csname semtex@anchor@\semtex@tmp@num\endcsname{#1}%
+    \fi
+  \fi
+}
+% \semtex@ifdatakey{key}{then}{else}
+%   True iff the label key ends in "@data" (thm-restate internal).
+%   These contain \setcounter calls, not display numbers.
+\def\semtex@ifdatakey#1{%
+  \semtex@iscreffalse
+  \def\semtex@ifdatakey@probe##1@data##2\@nil{%
+    \def\semtex@tmp@b{##2}%
+    \ifx\semtex@tmp@b\@empty\else
+      \def\semtex@tmp@c{@data}%
+      \ifx\semtex@tmp@b\semtex@tmp@c
+        \semtex@iscreftrue
+      \fi
+    \fi
+  }%
+  \semtex@ifdatakey@probe#1@data\@nil
+  \ifsemtex@iscref
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+}
+
 % Flag used only inside \semtex@ifcrefkey.
 \newif\ifsemtex@iscref
 
@@ -911,6 +967,7 @@
   \def\newlabel##1##2{%
     \semtex@orig@newlabel{##1}{##2}%
     \semtex@extractlblnum{##1}{##2}%
+    \semtex@extractanchor{##1}{##2}%
   }%
   % Pre-2023 hyperref path: \newlabelxx has 6 args.  Hyperref
   % installs it in \AtBeginDocument and it races with our
@@ -923,6 +980,14 @@
       % ##2 is already the display number for the 6-arg form.
       \expandafter\gdef
         \csname semtex@lblnum@##1\endcsname{##2}%
+      % ##5 is the hyperref anchor name; store reverse mapping.
+      \semtex@ifcrefkey{##1}{}{%
+        \def\semtex@tmp{##5}%
+        \ifx\semtex@tmp\@empty\else
+          \expandafter\xdef
+            \csname semtex@anchor@##2\endcsname{##5}%
+        \fi
+      }%
     }%
   }%
 }
@@ -1119,7 +1184,8 @@
 \newcommand*{\semtex@flushbackref}{%
   \ifbool{semtex@backrefs}{%
     \ifbool{semtex@appendix}{}{%
-      \edef\semtex@tmp{\the\semtex@pendingbr}%
+      \expandafter\def\expandafter\semtex@tmp\expandafter{%
+        \the\semtex@pendingbr}%
       \semtex@pendingbr={}%
       \ifx\semtex@tmp\@empty\else
         \semtex@renderinline{\semtex@tmp}%
@@ -1183,7 +1249,8 @@
         % Snapshot pending backref data for deferred emission.
         \ifbool{semtex@backrefs}{%
           \ifbool{semtex@appendix}{}{%
-            \edef\semtex@tmp{\the\semtex@pendingbr}%
+            \expandafter\def\expandafter\semtex@tmp\expandafter{%
+              \the\semtex@pendingbr}%
             \semtex@pendingbr={}%
             \ifx\semtex@tmp\@empty\else
               \global\let\semtex@deferredbr\semtex@tmp
@@ -1714,12 +1781,20 @@
   }%
 }{}
 
-% Hyperref detection: when loaded, the CLI can emit \hyperref
-% commands in .sbr reflist fields that render as clickable links.
-% The renderer is redefined to use \sffamily consistently.
+% Hyperref link wrapping for backref numbers.
+% Default is identity (plain text); redefined when hyperref
+% is loaded to use anchor names extracted from \newlabel (§8a.4).
+\newcommand*{\semtex@brhyper}[1]{#1}
+
 \AtBeginDocument{%
   \@ifpackageloaded{hyperref}{%
     \PackageInfo{semtex}{hyperref detected, enabling links}%
+    \renewcommand*{\semtex@brhyper}[1]{%
+      \expandafter\ifx\csname semtex@anchor@#1\endcsname\relax
+        #1%
+      \else
+        \hyperlink{\csname semtex@anchor@#1\endcsname}{#1}%
+      \fi}%
   }{}%
 }
 
