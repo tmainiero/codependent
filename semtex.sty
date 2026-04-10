@@ -1448,6 +1448,13 @@
         \expandafter c@\semtex@tmp
       }{}{%
         \expandafter\let\csname c@\semtex@tmp\endcsname\c@atom
+        % Also alias the display macro \the<env> to \theatom.
+        % When thmtools declares an env with sibling=theorem, it
+        % snapshots \thetheorem at declaration time.  If semtex
+        % later rewires \thetheorem to \theatom, the sibling's
+        % display macro still has the old format.  This re-let
+        % ensures every tracked env uses the atom display format.
+        \expandafter\let\csname the\semtex@tmp\endcsname\theatom
       }%
       \expandafter\semtex@hooktheorem
         \expandafter{\semtex@tmp}%
