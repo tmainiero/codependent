@@ -63,8 +63,6 @@
 
 \begin{restatable}{theorem}{thmMain}\label{thm:main}
   The $\Hom*{X}{Y}$ set has the expected universal property.
-  This is the ORIGINAL declaration firing; the \verb|\Hom*|
-  here registers 1.1 as the def site for concept Hom.
 \end{restatable}
 
 Uses of $\Hom{A}{B}$ in the main body resolve backward.
@@ -73,7 +71,7 @@ Uses of $\Hom{A}{B}$ in the main body resolve backward.
 
 For convenience we restate the main theorem here.
 
-\restate{thmMain}
+\thmMain*
 
 The \verb|\Hom*| inside the restated body MUST be a silent
 no-op: the §8a.5.a guard clears currentatom on the restate

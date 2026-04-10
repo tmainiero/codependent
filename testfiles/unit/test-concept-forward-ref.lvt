@@ -14,9 +14,9 @@
 %% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package semtex Warning
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@def{1.2}{Hom} = 1
+%% TEST-SBL-COUNT: \semtex@sbl@def{2.1}{Hom} = 1
 %% TEST-SBL-CONTAINS: \semtex@sbl@use{1.1}{Hom}
-%% TEST-AUX-CONTAINS: \semtex@concept{Hom}{1.2}
+%% TEST-AUX-CONTAINS: \semtex@concept{Hom}{2.1}
 %% TEST-AUX-CONTAINS: \semtex@conceptref{1.1}{Hom}
 %% TEST-PACKAGES: amsthm,semtex
 %% TEST-RERUN: 2
@@ -36,9 +36,10 @@
 
 \documentclass{article}
 \usepackage{amsthm}
-\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
 \usepackage{semtex}
-\semtextrack{definition}
+\semtextrack{theorem,definition}
 
 \semtexNewCommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 

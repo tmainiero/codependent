@@ -81,10 +81,11 @@
 \section{Kitchen sink}
 
 A lead paragraph to kick the atom counter. This paragraph uses
-$\Hom{X}{Y}$, which should emit one \semtex@sbl@use record.
+$\Hom{X}{Y}$, which should emit one sbl use record.
 
 \begin{definition}\label{def:cat}
-  A category is a quiver with composition.\semtextag{uid}{cat:category}
+  A $\Hom*{X}{Y}$ functor defines the morphism sets of a
+  category.\semtextag{uid}{cat:category}
 \end{definition}
 
 A paragraph between two atoms. Mentions \cref{def:cat}.
@@ -119,7 +120,7 @@ A paragraph between two atoms. Mentions \cref{def:cat}.
   A restatable theorem that uses $\Hom{Y}{Z}$.
 \end{restatable}
 
-Paragraph after the restatable. Uses \Cite[p.~1]{Lurie2009}.
+Paragraph after the restatable. Uses \Cite*[p.~1]{Lurie2009}.
 
 \begin{center}
   Centered prose must not be an atom.
@@ -135,7 +136,7 @@ Paragraph after the restatable. Uses \Cite[p.~1]{Lurie2009}.
 \end{itemize}
 
 A paragraph with an inline category-theory diagram
-$\tikzcd{A \arrow{r}{f} & B \arrow{r}{g} & C}$
+$\begin{tikzcd} A \arrow{r}{f} & B \arrow{r}{g} & C \end{tikzcd}$
 embedded mid-sentence.
 
 \begin{figure}[h]
@@ -151,11 +152,11 @@ embedded mid-sentence.
 
 We restate \cref{thm:restated} here for reference:
 
-\restate{thmRestated}
+\thmRestated*
 
-This test must not emit a duplicate \semtex@sbl@atom record
-for the restated theorem (REVIEW_E #1 BLOCKER guard), and
-must not attribute backrefs to the wrong prior atom.
+This test must not emit a duplicate sbl atom record for the
+restated theorem, and must not attribute backrefs to the wrong
+prior atom.
 
 A final trailing paragraph mentioning \Cref{thm:main} and
 \cref{prop:one,def:cat} (cleveref multi-label form).

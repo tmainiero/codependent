@@ -144,7 +144,7 @@
 %   Restore \semtex@currentatom from the restate stack, undefine
 %   the slot, and decrement the depth counter.
 \newcommand*{\semtex@popcurrentatom}{%
-  \global\let\semtex@currentatom
+  \global\expandafter\let\expandafter\semtex@currentatom
     \csname semtex@saved@currentatom@%
       \the\semtex@restate@depth\endcsname
   \global\expandafter\let
@@ -283,14 +283,19 @@
 
 % \semtex@hooktheorem{envname}
 %   Install begin/end hooks for a tracked theorem environment.
-%   Timing note (DESIGN.md §8a.5.0): the AtBeginEnvironment hook
-%   fires BEFORE amsthm's \refstepcounter{theorem}, so \theatom
-%   at begin-time is the PREVIOUS atom's number.  The queuebackref
-%   call is therefore moved to the AtEndEnvironment block, where
-%   the env body has run and \theatom reflects the current atom.
-%   \semtex@currentatom is demoted to a sentinel — its value is
-%   not used, only its emptiness; we set it to a literal "1" on
-%   begin and clear to \@empty on end.
+%   Uses LaTeX 2021+ cmd hooks (cmd/<env>/before) instead of
+%   etoolbox's \AtBeginEnvironment so that hooks also fire when
+%   thmtools' thm-restate.sty calls \theorem / \endtheorem
+%   directly (bypassing \begin{theorem}).
+%
+%   Timing note (DESIGN.md §8a.5.0): the cmd/before hook fires
+%   BEFORE amsthm's \refstepcounter{theorem}, so \theatom at
+%   begin-time is the PREVIOUS atom's number.  The queuebackref
+%   call is therefore in the end hook, where the env body has
+%   run and \theatom reflects the current atom.
+%   \semtex@currentatom is demoted to a sentinel — its value
+%   is not used, only its emptiness; we set it to a literal
+%   "1" on begin and clear to \@empty on end.
 %
 %   Restatable guard (§8a.5.a): \semtex@setupcounter aliases
 %   \c@theorem to \c@atom.  When thmtools' thm-restate.sty
@@ -303,8 +308,12 @@
 %   share \c@theorem, so the guard covers all shared-counter
 %   envs.  Envs with independent counters are not supported by
 %   this guard and should not be passed to \semtextrack.
+%
+%   Note: the env name is captured via the hook argument (#1)
+%   rather than \@currenvir, because under restatable the
+%   current environment is "restatable", not the theorem type.
 \newcommand*{\semtex@hooktheorem}[1]{%
-  \AtBeginEnvironment{#1}{%
+  \AddToHook{cmd/#1/before}{%
     \expandafter\ifx\csname c@theorem\endcsname\c@atom
       % Original occurrence: alias intact, normal hook body.
       \advance\semtex@nestlevel by 1\relax
@@ -326,22 +335,21 @@
       \semtex@pushcurrentatom
     \fi
   }%
-  \AtEndEnvironment{#1}{%
+  \AddToHook{cmd/end#1/before}{%
     \expandafter\ifx\csname c@theorem\endcsname\c@atom
       % Original occurrence: normal end body.
       % \theatom is now post-\refstepcounter (the env body
       % has run).
       \semtex@sblwrite@atom{%
-        \string\semtex@sbl@atom{\theatom}{\@currenvir}}%
+        \string\semtex@sbl@atom{\theatom}{#1}}%
       \semtex@sblwrite@atom{%
-        \string\semtex@sbl@meta{\theatom}{env}%
-          {\@currenvir}}%
+        \string\semtex@sbl@meta{\theatom}{env}{#1}}%
       \semtex@sblwrite@atom{%
         \string\semtex@sbl@meta{\theatom}{src}%
           {\jobname.tex:\the\inputlineno:1}}%
       \xdef\semtex@atomlist{%
         \semtex@atomlist
-        \noexpand\do{{\theatom}{\@currenvir}}}%
+        \noexpand\do{{\theatom}{#1}}}%
       \semtex@queuebackref{\theatom}%
       \semtex@flushbackref
       % §8a.5 atom-end clear of the in-atom sentinel.
@@ -502,13 +510,15 @@
 }
 
 % \semtex@suppresscommands
-%   Suppress numbering inside footnote, parbox, caption.
+%   Suppress numbering inside footnote, parbox.
+%   Note: \caption is NOT patched here because its complex
+%   calling convention (\@ifstar + optional arg) makes
+%   etoolbox patching unreliable.  Captions appear only
+%   inside figure/table environments, which are already
+%   suppressed at the env level.
 \newcommand*{\semtex@suppresscommands}{%
   \semtex@suppresscmd{\footnote}%
   \semtex@suppresscmd{\parbox}%
-  \@ifundefined{caption}{}{%
-    \semtex@suppresscmd{\caption}%
-  }%
 }
 
 % \semtex@installparahook
@@ -517,9 +527,31 @@
 %   - semtex@sectioning: one-shot flag for heading paragraphs
 %   - semtex@proofpending: deferred proof margin emission
 %   - semtex@nestlevel > 0: inside a suppressed env/command
+%   Also emits any deferred backref from the previous
+%   paragraph (saved by para/end to avoid mode-change error).
 \newcommand*{\semtex@installparahook}{%
   \AddToHook{para/begin}{%
     \ifbool{semtex@tracked}{%
+      % Emit deferred backref from previous paragraph.
+      % Uses \vadjust{pre} to inject the "Used in X." line
+      % above the current line (i.e. at the end of the
+      % previous paragraph's output) without a mode change.
+      \ifx\semtex@deferredbr\@empty\else
+        \vadjust pre{%
+          \vskip 0.3ex
+          \moveright 0pt \vbox{%
+            \hbox to \linewidth{%
+              \hfil
+              {\small\sffamily
+                Used in \semtex@deferredbr.}%
+              \kern 0.5em
+            }%
+          }%
+          \vskip 0.3ex
+          \nobreak
+        }%
+        \global\let\semtex@deferredbr\@empty
+      \fi
       % Sectioning heading paragraph: skip entirely.
       \ifbool{semtex@sectioning}{%
         \global\boolfalse{semtex@sectioning}%
@@ -1059,15 +1091,19 @@
 
 % \semtex@flushbackref
 %   Emit the pending back-reference and clear it.
+%   The pendingbr register is cleared BEFORE rendering so that
+%   the \par inside \semtex@renderinline cannot re-enter
+%   flushbackref with the same data (para/end → flushbackref
+%   → renderinline → \par → para/end → flushbackref loop).
 \newcommand*{\semtex@flushbackref}{%
   \ifbool{semtex@backrefs}{%
     \ifbool{semtex@appendix}{}{%
       \edef\semtex@tmp{\the\semtex@pendingbr}%
+      \semtex@pendingbr={}%
       \ifx\semtex@tmp\@empty\else
         \semtex@renderinline{\semtex@tmp}%
       \fi
     }%
-    \semtex@pendingbr={}%
   }{}%
 }
 
@@ -1082,16 +1118,35 @@
   \endgroup
 }
 
+% Deferred backref: data saved at para/end, emitted at the
+% next para/begin.  Avoids mode-change error (para/end must
+% stay in horizontal mode; \renderinline needs \par).
+\gdef\semtex@deferredbr{}
+
 % \semtex@installparendhook
 %   Install the para/end hook for flushing back-refs.
 %   Per §8a.5, clears \semtex@currentatom after the flush so
-%   that any \ref firing between paragraphs is not attributed to
-%   the just-closed atom.
+%   that any \ref firing between paragraphs is not attributed
+%   to the just-closed atom.
+%   Instead of calling \semtex@flushbackref (which does \par
+%   via \renderinline), we snapshot the pending br data into
+%   \semtex@deferredbr and clear the register.  The deferred
+%   data is emitted at the NEXT para/begin, before the new
+%   atom's margin number.
 \newcommand*{\semtex@installparendhook}{%
   \AddToHook{para/end}{%
     \ifbool{semtex@tracked}{%
       \ifbool{semtex@intheorem}{}{%
-        \semtex@flushbackref
+        % Snapshot pending backref data for deferred emission.
+        \ifbool{semtex@backrefs}{%
+          \ifbool{semtex@appendix}{}{%
+            \edef\semtex@tmp{\the\semtex@pendingbr}%
+            \semtex@pendingbr={}%
+            \ifx\semtex@tmp\@empty\else
+              \global\let\semtex@deferredbr\semtex@tmp
+            \fi
+          }%
+        }{}%
         \let\semtex@currentatom\@empty
       }%
     }{}%
@@ -1346,9 +1401,14 @@
   \booltrue{semtex@tracked}%
   \semtex@setupcounter
   % Hook each listed environment and its starred variant.
+  % Note: \expandafter ensures the env name is fully expanded
+  % before \semtex@hooktheorem captures it in \AddToHook
+  % bodies; without this, a stale \semtex@tmp reference would
+  % resolve to the wrong name at hook-fire time.
   \@for\semtex@tmp:=#1\do{%
     \ifx\semtex@tmp\@empty\else
-      \semtex@hooktheorem{\semtex@tmp}%
+      \expandafter\semtex@hooktheorem
+        \expandafter{\semtex@tmp}%
       % Auto-register starred variant (amsthm creates foo*).
       \edef\semtex@starred{\semtex@tmp*}%
       \expandafter\@ifundefined\expandafter{%

@@ -33,7 +33,8 @@
 \section{Inline tikzcd}
 
 A paragraph with an inline commutative diagram
-$\tikzcd{A \arrow{r} & B}$ embedded mid-sentence.
+$\begin{tikzcd} A \arrow{r} & B \end{tikzcd}$ embedded
+mid-sentence.
 Exactly one atom (atom 1.1 for the whole paragraph) expected.
 
 \END

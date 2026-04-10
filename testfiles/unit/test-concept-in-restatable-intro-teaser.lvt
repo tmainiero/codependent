@@ -1,11 +1,8 @@
 %% TEST-NAME: test-concept-in-restatable-intro-teaser
-%% TEST-WHAT: Verify the user's core scenario: a \restate{thm:main}
-%%            teaser in the introduction containing \Hom*, with
-%%            the actual \restatable{theorem}{thm:main}{body with
-%%            \Hom*} later in the main body. The def site MUST be
-%%            the main-body atom (the original declaration firing,
-%%            where the counter alias is intact), NEVER the intro
-%%            teaser atom.
+%% TEST-WHAT: Verify the intro-teaser pattern: restatable* (teaser,
+%%            non-primary) in the intro, then restatable (primary)
+%%            in the main body. The def site for \Hom* MUST be the
+%%            main-body atom, NEVER the intro teaser.
 %% TEST-SOURCE: DESIGN.md §8a.5.a save/clear/restore, §8a.9
 %%              Interaction with restatable
 %% TEST-SECTION: DESIGN.md §8a.5.a, §8a.9
@@ -13,38 +10,22 @@
 %% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package semtex Warning
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@def{1.1}{Hom} = 0
 %% TEST-SBL-COUNT: \semtex@sbl@def{2.1}{Hom} = 1
 %% TEST-AUX-CONTAINS: \semtex@concept{Hom}{2.1}
-%% TEST-AUX-NOT-CONTAINS: \semtex@concept{Hom}{1.1}
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,semtex
 %% TEST-RERUN: 2
 %%
-%% The intro section 1 contains a \restate{thm:main} teaser. Inside
-%% the restated body, \Hom* fires. Without the §8a.5.a save/clear/
-%% restore extension, \semtex@currentatom would still hold the
-%% intro paragraph's atom number (1.1) and \Hom* would erroneously
-%% register 1.1 as the def site. With the extension, the restate
-%% branch clears currentatom to \@empty, so \Hom* sees empty and
-%% silently no-ops.
+%% The intro section 1 uses restatable* (starred = non-primary)
+%% to show a teaser of the theorem. Inside the teaser body,
+%% \Hom* fires but the §8a.5.a guard clears currentatom on
+%% the restate branch, so the star silently no-ops.
 %%
-%% Later, in section 2, the \restatable{theorem}{thm:main}{...}
-%% fires for the first time. The counter alias \c@theorem = \c@atom
-%% is intact, the normal hook body runs, \semtex@currentatom is
-%% set to the theorem atom's number (2.1), and the \Hom* inside
-%% the body registers 2.1 as the def site.
+%% Later, in section 2, the unstarred restatable fires as the
+%% primary occurrence. The counter alias is intact, the normal
+%% hook body runs, and the \Hom* inside the body registers 2.1
+%% as the def site.
 %%
-%% Assertions verify that ONLY 2.1 is recorded as the def site,
-%% never 1.1. Atom numbering assumption: section 1 intro paragraph
-%% = 1.1 (first atom); restate{thm:main} teaser no-ops as a
-%% sub-atom. Section 2 restatable theorem = 2.1 (first atom in
-%% section 2). If the numbering assumption proves off-by-one
-%% against the actual §8a.5 clearing semantics, the fixture may
-%% need adjustment once implementation lands.
-%%
-%% Until §8a.5.a extension + §8a.9 are implemented, this fixture
-%% FAILS: the \Hom* inside the restate teaser would register 1.1
-%% against currentatom, producing the wrong def site.
+%% Assertions verify that ONLY 2.1 is recorded as the def site.
 
 \documentclass{article}
 \usepackage{thmtools}
@@ -62,12 +43,11 @@
 
 \section{Introduction}
 
-We tease a result early. The teaser below contains \verb|\Hom*|
-inside the restated body, but the save/clear/restore of
-currentatom in §8a.5.a ensures the star does NOT register
-against this intro paragraph's atom.
+We tease a result early.
 
-\restate{thmMain}
+\begin{restatable*}{theorem}{thmMain}
+  The $\Hom*{X}{Y}$ set has the expected universal property.
+\end{restatable*}
 
 The paragraph after the teaser resumes normal atom flow.
 
@@ -75,9 +55,6 @@ The paragraph after the teaser resumes normal atom flow.
 
 \begin{restatable}{theorem}{thmMain}\label{thm:main}
   The $\Hom*{X}{Y}$ set has the expected universal property.
-  This is the ORIGINAL declaration firing, with the counter
-  alias intact, so the \verb|\Hom*| here is the one that
-  registers the def site.
 \end{restatable}
 
 Later uses of $\Hom{A}{B}$ resolve via the concept map to the

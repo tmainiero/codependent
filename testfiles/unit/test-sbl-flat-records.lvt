@@ -34,9 +34,9 @@
 \section{Flat record}
 
 A paragraph with a semantic tag.\semtextag{uid}{cat:category theory}
-The \semtextag above must produce exactly one three-argument
-\semtex@sbl@tag record in the .sbl, with atom number 1.1,
-key "uid", and value "cat:category theory" (with a space).
+The \verb|\semtextag| above must produce exactly one
+three-argument sbl tag record in the sbl file, with atom
+number 1.1, key ``uid'', and value ``cat:category theory''.
 
 \END
 \end{document}

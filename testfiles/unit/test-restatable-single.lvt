@@ -10,7 +10,7 @@
 %% TEST-LOG-NOT: Package semtex Warning
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
 %% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{theorem} = 1
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.2}{paragraph} = 0
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.2}{paragraph} = 1
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,semtex
 %% TEST-RERUN: 2
 %%
@@ -40,7 +40,7 @@
 
 \begin{restatable}{theorem}{thmA}\label{thm:A}
   Statement of theorem A. The original occurrence here should
-  produce one \semtex@sbl@atom{1.1}{theorem} record.
+  produce exactly one sbl atom record for this theorem.
 \end{restatable}
 
 A paragraph in the main body. This is atom 1.2 (paragraph).
@@ -49,12 +49,12 @@ A paragraph in the main body. This is atom 1.2 (paragraph).
 
 In the appendix we restate theorem A:
 
-\restate{thm:A}
+\thmA*
 
 The restate above MUST NOT produce a second
-\semtex@sbl@atom record, and MUST NOT cause our hook to
-attribute the previous atom (the "In the appendix" paragraph)
-as a theorem.
+sbl atom record, and MUST NOT cause our hook to attribute
+the previous atom (the ``In the appendix'' paragraph) as
+a theorem.
 
 \END
 \end{document}

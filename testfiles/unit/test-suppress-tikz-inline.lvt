@@ -32,10 +32,10 @@
 
 \section{Inline tikz}
 
-A paragraph with an inline diagram \tikz{\node[draw,circle] {A};}
+A paragraph with an inline diagram \tikz \node[draw,circle] {A};
 embedded in the middle. Exactly one atom expected (the whole
 paragraph itself, atom 1.1) and no spurious atom from the
-\tikz expansion.
+tikz expansion.
 
 \END
 \end{document}

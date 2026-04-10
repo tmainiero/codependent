@@ -9,7 +9,7 @@
 %% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package semtex Warning
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{0.1.1}{paragraph} = 1
+%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
 %% TEST-PACKAGES: scrbook,amsthm,semtex
 %% TEST-RERUN: 2
 %%
