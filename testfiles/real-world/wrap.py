@@ -55,10 +55,20 @@ WRAPPERS_DIR = SCRIPT_DIR / "wrappers"
 SEMTEX_INJECTION = (
     "\n"
     "% ---- semtex injection (added by wrap.py) ----\n"
-    "\\usepackage{semtex}\n"
+    "\\usepackage[conceptwarnings=off]{semtex}\n"
     "\\semtextrack{theorem,definition,proposition,lemma,"
     "corollary,remark,example,proof}\n"
     "% ---- end semtex injection ----\n"
+)
+
+# Compiled regexes for the command-rewrite pass.
+# Match \newcommand or \newcommand* with brace or no-brace cmd.
+RE_NEWCOMMAND = re.compile(
+    r'\\newcommand\*?\s*(?:\{(\\[A-Za-z@]+)\}|(\\[A-Za-z@]+))'
+)
+# Match \NewDocumentCommand with brace or no-brace cmd.
+RE_NEWDOCCMD = re.compile(
+    r'\\NewDocumentCommand\s*(?:\{(\\[A-Za-z@]+)\}|(\\[A-Za-z@]+))'
 )
 
 RE_DOCUMENTCLASS = re.compile(r"\\documentclass\b")
@@ -156,7 +166,103 @@ def link_or_copy(src: Path, dest: Path) -> None:
         shutil.copy2(src, dest)
 
 
-def wrap_paper(paper_id: str) -> bool:
+def _unescaped_percent_pos(line: str) -> int:
+    """Return index of first unescaped % on the line, or len(line) if none."""
+    for i, ch in enumerate(line):
+        if ch == "%" and (i == 0 or line[i - 1] != "\\"):
+            return i
+    return len(line)
+
+
+def _rewrite_line_newcommand(line: str) -> tuple[str, str | None]:
+    r"""Rewrite \newcommand / \newcommand* on a single line.
+    Returns (new_line, description_or_None).  description is non-None only
+    when a rewrite happened."""
+    comment_pos = _unescaped_percent_pos(line)
+    m = RE_NEWCOMMAND.search(line)
+    if m is None:
+        return line, None
+    # Only rewrite if the match starts before any unescaped %.
+    if m.start() >= comment_pos:
+        return line, None
+    cmd = m.group(1) or m.group(2)
+    # Skip internal helpers (names containing @).
+    if "@" in cmd:
+        return line, None
+    replacement = f"\\semtexNewCommand{{{cmd}}}"
+    new_line = line[: m.start()] + replacement + line[m.end() :]
+    before = m.group(0).strip()
+    return new_line, f"{before} → {replacement}"
+
+
+def _rewrite_line_newdoccmd(line: str) -> tuple[str, str | None]:
+    r"""Rewrite \NewDocumentCommand on a single line."""
+    comment_pos = _unescaped_percent_pos(line)
+    m = RE_NEWDOCCMD.search(line)
+    if m is None:
+        return line, None
+    if m.start() >= comment_pos:
+        return line, None
+    cmd = m.group(1) or m.group(2)
+    if "@" in cmd:
+        return line, None
+    replacement = f"\\semtexNewDocumentCommand{{{cmd}}}"
+    new_line = line[: m.start()] + replacement + line[m.end() :]
+    before = m.group(0).strip()
+    return new_line, f"{before} → {replacement}"
+
+
+def rewrite_preamble(
+    preamble: str, paper_id: str
+) -> tuple[str, list[tuple[int, str]]]:
+    """Walk the preamble line by line, rewriting command definitions to
+    their semtex variants.  Returns (rewritten_preamble, rewrites) where
+    rewrites is a list of (lineno, description) pairs (1-based)."""
+    lines = preamble.splitlines(keepends=True)
+    out: list[str] = []
+    rewrites: list[tuple[int, str]] = []
+    makeatletter_depth = 0
+
+    for lineno, line in enumerate(lines, start=1):
+        # Pass through comment-only lines.
+        stripped = line.lstrip()
+        if stripped.startswith("%"):
+            out.append(line)
+            continue
+
+        # Update makeatletter depth (check both on this line).
+        at_count = len(re.findall(r"\\makeatletter\b", line))
+        end_count = len(re.findall(r"\\makeatother\b", line))
+        makeatletter_depth += at_count - end_count
+        # Clamp to 0 in case of malformed input.
+        if makeatletter_depth < 0:
+            makeatletter_depth = 0
+
+        # Inside makeatletter block: pass through.
+        if makeatletter_depth > 0:
+            out.append(line)
+            continue
+
+        # Try \newcommand rewrite first.
+        new_line, desc = _rewrite_line_newcommand(line)
+        if desc is not None:
+            out.append(new_line)
+            rewrites.append((lineno, desc))
+            continue
+
+        # Try \NewDocumentCommand rewrite.
+        new_line, desc = _rewrite_line_newdoccmd(line)
+        if desc is not None:
+            out.append(new_line)
+            rewrites.append((lineno, desc))
+            continue
+
+        out.append(line)
+
+    return "".join(out), rewrites
+
+
+def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
     """Generate wrappers/<id>.tex for a single paper. Returns True on success."""
     paper_dir = PAPERS_DIR / paper_id
     if not paper_dir.is_dir():
@@ -196,14 +302,26 @@ def wrap_paper(paper_id: str) -> bool:
         )
         return False
 
+    # Optionally rewrite command definitions to semtex variants.
+    rewrites: list[tuple[int, str]] = []
+    if do_rewrite:
+        preamble, rewrites = rewrite_preamble(preamble, paper_id)
+        preamble_note = (
+            "% Commands rewritten: \\newcommand -> \\semtexNewCommand, etc.\n"
+        )
+    else:
+        preamble_note = (
+            "% This wrapper preserves the original preamble byte-for-byte\n"
+        )
+
     # Strip any trailing whitespace from the preamble, then inject.
     wrapper_text = (
         "% Auto-generated by wrap.py - do not edit by hand.\n"
         f"% Source paper: {paper_id}\n"
         f"% Original main file: {main_file.relative_to(paper_dir)}\n"
         "%\n"
-        "% This wrapper preserves the original preamble byte-for-byte\n"
-        "% and injects \\usepackage{semtex} just before \\begin{document}.\n"
+        + preamble_note
+        + "% and injects \\usepackage{semtex} just before \\begin{document}.\n"
         "%\n"
         + preamble.rstrip()
         + "\n"
@@ -226,10 +344,24 @@ def wrap_paper(paper_id: str) -> bool:
         link_or_copy(dep, WRAPPERS_DIR / rel)
         linked += 1
 
+    k = len(rewrites)
     log(
         f"[ ok ] {paper_id}: wrote {wrapper_path.name} "
-        f"({len(wrapper_text)} bytes, {linked} deps linked)"
+        f"({len(wrapper_text)} bytes, {linked} deps linked, {k} commands rewritten)"
     )
+
+    # Emit per-paper rewrite diff log (cap at 8 shown; first 3 + "N more").
+    if rewrites:
+        show = rewrites[:3] if k > 8 else rewrites[:8]
+        indent = "       "
+        label = "rewrites: "
+        for i, (lno, desc) in enumerate(show):
+            prefix = label if i == 0 else " " * len(label)
+            log(f"{indent}{prefix}{desc} (line {lno})")
+        if k > 8:
+            hidden = k - 3
+            log(f"{indent}{' ' * len(label)}... ({hidden} more)")
+
     return True
 
 
@@ -261,6 +393,15 @@ def main(argv: list[str]) -> int:
         help="List wrappable papers (those under papers/) and exit.",
     )
     ap.add_argument(
+        "--no-rewrite",
+        action="store_true",
+        dest="no_rewrite",
+        help=(
+            "Disable the command-rewrite pass (preserve preamble "
+            "byte-for-byte). Regression escape valve."
+        ),
+    )
+    ap.add_argument(
         "ids",
         nargs="*",
         help="Specific arxiv IDs to wrap.",
@@ -284,9 +425,10 @@ def main(argv: list[str]) -> int:
         )
         return 2
 
+    do_rewrite = not args.no_rewrite
     failures = 0
     for pid in ids:
-        if not wrap_paper(pid):
+        if not wrap_paper(pid, do_rewrite=do_rewrite):
             failures += 1
 
     if failures:

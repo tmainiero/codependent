@@ -86,6 +86,23 @@ REPEATING_KEYS = {
     "aux_contains", "aux_not_contains",
 }
 
+# No-op definitions for l3build regression-test markers.  l3build provides
+# these via regression-test.tex; our standalone runner does not load that
+# file.  We prepend these \def primitives so \START / \END (and friends) are
+# harmless rather than fatal.  \def is a TeX primitive available before any
+# LaTeX kernel code, so it is safe above \documentclass.
+INJECT_L3BUILD_NOOPS = (
+    "% ---- l3build regression-test marker no-ops"
+    " (injected by run-tests.py) ----\n"
+    "\\def\\START{}\n"
+    "\\def\\END{}\n"
+    "\\def\\OMIT{}\n"
+    "\\def\\OMITS{}\n"
+    "\\def\\TIMO{}\n"
+    "\\long\\def\\TEST#1#2{}\n"
+    "% ---- end l3build no-op injection ----\n"
+)
+
 
 @dataclasses.dataclass
 class Fixture:
@@ -213,6 +230,11 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         # Copy the fixture and the .sty into the temp dir.
         local_lvt = tmp_path / f"{fix.name}.tex"  # rename to .tex for engine
         shutil.copy(fix.path, local_lvt)
+        # Inject l3build regression-test marker no-ops at the top of the
+        # fixture so \START / \END do not error.  l3build itself provides
+        # these via regression-test.tex; our standalone runner does not.
+        content = local_lvt.read_text(encoding="utf-8")
+        local_lvt.write_text(INJECT_L3BUILD_NOOPS + content, encoding="utf-8")
         shutil.copy(STY_FILE, tmp_path / "semtex.sty")
         if LTXML_FILE.exists():
             shutil.copy(LTXML_FILE, tmp_path / "semtex.ltxml")
