@@ -81,6 +81,11 @@ METADATA_KEYS = {
     "TEST-PDF-CONTAINS": "pdf_contains",  # may repeat; text in PDF output
     "TEST-PDF-NOT": "pdf_not",  # may repeat; text must NOT appear in PDF
     "TEST-PDF-LINKS": "pdf_links",  # int; minimum number of internal hyperlinks
+    # Structural PDF assertions (require mutool)
+    "TEST-PDF-STEXT": "pdf_stext",  # may repeat; regex on mutool stext XML (positions/fonts)
+    "TEST-PDF-STEXT-NOT": "pdf_stext_not",  # may repeat; regex must NOT match stext XML
+    "TEST-PDF-OBJECTS": "pdf_objects",  # may repeat; regex on mutool show grep (link annots, dests)
+    "TEST-PDF-OBJECTS-NOT": "pdf_objects_not",  # may repeat; regex must NOT match objects
 }
 
 REPEATING_KEYS = {
@@ -88,6 +93,8 @@ REPEATING_KEYS = {
     "sbl_contains", "sbl_not_contains", "sbl_count",
     "aux_contains", "aux_not_contains",
     "pdf_contains", "pdf_not",
+    "pdf_stext", "pdf_stext_not",
+    "pdf_objects", "pdf_objects_not",
 }
 
 # No-op definitions for l3build regression-test markers.  l3build provides
@@ -131,6 +138,10 @@ class Fixture:
     pdf_contains: list = dataclasses.field(default_factory=list)
     pdf_not: list = dataclasses.field(default_factory=list)
     pdf_links: int = 0
+    pdf_stext: list = dataclasses.field(default_factory=list)
+    pdf_stext_not: list = dataclasses.field(default_factory=list)
+    pdf_objects: list = dataclasses.field(default_factory=list)
+    pdf_objects_not: list = dataclasses.field(default_factory=list)
 
 
 def parse_fixture(path: Path) -> Fixture:
@@ -215,6 +226,8 @@ def assert_engine_available(engine: str) -> Path:
 # Prefer mutool (mupdf); fall back to pdftotext (poppler).
 PDF_TEXT_TOOL: str | None = shutil.which("mutool") or shutil.which("pdftotext")
 PDF_LINK_TOOL: str | None = shutil.which("mutool") or shutil.which("qpdf")
+# Structural assertions (stext positions/fonts, PDF objects) require mutool.
+PDF_STEXT_TOOL: str | None = shutil.which("mutool")
 
 
 def _extract_pdf_text(pdf_path: Path) -> str | None:
@@ -236,6 +249,45 @@ def _extract_pdf_text(pdf_path: Path) -> str | None:
         if proc.returncode == 0:
             return proc.stdout
         return None
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
+def _extract_pdf_stext(pdf_path: Path) -> str | None:
+    """Extract structured text XML from a PDF (mutool only).
+
+    The stext format includes per-character x,y coordinates and font names,
+    enabling assertions on text position (flush-left vs indented) and font
+    (backref text in configured font vs body font).
+    """
+    if PDF_STEXT_TOOL is None:
+        return None
+    try:
+        proc = subprocess.run(
+            [PDF_STEXT_TOOL, "draw", "-F", "stext", "-o", "-", str(pdf_path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        return proc.stdout if proc.returncode == 0 else None
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
+def _extract_pdf_objects(pdf_path: Path) -> str | None:
+    """Dump all PDF objects as text (mutool only).
+
+    The output includes link annotations (/Subtype /Link), their destinations
+    (/Dest or /A << /S /GoTo /D ... >>), and named destinations.  Regex
+    assertions against this output can verify that hyperlinks point to the
+    correct anchors (e.g., theorem anchors vs equation anchors).
+    """
+    if PDF_STEXT_TOOL is None:
+        return None
+    try:
+        proc = subprocess.run(
+            [PDF_STEXT_TOOL, "show", str(pdf_path), "grep"],
+            capture_output=True, text=True, timeout=30,
+        )
+        return proc.stdout if proc.returncode == 0 else None
     except (subprocess.TimeoutExpired, OSError):
         return None
 
@@ -444,7 +496,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         #    TEST-PDF-LINKS).  Only run when at least one PDF directive
         #    is present.  Skipped with a warning when no PDF extraction
         #    tool is available on PATH.
-        has_pdf_checks = fix.pdf_contains or fix.pdf_not or fix.pdf_links > 0
+        has_pdf_checks = (fix.pdf_contains or fix.pdf_not or fix.pdf_links > 0
+                          or fix.pdf_stext or fix.pdf_stext_not
+                          or fix.pdf_objects or fix.pdf_objects_not)
         if has_pdf_checks:
             pdf_file = tmp_path / f"{fix.name}.pdf"
             if not pdf_file.exists():
@@ -496,6 +550,56 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                                 f"pdf links: expected >= {fix.pdf_links}, "
                                 f"got {link_count}"
                             )
+
+                # 10. Structured text assertions (positions, fonts).
+                if fix.pdf_stext or fix.pdf_stext_not:
+                    if PDF_STEXT_TOOL is None:
+                        sys.stderr.write(
+                            f"  WARN: skipping PDF stext checks for {fix.name} "
+                            f"(no mutool on PATH)\n"
+                        )
+                    else:
+                        stext_xml = _extract_pdf_stext(pdf_file)
+                        if stext_xml is None:
+                            result.failures.append(
+                                "pdf stext extraction failed"
+                            )
+                        else:
+                            for pat in fix.pdf_stext:
+                                if not re.search(pat, stext_xml):
+                                    result.failures.append(
+                                        f"pdf stext missing pattern: {pat!r}"
+                                    )
+                            for pat in fix.pdf_stext_not:
+                                if re.search(pat, stext_xml):
+                                    result.failures.append(
+                                        f"pdf stext matched forbidden pattern: {pat!r}"
+                                    )
+
+                # 11. PDF object assertions (link annotations, destinations).
+                if fix.pdf_objects or fix.pdf_objects_not:
+                    if PDF_STEXT_TOOL is None:
+                        sys.stderr.write(
+                            f"  WARN: skipping PDF object checks for {fix.name} "
+                            f"(no mutool on PATH)\n"
+                        )
+                    else:
+                        obj_dump = _extract_pdf_objects(pdf_file)
+                        if obj_dump is None:
+                            result.failures.append(
+                                "pdf object extraction failed"
+                            )
+                        else:
+                            for pat in fix.pdf_objects:
+                                if not re.search(pat, obj_dump):
+                                    result.failures.append(
+                                        f"pdf objects missing pattern: {pat!r}"
+                                    )
+                            for pat in fix.pdf_objects_not:
+                                if re.search(pat, obj_dump):
+                                    result.failures.append(
+                                        f"pdf objects matched forbidden pattern: {pat!r}"
+                                    )
 
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name
@@ -671,6 +775,13 @@ def main():
         sys.stderr.write(
             "WARN: no PDF link tool found (mutool or qpdf). "
             "TEST-PDF-LINKS checks will be skipped.\n"
+        )
+    if PDF_STEXT_TOOL:
+        sys.stderr.write(f"PDF structural:      {PDF_STEXT_TOOL}\n")
+    else:
+        sys.stderr.write(
+            "WARN: no mutool found. TEST-PDF-STEXT / TEST-PDF-OBJECTS "
+            "checks will be skipped. Install: nix-shell -p mupdf qpdf\n"
         )
     sys.stderr.write("\n")
 
