@@ -1,0 +1,145 @@
+%% TEST-NAME: integ-equations-off
+%% TEST-WHAT: Verify that equations=off fully suppresses equation tracking:
+%%            no equation-sourced atomrefs appear in the .aux, and references
+%%            made inside equation environments fall through to the containing
+%%            atom (theorem or paragraph) instead.  Theorem backrefs must
+%%            still work normally.
+%%
+%%            With equations=off, \codep@eqshouldtrack always clears
+%%            \codep@eqatom.  The Track 1 path inside \codep@writeatomref@body
+%%            then falls through to \codep@writeatomref@do, attributing the
+%%            reference to the containing theorem/paragraph atom — NOT to an
+%%            equation number.
+%%
+%%            Assertions:
+%%            - NO atomref with a parenthesised equation number source appears
+%%              in the .aux (e.g. nothing matching \codep@atomref{(1.).
+%%            - Theorem-sourced atomrefs DO appear (theorems referencing other
+%%              theorems still track normally).
+%%            - References inside equation envs are attributed to the containing
+%%              atom, not discarded entirely.
+%%
+%% TEST-SOURCE: codependent.sty §\codep@eqshouldtrack, DESIGN.md §8a equations
+%% TEST-SECTION: DESIGN.md §8a (equation tracking)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Error
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom
+%% TEST-AUX-CONTAINS: \codep@atomref
+%%
+%% equations=off: NO equation-sourced atomrefs (source keys like "(N.M)").
+%% Parenthesised source atoms would be \codep@atomref{(N.  —  must not appear.
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(
+%%
+%% Theorem-sourced backrefs must still appear.
+%% E.g. thm:ivt references def:continuous, producing a theorem-atom source.
+%% TEST-AUX-CONTAINS: \codep@atomref
+%%
+%% TEST-ATOMS-MIN: 5
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+
+\documentclass{article}
+
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+%% equations=off: equation environments are suppressed for tracking purposes.
+\usepackage[equations=off]{codependent}
+\codeptrack{theorem,lemma,definition,corollary}
+
+\numberwithin{equation}{section}
+
+\begin{document}
+\START
+
+%% =====================================================================
+%%  Section 1: Definitions and main theorems
+%% =====================================================================
+\section{Real analysis}%
+\label{sec:real}
+
+\begin{definition}\label{def:continuous}
+  A function $f \colon [a,b] \to \mathbb{R}$ is \emph{continuous at} $x_0$
+  if for every $\varepsilon > 0$ there exists $\delta > 0$ such that
+  $|x - x_0| < \delta$ implies $|f(x) - f(x_0)| < \varepsilon$.
+\end{definition}
+
+\begin{theorem}\label{thm:ivt}
+  Let $f \colon [a,b] \to \mathbb{R}$ be continuous (\cref{def:continuous})
+  with $f(a) < 0 < f(b)$.  Then there exists $c \in (a,b)$ with $f(c) = 0$.
+\end{theorem}
+
+\begin{proof}
+  By bisection; continuity (\cref{def:continuous}) ensures the limit
+  of the midpoints is a root.
+\end{proof}
+
+%% thm:ivt references def:continuous, so we expect an atomref with
+%% source = theorem atom number (e.g. "1.2"), NOT a parenthesised eq number.
+
+\begin{lemma}\label{lem:extreme}
+  A continuous function (\cref{def:continuous}) on a closed bounded
+  interval attains its maximum and minimum.
+\end{lemma}
+
+\begin{theorem}\label{thm:mvt}
+  Let $f \colon [a,b] \to \mathbb{R}$ be continuous (\cref{def:continuous})
+  and differentiable on $(a,b)$.  Then there exists $c \in (a,b)$ such that:
+  \begin{equation}\label{eq:mvt}
+    f'(c) = \frac{f(b) - f(a)}{b - a}.
+  \end{equation}
+  This uses \cref{thm:ivt} applied to $f' - \text{(slope)}$.
+\end{theorem}
+
+%% With equations=off: the \cref{thm:ivt} inside eq:mvt (Track 1, inside
+%% thm:mvt) falls through to the containing theorem atom.  The equation
+%% itself (eq:mvt) does NOT become an equation-sourced atom.  The atomref
+%% for thm:ivt is attributed to the containing theorem atom for thm:mvt.
+
+%% =====================================================================
+%%  Section 2: Cross-section references — theorem backrefs still work
+%% =====================================================================
+\section{Corollaries}%
+\label{sec:corollaries}
+
+A paragraph referencing earlier material: the intermediate value theorem
+(\cref{thm:ivt}) and the extreme value theorem (\cref{lem:extreme}) are
+the two pillars of elementary real analysis.
+
+\begin{corollary}\label{cor:fixed}
+  Every continuous function $f \colon [0,1] \to [0,1]$
+  (\cref{def:continuous}) has a fixed point, by \cref{thm:ivt} applied
+  to $g(x) = f(x) - x$.
+\end{corollary}
+
+\begin{corollary}\label{cor:bounded}
+  A continuous function on a closed bounded interval is bounded;
+  see \cref{lem:extreme} and \cref{def:continuous}.
+\end{corollary}
+
+%% align block — Track 2 path with equations=off.
+%% \cref references inside align should NOT produce equation-sourced atomrefs.
+The mean value theorem (\cref{thm:mvt}) implies:
+\begin{align}
+  |f(b) - f(a)| &\le M \cdot (b-a), \label{eq:lipschitz} \\
+  M &= \sup_{x \in (a,b)} |f'(x)|. \label{eq:sup-norm}
+\end{align}
+The bound \cref{eq:lipschitz} combined with \cref{thm:ivt} gives
+the Lipschitz condition.
+
+%% With equations=off, eq:lipschitz is not an equation atom source.
+%% The \cref{thm:ivt} call at the end of the paragraph above is
+%% in paragraph mode (not inside any equation env), so it attributes
+%% to the paragraph atom — still NOT a parenthesised equation source.
+
+\END
+\end{document}
