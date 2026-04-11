@@ -1,0 +1,13 @@
+# Build artifacts
+*.aux
+*.log
+*.out
+*.sbl
+*.pdf
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+texput.*
+
+# Stale copies — use TEXINPUTS to find canonical semtex.sty
+testfiles/compiled-examples/semtex.sty
