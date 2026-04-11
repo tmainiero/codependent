@@ -40,6 +40,9 @@
 % Rendering configuration (backref style, alignment, fonts).
 \newcommand*{\semtex@backrefstyle}{block}
 \newcommand*{\semtex@backrefalign}{right}
+% String constants for \ifx comparisons in rendering macros.
+\def\semtex@const@block{block}
+\def\semtex@const@right{right}
 \newcommand*{\semtex@backreffont}{\scriptsize\sffamily}
 \newcommand*{\semtex@backrefprefix}{}
 \newcommand*{\semtex@backreflabel}{Used in}
@@ -1012,18 +1015,18 @@
 %   True iff the label key ends in "@data" (thm-restate internal).
 %   These contain \setcounter calls, not display numbers.
 \def\semtex@ifdatakey#1{%
-  \semtex@iscreffalse
+  \semtex@isdatafalse
   \def\semtex@ifdatakey@probe##1@data##2\@nil{%
     \def\semtex@tmp@b{##2}%
     \ifx\semtex@tmp@b\@empty\else
       \def\semtex@tmp@c{@data}%
       \ifx\semtex@tmp@b\semtex@tmp@c
-        \semtex@iscreftrue
+        \semtex@isdatatrue
       \fi
     \fi
   }%
   \semtex@ifdatakey@probe#1@data\@nil
-  \ifsemtex@iscref
+  \ifsemtex@isdata
     \expandafter\@firstoftwo
   \else
     \expandafter\@secondoftwo
@@ -1032,6 +1035,8 @@
 
 % Flag used only inside \semtex@ifcrefkey.
 \newif\ifsemtex@iscref
+% Flag used only inside \semtex@ifdatakey (separate from \ifsemtex@iscref).
+\newif\ifsemtex@isdata
 
 \def\semtex@installnewlabel{%
   \let\semtex@orig@newlabel\newlabel
@@ -1279,11 +1284,9 @@
 %   Used for theorem/definition/lemma atoms (non-paragraph).
 %   Respects backref-style and backref-align configuration.
 \newcommand*{\semtex@renderinline}[1]{%
-  \def\semtex@tmp@block{block}%
-  \ifx\semtex@backrefstyle\semtex@tmp@block
+  \ifx\semtex@backrefstyle\semtex@const@block
     % Block style: separate line after the atom.
-    \def\semtex@tmp@right{right}%
-    \ifx\semtex@backrefalign\semtex@tmp@right
+    \ifx\semtex@backrefalign\semtex@const@right
       \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
       \quad\semtex@formatusedin{#1}%
     \else
@@ -1304,13 +1307,11 @@
 %   Respects backref-style and backref-align configuration.
 \newcommand*{\semtex@renderdeferred}[1]{%
   \nobreak
-  \def\semtex@tmp@block{block}%
-  \ifx\semtex@backrefstyle\semtex@tmp@block
+  \ifx\semtex@backrefstyle\semtex@const@block
     % Block style
-    \def\semtex@tmp@right{right}%
     \vbox{%
       \hbox to \linewidth{%
-        \ifx\semtex@backrefalign\semtex@tmp@right
+        \ifx\semtex@backrefalign\semtex@const@right
           \hfil\semtex@formatusedin{#1}%
         \else
           \semtex@formatusedin{#1}\hfil
@@ -1491,30 +1492,6 @@
 \DeclareHookRule{begindocument/before}{semtex/sbl/cmddef}%
                 {after}{semtex/sbl/open}
 
-% \semtex@build@argspec{n}
-%   Convert integer arity 0..9 to a repeated-m xparse spec string.
-%   Arity 0 produces no tokens (empty spec), arity 2 produces "m m",
-%   etc.  Not currently called (the define-let-protected\edef approach
-%   sidesteps argspec construction), but retained per DESIGN.md §9a
-%   as a utility for future xparse-based variants.
-\newcommand*{\semtex@build@argspec}[1]{%
-  \ifcase\number#1\relax
-    \or m%
-    \or m m%
-    \or m m m%
-    \or m m m m%
-    \or m m m m m%
-    \or m m m m m m%
-    \or m m m m m m m%
-    \or m m m m m m m m%
-    \or m m m m m m m m m%
-  \else
-    \PackageError{semtex}%
-      {\string\semtexnewcommand\space arity \number#1\space
-       out of range (max 9)}%
-      {Use \string\semtexNewDocumentCommand\space for more.}%
-  \fi}
-
 % \semtex@emit@def{name}
 %   Star-branch handler: fires when \cmd* is used (defining site).
 %   Records the current atom as the defining site for the named
@@ -1601,6 +1578,16 @@
   \semtex@conceptwarnscan
 }
 
+% Flush any deferred backref from the last paragraph.
+% Without this, a backref on the final paragraph is lost because
+% there is no subsequent para/begin to emit it.
+\AtEndDocument{%
+  \ifx\semtex@deferredbr\@empty\else
+    \semtex@renderdeferred{\semtex@deferredbr}%
+    \global\let\semtex@deferredbr\@empty
+  \fi
+}
+
 %% ===================================================================
 %% Section 10: User-facing API
 %% ===================================================================
@@ -1615,9 +1602,26 @@
 %   env1, env2, ... -- comma-separated environment names to track.
 %   The first env name is auto-detected as the base counter name.
 \newcommand*{\semtextrack}[1]{%
+  % Guard against double invocation (newcounter{atom} would crash).
+  \ifbool{semtex@tracked}{%
+    \PackageError{semtex}%
+      {\string\semtextrack\space called twice}%
+      {Call \string\semtextrack\space only once, after all
+       theorem declarations.}%
+  }{}%
   \booltrue{semtex@tracked}%
   % Auto-detect the base counter from the first environment name.
   \semtex@extractfirst#1,\@nil
+  % Check that the base counter exists (i.e. \newtheorem was called).
+  \@ifundefined{c@\semtex@basecounter}{%
+    \PackageError{semtex}%
+      {Counter '\semtex@basecounter' undefined -- %
+       \string\semtextrack\space called before
+       \string\newtheorem}%
+      {Declare all theorem environments with
+       \string\newtheorem\space before calling
+       \string\semtextrack.}%
+  }{}%
   \semtex@setupcounter
   % Hook each listed environment and its starred variant.
   % Note: \expandafter ensures the env name is fully expanded
