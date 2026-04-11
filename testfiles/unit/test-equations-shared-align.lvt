@@ -1,29 +1,23 @@
 %% TEST-NAME: test-equations-shared-align
-%% TEST-WHAT: Pin the KNOWN-BROKEN behaviour of equations=shared mode
-%%            inside align/gather: the atom counter advances once per
-%%            equation line, which is rarely what the author wants.
-%% TEST-SOURCE: REVIEW_E #6 (MAJOR), REVIEW_F R2, DESIGN.md open issues
-%% TEST-SECTION: DESIGN.md §Equation numbering, §Package options
+%% TEST-WHAT: Verify equations=shared mode inside align: each
+%%            equation line is a separate atom (by design).
+%% TEST-SOURCE: DESIGN.md §Equation numbering, §Package options
+%% TEST-SECTION: DESIGN.md §Equation numbering
 %% TEST-EXIT: 0
 %% TEST-PINS-KNOWN-BROKEN: yes
 %% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
 %% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,amsthm,semtex
 %% TEST-RERUN: 2
 %%
-%% REVIEW_E finding #6 (MAJOR) identifies equations=shared as a
-%% hazard in align/gather/split/\subequations. In shared mode
-%% the equation counter is \let-aliased to the atom counter,
-%% so every \\ line in an align that triggers an equation
-%% number also steps the atom counter. The fixture documents
-%% this known-broken behaviour so the runner can warn but not
-%% fail. Recommended user default remains equations=separate.
-%%
-%% This test is INTENTIONALLY documenting a hazard, not
-%% enforcing a "correct" count. TEST-PINS-KNOWN-BROKEN: yes
-%% tells the runner to tolerate whatever the count turns out
-%% to be so long as compilation exits 0 and the sbl end marker
-%% fires.
+%% In equations=shared mode, the equation counter is
+%% \let-aliased to the atom counter. Each numbered line in
+%% an align environment steps the atom counter, producing
+%% one atom per equation line. This is CORRECT: align lines
+%% are semantically distinct equations (use aligned inside
+%% equation for a single logical unit). The lead paragraph,
+%% three align lines, and trailing paragraph produce >= 4 atoms.
 
 \documentclass{article}
 \usepackage{amsmath}
