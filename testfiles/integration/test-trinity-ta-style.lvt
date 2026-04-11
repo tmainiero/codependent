@@ -24,6 +24,22 @@
 %% TEST-AUX-CONTAINS: \codep@concept{Funct}
 %% TEST-AUX-CONTAINS: \codep@concept{catname}
 %% TEST-AUX-CONTAINS: \codep@conceptref
+%%
+%% Guard against concept backref contamination (Bug 2026-04-11):
+%% Atoms that only USE \catname (not \ref{thm:main}) must NOT
+%% appear as atomref sources for thm:main.
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.4}{thm:main}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.8}{thm:main}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.9}{thm:main}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.10}{thm:main}
+%%
+%% Equation backref tracking (Track 1): standalone equation with \cref
+%% TEST-AUX-CONTAINS: \codep@atomref{(2.5)}{cor:equiv}
+%% Equation backref tracking (Track 2): align range with \cref on arrows
+%% TEST-AUX-CONTAINS: \codep@atomref{(2.6--2.7)}{def:enrichment}
+%% TEST-AUX-CONTAINS: \codep@atomref{(2.6--2.7)}{thm:main}
+%% Outer-mode guard: equation inside theorem must NOT produce eq-sourced atomref
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(2.8)
 %% TEST-ATOMS-MIN: 15
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-RERUN: 3
@@ -46,6 +62,8 @@
 %%   - \codepnewcommand concept tracking (def-site / use-site)
 %%   - \codeptag semantic sidecar records
 %%   - Cross-section backrefs (section 3 → section 1)
+%%   - Equation backref tracking (Track 1: standalone, Track 2: align range)
+%%   - Outer-mode equation guard (eq inside theorem → falls through to thm)
 
 \documentclass{article}
 
@@ -307,6 +325,28 @@ $\begin{tikzcd}[cramped, sep=small]
   \catname{D} \arrow[l, bend left, "G"]
 \end{tikzcd}$
 induces a monad $GF$ on $\catname{C}$.
+
+%% --- Equation backref tracking (Track 1 — standalone equation) ---
+Functoriality of $F$ gives the following, by \cref{thm:main}:
+\begin{equation}\label{eq:functorial}
+  F(f \circ g) = F(f) \circ F(g)
+  \qquad\text{(\cref{cor:equiv})}
+\end{equation}
+
+%% --- Equation backref tracking (Track 2 — align range) ---
+The enrichment structure gives:
+\begin{align}
+  X \otimes Y &\xrightarrow{\text{\cref{def:enrichment}}} \catname{V}(X,Y) \label{eq:enrich-step1} \\
+  \catname{V}(X,Y) &\xrightarrow{\text{\cref{thm:main}}} Z \label{eq:enrich-step2}
+\end{align}
+
+%% --- Equation inside theorem (outer mode — should NOT track eq) ---
+\begin{theorem}\label{thm:with-eq}
+By \cref{def:enrichment}, we have
+\begin{equation}\label{eq:inside-thm}
+  f = g \quad\text{by \cref{lem:adjunction}}.
+\end{equation}
+\end{theorem}
 
 %% ====================================================================
 %%  Section 3: Cross-section backrefs

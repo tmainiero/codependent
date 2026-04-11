@@ -151,92 +151,250 @@ level is a subset of resetting at a finer level.
 
 ### Equation numbering
 
-By default, equation numbering is independent of atom
-numbering.  Atoms render as superscript margin numbers;
-equations render as standard parenthesized numbers.
+Equation numbering is always independent of atom numbering.
+Atoms use the `atom` counter (margin superscripts); equations
+use the standard `equation` counter (parenthesized numbers).
+The old `equations=shared` mode (counter aliasing) was removed
+— it had intractable hazards with `align`/`gather`/`subequations`
+(see REVIEW_E #6).
+
+### Equations as backref sources
+
+Equations can appear as sources in "Used in" lists.  When
+`\ref{thm:main}` appears inside a numbered equation, the
+equation number is recorded as the backref source, displayed
+with parentheses to distinguish from atom numbers:
+
+```
+Used in 2.1, (3), (5--7).
+           ^    ^       ^
+       theorem  eq    align range
+```
+
+The parenthesized form serves as both display format (standard
+math convention) and internal namespace key (prevents collision
+between theorem 4.1 and equation 4.1 in the anchormap and
+backref data structures).
+
+#### Three modes
 
 ```latex
-\usepackage[equations=separate]{codependent}  % independent (default)
-\usepackage[equations=shared]{codependent}    % single counter for everything
+\codepsetup{equations=outer}  % default
+\codepsetup{equations=all}
+\codepsetup{equations=off}
 ```
 
-In `shared` mode, `\let\c@equation\c@atom` — unstarred
-equations consume atom numbers.  Starred equations
-(`equation*`, `\[...\]`) do not advance any counter and
-display no number — this is standard LaTeX behavior.
-No gap in numbering; the next atom picks up naturally.
+| Mode | Behaviour |
+|------|-----------|
+| `outer` | Equations outside theorems/proofs are backref sources. Equations inside a tracked environment fall through to the containing atom (theorem/proof number). |
+| `all` | Every numbered equation is a backref source, even inside theorems. May produce both "2.1" and "(3)" in the same "Used in" list. |
+| `off` | Equations never appear as sources. Refs inside equations are attributed to the containing atom, or silently dropped if no containing atom exists (e.g. `paragraphs=off`). |
 
-In `separate` mode, there is no ambiguity in "Used in" lists
-because those only reference atom numbers, never equation
-numbers.
+**Default is `outer`.**  This is the least surprising: standalone
+equations (between theorems, in running text) get tracked — important
+because with `paragraphs=off` these refs would otherwise be lost
+entirely.  Equations inside theorems fall through to the theorem
+number, avoiding "(3)" alongside "2.1" in the same list.
 
-#### Hazards of `equations=shared` mode (REVIEW_E #6)
+#### Two-track implementation
 
-> Upstream motivation: **REVIEW_E finding #6 (MAJOR).**
-> Under `equations=shared`, `\c@equation` is aliased to
-> `\c@atom`.  Several amsmath constructs call
-> `\refstepcounter{equation}` in ways that surprise the
-> atom-counter model.
+Equation environments are semantically two kinds: single-number
+(one equation counter step) and multi-number (one step per line).
+amsmath steps the counter at different points for each kind —
+at `\begin` for single-number, at `\\` (after line content) for
+multi-number.  These require different recording strategies.
 
-- **`align` / `gather` / `flalign` / `eqnarray`.**  Each
-  labelled line in these environments calls
-  `\refstepcounter{equation}` independently.  Under
-  `shared`, that means each line advances the atom
-  counter.  A 5-line `align` block where the author
-  expects "one atom for the whole display" instead
-  consumes 5 atom numbers, and the atom sequence becomes
-  `para 2.4 -> align lines 2.5, 2.6, 2.7, 2.8, 2.9 ->
-  next para 2.10`.  `\codep@currentatom` is also
-  stamped to the per-line value on each line, so any
-  `\ref{...}` inside the RHS is attributed to the
-  current line's atom number — which may or may not
-  match the author's intent.
-- **`\subequations`.**  amsmath line 1131-1132 begins
-  `\subequations` with `\refstepcounter{equation}`,
-  creating a parent atom.  Nested labelled lines inside
-  then create child atoms.  Display numbers like
-  `(1.2.3a)` may appear that the rest of the pipeline
-  does not parse cleanly.
-- **`\tag{custom}`.**  A tagged line does NOT advance
-  the counter, so a `\tag`'d line is not a new atom,
-  but the next non-tagged line resumes counter
-  advancement — producing an inconsistent visual
-  numbering.
+##### Track 1: Single-number environments (`equation`)
 
-**Recommendation.**  Use `equations=separate` (the
-default) for serious math typesetting.  Authors who
-want a single-number display for a multi-line derivation
-should use `aligned` (no counter) inside a single-numbered
-`equation`, not `align`:
+`\refstepcounter{equation}` fires at `\begin{equation}`, BEFORE
+content.  At `\ref` time, `\theequation` is correct.
 
-```tex
-\begin{equation}\label{eq:long}
-\begin{aligned}
-f(x) &= x^2 \\
-g(x) &= 2x
-\end{aligned}
-\end{equation}
+Record `(\theequation)` as backref source directly in
+`\codep@writeatomref`.  Write anchormap entry lazily at
+`\ref` time.
+
+##### Track 2: Multi-number environments (`align`, `gather`, `multline`, `flalign`)
+
+`\refstepcounter{equation}` fires at `\\` (end of row), AFTER
+line content.  At `\ref` time, `\theequation` is stale
+(off by one).  Reading `\theequation` at `\ref` time produces
+wrong source numbers.
+
+**Note:** `multline` is Track 2 despite having a single equation
+number — its counter also steps late (via `\make@display@tag`),
+not at `\begin{multline}`.
+
+**Range-based recording.**  Instead of tracking per-line equation
+numbers, attribute all `\ref`s in the block to the block's
+equation range:
+
+1. At `\begin{align}`: save `\c@equation` (raw counter value).
+   Inject a dedicated `\hypertarget` anchor for the block
+   (do NOT rely on `\@currentHref`, which at `\end{align}`
+   points to the last row's anchor or is stale if all rows
+   have `\notag`).
+2. During content: any `\ref` → append the target label key
+   to a pending list.  Do NOT capture `\theequation` — it is
+   wrong at this point.  Guard the append with `\ifmeasuring@`
+   to skip amsmath's measuring pass (which fires `\ref` twice).
+3. At `\end{align}`: compute the formatted range:
+   ```latex
+   \begingroup
+     \c@equation=\codep@eq@startcount\relax
+     \advance\c@equation by 1\relax
+     \edef\codep@eq@startdisplay{\theequation}%
+   \endgroup
+   \edef\codep@eq@enddisplay{\theequation}
+   ```
+   If start == end (single numbered line, or `multline`):
+   display `(N)`.  If start < end: display `(N--M)`.  If
+   counter did not advance (all `\notag`): fall through to
+   containing atom, or silently drop if no containing atom.
+4. Write `\codep@atomref{(N--M)}{target}` for each pending ref.
+   Write `\codep@writeanchormap{(N--M)}` using the dedicated
+   anchor from step 1.
+5. Clear the pending list.
+
+**Internal key format.**  Use ASCII `--` (two hyphens) as the
+range separator in csname keys: `codep@anchor@(2--4)`.  Render
+as en-dash (`\textendash`) only at display time in
+`\codep@brhyper`.  ASCII hyphens are catcode 12 on all engines
+(pdfLaTeX, LuaLaTeX, XeLaTeX) and survive aux file
+round-tripping.  The display key and the internal key are NOT
+the same string — `\codep@brhyper` maps `--` to `\textendash`
+for rendering.
+
+**Registration.**  Two internal registration commands:
+
+- `\codep@trackeqenv{env}` — Track 1 (single-number, direct)
+- `\codep@trackalignenv{env}` — Track 2 (multi-number, range)
+
+Public commands for custom environments:
+
+- `\codeptrackeq{env}` — register as Track 1
+- `\codeptrackalign{env}` — register as Track 2
+
+Starred/unnumbered environments (`equation*`, `align*`, etc.)
+use the existing `\codep@suppressenv` — paragraph suppression
+only, no equation tracking.
+
+#### Pre-requisite: atomref dedup bug fix
+
+Before implementing equation tracking, fix two existing bugs
+that produce duplicate/disordered "Used in" entries:
+
+1. **Multiple patch sites fire for one `\cref` call.**
+   `\cref{thm:main}` triggers both `\cref@getlabel` (patch 2)
+   and `\@setref` (patch 1), each writing an `\codep@atomref`
+   record.  Fix: add per-source-target dedup in
+   `\codep@writeatomref@do` — one aux write per (source, target)
+   pair per compile pass.
+
+2. **amsmath measuring pass fires `\ref` twice.**  amsmath
+   processes `align`/`gather`/`multline`/`flalign` bodies twice
+   (measuring + typesetting).  `\ref` fires both times.
+   `\protected@write` in the measuring box is discarded, but
+   global state (like dedup marks) persists.  Fix: guard
+   `\codep@writeatomref` with `\ifmeasuring@` (skip entirely
+   during the measuring pass).
+
+Both fixes use only documented interfaces (`\ifmeasuring@` is
+a public amsmath conditional).  The `\ifmeasuring@` guard must
+come BEFORE the dedup marks to avoid setting marks during the
+measuring pass that would block the real (typesetting) pass.
+
+#### Design decisions and alternatives considered
+
+1. **Why two tracks instead of one mechanism?**  `equation` and
+   `align` are semantically different: a single equation vs a
+   multi-line derivation.  amsmath steps the counter at different
+   points for each.  Forcing one mechanism produces either
+   incorrect numbers (reading `\theequation` at `\ref` time in
+   align) or unnecessary complexity (deferred recording for
+   `equation` where it's not needed).
+
+2. **Why ranges for multi-line environments?**  Per-line equation
+   numbers in `align` require either patching `\refstepcounter`
+   (fragile — cleveref adds optional args) or deferring to
+   `\label` time (correct only when `\label` is present, noisy
+   warnings otherwise).  Ranges are always correct, always
+   available (computed from counter at env boundaries), and
+   semantically appropriate (an `align` block is one derivation).
+
+3. **Why parenthesized display numbers as keys?**  Parentheses
+   `(` `)` are catcode 12 in TeX and valid in `\csname` keys.
+   Using `(4.1)` instead of `eq:4.1` as the internal key means
+   the rendering code (`\codep@brhyper`, `\codep@collapsebr`)
+   requires minimal changes.
+
+4. **Why not patch `\refstepcounter`?**  cleveref adds an optional
+   argument; hyperref also patches it.  A chain of patches is
+   fragile across package versions.
+
+5. **Why `\ifmeasuring@` instead of choosing which patches to
+   install?**  Even if we skip the `\@setref` patch when cleveref
+   is loaded, the measuring pass still fires `\ref` twice.
+   `\ifmeasuring@` is a single guard that handles both problems
+   (double-patch + measuring pass) at the entry point.
+
+6. **Why inject `\hypertarget` at `\begin{align}`?**  At
+   `\end{align}`, `\@currentHref` points to the last row's
+   hyperref anchor, not the block.  If all rows have `\notag`,
+   `\@currentHref` is stale from whatever preceded the align.
+   A dedicated anchor is reliable.
+
+7. **Why not counter-share?**  The old `equations=shared` mode
+   was removed — see REVIEW_E #6.
+
+#### Edge cases (from adversarial review)
+
+- **All-`\notag` align:** counter doesn't advance → no range
+  to compute.  Fall through to containing atom or silently drop.
+- **`\subequations` wrapping align:** `\theequation` is redefined
+  to `\theparentequation\alph{equation}`, which is in scope
+  during the `\begingroup` computation.  Range `(1a--1c)` is
+  correct.
+- **Consecutive align blocks:** pending list must be cleared at
+  `\begin{align}`.  Assert empty or clear unconditionally.
+- **`paragraphs=off` + `equations=outer`:** deferred flush at
+  `\end{align}` must perform the same mode/theorem guard as
+  `\codep@writeatomref`.
+- **`gather`/`flalign`:** same Track 2 behaviour as `align`;
+  different amsmath internals but same `\AtBeginEnvironment` /
+  `\AtEndEnvironment` hooks work uniformly.
+
+#### Fragility assessment
+
+| Component | Rating | Depends on |
+|-----------|--------|------------|
+| `\AtBeginEnvironment` / `\AtEndEnvironment` | **Robust** | Documented etoolbox/LaTeX interfaces |
+| `\c@equation` read at env boundaries | **Robust** | Standard counter access |
+| `\theequation` in `\begingroup` for formatting | **Robust** | Standard TeX grouping |
+| `\ifmeasuring@` guard | **Robust** | Documented amsmath conditional |
+| `\hypertarget` anchor injection | **Robust** | Documented hyperref interface |
+| Parentheses and `--` in csname keys | **Robust** | Catcode 12, all engines |
+| Assumption: counter monotonically increases in align | **Moderate** | Standard amsmath behaviour; `\notag` doesn't decrement |
+
+#### Number-first theorem headers
+
+Some authors prefer "1.1 Theorem" instead of "Theorem 1.1"
+(Bourbaki, EGA, Stacks Project style).  This is a theorem
+formatting concern, not a dependency tracking concern.
+codependent does not override theorem headers.
+
+To achieve this with amsthm:
+
+```latex
+\newtheoremstyle{numberfirst}%
+  {}{}%                          % space above/below
+  {\itshape}%                    % body font
+  {}%                            % indent
+  {\bfseries}%                   % head font
+  {.}%                           % punctuation after head
+  { }%                           % space after head
+  {\thmnumber{#2} \thmname{#1}\thmnote{ (#3)}}%  number first
+\theoremstyle{numberfirst}
 ```
-
-This consumes one atom number for the whole derivation
-and produces exactly one back-reference target.
-
-**Future work.**  A cleaner `shared` mode would alias
-`\c@equation` to `\c@atom` only at `\refstepcounter{equation}`
-time OUTSIDE an `align`/`gather`/`subequations` scope,
-i.e. when the author writes a top-level
-`\begin{equation}`.  Inside multi-line environments,
-the counter would fall back to an ordinary non-aliased
-equation counter.  Implementation sketched in REVIEW_E
-finding #6's "Proposed fix" — see the TODO section at
-the end of this file.
-
-Regression fixture: `testfiles/test-equations-shared-align.lvt`
-exercising the above hazards and asserting the observed
-atom count for each case.  (The fixture is primarily
-documentation: it pins the current known-broken
-behaviour so an implementer adding the future-work fix
-can see what changed.)
 
 ### Paragraph numbering
 
@@ -2184,17 +2342,19 @@ All three `\Hom` uses — the two non-star uses and the
 one star use — typeset to the same visual output.  The
 difference is purely in the backref metadata.
 
-#### Architecture: hybrid, Option C
+#### Architecture: observation layer, NOT backref injection
 
 Concept-tracking records are written to BOTH sidecars.
 Each sidecar serves a different consumer:
 
 - **`.aux`** (read by `codependent.sty` itself at pass 2).
-  Two new record types allow the .sty to resolve
-  concept references in TeX-time without any CLI
-  involvement.  The typeset PDF's "Used in X, Y" lists
-  at each def atom are complete after a normal pdflatex
-  run cycle.
+  Two record types (`\codep@concept`, `\codep@conceptref`)
+  allow the .sty to create hyperlinks from concept uses
+  back to their definition sites.  Concept edges do
+  **NOT** appear in "Used in" lists — those are reserved
+  for explicit `\ref`/`\cref` citations only.  The
+  `.aux` concept records exist solely for hyperlink
+  resolution.
 - **`.sbl`** (read by the semantic CLI, Layer 2).  One
   new record type (`\codep@sbl@def`) gives the CLI
   source-location-grounded concept def sites; the
@@ -2205,10 +2365,16 @@ Each sidecar serves a different consumer:
   do — but the .sty's typeset output is independent of
   whether the CLI ever runs.
 
-This hybrid (records duplicated across both sidecars
-for different consumers) is deliberately simpler than
-an architecture where the .sty depends on the CLI for
-backref resolution.  Each sidecar is self-sufficient
+**Concept edges are NOT injected into the backref pipeline.**
+The previous design (Option C hybrid) fed concept edges
+into `\codep@recordbr` / `\codep@appendbr`, causing concept
+uses to appear in "Used in" lists alongside explicit
+`\ref` citations.  This was removed: "Used in" shows only
+explicit cross-references.  Concept dependency analysis is
+the CLI's responsibility (Layer 2).
+
+This separation is deliberately simpler than the hybrid
+approach.  Each sidecar is self-sufficient
 for its own consumer.
 
 #### New `.aux` records
@@ -3195,6 +3361,32 @@ has `\newlabel{key}{{num}...}` entries already, but the
 that the CLI can read atom-scoped cross-references without
 parsing `.aux` at all.  This redundancy is deliberate and
 documented.
+
+### Location fallback for `.sbl` records
+
+`.sbl` records include a location (atom number) so the CLI
+knows where each event occurred.  The location is determined
+by this fallback chain:
+
+1. **`\codep@currentatom`** (atom number) — when inside a
+   tracked theorem, proof, or numbered paragraph.
+2. **Finest sectioning level** (`\thesubsubsection` >
+   `\thesubsection` > `\thesection`) — when outside an
+   atom (e.g. `paragraphs=off` and in running text).
+
+The CLI can distinguish atom-level locations (e.g. `2.1`)
+from section-level locations by the record context or by a
+prefix/flag in the location field (design TBD).
+
+**Rationale:** with `paragraphs=off`, concept uses in running
+text between theorems have no atom identity.  Dropping these
+records entirely loses dependency information the CLI needs.
+A section-level fallback preserves coarse but usable location
+context: "concept Hom used somewhere in section 1.3."
+
+This fallback applies ONLY to `.sbl` records.  The "Used in"
+display in the PDF is atom-only — section-level locations do
+not appear in backref lists.
 
 ### Record format
 

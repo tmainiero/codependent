@@ -1,0 +1,60 @@
+%% TEST-NAME: test-equations-outer
+%% TEST-WHAT: Default equations=outer: equation outside a theorem uses
+%%            parenthesized equation number.  Equation inside a theorem
+%%            falls through to the theorem's atom number.
+%% TEST-SOURCE: DESIGN.md §Equations as backref sources (outer mode)
+%% TEST-SECTION: codependent.sty \codep@eqshouldtrack
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.2}{definition} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{(1)}{thm:main}
+%% TEST-AUX-CONTAINS: \codep@anchormap{(1)}
+%% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:main}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(2)}{thm:main}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% Outer mode (default): standalone equation outside any theorem
+%% uses parenthesized equation number (1) as source.  Equation
+%% inside a definition falls through to the definition's atom
+%% number (1.2), not the equation number (2).
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\usepackage{hyperref}
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem,definition}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  The main theorem statement.
+\end{theorem}
+
+% Standalone equation (outside theorem): source = (1).
+\begin{equation}\label{eq:standalone}
+  f(x) = g(x) \quad\text{by \ref{thm:main}}.
+\end{equation}
+
+% Atom 1.2 -- definition containing an equation.
+% Outer mode: equation inside theorem falls through to 1.2.
+\begin{definition}\label{def:foo}
+  A definition with an internal equation.
+  \begin{equation}\label{eq:inside}
+    a = b \quad\text{see \ref{thm:main}}.
+  \end{equation}
+\end{definition}
+
+\END
+\end{document}

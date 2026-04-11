@@ -43,6 +43,9 @@
 \newbool{codep@paragraphs}
 \booltrue{codep@paragraphs}
 
+% Equation tracking mode: outer (default), all, off.
+\newcommand*{\codep@equationmode}{outer}
+
 % Rendering configuration (backref style, alignment, fonts).
 \newcommand*{\codep@backrefstyle}{block}
 \newcommand*{\codep@backrefalign}{right}
@@ -53,6 +56,9 @@
 \def\codep@const@inline{inline}
 \def\codep@const@margin{margin}
 \def\codep@const@right{right}
+\def\codep@const@off{off}
+\def\codep@const@outer{outer}
+\def\codep@const@all{all}
 \newcommand*{\codep@backreffont}{\scriptsize\sffamily}
 \newcommand*{\codep@backrefcolor}{}
 \newcommand*{\codep@backrefprefix}{}
@@ -97,6 +103,11 @@
   paragraphs/on/.code = {\booltrue{codep@paragraphs}},%
   paragraphs/off/.code = {\boolfalse{codep@paragraphs}},%
   paragraphs/.default = on,%
+  equations/.is choice,%
+  equations/all/.code = {\def\codep@equationmode{all}},%
+  equations/outer/.code = {\def\codep@equationmode{outer}},%
+  equations/off/.code = {\def\codep@equationmode{off}},%
+  equations/.default = outer,%
   backref-style/.is choice,%
   backref-style/block/.code = {\renewcommand*{\codep@backrefstyle}{block}},%
   backref-style/inline/.code = {\renewcommand*{\codep@backrefstyle}{inline}},%
@@ -223,6 +234,28 @@
       \the\codep@restate@depth\endcsname\@undefined
   \global\advance\codep@restate@depth -1\relax
 }
+
+% Flag: true inside a tracked equation environment.
+\newbool{codep@inequation}
+
+% Track 1: current equation atom (set at \ref time for single-number envs).
+\newcommand*{\codep@eqatom}{}
+
+% Track 2: pending ref targets for multi-number envs.
+\newtoks\codep@eqpending
+\codep@eqpending={}
+\newcount\codep@eqpendingcount
+\codep@eqpendingcount=0\relax
+
+% Track 2: saved equation counter at \begin{align}.
+\newcount\codep@eq@startcount
+\codep@eq@startcount=0\relax
+
+% Track 2: dedicated anchor name for the block.
+\newcommand*{\codep@eq@anchor}{}
+
+% Track 2 flag: distinguishes Track 1 vs Track 2 envs.
+\newbool{codep@eqmultiline}
 
 % Accumulated appendix data (token register).
 % Still referenced by \codepappendix (Section 10); Wave 3 rewires
@@ -616,6 +649,168 @@
   }%
 }
 
+%% --- Equation backref tracking (two-track design) ---
+%% Track 1: single-number environments (equation).
+%% Track 2: multi-number environments (align, gather, multline, flalign).
+
+% \codep@eqshouldtrack
+%   Set \codep@eqatom to a non-empty sentinel if equation tracking
+%   should proceed, empty if suppressed by the current mode.
+\newcommand*{\codep@eqshouldtrack}{%
+  \def\codep@eqatom{}%
+  \ifx\codep@equationmode\codep@const@off\else
+    \ifx\codep@equationmode\codep@const@outer
+      \ifbool{codep@intheorem}{}{%
+        \def\codep@eqatom{pending}%  sentinel, will be replaced
+      }%
+    \else
+      \def\codep@eqatom{pending}%
+    \fi
+  \fi
+}
+
+% \codep@trackeqenv{envname}
+%   Track 1: single-number equation environments.
+%   \theequation is correct at \ref time (counter steps at \begin).
+%   Suppresses paragraph numbering and sets the equation flag.
+\newcommand*{\codep@trackeqenv}[1]{%
+  \AtBeginEnvironment{#1}{%
+    \advance\codep@nestlevel by 1\relax
+    \booltrue{codep@inequation}%
+    \boolfalse{codep@eqmultiline}%
+  }%
+  \AtEndEnvironment{#1}{%
+    \advance\codep@nestlevel by -1\relax
+    \boolfalse{codep@inequation}%
+    \def\codep@eqatom{}%
+  }%
+}
+
+% \codep@trackalignenv{envname}
+%   Track 2: multi-number equation environments (align, gather, etc.).
+%   \theequation is stale at \ref time (counter steps at \\).
+%   Saves the equation counter at \begin, defers \ref targets to a
+%   pending list, and computes the range at \end.
+%
+%   Timing: the equation counter for the LAST numbered line is
+%   stepped during \end<env> (amsmath processes the final row
+%   there), AFTER \AtEndEnvironment fires but BEFORE
+%   \AfterEndEnvironment fires.  The flush therefore runs in
+%   \AfterEndEnvironment to see the final counter value.  The
+%   nestlevel/flag cleanup also moves to \AfterEndEnvironment
+%   to keep all Track 2 teardown in one place.
+\newcommand*{\codep@trackalignenv}[1]{%
+  \AtBeginEnvironment{#1}{%
+    \advance\codep@nestlevel by 1\relax
+    \booltrue{codep@inequation}%
+    \booltrue{codep@eqmultiline}%
+    % Save counter for range computation.
+    \global\codep@eq@startcount=\c@equation\relax
+    % Clear pending list.
+    \global\codep@eqpending={}%
+    \global\codep@eqpendingcount=0\relax
+    % Inject a dedicated hypertarget for the block anchor.
+    % \@currentHref at \end is stale (points to last row's anchor).
+    % Use \xdef so the anchor name survives group boundaries
+    % (needed at \AfterEndEnvironment flush time).
+    \@ifpackageloaded{hyperref}{%
+      \xdef\codep@eq@anchor{codep.eq.\the\c@equation}%
+      \Hy@raisedlink{%
+        \hyper@anchorstart{\codep@eq@anchor}\hyper@anchorend}%
+    }{}%
+  }%
+  \AfterEndEnvironment{#1}{%
+    % Flush pending refs with the computed range.
+    % \c@equation is now correct (amsmath stepped it for all rows).
+    \ifnum\codep@eqpendingcount>0\relax
+      \codep@flusheqrange
+    \fi
+    \advance\codep@nestlevel by -1\relax
+    \boolfalse{codep@inequation}%
+    \boolfalse{codep@eqmultiline}%
+    \def\codep@eqatom{}%
+  }%
+}
+
+% \codep@flusheqrange
+%   Compute the equation range and flush all pending refs.
+%   Called at \end{align} (Track 2).
+\def\codep@flusheqrange{%
+  % Check equation mode.
+  \codep@eqshouldtrack
+  \ifx\codep@eqatom\@empty
+    % Mode says don't track; silently drop pending refs.
+    \global\codep@eqpending={}%
+    \global\codep@eqpendingcount=0\relax
+  \else
+    % Check if counter advanced (at least one numbered line).
+    \ifnum\c@equation>\codep@eq@startcount\relax
+      % Compute formatted start: saved+1 in a group.
+      \begingroup
+        \c@equation=\codep@eq@startcount\relax
+        \advance\c@equation by 1\relax
+        \xdef\codep@tmp@eqstart{\theequation}%
+      \endgroup
+      \edef\codep@tmp@eqend{\theequation}%
+      % Build the display key.
+      \ifx\codep@tmp@eqstart\codep@tmp@eqend
+        % Single numbered line: (N)
+        \edef\codep@eqatom{(\codep@tmp@eqstart)}%
+      \else
+        % Range: (N--M)  (ASCII hyphens internally)
+        \edef\codep@eqatom{(\codep@tmp@eqstart--\codep@tmp@eqend)}%
+      \fi
+      % Write anchormap entry using dedicated block anchor.
+      \@ifpackageloaded{hyperref}{%
+        \expandafter\xdef
+          \csname codep@anchor@\codep@eqatom\endcsname
+          {\codep@eq@anchor}%
+        \if@filesw
+          \protected@write\@auxout{}{%
+            \string\codep@anchormap{\codep@eqatom}{\codep@eq@anchor}}%
+        \fi
+      }{}%
+      % Flush all pending refs (with dedup).
+      \if@filesw
+        \def\codep@eqpending@entry##1{%
+          \expandafter\ifx
+              \csname codep@arw@\codep@eqatom @##1\endcsname\relax
+            \global\expandafter\let
+              \csname codep@arw@\codep@eqatom @##1\endcsname\@empty
+            \protected@write\@auxout{}{%
+              \string\codep@atomref{\codep@eqatom}{##1}}%
+          \fi
+        }%
+        \the\codep@eqpending
+      \fi
+    \else
+      % Counter didn't advance: all \notag. Fall through to
+      % containing atom (if any).
+      \ifx\codep@currentatom\@empty\else
+        \if@filesw
+          \ifx\codep@sourceatom\@empty
+            \edef\codep@tmp@srcatom{\theatom}%
+          \else
+            \edef\codep@tmp@srcatom{\codep@sourceatom}%
+          \fi
+          \def\codep@eqpending@entry##1{%
+            \expandafter\ifx
+                \csname codep@arw@\codep@tmp@srcatom @##1\endcsname\relax
+              \global\expandafter\let
+                \csname codep@arw@\codep@tmp@srcatom @##1\endcsname\@empty
+              \protected@write\@auxout{}{%
+                \string\codep@atomref{\codep@tmp@srcatom}{##1}}%
+            \fi
+          }%
+          \the\codep@eqpending
+        \fi
+      \fi
+    \fi
+    \global\codep@eqpending={}%
+    \global\codep@eqpendingcount=0\relax
+  \fi
+}
+
 % \codep@suppresscmd{command}
 %   Patch a command to suppress numbering in its body.
 \newcommand*{\codep@suppresscmd}[1]{%
@@ -638,17 +833,20 @@
   \codep@suppressenv{tabularx}%
   \codep@suppressenv{longtable}%
   \codep@suppressenv{trivlist}%
-  % Display math: suppress margin numbers inside displayed equations.
-  \codep@suppressenv{equation}%
+  % Numbered equation environments.
+  % Track 1: single-number (counter steps at \begin).
+  \codep@trackeqenv{equation}%
+  % Track 2: multi-number (counter steps at \\).
+  \codep@trackalignenv{align}%
+  \codep@trackalignenv{gather}%
+  \codep@trackalignenv{multline}%
+  \codep@trackalignenv{flalign}%
+  % Unnumbered/display-only: suppress paragraphs only.
   \codep@suppressenv{equation*}%
   \codep@suppressenv{displaymath}%
-  \codep@suppressenv{align}%
   \codep@suppressenv{align*}%
-  \codep@suppressenv{gather}%
   \codep@suppressenv{gather*}%
-  \codep@suppressenv{multline}%
   \codep@suppressenv{multline*}%
-  \codep@suppressenv{flalign}%
   \codep@suppressenv{flalign*}%
 }
 
@@ -834,23 +1032,96 @@
 %   \theatom at write time per DESIGN.md §8a.5.0.  However, when
 %   \codep@sourceatom is non-empty (adjacent proofs), it overrides
 %   \theatom to emit starred atom numbers (e.g. "2.1*").
-\def\codep@writeatomref#1{%
-  \ifx\codep@currentatom\@empty\else
-    \if@filesw
-      % Determine source atom: use \codep@sourceatom override
-      % (set by adjacent proofs for starred numbers) or fall
-      % back to \theatom (normal path).
-      \ifx\codep@sourceatom\@empty
-        \edef\codep@tmp@srcatom{\theatom}%
-      \else
-        \edef\codep@tmp@srcatom{\codep@sourceatom}%
-      \fi
+%
+%   Bug-fix guards (2026-04-11):
+%   (a) \ifmeasuring@ — amsmath processes align/gather/multline/
+%       flalign bodies twice (measuring + typesetting).  Skip
+%       entirely during the measuring pass so no dedup marks are
+%       set and no writes are emitted.  \ifmeasuring@ is defined
+%       by amsmath; guarded with \@ifundefined for non-amsmath docs.
+%   (b) Per-(source, target) dedup — \cref{label} fires both
+%       \cref@getlabel (patch 2) and \@setref (patch 1), producing
+%       doubled \codep@atomref records.  A csname flag
+%       codep@arw@<src>@<tgt> blocks the second write.
+% \codep@writeatomref@do{target}
+%   Normal (non-equation) aux-write path.  Extracted from the
+%   original \codep@writeatomref body so equation branches can
+%   fall through to it.
+\def\codep@writeatomref@do#1{%
+  \if@filesw
+    % Determine source atom: use \codep@sourceatom override
+    % (set by adjacent proofs for starred numbers) or fall
+    % back to \theatom (normal path).
+    \ifx\codep@sourceatom\@empty
+      \edef\codep@tmp@srcatom{\theatom}%
+    \else
+      \edef\codep@tmp@srcatom{\codep@sourceatom}%
+    \fi
+    % Per-(source, target) dedup: skip if already written.
+    \expandafter\ifx
+        \csname codep@arw@\codep@tmp@srcatom @#1\endcsname\relax
+      \global\expandafter\let
+        \csname codep@arw@\codep@tmp@srcatom @#1\endcsname\@empty
       \protected@write\@auxout{}{%
         \string\codep@atomref
           {\codep@tmp@srcatom}{#1}%
       }%
     \fi
   \fi
+}
+
+\def\codep@writeatomref#1{%
+  % (a) Skip during amsmath measuring pass.
+  \@ifundefined{ifmeasuring@}%
+    {\codep@writeatomref@body{#1}}%
+    {\ifmeasuring@\else\codep@writeatomref@body{#1}\fi}%
+}
+
+\def\codep@writeatomref@body#1{%
+  % Equation environment handling.
+  \ifbool{codep@inequation}{%
+    \ifbool{codep@eqmultiline}{%
+      % Track 2: defer to pending list.
+      \codep@eqshouldtrack
+      \ifx\codep@eqatom\@empty
+        % Mode suppressed; fall through to containing atom.
+        \ifx\codep@currentatom\@empty\else
+          \codep@writeatomref@do{#1}%
+        \fi
+      \else
+        \global\codep@eqpending=\expandafter{%
+          \the\codep@eqpending\codep@eqpending@entry{#1}}%
+        \global\advance\codep@eqpendingcount by 1\relax
+      \fi
+    }{%
+      % Track 1: direct recording with (\theequation).
+      \codep@eqshouldtrack
+      \ifx\codep@eqatom\@empty
+        % Mode suppressed; fall through to containing atom.
+        \ifx\codep@currentatom\@empty\else
+          \codep@writeatomref@do{#1}%
+        \fi
+      \else
+        % Record with parenthesized equation number.
+        \edef\codep@eqatom{(\theequation)}%
+        \codep@writeanchormap{\codep@eqatom}%
+        \if@filesw
+          \expandafter\ifx
+              \csname codep@arw@\codep@eqatom @#1\endcsname\relax
+            \global\expandafter\let
+              \csname codep@arw@\codep@eqatom @#1\endcsname\@empty
+            \protected@write\@auxout{}{%
+              \string\codep@atomref{\codep@eqatom}{#1}}%
+          \fi
+        \fi
+      \fi
+    }%
+  }{%
+    % Normal (non-equation) path.
+    \ifx\codep@currentatom\@empty\else
+      \codep@writeatomref@do{#1}%
+    \fi
+  }%
 }
 
 % \codep@installatomrefpatch
@@ -1270,23 +1541,18 @@
 }
 
 % \codep@resolveconcept{srcatom}{conceptname}
-%   Look up the def atom for the named concept and feed the
-%   resolved edge directly into the per-target node list via
-%   \codep@appendbr (bypasses the label lookup in processbr,
-%   since concept edges carry raw atom display numbers).
-%   If the concept has no def site (codep@conceptdef@<name>
-%   undefined), silently no-op — the missing-def warning
-%   fires at \AtEndDocument via the concept name scan.
-\def\codep@resolveconcept#1#2{%
-  \@ifundefined{codep@conceptdef@#2}{}{%
-    \edef\codep@cr@tgt{%
-      \csname codep@conceptdef@#2\endcsname}%
-    \edef\codep@cr@act{%
-      \noexpand\codep@appendbr
-        {\codep@cr@tgt}{#1}}%
-    \codep@cr@act
-  }%
-}
+%   Concept resolution callback.  Originally fed concept edges
+%   into the backref linked list via \codep@appendbr; this was
+%   removed (2026-04-11) because concept edges are NOT cross-
+%   references — they should not appear in "Used in" lists.
+%   The .aux records (\codep@concept, \codep@conceptref) and
+%   .sbl records (\codep@sbl@def, \codep@sbl@use) remain
+%   intact for the CLI layer.  The concept warning system
+%   (\codep@conceptwarnscan) also remains.  This function is
+%   now a silent no-op; it is kept so that stale .aux files
+%   containing \codep@conceptref records (which trigger
+%   \codep@resolveconcept via the pending list) do not error.
+\def\codep@resolveconcept#1#2{}
 
 % Swap the providecommand no-ops for the active callbacks
 % at begindocument/before, before the .aux read.
@@ -2048,6 +2314,13 @@
   }%
   \codep@tmp@rec
 }
+
+% \codeptrackeq{envname}
+%   Register a custom single-number equation environment (Track 1).
+\newcommand*{\codeptrackeq}[1]{\codep@trackeqenv{#1}}
+% \codeptrackalign{envname}
+%   Register a custom multi-number equation environment (Track 2).
+\newcommand*{\codeptrackalign}[1]{\codep@trackalignenv{#1}}
 
 % \codepsuppress{envname}
 %   Register a user environment for paragraph-number suppression.

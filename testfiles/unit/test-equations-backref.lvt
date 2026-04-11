@@ -1,0 +1,74 @@
+%% TEST-NAME: test-equations-backref
+%% TEST-WHAT: Default equations=outer: \ref inside a numbered equation
+%%            outside a theorem uses the parenthesized equation number
+%%            as the backref source.  Inside a theorem, falls through
+%%            to the theorem's atom number.  Also tests align env.
+%% TEST-SOURCE: DESIGN.md §Equation backref tracking
+%% TEST-SECTION: codependent.sty \codep@trackeqenv / \codep@eqsource
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.2}{definition} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{(1)}{thm:main}
+%% TEST-AUX-CONTAINS: \codep@anchormap{(1)}
+%% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:main}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% A theorem with label thm:main is defined first.  Then a numbered
+%% equation references it via \ref{thm:main}.  The equation counter
+%% produces equation number 1, so the atomref source should be "(1)"
+%% (parenthesized).  The anchormap should also contain an entry for
+%% "(1)" so that hyperlinks work.  An equation* (unnumbered) should
+%% NOT produce equation backrefs.  A theorem numbered 1.1 and an
+%% equation also producing display number 1 should not collide
+%% because the equation key is "(1)" not "1".
+%%
+%% In outer mode (default), a \ref inside an equation that is INSIDE
+%% a theorem falls through to the theorem atom number (1.2 here),
+%% not the equation number.
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\usepackage{hyperref}
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem,definition}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  The main theorem statement.
+\end{theorem}
+
+% Numbered equation referencing the theorem (OUTSIDE theorem).
+% Source should be "(1)" in the atomref record.
+\begin{equation}\label{eq:use}
+  f(x) = g(x) \quad\text{by Theorem~\ref{thm:main}}.
+\end{equation}
+
+% Unnumbered equation: should NOT produce equation backref.
+\begin{equation*}
+  h(x) = 0 \quad\text{unrelated}.
+\end{equation*}
+
+% Atom 1.2 -- definition
+\begin{definition}\label{def:foo}
+  A definition containing an equation.
+  % Equation INSIDE theorem: outer mode, falls through to theorem atom.
+  \begin{equation}\label{eq:inthm}
+    a = b \quad\text{see \ref{thm:main}}.
+  \end{equation}
+\end{definition}
+
+\END
+\end{document}

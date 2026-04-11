@@ -2,8 +2,8 @@
 
 > **If you are a fresh agent being asked to implement `codependent.sty`,
 > READ ALL OF THIS FILE FIRST, then read `HISTORY.md`, `DESIGN.md`,
-> `CREDITS.md`, and the six review files under
-> `../codependent-cli/reviews/`. DO NOT SKIP. The user has been burned
+> `CREDITS.md`, and the six review files (see note below on their
+> location). DO NOT SKIP. The user has been burned
 > ~50% of the time by fresh orchestrators who skim critical
 > documents and jump to implementation.**
 
@@ -11,7 +11,7 @@ This file is deliberately short and pointers-only. The canonical
 reading list + verification checkpoint + forbidden-actions list
 lives at:
 
-`~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_codependent_next_steps.md`
+`~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_status.md`
 
 Read that agent-memory file in full before touching anything in
 this repo. It takes ~45-60 minutes to read all the linked docs
@@ -43,13 +43,12 @@ currently red by design — that's the TDD baseline).
      `\codepNewDocumentCommand` + `\codeptag`)
 4. **`CREDITS.md`** (293 lines) — GPLv3 attribution + sed-safety
    discipline. Don't skip.
-5. **`../codependent-cli/reviews/REVIEW_A_correctness.md`**,
-   **`REVIEW_ARCH_dpmac_port.md`**, **`REVIEW_C_port_proposal.md`**,
-   **`REVIEW_D_revision.md`**, **`REVIEW_E_compat.md`**,
-   **`REVIEW_F_round3_spotcheck.md`** — six adversarial review
-   files. Skim each **Headline** section; dig into REVIEW_E in
-   detail (it has 3 BLOCKERs that MUST be understood before
-   editing).
+5. **Adversarial review files** (REVIEW_A through REVIEW_F) —
+   six adversarial review files. These live in the mwablab repo
+   at `tools/semtex-cli/reviews/` (not yet migrated to this
+   standalone repo). Skim each **Headline** section; dig into
+   REVIEW_E in detail (it has 3 BLOCKERs that MUST be understood
+   before editing).
 6. **`testfiles/README.md`** — test runner + fixture format docs
 7. **`testfiles/run-tests.py`** — the Python test runner
 8. **At least 5 fixtures** from `testfiles/unit/` to understand
@@ -63,7 +62,7 @@ currently red by design — that's the TDD baseline).
 ## Verification checkpoint — MANDATORY
 
 Before you edit `codependent.sty`, you must be able to answer these
-without consulting notes. See `project_codependent_next_steps.md` for
+without consulting notes. See `project_status.md` (in agent memory) for
 full questions + expected answers:
 
 1. Why did the architectural pivot happen? (REVIEW_A + REVIEW_ARCH)
@@ -86,26 +85,26 @@ NOT start editing.
 
 ```sh
 # 1. Verify the branch and commit history
-git log --oneline feat/codependent | head -15
+git log --oneline | head -15
 
 # 2. Establish the red baseline. Expected: all 36+ fixtures
 #    fail. This is CORRECT — the TDD signal.
-python3 tools/codependent/testfiles/run-tests.py 2>&1 | tail -10
+python3 testfiles/run-tests.py 2>&1 | tail -10
 
 # 3. Read the first edit target (§8a.6.a — \codep@queuebackref
 #    rewrite, which wires the existing macro to \codep@collapsebr)
-sed -n '/^#### 8a.6.a/,/^#### 8a.6.b/p' tools/codependent/DESIGN.md
+sed -n '/^#### 8a.6.a/,/^#### 8a.6.b/p' DESIGN.md
 
 # 4. Open codependent.sty
-$EDITOR tools/codependent/codependent.sty
+$EDITOR codependent.sty
 
 # 5. Iterate: edit -> run runner with --filter -> watch fixtures turn green
-python3 tools/codependent/testfiles/run-tests.py --filter numbering
+python3 testfiles/run-tests.py --filter numbering
 ```
 
 ## What you are NOT allowed to do (short list)
 
-The full list is in `project_codependent_next_steps.md`. Quick
+The full list is in `project_status.md` (agent memory). Quick
 forbidden-actions summary:
 
 - No editing `codependent.sty` without running the test runner first.
@@ -119,8 +118,8 @@ forbidden-actions summary:
 - No content-hash staleness detection (LaTeX's
   `rerunfilecheck` handles it).
 - No coupling to mwablab internals (codependent is standalone).
-- No merging `tools/codependent-hs/` (v1 legacy) code into
-  `tools/codependent-cli/` (separate, will be deprecated later).
+- No merging the v1 legacy Haskell tool into the CLI
+  (separate repos, v1 will be deprecated later).
 - No single-patch-site `\@setref` interception (three sites
   required; see REVIEW_E #2).
 - No "first occurrence wins" for concept backrefs (use

@@ -230,7 +230,39 @@ by the universal property of the tensor product
 (\cref{def:enrichment}).
 \end{proof}
 
-%% --- 4.5: Multiple cross-references in one atom ---
+%% --- 4.5: Equation backref tracking (Track 1 — standalone equation) ---
+%%
+%% A standalone equation (OUTSIDE a theorem) that references atoms.
+%% In outer mode (default), equations outside theorems should produce
+%% equation-sourced atomrefs with parenthesised equation numbers.
+Functoriality of $F$ gives the following, by \cref{thm:main}:
+\begin{equation}\label{eq:functorial}
+  F(f \circ g) = F(f) \circ F(g)
+  \qquad\text{(\cref{cor:equiv})}
+\end{equation}
+
+%% --- 4.6: Equation backref tracking (Track 2 — align range) ---
+%%
+%% An align block (OUTSIDE a theorem) with refs on arrows.
+%% Track 2 should produce a range atomref like (4.4--4.5).
+The enrichment structure gives:
+\begin{align}
+  X \otimes Y &\xrightarrow{\text{\cref{def:enrichment}}} \catname{V}(X,Y) \label{eq:enrich-step1} \\
+  \catname{V}(X,Y) &\xrightarrow{\text{\cref{thm:main}}} Z \label{eq:enrich-step2}
+\end{align}
+
+%% --- 4.7: Equation inside theorem (outer mode — should NOT track eq) ---
+%%
+%% In outer mode, an equation inside a tracked theorem should fall
+%% through to the theorem's atom number, NOT produce an eq-sourced atomref.
+\begin{theorem}\label{thm:with-eq}
+By \cref{def:enrichment}, we have
+\begin{equation}\label{eq:inside-thm}
+  f = g \quad\text{by \cref{lem:technical}}.
+\end{equation}
+\end{theorem}
+
+%% --- 4.8: Multiple cross-references in one atom ---
 \begin{theorem}\label{thm:omnibus}
 By combining
 \cref{def:enrichment,thm:main,cor:equiv,prop:compose,lem:technical,term:monoidal},
@@ -238,7 +270,7 @@ we obtain a complete description of the enriched monoidal structure.
 This extends the coherence result of \cref{thm:coherence}.
 \end{theorem}
 
-%% --- 4.6: Adjacent proof with cross-references (tests starred backrefs) ---
+%% --- 4.9: Adjacent proof with cross-references (tests starred backrefs) ---
 \begin{proof}
 Apply \cref{def:enrichment} and \cref{thm:main} to the diagram
 of \cref{prop:square}; the result follows from \cref{lem:trace-cyclic}
