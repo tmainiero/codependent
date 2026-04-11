@@ -1329,18 +1329,9 @@
       \smash{%
         \rlap{%
           \kern0.5em
-          \vtop{%
-            \hsize\marginparwidth
-            \leftskip\z@
-            \rightskip\z@ plus 1fil\relax
-            \parfillskip\z@
-            \parindent\z@
-            \everypar{}%
-            \leavevmode
-            \semtex@backreffont\semtex@backrefprefix
-            \semtex@backreflabel\space
-            \semtex@truncatereflist{#1}.%
-          }%
+          {\semtex@backreffont\semtex@backrefprefix
+           \semtex@backreflabel\space
+           \semtex@truncatereflist{#1}.}%
         }%
       }%
     }%
@@ -1403,24 +1394,19 @@
     }%
   \else
     % Margin style: emit in the right margin (past \linewidth).
+    % Uses \rlap without \vtop — paragraph mode inside a box
+    % here triggers the para/begin hook recursively (LaTeX 2022+
+    % para hooks bypass \everypar).  Long reflists are handled
+    % by \semtex@truncatereflist instead of line-wrapping.
     \vbox{%
       \hbox to \linewidth{%
         \hfil
         \smash{%
           \rlap{%
             \kern0.5em
-            \vtop{%
-              \hsize\marginparwidth
-              \leftskip\z@
-              \rightskip\z@ plus 1fil\relax
-              \parfillskip\z@
-              \parindent\z@
-              \everypar{}%
-              \leavevmode
-              \semtex@backreffont\semtex@backrefprefix
-              \semtex@backreflabel\space
-              \semtex@truncatereflist{#1}.%
-            }%
+            {\semtex@backreffont\semtex@backrefprefix
+             \semtex@backreflabel\space
+             \semtex@truncatereflist{#1}.}%
           }%
         }%
       }%
