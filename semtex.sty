@@ -38,6 +38,11 @@
 \newbool{semtex@conceptwarnings}
 \booltrue{semtex@conceptwarnings}
 
+% Paragraphs: on (default) or off.
+% When off, bare paragraphs get no atom numbers, no SBL records, no backrefs.
+\newbool{semtex@paragraphs}
+\booltrue{semtex@paragraphs}
+
 % Rendering configuration (backref style, alignment, fonts).
 \newcommand*{\semtex@backrefstyle}{block}
 \newcommand*{\semtex@backrefalign}{right}
@@ -88,6 +93,10 @@
   conceptwarnings/on/.code = {\booltrue{semtex@conceptwarnings}},%
   conceptwarnings/off/.code = {\boolfalse{semtex@conceptwarnings}},%
   conceptwarnings/.default = on,%
+  paragraphs/.is choice,%
+  paragraphs/on/.code = {\booltrue{semtex@paragraphs}},%
+  paragraphs/off/.code = {\boolfalse{semtex@paragraphs}},%
+  paragraphs/.default = on,%
   backref-style/.is choice,%
   backref-style/block/.code = {\renewcommand*{\semtex@backrefstyle}{block}},%
   backref-style/inline/.code = {\renewcommand*{\semtex@backrefstyle}{inline}},%
@@ -739,19 +748,21 @@
         }{%
           % Normal paragraph (not suppressed).
           \ifnum\semtex@nestlevel>0\relax\else
-            \refstepcounter{atom}%
-            \edef\semtex@currentatom{\theatom}%
-            \semtex@sblwrite@atom{%
-              \string\semtex@sbl@atom
+            \ifbool{semtex@paragraphs}{%
+              \refstepcounter{atom}%
+              \edef\semtex@currentatom{\theatom}%
+              \semtex@sblwrite@atom{%
+                \string\semtex@sbl@atom
+                  {\theatom}{paragraph}}%
+              \semtex@sblwrite@atom{%
+                \string\semtex@sbl@meta{\theatom}{src}%
+                  {\jobname.tex:\the\inputlineno:1}}%
+              \global\advance\semtex@atomcount by 1\relax
+              \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
                 {\theatom}{paragraph}}%
-            \semtex@sblwrite@atom{%
-              \string\semtex@sbl@meta{\theatom}{src}%
-                {\jobname.tex:\the\inputlineno:1}}%
-            \global\advance\semtex@atomcount by 1\relax
-            \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
-              {\theatom}{paragraph}}%
-            \semtex@emitmargin{\semtex@currentatom}%
-            \semtex@queuebackref{\theatom}%
+              \semtex@emitmargin{\semtex@currentatom}%
+              \semtex@queuebackref{\theatom}%
+            }{}%
           \fi
         }%
       }%
