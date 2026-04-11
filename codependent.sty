@@ -696,9 +696,12 @@
 %   stepped during \end<env> (amsmath processes the final row
 %   there), AFTER \AtEndEnvironment fires but BEFORE
 %   \AfterEndEnvironment fires.  The flush therefore runs in
-%   \AfterEndEnvironment to see the final counter value.  The
-%   nestlevel/flag cleanup also moves to \AfterEndEnvironment
-%   to keep all Track 2 teardown in one place.
+%   \AfterEndEnvironment to see the final counter value.
+%   Nestlevel/flag cleanup stays in \AtEndEnvironment (LOCAL
+%   to the group) so it is undone together with the increment;
+%   putting it in \AfterEndEnvironment would fire OUTSIDE the
+%   group, after TeX has already undone the local +1, pushing
+%   nestlevel to -1.
 \newcommand*{\codep@trackalignenv}[1]{%
   \AtBeginEnvironment{#1}{%
     \advance\codep@nestlevel by 1\relax
@@ -719,16 +722,21 @@
         \hyper@anchorstart{\codep@eq@anchor}\hyper@anchorend}%
     }{}%
   }%
-  \AfterEndEnvironment{#1}{%
-    % Flush pending refs with the computed range.
-    % \c@equation is now correct (amsmath stepped it for all rows).
-    \ifnum\codep@eqpendingcount>0\relax
-      \codep@flusheqrange
-    \fi
+  \AtEndEnvironment{#1}{%
     \advance\codep@nestlevel by -1\relax
     \boolfalse{codep@inequation}%
     \boolfalse{codep@eqmultiline}%
     \def\codep@eqatom{}%
+  }%
+  \AfterEndEnvironment{#1}{%
+    % Flush ONLY — all state cleanup already done above.
+    % The flush stays here because amsmath steps the last row's
+    % counter during \endalign, which runs between \AtEndEnvironment
+    % and \AfterEndEnvironment.  The range computation needs the
+    % final counter value.
+    \ifnum\codep@eqpendingcount>0\relax
+      \codep@flusheqrange
+    \fi
   }%
 }
 
@@ -998,8 +1006,15 @@
 \providecommand*{\codep@atomref}[2]{}
 
 % Pass-1 safety: \codep@anchormap records atom→hyperref anchor
-% mappings.  No-op until hyperref is detected at \AtBeginDocument.
+% mappings.  No-op until hyperref is detected at begindocument/before.
 \providecommand*{\codep@anchormap}[2]{}
+
+% Active definition for \codep@anchormap: populates the anchor lookup
+% table from aux records.  Defined at package load time (outside any
+% macro) so # works; activated in begindocument/before BEFORE the aux
+% read, so equation range anchors are not silently discarded.
+\def\codep@anchormap@active#1#2{%
+  \expandafter\gdef\csname codep@anchor@#1\endcsname{#2}}
 
 % \codep@writeanchormap{atomnum}
 %   Write an atom→anchor aux record.  No-op by default; activated
@@ -1513,6 +1528,11 @@
   \codep@installnewlabel
   % Swap the providecommand no-op for the active callback.
   \let\codep@atomref\codep@atomref@active
+  % Activate anchormap BEFORE aux read so equation range anchors
+  % like \codep@anchormap{(4.4--4.5)}{codep.eq.3} are not discarded.
+  \@ifpackageloaded{hyperref}{%
+    \let\codep@anchormap\codep@anchormap@active
+  }{}%
 }
 
 %% --- Section 8a.9: Concept-aware forward-reference resolution ---
@@ -2428,10 +2448,9 @@
           \hyperlink{\csname codep@anchor@#1\endcsname}{#3}%
         \fi
       \fi}%
-    % Activate atom→anchor aux record reading and writing.
-    \def\codep@anchormap@active#1#2{%
-      \expandafter\gdef\csname codep@anchor@#1\endcsname{#2}}%
-    \let\codep@anchormap\codep@anchormap@active
+    % Activate atom→anchor aux record WRITING.  The reading side
+    % (\codep@anchormap) is activated in begindocument/before
+    % (§8a.7) so it is live BEFORE the aux read.
     \renewcommand*{\codep@writeanchormap}[1]{%
       \if@filesw
         \protected@write\@auxout{}{%
