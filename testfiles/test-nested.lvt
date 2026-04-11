@@ -4,7 +4,7 @@
 % environment is part of the outer atom.
 %
 % Design reference: DESIGN.md "Nested tracked environments" --
-% if \semtex@nestlevel > 0 when a tracked env opens, the counter
+% if \codep@nestlevel > 0 when a tracked env opens, the counter
 % is NOT advanced.  One definition containing an example gets
 % exactly one atom number, not two.
 
@@ -15,27 +15,27 @@
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{example}[theorem]{Example}
 
-\usepackage{semtex}
-\semtextrack{definition,theorem,example}
+\usepackage{codependent}
+\codeptrack{definition,theorem,example}
 
 \begin{document}
 \START
 
 \section{Nesting Test}
 
-% Atom 1.1 -- outer definition opens, \semtex@nestlevel becomes 1
+% Atom 1.1 -- outer definition opens, \codep@nestlevel becomes 1
 \begin{definition}
   A \textbf{group} is a set $G$ with a binary operation satisfying
   closure, associativity, identity, and invertibility.
 
-  % Inner example: \semtex@nestlevel is already 1, so counter is NOT
+  % Inner example: \codep@nestlevel is already 1, so counter is NOT
   % advanced.  This example shares atom 1.1 with its enclosing definition.
   \begin{example}
     The integers $(\mathbb{Z}, +)$ form a group.
   \end{example}
 \end{definition}
 
-% \semtex@nestlevel is back to 0 here.
+% \codep@nestlevel is back to 0 here.
 % Atom 1.2 -- next item at top level advances counter normally.
 \begin{definition}
   A \textbf{subgroup} is a subset closed under the group operation

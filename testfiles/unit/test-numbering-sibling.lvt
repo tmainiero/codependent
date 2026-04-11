@@ -5,22 +5,22 @@
 %%            and share a single sequential counter.
 %% TEST-SOURCE: Bug report: sibling envs displayed wrong format
 %%              (e.g. 3.4 instead of 3.0.3) because \the<env> was
-%%              not re-aliased to \theatom in the \semtextrack loop.
-%% TEST-SECTION: DESIGN.md §Numbering, semtex.sty \semtextrack loop
+%%              not re-aliased to \theatom in the \codeptrack loop.
+%% TEST-SECTION: DESIGN.md §Numbering, codependent.sty \codeptrack loop
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1.1}{theorem} = 1
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1.2}{corollary} = 1
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1.3}{definition} = 1
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1.1}{theorem} = 1
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1.2}{corollary} = 1
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1.3}{definition} = 1
 %% TEST-ATOMS-MIN: 3
-%% TEST-PACKAGES: thmtools,amsthm,semtex
+%% TEST-PACKAGES: thmtools,amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Pins sibling counter-sharing: thmtools' sibling=theorem makes
 %% corollary and definition share theorem's counter register.
-%% semtex must re-alias both \c@<env> and \the<env> to the atom
+%% codependent must re-alias both \c@<env> and \the<env> to the atom
 %% counter/display.  Without the \the<env> fix, depth=2 would
 %% show e.g. "1.4" for corollary instead of "1.1.2".
 
@@ -30,8 +30,8 @@
 \declaretheorem[numberwithin=section]{theorem}
 \declaretheorem[sibling=theorem]{corollary}
 \declaretheorem[sibling=theorem]{definition}
-\usepackage[depth=2]{semtex}
-\semtextrack{theorem,corollary,definition}
+\usepackage[depth=2]{codependent}
+\codeptrack{theorem,corollary,definition}
 
 \begin{document}
 \START

@@ -11,8 +11,8 @@
 \newtheorem{lemma}[theorem]{Lemma}
 
 % Default: proofs=on
-\usepackage{semtex}
-\semtextrack{theorem,lemma}
+\usepackage{codependent}
+\codeptrack{theorem,lemma}
 
 \begin{document}
 \START

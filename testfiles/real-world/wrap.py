@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-wrap.py - generate wrapper .tex files that inject semtex into an
+wrap.py - generate wrapper .tex files that inject codependent into an
 existing arxiv paper source, without editing the original.
 
 Usage:
@@ -14,9 +14,9 @@ The generated wrapper lives at wrappers/<id>.tex and has the shape:
     \\documentclass...
     \\usepackage...
     ...
-    % SEMTEX INJECTION (added just before \\begin{document})
-    \\usepackage{semtex}
-    \\semtextrack{theorem,definition,proposition,lemma,
+    % CODEPENDENT INJECTION (added just before \\begin{document})
+    \\usepackage{codependent}
+    \\codeptrack{theorem,definition,proposition,lemma,
                   corollary,remark,example,proof}
     \\begin{document}
     % ORIGINAL BODY (verbatim)
@@ -52,13 +52,13 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PAPERS_DIR = SCRIPT_DIR / "papers"
 WRAPPERS_DIR = SCRIPT_DIR / "wrappers"
 
-SEMTEX_INJECTION = (
+CODEPENDENT_INJECTION = (
     "\n"
-    "% ---- semtex injection (added by wrap.py) ----\n"
-    "\\usepackage[conceptwarnings=off]{semtex}\n"
-    "\\semtextrack{theorem,definition,proposition,lemma,"
+    "% ---- codependent injection (added by wrap.py) ----\n"
+    "\\usepackage[conceptwarnings=off]{codependent}\n"
+    "\\codeptrack{theorem,definition,proposition,lemma,"
     "corollary,remark,example,proof}\n"
-    "% ---- end semtex injection ----\n"
+    "% ---- end codependent injection ----\n"
 )
 
 # Compiled regexes for the command-rewrite pass.
@@ -74,7 +74,7 @@ RE_NEWDOCCMD = re.compile(
 RE_DOCUMENTCLASS = re.compile(r"\\documentclass\b")
 RE_BEGIN_DOCUMENT = re.compile(r"\\begin\s*\{document\}")
 RE_END_DOCUMENT = re.compile(r"\\end\s*\{document\}")
-RE_SEMTEX_LOADED = re.compile(r"\\usepackage\s*(?:\[[^\]]*\])?\s*\{semtex\}")
+RE_CODEPENDENT_LOADED = re.compile(r"\\usepackage\s*(?:\[[^\]]*\])?\s*\{codependent\}")
 RE_INPUT_INCLUDE = re.compile(
     r"\\(?:input|include|subfile)\s*\{([^}]+)\}"
 )
@@ -189,7 +189,7 @@ def _rewrite_line_newcommand(line: str) -> tuple[str, str | None]:
     # Skip internal helpers (names containing @).
     if "@" in cmd:
         return line, None
-    replacement = f"\\semtexnewcommand{{{cmd}}}"
+    replacement = f"\\codepnewcommand{{{cmd}}}"
     new_line = line[: m.start()] + replacement + line[m.end() :]
     before = m.group(0).strip()
     return new_line, f"{before} → {replacement}"
@@ -206,7 +206,7 @@ def _rewrite_line_newdoccmd(line: str) -> tuple[str, str | None]:
     cmd = m.group(1) or m.group(2)
     if "@" in cmd:
         return line, None
-    replacement = f"\\semtexNewDocumentCommand{{{cmd}}}"
+    replacement = f"\\codepNewDocumentCommand{{{cmd}}}"
     new_line = line[: m.start()] + replacement + line[m.end() :]
     before = m.group(0).strip()
     return new_line, f"{before} → {replacement}"
@@ -216,7 +216,7 @@ def rewrite_preamble(
     preamble: str, paper_id: str
 ) -> tuple[str, list[tuple[int, str]]]:
     """Walk the preamble line by line, rewriting command definitions to
-    their semtex variants.  Returns (rewritten_preamble, rewrites) where
+    their codependent variants.  Returns (rewritten_preamble, rewrites) where
     rewrites is a list of (lineno, description) pairs (1-based)."""
     lines = preamble.splitlines(keepends=True)
     out: list[str] = []
@@ -281,9 +281,9 @@ def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
         log(f"[skip] {paper_id}: cannot read {main_file}: {e}")
         return False
 
-    # Already uses semtex? Warn and skip.
-    if RE_SEMTEX_LOADED.search(text):
-        log(f"[skip] {paper_id}: already loads semtex in preamble.")
+    # Already uses codependent? Warn and skip.
+    if RE_CODEPENDENT_LOADED.search(text):
+        log(f"[skip] {paper_id}: already loads codependent in preamble.")
         return False
 
     parts = split_preamble_body(text)
@@ -302,12 +302,12 @@ def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
         )
         return False
 
-    # Optionally rewrite command definitions to semtex variants.
+    # Optionally rewrite command definitions to codependent variants.
     rewrites: list[tuple[int, str]] = []
     if do_rewrite:
         preamble, rewrites = rewrite_preamble(preamble, paper_id)
         preamble_note = (
-            "% Commands rewritten: \\newcommand -> \\semtexnewcommand, etc.\n"
+            "% Commands rewritten: \\newcommand -> \\codepnewcommand, etc.\n"
         )
     else:
         preamble_note = (
@@ -321,11 +321,11 @@ def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
         f"% Original main file: {main_file.relative_to(paper_dir)}\n"
         "%\n"
         + preamble_note
-        + "% and injects \\usepackage{semtex} just before \\begin{document}.\n"
+        + "% and injects \\usepackage{codependent} just before \\begin{document}.\n"
         "%\n"
         + preamble.rstrip()
         + "\n"
-        + SEMTEX_INJECTION
+        + CODEPENDENT_INJECTION
         + "\\begin{document}\n"
         + body
         + "\\end{document}\n"
@@ -378,7 +378,7 @@ def list_paper_dirs() -> list[str]:
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
         prog="wrap.py",
-        description="Generate semtex-injecting wrappers for fetched "
+        description="Generate codependent-injecting wrappers for fetched "
         "arxiv papers.",
     )
     g = ap.add_mutually_exclusive_group()

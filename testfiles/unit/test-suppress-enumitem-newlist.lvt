@@ -4,20 +4,20 @@
 %% TEST-SOURCE: REVIEW_E #10 (MINOR)
 %% TEST-SECTION: DESIGN.md §8a.6 suppression list / enumitem integration
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.2}{paragraph} = 1
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{paragraph} = 1
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.2}{paragraph} = 1
 %% TEST-ATOMS-MIN: 2
-%% TEST-PACKAGES: enumitem,amsthm,semtex
+%% TEST-PACKAGES: enumitem,amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% REVIEW_E finding #10. enumitem's \newlist creates new list
-%% environments on the fly. The semtex suppression registry
+%% environments on the fly. The codependent suppression registry
 %% must recognize these (via the generic trivlist/list hook or
 %% by tapping into enumitem's registration) so authors don't
-%% have to call \semtexsuppress{mylist} manually after every
+%% have to call \codepsuppress{mylist} manually after every
 %% \newlist. Body paragraphs outside the list are atoms 1.1
 %% and 1.2; item bodies inside the list are NOT atoms.
 
@@ -25,8 +25,8 @@
 \usepackage{enumitem}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \newlist{mylist}{itemize}{1}
 \setlist[mylist]{label=$\bullet$}

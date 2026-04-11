@@ -1,15 +1,15 @@
 %% TEST-NAME: test-backref-style-margin
 %% TEST-WHAT: Verify that backref-style=margin works as a package option
 %%            passed to \usepackage, and that backrefs render without error.
-%% TEST-SOURCE: DESIGN.md \semtexsetup key-value API, package options
-%% TEST-SECTION: semtex.sty §Options, §Rendering
+%% TEST-SOURCE: DESIGN.md \codepsetup key-value API, package options
+%% TEST-SECTION: codependent.sty §Options, §Rendering
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{theorem} = 1
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.2}{theorem} = 1
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.2}{theorem} = 1
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Passes backref-style=margin as a package option via \usepackage.
@@ -19,8 +19,8 @@
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage[backref-style=margin]{semtex}
-\semtextrack{theorem}
+\usepackage[backref-style=margin]{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START

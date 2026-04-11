@@ -4,18 +4,18 @@
 %%            \hypertarget anchors.  Without hyperref, plain text
 %%            fallback is used (no errors).
 %% TEST-SOURCE: DESIGN.md hyperref integration requirement
-%% TEST-SECTION: semtex.sty \semtex@brhyper, \semtex@mktarget
+%% TEST-SECTION: codependent.sty \codep@brhyper, \codep@mktarget
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{theorem} = 1
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.3}{theorem} = 1
-%% TEST-AUX-CONTAINS: \semtex@atomref
-%% TEST-PACKAGES: amsthm,hyperref,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.3}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 %%
-%% Verifies that hyperref + semtex coexist without errors and
+%% Verifies that hyperref + codependent coexist without errors and
 %% that atoms are recorded correctly.  The actual hyperlink
 %% rendering is verified visually; this test gates on no errors
 %% and correct SBL output.
@@ -24,8 +24,8 @@
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{hyperref}
-\usepackage[depth=1]{semtex}
-\semtextrack{theorem}
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START

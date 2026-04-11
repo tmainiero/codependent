@@ -1,12 +1,12 @@
--- l3build configuration for semtex
+-- l3build configuration for codependent
 -- Run: l3build check   -- regression tests
 --      l3build doc     -- build documentation
 --      l3build ctan    -- package for CTAN submission
 
-module = "semtex"
+module = "codependent"
 
 -- Source files
-sourcefiles = {"semtex.sty"}
+sourcefiles = {"codependent.sty"}
 
 -- Test directory
 testfiledir = "testfiles"
@@ -17,11 +17,11 @@ checkengines = {"pdftex"}
 -- Check options: run tests quietly
 checkopts = "-interaction=nonstopmode"
 
--- Documentation sources (none yet — will be semtex.dtx when converted)
--- docfiles = {"semtex.dtx"}
+-- Documentation sources (none yet — will be codependent.dtx when converted)
+-- docfiles = {"codependent.dtx"}
 
 -- Files to install
-installfiles = {"semtex.sty"}
+installfiles = {"codependent.sty"}
 
 -- CTAN metadata
-ctanpkg = "semtex"
+ctanpkg = "codependent"

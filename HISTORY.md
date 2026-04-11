@@ -1,13 +1,13 @@
-# semtex.sty — Design Evolution and Audit Trail
+# codependent.sty — Design Evolution and Audit Trail
 
-This file documents how `semtex.sty`'s design was reached, in
+This file documents how `codependent.sty`'s design was reached, in
 chronological order, with the decisions and the failures that
 preceded them. It is the navigation aid for any future agent
 (human or AI) trying to understand "why is the design like this?"
 or "what was tried before?" or "is X already known to break?".
 
 For the *current* design, see `DESIGN.md`. For the *adversarial
-reviews* that produced it, see `../semtex-cli/reviews/`. This
+reviews* that produced it, see `../codependent-cli/reviews/`. This
 file is the connecting tissue.
 
 ## Architectural pivots (in order)
@@ -18,16 +18,16 @@ User had a personal `\newmath` macro and ad-hoc atom-numbering
 machinery in their math monograph preamble, inspired by
 Pavlov's dpmac. Worked for one document, not packaged.
 
-### v0.1 — semtex.sty as a CTAN-quality package (2026-04-08)
+### v0.1 — codependent.sty as a CTAN-quality package (2026-04-08)
 
 First commit (`941b297`). Goal: extract the personal machinery
 into a reusable LaTeX package. Settled three-round adversarial
 design review on the .sty layer alone (`0d66ebd`,
-`tools/semtex-sty/CONVENTIONS.md`).
+`tools/codependent/CONVENTIONS.md`).
 
 Three-layer architecture proposed:
 
-1. `semtex.sty` — atom numbering + back-ref *display*
+1. `codependent.sty` — atom numbering + back-ref *display*
 2. External CLI — `.aux` -> `.sbr` (back-ref *computation*)
 3. mwablab extension — UIDs, symbol tracking, project-specific
 
@@ -36,25 +36,25 @@ well", make semantic analysis possible later via Layer 2.
 
 ### v0.2 — External Haskell CLI design (2026-04-08, `0fe7de6`)
 
-`tools/semtex-cli/DESIGN.md` first written, 1108 lines, by
+`tools/codependent-cli/DESIGN.md` first written, 1108 lines, by
 adversarial-design pod. Specified:
 
-- Aux wire format: `\semtex@atom`, `\semtex@atomref`,
-  `\semtex@auxversion`
-- Sbr wire format: `\semtex@sbrversion`, `\semtex@section`,
-  `\semtex@backref`
+- Aux wire format: `\codep@atom`, `\codep@atomref`,
+  `\codep@auxversion`
+- Sbr wire format: `\codep@sbrversion`, `\codep@section`,
+  `\codep@backref`
 - FNV-1a 64 hash for staleness detection
 - Haskell + megaparsec reference impl
 - Lua reimplementability under ~500 lines as a portability contract
 
 ### v0.3 — REVIEW_A correctness attacks (2026-04-09, this session)
 
-`tools/semtex-cli/reviews/REVIEW_A_correctness.md`. 15 findings.
+`tools/codependent-cli/reviews/REVIEW_A_correctness.md`. 15 findings.
 Headline finding: **FNV-1a 64 hash is uncomputable in pdflatex**
 because `\numexpr` is 31-bit signed and 64-bit unsigned multiply
 is hundreds of lines of multi-word arithmetic per atom.
 
-Other major findings: `\semtex@currentatom` not cleared at atom
+Other major findings: `\codep@currentatom` not cleared at atom
 end (live defect), parser edge cases for `\@input`/`\newlabel`
 shapes, multi-pass convergence issues.
 
@@ -62,7 +62,7 @@ shapes, multi-pass convergence issues.
 
 ### v0.4 — REVIEW_ARCH dpmac port proposal (2026-04-09)
 
-`tools/semtex-cli/reviews/REVIEW_ARCH_dpmac_port.md`. 1161 lines.
+`tools/codependent-cli/reviews/REVIEW_ARCH_dpmac_port.md`. 1161 lines.
 Direct port analysis of Pavlov's dpmac (Plain TeX, GPLv3,
 1900 lines, ~160 lines of back-ref machinery).
 
@@ -86,9 +86,9 @@ free. Our LaTeX port is *simpler* than the upstream Plain TeX.
 User clarified that the CLI should NOT die — it should refocus
 on semantic analysis only. Final architecture:
 
-1. `semtex.sty` — numbering + non-semantic backrefs (dpmac port,
+1. `codependent.sty` — numbering + non-semantic backrefs (dpmac port,
    pure TeX), writes a `.sbl` semantic-hint sidecar
-2. `semtex-cli` — semantic analysis (UID tracking, concept
+2. `codependent-cli` — semantic analysis (UID tracking, concept
    graphs, `\newmath` coherence). Reads `.tex` source + `.sbl`,
    writes `concepts.json` / `uid.log` / `deps.dot`. Does NOT
    compute generic backrefs.
@@ -96,35 +96,35 @@ on semantic analysis only. Final architecture:
 
 The `.sbl` file is a new wire format, write-only from the .sty,
 read-only by the CLI. Carries per-atom semantic metadata
-(source location, labels, user `\semtextag` records,
+(source location, labels, user `\codeptag` records,
 `\newmath` declarations and uses).
 
 ### v0.6 — REVIEW_C attacks the port proposal (2026-04-09)
 
-`tools/semtex-cli/reviews/REVIEW_C_port_proposal.md`. 14 findings.
+`tools/codependent-cli/reviews/REVIEW_C_port_proposal.md`. 14 findings.
 Three BLOCKERs:
 
-1. `\semtex@extractfirst` brace parser was syntactically broken
+1. `\codep@extractfirst` brace parser was syntactically broken
    for cleveref's `@cref` records.
-2. **`\semtex@recordbr` toks-register append is O(N^2)**, not
+2. **`\codep@recordbr` toks-register append is O(N^2)**, not
    amortised O(1). The proposed performance estimate (~0.15s
    for 15k refs) was off by 1700x; real cost is ~253 seconds.
 3. `\newlabel` override at package-load time gets clobbered
    by pre-2023 hyperref's aux-injection block.
 
-Plus 4 MAJORs (most importantly: `\semtex@currentatom` clearing
+Plus 4 MAJORs (most importantly: `\codep@currentatom` clearing
 inherited from REVIEW_A finding 3) and 5 MINORs.
 
 ### v0.7 — REVIEW_D second-pass critic (2026-04-09)
 
-`tools/semtex-cli/reviews/REVIEW_D_revision.md`. After the
+`tools/codependent-cli/reviews/REVIEW_D_revision.md`. After the
 proposer applied REVIEW_C's fixes, a second critic round
 caught two NEW BLOCKERs introduced during the restructure:
 
 1. **`\@setref` aux-write patch** referenced in prose but
    missing from the implementation sketch (and falsely
-   claimed to be "already present in semtex.sty").
-2. **`\semtex@queuebackref` not wired to `\semtex@collapsebr`**
+   claimed to be "already present in codependent.sty").
+2. **`\codep@queuebackref` not wired to `\codep@collapsebr`**
    — the linked-list defer queue was built but never
    materialised into the display csname. Silent end-to-end
    pipeline break.
@@ -133,13 +133,13 @@ Plus the `\newmath` user-API signature was unspecified.
 
 ### v0.8 — Design pivot landing commit (2026-04-09, `f199852`)
 
-`tools/semtex-sty/DESIGN.md` grows from 518 to 2058 lines.
+`tools/codependent/DESIGN.md` grows from 518 to 2058 lines.
 Adds Section 8a (dpmac port + corrected TeX sketch),
-Section 8b (LaTeXML semtex.ltxml binding for hideable HTML
+Section 8b (LaTeXML codependent.ltxml binding for hideable HTML
 backrefs), Section 9a (.sbl writer with flattened record format
-and end-marker sentinel). Also: `tools/semtex-cli/DESIGN.md`
+and end-marker sentinel). Also: `tools/codependent-cli/DESIGN.md`
 rewritten from scratch as semantic-analysis-only (480 lines).
-`tools/semtex-sty/CREDITS.md` created with GPLv3 attribution
+`tools/codependent/CREDITS.md` created with GPLv3 attribution
 to Pavlov.
 
 ### v0.9 — Naming refinement: `\newmath` -> two macros (2026-04-09, `f4cf238`)
@@ -148,13 +148,13 @@ User flagged that `\newmath` was misleading (implies math-mode
 only) and that the framework should support `\NewDocumentCommand`
 in the first pass, not as a follow-up. Outcome:
 
-- `\semtexNewCommand{\Hom}[2]{...}` — wraps `\newcommand`
-- `\semtexNewDocumentCommand{\Cite}{s o m}{...}` — wraps
+- `\codepNewCommand{\Hom}[2]{...}` — wraps `\newcommand`
+- `\codepNewDocumentCommand{\Cite}{s o m}{...}` — wraps
   `\NewDocumentCommand`
-- Lowercase `semtex` prefix (matches existing public API),
+- Lowercase `codependent` prefix (matches existing public API),
   CamelCase suffix (mirrors LaTeX kernel definers)
-- Internal `\semtex@sbl@newmath` records renamed to
-  `\semtex@sbl@cmddef` with a `kind` discriminator
+- Internal `\codep@sbl@newmath` records renamed to
+  `\codep@sbl@cmddef` with a `kind` discriminator
   (`newcommand` vs `NewDocumentCommand`)
 - Opt-in only (no global kernel patching); migration is two
   sed lines per file
@@ -162,14 +162,14 @@ in the first pass, not as a follow-up. Outcome:
   (the rewrite had accidentally dropped it)
 
 User-driven sed-safety audit: canonical token is the literal
-lowercase string `semtex`; one sed pass renames everything
+lowercase string `codependent`; one sed pass renames everything
 except the `.sbl` extension and the `sbl` substring (which
 follow TeX-extension convention and intentionally stay).
 Documented in CREDITS.md "Renameability" section.
 
 ### v1.0-pre — REVIEW_E package compatibility round (2026-04-09)
 
-`tools/semtex-cli/reviews/REVIEW_E_compat.md`. 16 findings:
+`tools/codependent-cli/reviews/REVIEW_E_compat.md`. 16 findings:
 3 BLOCKERs, 5 MAJORs, 6 MINORs, 2 NITPICKs.
 
 The critic read actual TeX Live source for every package
@@ -189,7 +189,7 @@ specific line numbers.
 
 2. **`\restatable` re-fires `\AtBeginEnvironment{theorem}`**
    in a scope where `\c@theorem` has been re-let to a dummy
-   counter. Our hook reads `\edef\semtex@currentatom{\theatom}`
+   counter. Our hook reads `\edef\codep@currentatom{\theatom}`
    and gets the atom number of an unrelated previous atom.
    Plus a duplicate `.sbl@atom` record with conflicting type.
    Fix: one-line guard `\ifx\c@theorem\c@atom`.
@@ -217,25 +217,25 @@ After the design phase closed (commit 2e1fc2a), the user requested
 test files BEFORE implementation so the implementer has concrete
 TDD targets. Built in one parallel-dispatch session:
 
-- **35 unit fixtures** under `tools/semtex-sty/testfiles/unit/`
+- **35 unit fixtures** under `tools/codependent/testfiles/unit/`
   covering numbering, reference recording (kernel/cleveref/hyperref/
   autoref/eqref/ref-star), KOMA/memoir/titlesec sectioning, suppression
   envs (trivlist/enumitem/tcolorbox/tikz/tikzcd), equations (separate
   + pinned-broken shared), `.sbl` writer (version/source/end-marker/
   flat-records), `\label` patching (kernel + cleveref opt-arg), the
-  new public API (`\semtexNewCommand`/`\semtexNewDocumentCommand`/
-  `\semtextag`/cmd-uses), hook & load ordering, engine matrix
-  (pdflatex/lualatex), `\restatable`, `\semtex@currentatom` clearing.
+  new public API (`\codepNewCommand`/`\codepNewDocumentCommand`/
+  `\codeptag`/cmd-uses), hook & load ordering, engine matrix
+  (pdflatex/lualatex), `\restatable`, `\codep@currentatom` clearing.
 
 - **1 integration fixture** at
-  `tools/semtex-sty/testfiles/integration/test-integration-kitchen-sink.lvt`
-  exercising every semtex feature in a single document with a realistic
+  `tools/codependent/testfiles/integration/test-integration-kitchen-sink.lvt`
+  exercising every codependent feature in a single document with a realistic
   preamble stack (~200 lines).
 
 - **Real-world arxiv corpus infrastructure** under
-  `tools/semtex-sty/testfiles/real-world/`: a Python `fetch.py` script
+  `tools/codependent/testfiles/real-world/`: a Python `fetch.py` script
   that downloads arxiv source tarballs with SHA-256 verification, a
-  `wrap.py` that injects `\usepackage{semtex}\semtextrack{...}` into
+  `wrap.py` that injects `\usepackage{codependent}\codeptrack{...}` into
   each paper's preamble for tracked-mode compilation, a JSON
   `corpus.lock` manifest of 8 hand-curated math.* papers (3 math.CT,
   2 math.AG, 1 math.AT, 1 math.RT, 1 free) with REVIEW_E coverage
@@ -245,9 +245,9 @@ TDD targets. Built in one parallel-dispatch session:
   internet access; manual verification required before first use.
   This is the smaller, fixed-corpus version of the broader
   arxiv-fuzz plan documented in
-  `~/.claude/projects/.../memory/project_semtex_arxiv_fuzz.md`.
+  `~/.claude/projects/.../memory/project_codependent_arxiv_fuzz.md`.
 
-- **Test runner** at `tools/semtex-sty/testfiles/run-tests.py`
+- **Test runner** at `tools/codependent/testfiles/run-tests.py`
   (~430 lines, Python 3 stdlib only). Reads machine-readable
   `%% TEST-*:` metadata headers from each `.lvt` fixture, compiles
   via pdflatex (configurable engine), reads `.aux`/`.sbl`/`.log`,
@@ -265,19 +265,19 @@ TDD targets. Built in one parallel-dispatch session:
   is updated).
 
 **Pre-implementation TDD signal**: All 36 fixtures FAIL today
-because semtex.sty v0.1 doesn't have the v1.0 features. This is
+because codependent.sty v0.1 doesn't have the v1.0 features. This is
 the intended state. As the implementer lands each spec section
 (Section 8a, 8a.5, 8a.5.a, 8a.6, 8b, 9a), the corresponding
 fixtures turn green. Implementation is "done" when the runner
 reports zero real failures on all engines.
 
-**Standalone-project framing**: The user noted that semtex.sty
+**Standalone-project framing**: The user noted that codependent.sty
 is now considered its own project, only living in the mwablab
 repo by historical accident. Test infrastructure is path-
 independent: every script uses paths relative to
-`tools/semtex-sty/`, so a future
-`git mv tools/semtex-sty/ <new-repo>/` is a single move with
-no broken paths. mwablab will eventually call semtex as a
+`tools/codependent/`, so a future
+`git mv tools/codependent/ <new-repo>/` is a single move with
+no broken paths. mwablab will eventually call codependent as a
 dependency rather than embed it.
 
 ### v1.0-concept — Concept-aware forward references (2026-04-09)
@@ -293,26 +293,26 @@ manual marking was a feature, not a kludge.
 Added:
 
 - Section 8a.9 "Concept-aware forward references" (~500 lines):
-  `\Hom*` starred variant inside `\semtexNewCommand` marks the def
-  site explicitly. New `.aux` records `\semtex@concept` /
-  `\semtex@conceptref` feed into the existing backref pipeline via
-  the `.sty`'s pass-2 rerun. New `.sbl` record `\semtex@sbl@def`
+  `\Hom*` starred variant inside `\codepNewCommand` marks the def
+  site explicitly. New `.aux` records `\codep@concept` /
+  `\codep@conceptref` feed into the existing backref pipeline via
+  the `.sty`'s pass-2 rerun. New `.sbl` record `\codep@sbl@def`
   gives the CLI source-grounded concept metadata. Hybrid
   architecture (Option C): both sidecars carry the info, the `.sty`
   typeset PDF is complete without the CLI.
 
 - §8a.5.a extended with save/clear/restore semantics on
-  `\semtex@currentatom` during restated theorem bodies. Nested
+  `\codep@currentatom` during restated theorem bodies. Nested
   restates use a counter for LIFO-safe stack. Ensures `\Hom*`
   inside a restated body NEVER registers against the enclosing
   atom's stale currentatom; only the original declaration firing
   (with alias intact) registers the def site.
 
-- §9a `\semtexNewCommand` implementation sketch updated to
+- §9a `\codepNewCommand` implementation sketch updated to
   dispatch star vs non-star via `\IfBooleanTF`. Same for
-  `\semtexNewDocumentCommand`. Shared helpers `\semtex@emit@def`
-  and `\semtex@emit@use` handle the concept record emissions;
-  `\semtex@definewrapped` factors the star-dispatch wrapping so
+  `\codepNewDocumentCommand`. Shared helpers `\codep@emit@def`
+  and `\codep@emit@use` handle the concept record emissions;
+  `\codep@definewrapped` factors the star-dispatch wrapping so
   both public macros share one code path.
 
 - 5 new regression fixtures under `testfiles/unit/`:
@@ -352,9 +352,9 @@ sources:
 
 - **J3 (PRIMARY: label-wrap double-wrap ordering)** — VERIFIED.
   Walked cleveref.sty lines 66-97. cleveref strips the optional
-  arg before forwarding to its captured target (= semtex's
-  dispatcher); semtex's no-optional-arg branch fires with the
-  correct mandatory key; `\semtex@currentatom` is live.
+  arg before forwarding to its captured target (= codependent's
+  dispatcher); codependent's no-optional-arg branch fires with the
+  correct mandatory key; `\codep@currentatom` is live.
 - **J1 (hook-rule centralisation)** — VERIFIED.
 - **J2 (`\ifx\c@theorem\c@atom` guard)** — VERIFIED against
   thm-restate.sty lines 103-184, theoremref, ntheorem.
@@ -400,19 +400,19 @@ accepted as live limitations:
   Users on pathological documents must increase `hash_extra`
   in `texmf.cnf`. Documented as a known limitation.
 - **`.sbl` extension is independent of the project name.**
-  A future rename of `semtex` -> `<other>` requires a second
+  A future rename of `codependent` -> `<other>` requires a second
   sed pass to also rename `.sbl` if desired. Follows TeX
   convention (`.bbl`, `.nav`, etc.).
 - **No `\providecommand` / `\renewcommand` /
   `\DeclareDocumentCommand` mirrors in v1.** The two-macro
-  pair (`\semtexNewCommand` + `\semtexNewDocumentCommand`)
+  pair (`\codepNewCommand` + `\codepNewDocumentCommand`)
   covers the common case. Add when real use cases appear.
-- **`semtex.sty` itself is NOT yet modified.** All work in
+- **`codependent.sty` itself is NOT yet modified.** All work in
   this session was design-only. Implementation of Sections
   8a / 8b / 9a is the next phase.
 - **arxiv-fuzz validation** is the planned release-gate test
   before main-merge. See
-  `~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_semtex_arxiv_fuzz.md`
+  `~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_codependent_arxiv_fuzz.md`
   for the harness sketch.
 - **License: GPLv3.** The dpmac port creates a derivative
   work. Planned outreach to Pavlov for an optional LPPL 1.3c
@@ -421,7 +421,7 @@ accepted as live limitations:
   dpmac provides inline concept tagging via `^{words}` (in math)
   and similar forms (in text) that work without requiring the
   author to define a macro first. Syntactic sugar over the
-  `\semtex@concept` / `\semtex@conceptref` machinery added in
+  `\codep@concept` / `\codep@conceptref` machinery added in
   v1.0-concept (Section 8a.9). Deferred pending user feedback;
   the core concept-map infrastructure is in place so the sugar
   is a pure lexer add-on.
@@ -471,20 +471,20 @@ agents should not propose these without re-litigating:
 7. **`\newmath{cmd}{arity}{body}` as the user-tracking macro**
    (v0.7 sketch). Rejected by user as misleading (implies
    math-mode-only) and incomplete (no `\NewDocumentCommand`
-   support). Replaced by `\semtexNewCommand` +
-   `\semtexNewDocumentCommand` pair, opt-in only.
+   support). Replaced by `\codepNewCommand` +
+   `\codepNewDocumentCommand` pair, opt-in only.
 
 8. **Global kernel patching** (`Option C` from the rename
    discussion, v0.9). Rejected by user as too invasive.
    "User can easily find/replace newcommands or newdoccommands."
 
-9. **`\semtex@sbl@newmath` record name** (v0.5-v0.8).
+9. **`\codep@sbl@newmath` record name** (v0.5-v0.8).
    Rejected when the user-API rename made "math" misleading.
-   Replaced by `\semtex@sbl@cmddef` with a `kind`
+   Replaced by `\codep@sbl@cmddef` with a `kind`
    discriminator field.
 
 10. **Embedding kv blobs in `.sbl` records** like
-    `\semtex@sbl@atom{1.2.3}{paragraph}{src=foo,env=bar}`.
+    `\codep@sbl@atom{1.2.3}{paragraph}{src=foo,env=bar}`.
     Rejected by REVIEW_C finding 6 because filenames may
     contain commas. Replaced by flat one-pair-per-record
     schema.
@@ -497,26 +497,26 @@ agents should not propose these without re-litigating:
 
 ## Cross-references
 
-- **Current design**: `tools/semtex-sty/DESIGN.md` (the
+- **Current design**: `tools/codependent/DESIGN.md` (the
   living spec)
-- **CLI design**: `tools/semtex-cli/DESIGN.md` (semantic-only
+- **CLI design**: `tools/codependent-cli/DESIGN.md` (semantic-only
   Layer 2)
-- **License & attribution**: `tools/semtex-sty/CREDITS.md`
-- **Adversarial reviews**: `tools/semtex-cli/reviews/`
+- **License & attribution**: `tools/codependent/CREDITS.md`
+- **Adversarial reviews**: `tools/codependent-cli/reviews/`
   (REVIEW_A, REVIEW_ARCH, REVIEW_C, REVIEW_D, REVIEW_E, REVIEW_F)
 - **arxiv-fuzz validation plan**:
-  `~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_semtex_arxiv_fuzz.md`
+  `~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_codependent_arxiv_fuzz.md`
 - **Transferable lessons for other LaTeX-package projects**:
   `~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/lessons_latex_package_evolution.md`
-- **Code conventions**: `tools/semtex-sty/CONVENTIONS.md`
+- **Code conventions**: `tools/codependent/CONVENTIONS.md`
 
 ## How to read this file as a future agent
 
 **If you are a FRESH ORCHESTRATOR being asked to work on
-semtex.sty for the first time in a new session, STOP and read
+codependent.sty for the first time in a new session, STOP and read
 `IMPLEMENTATION_PICKUP.md` (same directory) FIRST, then the
 canonical agent-memory pickup doc at
-`~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_semtex_next_steps.md`.**
+`~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_codependent_next_steps.md`.**
 That pickup doc has the full mandatory-reading list, the
 verification checkpoint, and the forbidden-actions list. This
 HISTORY file is ONE of the mandatory documents but not the
@@ -541,7 +541,7 @@ If you are coming back to this project and want to:
   read the relevant REVIEW file from the appropriate version.
 - **Understand a design decision** -> trace it back through
   the version history, then read the cited REVIEW file under
-  `../semtex-cli/reviews/`.
+  `../codependent-cli/reviews/`.
 - **Contribute lessons to other LaTeX projects** -> see the
   cross-referenced `lessons_latex_package_evolution.md` in
   user-global agent memory.

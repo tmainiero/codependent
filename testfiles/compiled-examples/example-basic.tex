@@ -1,0 +1,41 @@
+\documentclass{article}
+\usepackage{amsthm}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\usepackage{codependent}
+\codeptrack{theorem,definition,proposition}
+
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\Cat}{\mathsf{Cat}}
+
+\begin{document}
+
+\section{Introduction}
+
+In this paper we study the $\Hom{X}{Y}$ functor in $\Cat$.
+The precise definition will be given in \cref{sec:cats}.
+
+This paragraph is atom 1.2.
+
+\section{Categories}\label{sec:cats}
+
+\begin{definition}\label{def:cat}
+  A \textbf{category} $\Cat*$ consists of objects and morphisms,
+  with a $\Hom*{X}{Y}$ set for each pair of objects $X, Y$.
+\end{definition}
+
+\begin{proposition}\label{prop:comp}
+  Composition in $\Cat$ is associative. See \cref{def:cat}.
+\end{proposition}
+
+\begin{theorem}\label{thm:main}
+  Every small category admits a faithful functor to $\Cat$.
+  This follows from \cref{prop:comp} and \cref{def:cat}.
+\end{theorem}
+
+A concluding paragraph referencing \cref{thm:main}.
+
+\end{document}

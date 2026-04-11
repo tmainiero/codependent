@@ -1,22 +1,22 @@
 %% TEST-NAME: test-cmd-uses
-%% TEST-WHAT: Verify a wrapped command (defined via \semtexnewcommand)
-%%            emits one \semtex@sbl@use record per invocation INSIDE
+%% TEST-WHAT: Verify a wrapped command (defined via \codepnewcommand)
+%%            emits one \codep@sbl@use record per invocation INSIDE
 %%            an atom, and ZERO use records when invoked outside any
 %%            atom (e.g., in section titles).
 %% TEST-SOURCE: DESIGN.md §9a User API "Side effects at invocation time"
 %% TEST-SECTION: DESIGN.md §9a
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@use{1.1}{Hom} = 3
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@use{1.1}{Hom} = 3
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
-%% The wrapper guards on \ifx\semtex@currentatom\@empty:
+%% The wrapper guards on \ifx\codep@currentatom\@empty:
 %%   - Inside an atom (paragraph 1.1 below): each \Hom call
-%%     emits \semtex@sbl@use{1.1}{Hom}.
+%%     emits \codep@sbl@use{1.1}{Hom}.
 %%   - Outside any atom (the section title below): \Hom is
-%%     called once but \semtex@currentatom is empty, so no
+%%     called once but \codep@currentatom is empty, so no
 %%     use record fires.
 %%
 %% Expected: exactly 3 use records for {1.1}, zero for any
@@ -25,10 +25,10 @@
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \begin{document}
 \START

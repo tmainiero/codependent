@@ -13,8 +13,8 @@
 % (A single .lvt exercises one configuration; split into separate
 %  .lvt files if isolation is needed.  This file tests the option
 %  surface area quickly without requiring multiple runs.)
-\usepackage[depth=2,backrefs=none]{semtex}
-\semtextrack{definition,theorem}
+\usepackage[depth=2,backrefs=none]{codependent}
+\codeptrack{definition,theorem}
 
 \begin{document}
 \START

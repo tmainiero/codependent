@@ -1,24 +1,24 @@
 %% TEST-NAME: test-concept-forward-ref
 %% TEST-WHAT: Verify \Hom in the intro paragraph + \Hom* in a later
 %%            definition produces the expected concept records:
-%%            \semtex@concept{Hom}{<def-atom>} in .aux (once),
-%%            \semtex@conceptref{<intro-atom>}{Hom} in .aux,
-%%            \semtex@sbl@def{<def-atom>}{Hom} in .sbl (once),
-%%            \semtex@sbl@use{<intro-atom>}{Hom} in .sbl.
+%%            \codep@concept{Hom}{<def-atom>} in .aux (once),
+%%            \codep@conceptref{<intro-atom>}{Hom} in .aux,
+%%            \codep@sbl@def{<def-atom>}{Hom} in .sbl (once),
+%%            \codep@sbl@use{<intro-atom>}{Hom} in .sbl.
 %%            At pass 2, the def atom's "Used in" list includes
 %%            the intro atom (forward-reference resolves backward
 %%            via the concept map).
 %% TEST-SOURCE: DESIGN.md §8a.9 Concept-aware forward references
 %% TEST-SECTION: DESIGN.md §8a.9
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@def{2.1}{Hom} = 1
-%% TEST-SBL-CONTAINS: \semtex@sbl@use{1.1}{Hom}
-%% TEST-AUX-CONTAINS: \semtex@concept{Hom}{2.1}
-%% TEST-AUX-CONTAINS: \semtex@conceptref{1.1}{Hom}
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@def{2.1}{Hom} = 1
+%% TEST-SBL-CONTAINS: \codep@sbl@use{1.1}{Hom}
+%% TEST-AUX-CONTAINS: \codep@concept{Hom}{2.1}
+%% TEST-AUX-CONTAINS: \codep@conceptref{1.1}{Hom}
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% This is the baseline forward-reference test. The intro paragraph
@@ -26,22 +26,22 @@
 %% definition environment in "Categories" is atom 1.2. The \Hom* in
 %% the definition body marks 1.2 as the def site for concept "Hom";
 %% the \Hom in the intro marks 1.1 as a use site. At pass 2, the
-%% .aux records flow through \semtex@concept/\semtex@conceptref,
+%% .aux records flow through \codep@concept/\codep@conceptref,
 %% the concept map resolves Hom -> 1.2, and the edge (1.1 -> 1.2)
-%% feeds into \semtex@recordbr just like any explicit \cref edge.
+%% feeds into \codep@recordbr just like any explicit \cref edge.
 %% The "Used in 1.1" line appears at atom 1.2.
 %%
-%% Until §8a.9 is implemented in semtex.sty, this fixture FAILS at
-%% the \semtex@concept record assertion (the record is not written).
+%% Until §8a.9 is implemented in codependent.sty, this fixture FAILS at
+%% the \codep@concept record assertion (the record is not written).
 
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{definition}[theorem]{Definition}
-\usepackage{semtex}
-\semtextrack{theorem,definition}
+\usepackage{codependent}
+\codeptrack{theorem,definition}
 
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \begin{document}
 \START

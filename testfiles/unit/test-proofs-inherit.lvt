@@ -4,18 +4,18 @@
 %% TEST-SOURCE: DESIGN.md Proof adjacency, Pavlov-style numbering
 %% TEST-SECTION: DESIGN.md §Proof environments
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.1*}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.2}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.2*}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.4}{proof}
-%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.1*}
-%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.2*}
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.1*}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.2}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.2*}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.4}{proof}
+%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.1*}
+%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.2*}
 %% TEST-LOG-CONTAINS: Proof not adjacent to a tracked
 %% TEST-ATOMS-MIN: 4
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Tests three scenarios:
@@ -27,8 +27,8 @@
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START

@@ -9,5 +9,5 @@
 *.fdb_latexmk
 texput.*
 
-# Stale copies — use TEXINPUTS to find canonical semtex.sty
-testfiles/compiled-examples/semtex.sty
+# Stale copies — use TEXINPUTS to find canonical codependent.sty
+testfiles/compiled-examples/codependent.sty

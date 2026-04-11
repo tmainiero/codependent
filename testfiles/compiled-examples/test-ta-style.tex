@@ -12,12 +12,12 @@
 \usepackage{sty-theorems-ta}  % loads amsthm, thmtools, xparse, fontawesome, xcolor
 \usepackage{thm-restate}
 
-%% semtex with inline backrefs in gray (user's preferred style)
-\usepackage[backref-style=inline,backref-color=gray]{semtex}
-\semtextrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
+%% codependent with inline backrefs in gray (user's preferred style)
+\usepackage[backref-style=inline,backref-color=gray]{codependent}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
 
 %% Multi-file compatibility check: load subfiles and standalone.
-%% These must not conflict with semtex's hooks.
+%% These must not conflict with codependent's hooks.
 \usepackage{subfiles}
 \usepackage{standalone}
 
@@ -30,14 +30,14 @@
 \crefname{question}{Question}{Questions}
 
 %% ---------- Concept-tracked macros ----------
-\semtexnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
-\semtexnewcommand{\catname}[1]{\mathsf{#1}}
-\semtexnewcommand{\Tr}[0]{\operatorname{Tr}}
+\codepnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
+\codepnewcommand{\catname}[1]{\mathsf{#1}}
+\codepnewcommand{\Tr}[0]{\operatorname{Tr}}
 
 %% ---------- Equation numbering by section ----------
 \numberwithin{equation}{section}
 
-\title{Semtex + sty-theorems-ta stress test}
+\title{Codependent + sty-theorems-ta stress test}
 \author{Test}
 \date{}
 
@@ -57,7 +57,7 @@ Let $\catname{C}$ be a monoidal category with morphisms $\Funct{F}{C}$.
 A $\catname{V}$-enriched category $\catname{C}$ consists of a set of
 objects $\mathrm{Ob}(\catname{C})$ and, for each pair $(A,B)$, a hom-object
 $\catname{V}(A,B)$ in $\catname{V}$.
-\semtextag{uid}{cat:enriched-category}%
+\codeptag{uid}{cat:enriched-category}%
 \end{definition}
 
 \begin{theorem}\label{thm:main}
@@ -207,7 +207,7 @@ $f \in \catname{C}(A,A)$ is the composite
 \[
   \Tr(f) = \varepsilon \circ (f \otimes \mathrm{id}) \circ \eta.
 \]
-\semtextag{uid}{cat:trace}%
+\codeptag{uid}{cat:trace}%
 \end{definition}
 
 \begin{lemma}\label{lem:trace-cyclic}
@@ -218,11 +218,11 @@ $f\colon A \to B$ and $g\colon B \to A$ in $\catname{C}$,
 \end{equation}
 \end{lemma}
 
-%% --- 4.4: Separated proof with \semtexproofof ---
+%% --- 4.4: Separated proof with \codepproofof ---
 %%
 %% The proof of prop:square is given here, in a different section
-%% from the statement.  This tests the \semtexproofof mechanism.
-\begin{proof}[\semtexproofof{prop:square}]
+%% from the statement.  This tests the \codepproofof mechanism.
+\begin{proof}[\codepproofof{prop:square}]
 We construct the natural isomorphism componentwise.  For each
 object $X$ in $\catname{C}$, the strictification functor
 $\Funct{S}{C}$ sends $X$ to $[X]$, and the square commutes

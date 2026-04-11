@@ -1,9 +1,9 @@
-# semtex.sty — IMPLEMENTATION PICKUP POINT
+# codependent.sty — IMPLEMENTATION PICKUP POINT
 
-> **If you are a fresh agent being asked to implement `semtex.sty`,
+> **If you are a fresh agent being asked to implement `codependent.sty`,
 > READ ALL OF THIS FILE FIRST, then read `HISTORY.md`, `DESIGN.md`,
 > `CREDITS.md`, and the six review files under
-> `../semtex-cli/reviews/`. DO NOT SKIP. The user has been burned
+> `../codependent-cli/reviews/`. DO NOT SKIP. The user has been burned
 > ~50% of the time by fresh orchestrators who skim critical
 > documents and jump to implementation.**
 
@@ -11,7 +11,7 @@ This file is deliberately short and pointers-only. The canonical
 reading list + verification checkpoint + forbidden-actions list
 lives at:
 
-`~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_semtex_next_steps.md`
+`~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_codependent_next_steps.md`
 
 Read that agent-memory file in full before touching anything in
 this repo. It takes ~45-60 minutes to read all the linked docs
@@ -20,9 +20,9 @@ properly. Don't try to compress it.
 ## The one-sentence state
 
 The design phase is **complete** (seven rounds of adversarial
-review). `semtex.sty` itself is **still at v0.1** (654 lines);
+review). `codependent.sty` itself is **still at v0.1** (654 lines);
 no v1.0 TeX code exists yet. Your job is the **implementation
-phase**: edit `semtex.sty` per `DESIGN.md` Section 8a.6.a–8a.6.m
+phase**: edit `codependent.sty` per `DESIGN.md` Section 8a.6.a–8a.6.m
 (explicit line-range edit list), iterating red→green against
 the test runner at `testfiles/run-tests.py` (36+ fixtures, all
 currently red by design — that's the TDD baseline).
@@ -39,11 +39,11 @@ currently red by design — that's the TDD baseline).
    - Section 8a (all subsections 8a.0 through 8a.9, 8a.6.a-m
      especially)
    - Section 8b (LaTeXML binding)
-   - Section 9a (sidecar writer + `\semtexNewCommand` +
-     `\semtexNewDocumentCommand` + `\semtextag`)
+   - Section 9a (sidecar writer + `\codepNewCommand` +
+     `\codepNewDocumentCommand` + `\codeptag`)
 4. **`CREDITS.md`** (293 lines) — GPLv3 attribution + sed-safety
    discipline. Don't skip.
-5. **`../semtex-cli/reviews/REVIEW_A_correctness.md`**,
+5. **`../codependent-cli/reviews/REVIEW_A_correctness.md`**,
    **`REVIEW_ARCH_dpmac_port.md`**, **`REVIEW_C_port_proposal.md`**,
    **`REVIEW_D_revision.md`**, **`REVIEW_E_compat.md`**,
    **`REVIEW_F_round3_spotcheck.md`** — six adversarial review
@@ -62,8 +62,8 @@ currently red by design — that's the TDD baseline).
 
 ## Verification checkpoint — MANDATORY
 
-Before you edit `semtex.sty`, you must be able to answer these
-without consulting notes. See `project_semtex_next_steps.md` for
+Before you edit `codependent.sty`, you must be able to answer these
+without consulting notes. See `project_codependent_next_steps.md` for
 full questions + expected answers:
 
 1. Why did the architectural pivot happen? (REVIEW_A + REVIEW_ARCH)
@@ -86,41 +86,41 @@ NOT start editing.
 
 ```sh
 # 1. Verify the branch and commit history
-git log --oneline feat/semtex-sty | head -15
+git log --oneline feat/codependent | head -15
 
 # 2. Establish the red baseline. Expected: all 36+ fixtures
 #    fail. This is CORRECT — the TDD signal.
-python3 tools/semtex-sty/testfiles/run-tests.py 2>&1 | tail -10
+python3 tools/codependent/testfiles/run-tests.py 2>&1 | tail -10
 
-# 3. Read the first edit target (§8a.6.a — \semtex@queuebackref
-#    rewrite, which wires the existing macro to \semtex@collapsebr)
-sed -n '/^#### 8a.6.a/,/^#### 8a.6.b/p' tools/semtex-sty/DESIGN.md
+# 3. Read the first edit target (§8a.6.a — \codep@queuebackref
+#    rewrite, which wires the existing macro to \codep@collapsebr)
+sed -n '/^#### 8a.6.a/,/^#### 8a.6.b/p' tools/codependent/DESIGN.md
 
-# 4. Open semtex.sty
-$EDITOR tools/semtex-sty/semtex.sty
+# 4. Open codependent.sty
+$EDITOR tools/codependent/codependent.sty
 
 # 5. Iterate: edit -> run runner with --filter -> watch fixtures turn green
-python3 tools/semtex-sty/testfiles/run-tests.py --filter numbering
+python3 tools/codependent/testfiles/run-tests.py --filter numbering
 ```
 
 ## What you are NOT allowed to do (short list)
 
-The full list is in `project_semtex_next_steps.md`. Quick
+The full list is in `project_codependent_next_steps.md`. Quick
 forbidden-actions summary:
 
-- No editing `semtex.sty` without running the test runner first.
+- No editing `codependent.sty` without running the test runner first.
 - No re-proposing anything in `HISTORY.md`'s failure register.
 - No updating `flake.nix` (system-wide `texlive-full` is a
   documented one-time exception).
 - No `\newmath` or alternative names for the command-tracking
-  macros (they are `\semtexNewCommand` and
-  `\semtexNewDocumentCommand`, case-exact).
+  macros (they are `\codepNewCommand` and
+  `\codepNewDocumentCommand`, case-exact).
 - No reopening the dpmac-port architectural decision.
 - No content-hash staleness detection (LaTeX's
   `rerunfilecheck` handles it).
-- No coupling to mwablab internals (semtex is standalone).
-- No merging `tools/semtex-hs/` (v1 legacy) code into
-  `tools/semtex-cli/` (separate, will be deprecated later).
+- No coupling to mwablab internals (codependent is standalone).
+- No merging `tools/codependent-hs/` (v1 legacy) code into
+  `tools/codependent-cli/` (separate, will be deprecated later).
 - No single-patch-site `\@setref` interception (three sites
   required; see REVIEW_E #2).
 - No "first occurrence wins" for concept backrefs (use

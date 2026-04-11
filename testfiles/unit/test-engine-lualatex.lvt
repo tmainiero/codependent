@@ -1,22 +1,22 @@
 %% TEST-NAME: test-engine-lualatex
-%% TEST-WHAT: Verify semtex.sty compiles cleanly and tracks one theorem
+%% TEST-WHAT: Verify codependent.sty compiles cleanly and tracks one theorem
 %%            under the lualatex engine. Catches any \directlua
 %%            primitives or engine-specific csname hash paths.
 %% TEST-SOURCE: DESIGN.md §Compatibility "Engine matrix"
 %% TEST-SECTION: DESIGN.md §Compatibility
 %% TEST-EXIT: 0
 %% TEST-ENGINE: lualatex
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{theorem} = 1
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
 %% TEST-ATOMS-MIN: 1
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Engine matrix: lualatex. Runs the same minimal theorem
 %% tracking test but under lualatex. Catches regressions
-%% where a future semtex uses a pdftex-only primitive
+%% where a future codependent uses a pdftex-only primitive
 %% (e.g., \pdfmdfivesum) without a luatex fallback. Also
 %% catches csname-hash sizing differences between the two
 %% engines in pathological documents.
@@ -29,8 +29,8 @@
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START

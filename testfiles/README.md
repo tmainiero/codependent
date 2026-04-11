@@ -1,17 +1,17 @@
-# semtex.sty test suite
+# codependent.sty test suite
 
-Test fixtures and runner for `semtex.sty`. Designed to be useful
+Test fixtures and runner for `codependent.sty`. Designed to be useful
 **before the implementation lands** — the assertions target
 observable artifacts (`.aux`, `.sbl`, `.log`, exit code) so an
 implementer running these tests in red-green-refactor mode has
 concrete TDD targets without needing pre-locked golden files.
 
-`semtex.sty` is a standalone CTAN-targeted package. It currently
-lives under `tools/semtex-sty/` inside the `mwablab` repository
+`codependent.sty` is a standalone CTAN-targeted package. It currently
+lives under `tools/codependent/` inside the `mwablab` repository
 for historical reasons; it will eventually split into its own
 repo. The test suite is **path-independent**: every script uses
-relative paths from `tools/semtex-sty/`, so a future
-`git mv tools/semtex-sty/ <new-repo>/` is a single move.
+relative paths from `tools/codependent/`, so a future
+`git mv tools/codependent/ <new-repo>/` is a single move.
 
 ## Layout
 
@@ -92,7 +92,7 @@ Each fixture is a `.lvt` file with two layers:
 | `TEST-SBL-LAST-RECORD` | 1 | substring that MUST appear in the LAST non-empty line of `.sbl` (stronger than `CONTAINS`; used to pin the end-marker sentinel position) |
 | `TEST-AUX-CONTAINS` | * | substring that MUST appear in `.aux` |
 | `TEST-AUX-NOT-CONTAINS` | * | substring that must NOT appear in `.aux` |
-| `TEST-ATOMS-MIN` | 1 | minimum count of `\semtex@sbl@atom{` records |
+| `TEST-ATOMS-MIN` | 1 | minimum count of `\codep@sbl@atom{` records |
 | `TEST-PACKAGES` | 1 | comma-separated list of packages this fixture loads |
 | `TEST-RERUN` | 1 | number of `pdflatex` passes (default 2 for backref population) |
 | `TEST-PINS-KNOWN-BROKEN` | 1 | `yes` marks intentional hazard pin (exempted from exit code) |
@@ -107,10 +107,10 @@ Repeating keys may appear multiple times in the header.
 %% TEST-SOURCE: REVIEW_E #2 (BLOCKER)
 %% TEST-SECTION: DESIGN.md §8a.0
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-AUX-CONTAINS: \semtex@atomref{1.2}{thm:A}
-%% TEST-PACKAGES: hyperref,cleveref,amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:A}
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Plain-English explanation of what this test catches and why...
@@ -120,8 +120,8 @@ Repeating keys may appear multiple times in the header.
 \usepackage{cleveref}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START
@@ -143,7 +143,7 @@ the system `pdflatex`/`lualatex` at startup and prints a
 notice.
 
 This is a **one-time exception** documented in
-`tools/semtex-sty/HISTORY.md`. Future runs (post-implementation,
+`tools/codependent/HISTORY.md`. Future runs (post-implementation,
 after the Nix flake is updated) should go through `nix develop`.
 
 ## Categories
@@ -163,12 +163,12 @@ points at a specific spec section. Categories:
 - **Equations**: separate (default), shared (pinned-broken)
 - **Sidecar `.sbl`**: header records, end marker, flat records
 - **`\label` patching**: kernel and cleveref optional-arg forms
-- **New public API**: `\semtexNewCommand`,
-  `\semtexNewDocumentCommand`, `\semtextag`, command uses
-- **Hook & load ordering**: semtex before/after
+- **New public API**: `\codepNewCommand`,
+  `\codepNewDocumentCommand`, `\codeptag`, command uses
+- **Hook & load ordering**: codependent before/after
   hyperref/cleveref
 - **`\restatable`**: REVIEW_E #2 BLOCKER coverage
-- **`\semtex@currentatom` clearing**: REVIEW_A #3 LIVE DEFECT
+- **`\codep@currentatom` clearing**: REVIEW_A #3 LIVE DEFECT
 - **Engine matrix**: pdflatex, lualatex (xelatex deferred)
 
 ### `integration/` — kitchen-sink + realistic preambles (~5)
@@ -177,7 +177,7 @@ Each integration fixture exercises many features in one
 document, mimicking a realistic mathematical preamble.
 
 - **`test-integration-kitchen-sink.lvt`** — every common
-  package + every semtex feature in one document
+  package + every codependent feature in one document
 - (additional realistic preambles to be added)
 
 ### `real-world/` — actual arxiv papers
@@ -190,21 +190,21 @@ manifest, fetch script, and wrapper-generation logic are.
 See `real-world/README.md` for fetch + wrap procedures.
 
 This is the smoke version of the broader arxiv-fuzz plan
-(see `~/.claude/projects/.../memory/project_semtex_arxiv_fuzz.md`):
+(see `~/.claude/projects/.../memory/project_codependent_arxiv_fuzz.md`):
 ~5-10 papers as a fixed regression corpus, ~100-1000
 papers as the periodic full fuzz before main-merge.
 
 ## What "passing" means before implementation
 
-`semtex.sty` is currently the v0.1 stub (654 lines). The
+`codependent.sty` is currently the v0.1 stub (654 lines). The
 v1.0 implementation has not yet been written. **All
 fixtures will fail when run today** because the v0.1 stub
 does not implement:
 
 - The dpmac-port backref machinery (Section 8a)
 - The `.sbl` writer (Section 9a)
-- The new public API (`\semtexNewCommand`,
-  `\semtexNewDocumentCommand`, `\semtextag`)
+- The new public API (`\codepNewCommand`,
+  `\codepNewDocumentCommand`, `\codeptag`)
 - The cleveref/hyperref reference patches (Section 8a.0)
 - The `\@startsection` → `cmd/section/before` migration
   (Section 8a.6.i)
@@ -219,9 +219,9 @@ engines (pdflatex, lualatex, xelatex).
 
 ## Cross-references
 
-- **Living spec**: `tools/semtex-sty/DESIGN.md`
-- **Project history**: `tools/semtex-sty/HISTORY.md`
-- **Audit trail**: `tools/semtex-cli/reviews/` (six rounds)
+- **Living spec**: `tools/codependent/DESIGN.md`
+- **Project history**: `tools/codependent/HISTORY.md`
+- **Audit trail**: `tools/codependent-cli/reviews/` (six rounds)
 - **Transferable lessons**: see `MEMORY.md` for the pointer
   to `lessons_latex_package_evolution.md` in user-global
   agent memory

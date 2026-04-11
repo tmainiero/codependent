@@ -1,23 +1,23 @@
 %% TEST-NAME: test-newcommand-tracking
-%% TEST-WHAT: Verify \semtexnewcommand{\Hom}[2]{...} emits the expected
-%%            \semtex@sbl@cmddef records (kind=newcommand, arity, src)
+%% TEST-WHAT: Verify \codepnewcommand{\Hom}[2]{...} emits the expected
+%%            \codep@sbl@cmddef records (kind=newcommand, arity, src)
 %%            and that the defined \Hom command works in the body.
-%% TEST-SOURCE: DESIGN.md §9a User API: \semtexnewcommand
+%% TEST-SOURCE: DESIGN.md §9a User API: \codepnewcommand
 %% TEST-SECTION: DESIGN.md §9a User API
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{arity}{2}
-%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Hom}{src}
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{arity}{2}
+%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{src}
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
-%% \semtexnewcommand mirrors \newcommand exactly: takes a backslash-
+%% \codepnewcommand mirrors \newcommand exactly: takes a backslash-
 %% prefixed command, optional bracketed arity, mandatory braced body.
 %% At declaration time it must emit three .sbl records (kind, arity,
 %% src). At invocation time inside an atom, the wrapped command must
-%% emit a \semtex@sbl@use record per call.
+%% emit a \codep@sbl@use record per call.
 %%
 %% This test verifies the declaration-side records. See
 %% test-cmd-uses.lvt for the invocation-side use records.
@@ -25,11 +25,11 @@
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
-\semtexnewcommand{\id}{\mathrm{id}}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\id}{\mathrm{id}}
 
 \begin{document}
 \START

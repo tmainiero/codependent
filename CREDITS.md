@@ -2,7 +2,7 @@
 
 ## Main credit
 
-`semtex.sty` is built around a direct port of the
+`codependent.sty` is built around a direct port of the
 back-reference machinery from **`dpmac.tex`** by
 **Dmitri Pavlov**.
 
@@ -14,7 +14,7 @@ back-reference machinery from **`dpmac.tex`** by
   `Copyright 2017, 2018 Dmitri Pavlov` (file header);
   the UTF-8 block carries `Copyright 2008, 2015, 2018`.
 - Fetched from: same URL, during the architecture review
-  recorded under `tools/semtex-cli/reviews/`.
+  recorded under `tools/codependent-cli/reviews/`.
 
 The SHA-256 of the upstream file fetched during review
 **must be recorded here before committing the ported
@@ -65,7 +65,7 @@ the rationale and the original critic discussion.
 
 ## What was ported
 
-### Bucket A — verbatim (rename to `\semtex@*`)
+### Bucket A — verbatim (rename to `\codep@*`)
 
 Adapted from dpmac's back-reference subset (lines
 ~1000-1088 of `dpmac.tex`).  The structure and control
@@ -74,15 +74,15 @@ Pavlov's code; only the namespace changes and the LaTeX
 hook system replaces the Plain TeX `\everypar` / `\par`
 wiring.
 
-| dpmac (Plain TeX) | semtex.sty | Role |
+| dpmac (Plain TeX) | codependent.sty | Role |
 |---|---|---|
-| `\newtoks\backreflist` | csname linked list `semtex@brq@*` | Defer queue (restructured — see Bucket B) |
-| `\def\predefbackref` | `\semtex@predefbr` (optional init) | Pre-initialise target list |
-| `\def\recordbackref` | `\semtex@recordbr` | Enqueue at reference time |
-| `\def\processbackref` | `\semtex@processbr` | Graph inversion step |
-| `\newtoks\atendbr` | `\semtex@pendingbr` | Per-atom pending back-ref text |
-| `\def\nextpar` / `\finishpar` (flush segments) | `\semtex@flushbackref` (via `para/end` hook) | Flush at atom end |
-| `\newif\ifaddbr` | `\ifsemtex@addbr` (consecutive-dup gate) | Internal gate |
+| `\newtoks\backreflist` | csname linked list `codep@brq@*` | Defer queue (restructured — see Bucket B) |
+| `\def\predefbackref` | `\codep@predefbr` (optional init) | Pre-initialise target list |
+| `\def\recordbackref` | `\codep@recordbr` | Enqueue at reference time |
+| `\def\processbackref` | `\codep@processbr` | Graph inversion step |
+| `\newtoks\atendbr` | `\codep@pendingbr` | Per-atom pending back-ref text |
+| `\def\nextpar` / `\finishpar` (flush segments) | `\codep@flushbackref` (via `para/end` hook) | Flush at atom end |
+| `\newif\ifaddbr` | `\ifcodep@addbr` (consecutive-dup gate) | Internal gate |
 
 ### Bucket B — adapted
 
@@ -104,7 +104,7 @@ LaTeX's hook system:
   does not have this concern.
 - Cleveref's `@cref`-suffixed records are filtered out of
   the `\newlabel` override, per REVIEW_C finding #12.
-- `\semtex@currentatom` is cleared at atom-end hooks to
+- `\codep@currentatom` is cleared at atom-end hooks to
   fix the stale-state bug.  Per REVIEW_A finding #3 and
   REVIEW_C finding #4.  Dpmac does not have this bug
   because its atom model and flush timing are different.
@@ -126,7 +126,7 @@ provides the functionality natively:
 - `\hinitlabelcommand` / `\pinitlabelcommand` — dpmac's
   label-macro installer.  Replaced by LaTeX's `\label` /
   `\@newl@bel` / `\@setref` chain (patched once in
-  `semtex.sty`).
+  `codependent.sty`).
 - `\everypar{\numpar}` — replaced by `\AddToHook{para/begin}`.
 - `\def\par{\finishpar}` — replaced by
   `\AddToHook{para/end}`.
@@ -147,15 +147,15 @@ Out-of-scope dpmac features not ported:
 
 The ported code (Bucket A + B) is a non-trivial subset of
 the original `dpmac.tex` and carries its own copyright.
-Because it is distributed as part of `semtex.sty` (a
+Because it is distributed as part of `codependent.sty` (a
 single file), the GPL's combined-work clause applies to
-the whole file.  `semtex.sty` is therefore licensed under
+the whole file.  `codependent.sty` is therefore licensed under
 **GNU GPL version 3**.
 
-The LaTeXML binding `semtex.ltxml` is an accompanying file
+The LaTeXML binding `codependent.ltxml` is an accompanying file
 in the same package and is also distributed under GPLv3.
 
-Downstream consumers who embed `semtex.sty` in larger
+Downstream consumers who embed `codependent.sty` in larger
 works inherit GPLv3 obligations (source availability,
 license notice).  For a research-math documentation tool
 this is the intended audience; users building
@@ -165,14 +165,14 @@ proprietary-TeX pipelines should be aware.
 
 Per user decision 2026-04-09, the project will reach out
 to Dmitri Pavlov about an optional **LPPL 1.3c
-dual-license courtesy** for `semtex.sty`.  LPPL is the
+dual-license courtesy** for `codependent.sty`.  LPPL is the
 CTAN-standard package license and dual-licensing would
 widen compatibility with TeX Live / MiKTeX distribution
 conventions.  The port cannot adopt LPPL unilaterally
 because the ported code is Pavlov's, so explicit consent
 is required.
 
-If Pavlov agrees, `semtex.sty` will ship under
+If Pavlov agrees, `codependent.sty` will ship under
 **GPLv3 OR LPPL 1.3c** at the user's choice.  If he
 declines or does not respond, GPLv3 remains the sole
 license and we retain the copyleft-forward defaults.
@@ -186,13 +186,13 @@ address before sending).
 The architecture of this package went through three
 rounds of adversarial review before settling:
 
-1. `tools/semtex-cli/reviews/REVIEW_A_correctness.md` —
+1. `tools/codependent-cli/reviews/REVIEW_A_correctness.md` —
    attacked the original Haskell-CLI-based design; 15
    findings, 1 blocker, 6 majors.
-2. `tools/semtex-cli/reviews/REVIEW_ARCH_dpmac_port.md` —
+2. `tools/codependent-cli/reviews/REVIEW_ARCH_dpmac_port.md` —
    proposed the dpmac port; 1161 lines; answered Q1-Q10
    on feasibility and performance.
-3. `tools/semtex-cli/reviews/REVIEW_C_port_proposal.md` —
+3. `tools/codependent-cli/reviews/REVIEW_C_port_proposal.md` —
    attacked the port proposal's concrete TeX code; 14
    findings, 3 blockers, 4 majors.  All fixes incorporated
    into `DESIGN.md` Section 8a.
@@ -203,7 +203,7 @@ living design but they are the audit trail.
 ## Renameability of the project token
 
 The project name token throughout this codebase is the
-literal lowercase string `semtex`.  Should the project be
+literal lowercase string `codependent`.  Should the project be
 renamed in the future, this section documents how to
 perform the rename and which tokens stay independent.
 
@@ -211,25 +211,25 @@ perform the rename and which tokens stay independent.
 
 ```sh
 # In the project root, applied to all relevant source:
-git ls-files | xargs sed -i 's/semtex/<newname>/g'
+git ls-files | xargs sed -i 's/codep/<newname>/g'
 ```
 
 This handles, in one pass:
 
-- Public API macros: `\semtextrack`, `\semtextag`,
-  `\semtexsuppress`, `\semtexappendix`,
-  `\semtexNewCommand`, `\semtexNewDocumentCommand`
-- Internal namespace: every `\semtex@*` macro and
-  every `\semtex@sbl@*` record (the `semtex` part
+- Public API macros: `\codeptrack`, `\codeptag`,
+  `\codepsuppress`, `\codepappendix`,
+  `\codepNewCommand`, `\codepNewDocumentCommand`
+- Internal namespace: every `\codep@*` macro and
+  every `\codep@sbl@*` record (the `codependent` part
   renames; the `sbl` part is independent — see below)
-- LaTeXML CSS class contract: `semtex-usedby`,
-  `semtex-usedby-label`, `semtex-usedby-list`,
-  `semtex-usedby-ref`, `semtex-usedby-trailer`,
-  `semtex-atomnum`, `semtex-atomnum-value`
-- File paths: `tools/semtex-sty/`, `tools/semtex-cli/`
-- Source files: `semtex.sty`, `semtex.ltxml`
-- Package option family names like `semtex-foo`
-- Documentation prose references to "semtex"
+- LaTeXML CSS class contract: `codependent-usedby`,
+  `codependent-usedby-label`, `codependent-usedby-list`,
+  `codependent-usedby-ref`, `codependent-usedby-trailer`,
+  `codependent-atomnum`, `codependent-atomnum-value`
+- File paths: `tools/codependent/`, `tools/codependent-cli/`
+- Source files: `codependent.sty`, `codependent.ltxml`
+- Package option family names like `codependent-foo`
+- Documentation prose references to "codependent"
 
 ### Tokens that do NOT auto-rename (independent)
 
@@ -242,9 +242,9 @@ the project name and **will survive a rename unchanged**:
   beamer, `.aux` for the kernel).  A future rename
   may keep `.sbl` or change it to a new acronym in a
   separate sed pass.
-- **`sbl` token inside `\semtex@sbl@*` records.**  The
+- **`sbl` token inside `\codep@sbl@*` records.**  The
   `sbl` substring is the sidecar acronym, not the
-  project name.  After a `s/semtex/foobar/g` rename
+  project name.  After a `s/codep/foobar/g` rename
   the records become `\foobar@sbl@*` — readable but
   with `sbl` now standing for whatever the new
   project's acronym is, or staying as historical
@@ -257,12 +257,12 @@ the project name and **will survive a rename unchanged**:
 ### Canonical-token discipline
 
 To keep the rename single-sed-clean, this codebase
-commits to using the literal lowercase string `semtex`
+commits to using the literal lowercase string `codependent`
 wherever the project name appears.  No abbreviations:
 
 - ✗ `\stx@foo`, `\smt@foo`, `\Smtex@foo`
 - ✗ `Sx`, `St`, mixed-case partials
-- ✓ `\semtex`, `\semtex@`, `\Semtex` (CamelCase form
+- ✓ `\codep`, `\codep@`, `\Codependent` (CamelCase form
   reserved for documentation prose, not code)
 
 A reviewer who finds an abbreviation that violates this
@@ -275,7 +275,7 @@ If you also want to rename the `.sbl` extension (e.g.,
 to `.fbl` for a `foobar` rename):
 
 ```sh
-git ls-files | xargs sed -i 's/semtex/foobar/g'
+git ls-files | xargs sed -i 's/codep/foobar/g'
 git ls-files | xargs sed -i 's/\.sbl\b/.fbl/g; s/\bsbl\b/fbl/g'
 git mv tools/foobar-sty/test-output.sbl tools/foobar-sty/test-output.fbl  # if test artifacts exist
 ```

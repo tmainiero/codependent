@@ -1,10 +1,10 @@
 % test-starred.lvt
-% Verifies: \semtextrack{definition} auto-registers both "definition"
+% Verifies: \codeptrack{definition} auto-registers both "definition"
 % and "definition*" (the starred variant amsthm creates automatically).
 % Starred environments should receive atom numbers just like unstarred.
 %
 % Design reference: DESIGN.md "Starred environments" --
-% \semtextrack{definition} auto-registers both definition and definition*
+% \codeptrack{definition} auto-registers both definition and definition*
 
 \documentclass{article}
 \usepackage{amsthm}
@@ -14,9 +14,9 @@
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem*{definition*}{Definition}
 
-\usepackage{semtex}
+\usepackage{codependent}
 % Registering "definition" should implicitly also register "definition*"
-\semtextrack{definition,theorem}
+\codeptrack{definition,theorem}
 
 \begin{document}
 \START

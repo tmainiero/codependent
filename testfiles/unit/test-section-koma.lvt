@@ -6,11 +6,11 @@
 %% TEST-SOURCE: REVIEW_E #5 (BLOCKER), REVIEW_F R1 (refuted, KOMA OK)
 %% TEST-SECTION: DESIGN.md §8a.6.i Sectioning hooks
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
-%% TEST-PACKAGES: scrbook,amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{paragraph} = 1
+%% TEST-PACKAGES: scrbook,amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% The original v0.1 design wrapped \@startsection. KOMA-Script
@@ -27,8 +27,8 @@
 \documentclass{scrbook}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START

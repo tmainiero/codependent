@@ -5,12 +5,12 @@
 %% TEST-SOURCE: REVIEW_E #9 (MINOR)
 %% TEST-SECTION: DESIGN.md §8a.6 inline tikz suppression
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@atom{1.1}{paragraph} = 1
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{paragraph} = 1
 %% TEST-ATOMS-MIN: 1
-%% TEST-PACKAGES: tikz-cd,amsthm,semtex
+%% TEST-PACKAGES: tikz-cd,amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% REVIEW_E finding #9 companion to test-suppress-tikz-inline.
@@ -24,8 +24,8 @@
 \usepackage{tikz-cd}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START

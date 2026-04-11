@@ -5,12 +5,12 @@
 %% TEST-SOURCE: DESIGN.md §Proof environments, §Tracked env hooks
 %% TEST-SECTION: DESIGN.md §8a
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.1*}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.2}{lemma}
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.1*}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.2}{lemma}
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% A lemma inside an adjacent proof is not inside another tracked env
@@ -23,8 +23,8 @@
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
-\usepackage{semtex}
-\semtextrack{theorem,lemma}
+\usepackage{codependent}
+\codeptrack{theorem,lemma}
 
 \begin{document}
 \START

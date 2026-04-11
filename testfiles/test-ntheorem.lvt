@@ -1,7 +1,7 @@
 % test-ntheorem.lvt
-% Verifies: semtex works with ntheorem as the theorem backend.
+% Verifies: codependent works with ntheorem as the theorem backend.
 % ntheorem redefines \newtheorem and theorem internals differently
-% from amsthm.  semtex must hook by environment name via etoolbox,
+% from amsthm.  codependent must hook by environment name via etoolbox,
 % not by assuming amsthm internals.
 
 \documentclass{article}
@@ -11,8 +11,8 @@
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{lemma}[theorem]{Lemma}
 
-\usepackage{semtex}
-\semtextrack{definition,theorem,lemma}
+\usepackage{codependent}
+\codeptrack{definition,theorem,lemma}
 
 \begin{document}
 \START

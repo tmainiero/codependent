@@ -1,14 +1,14 @@
-# real-world/ — arxiv corpus for semtex.sty integration smoke tests
+# real-world/ — arxiv corpus for codependent.sty integration smoke tests
 
 This directory is a **fixed, hand-curated** corpus of real arxiv math
-papers used to smoke-test `semtex.sty` against actual-in-the-wild
+papers used to smoke-test `codependent.sty` against actual-in-the-wild
 LaTeX. It is the small, committed companion to the larger
 **arxiv-fuzz** validation plan (~100 papers, post-implementation,
 random sample) documented in:
 
 ```
 ~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/\
-memory/project_semtex_arxiv_fuzz.md
+memory/project_codependent_arxiv_fuzz.md
 ```
 
 Whereas the fuzz run is random-sampled and thrown away, the corpus
@@ -25,7 +25,7 @@ under `real-world/` is **version-pinned**, **sha-verified**, and
 | `README.md` | This file | yes |
 | `.gitignore` | Excludes `papers/` and `wrappers/` | yes |
 | `papers/<id>/` | Extracted source trees (fetched on demand) | **no** |
-| `wrappers/<id>.tex` | Semtex-injecting wrappers around each paper | **no** |
+| `wrappers/<id>.tex` | Codependent-injecting wrappers around each paper | **no** |
 
 Fetched paper contents and generated wrappers are deliberately NOT
 committed. Only the manifest and the logic to reconstruct them live
@@ -53,7 +53,7 @@ Arxiv asks automated clients to stay under **4 requests per second**
 and to **fetch sparingly**. Our `fetch.py`:
 
 - sleeps 300 ms between downloads (~3.3 req/s worst case),
-- sends a descriptive `User-Agent: semtex-sty test corpus / semtex-arxiv-corpus 0.1`,
+- sends a descriptive `User-Agent: codependent test corpus / codependent-arxiv-corpus 0.1`,
 - is idempotent (already-fetched papers are skipped on rerun).
 
 **Do not** run `fetch.py` in CI loops. Treat it as a once-per-release
@@ -113,10 +113,10 @@ The top-level test harness is expected to:
    **twice** (the dpmac port requires a rerun for backref population).
 4. Collect per-paper metrics:
    - pdflatex exit code,
-   - presence of `\semtex@sbl@end{OK}` sentinel in the generated
+   - presence of `\codep@sbl@end{OK}` sentinel in the generated
      `.sbl` file,
    - atom-count stability between the two passes,
-   - log lines matching `Warning|Error|semtex`.
+   - log lines matching `Warning|Error|codependent`.
 5. Triage any failure into a regression fixture under
    `testfiles/integration/` (extracted minimal repro) and move on.
 
@@ -171,13 +171,13 @@ only retry the papers that did not land.
 The paper may be a PDF-only arxiv submission. Remove it from
 `corpus.lock` and pick a source-available replacement.
 
-**`wrap.py` says "already loads semtex in preamble"**
-Someone added a paper that already uses semtex (extremely unlikely
+**`wrap.py` says "already loads codependent in preamble"**
+Someone added a paper that already uses codependent (extremely unlikely
 before v1.0). Check the paper and replace the entry.
 
 ## Forward-compat note (moving to a separate repo)
 
-Per the three-layer architecture plan, `tools/semtex-sty/` is
+Per the three-layer architecture plan, `tools/codependent/` is
 intended to be extracted into a standalone CTAN repo later. This
 directory uses **only relative paths and `Path(__file__).parent`**
 so the scripts will work unchanged after extraction.

@@ -2,7 +2,7 @@
 %% Section 1: Identification
 %% ===================================================================
 \NeedsTeXFormat{LaTeX2e}[2021/06/01]
-\ProvidesPackage{semtex}[2026/04/10 v1.0 %
+\ProvidesPackage{codependent}[2026/04/10 v1.0 %
   Pavlov-style atom numbering and back-reference display]
 
 %% ===================================================================
@@ -16,338 +16,338 @@
 %% ===================================================================
 
 % Depth: how many sectioning levels in the atom display number.
-\newcommand*{\semtex@depth}{1}
+\newcommand*{\codep@depth}{1}
 
 % Back-references: inline (default), appendix, or none.
-\newcommand*{\semtex@backrefmode}{inline}
-\newbool{semtex@backrefs}
-\booltrue{semtex@backrefs}
-\newbool{semtex@appendix}
-\boolfalse{semtex@appendix}
+\newcommand*{\codep@backrefmode}{inline}
+\newbool{codep@backrefs}
+\booltrue{codep@backrefs}
+\newbool{codep@appendix}
+\boolfalse{codep@appendix}
 
 % Proofs: on (default) or off.
-\newbool{semtex@proofsnumbered}
-\booltrue{semtex@proofsnumbered}
+\newbool{codep@proofsnumbered}
+\booltrue{codep@proofsnumbered}
 
 % Proof warnings: on (default) or off.
 % Controls the "proof not adjacent to tracked environment" warning.
-\newbool{semtex@proofwarnings}
-\booltrue{semtex@proofwarnings}
+\newbool{codep@proofwarnings}
+\booltrue{codep@proofwarnings}
 
 % Concept warnings: on (default) or off.
-\newbool{semtex@conceptwarnings}
-\booltrue{semtex@conceptwarnings}
+\newbool{codep@conceptwarnings}
+\booltrue{codep@conceptwarnings}
 
 % Paragraphs: on (default) or off.
 % When off, bare paragraphs get no atom numbers, no SBL records, no backrefs.
-\newbool{semtex@paragraphs}
-\booltrue{semtex@paragraphs}
+\newbool{codep@paragraphs}
+\booltrue{codep@paragraphs}
 
 % Rendering configuration (backref style, alignment, fonts).
-\newcommand*{\semtex@backrefstyle}{block}
-\newcommand*{\semtex@backrefalign}{right}
+\newcommand*{\codep@backrefstyle}{block}
+\newcommand*{\codep@backrefalign}{right}
 % Margin truncation: max refs shown in margin mode before "...".
-\newcommand*{\semtex@backrefmarginmax}{5}
+\newcommand*{\codep@backrefmarginmax}{5}
 % String constants for \ifx comparisons in rendering macros.
-\def\semtex@const@block{block}
-\def\semtex@const@inline{inline}
-\def\semtex@const@margin{margin}
-\def\semtex@const@right{right}
-\newcommand*{\semtex@backreffont}{\scriptsize\sffamily}
-\newcommand*{\semtex@backrefcolor}{}
-\newcommand*{\semtex@backrefprefix}{}
-\newcommand*{\semtex@backreflabel}{Used in}
-\newcommand*{\semtex@marginfont}{\scriptsize}
+\def\codep@const@block{block}
+\def\codep@const@inline{inline}
+\def\codep@const@margin{margin}
+\def\codep@const@right{right}
+\newcommand*{\codep@backreffont}{\scriptsize\sffamily}
+\newcommand*{\codep@backrefcolor}{}
+\newcommand*{\codep@backrefprefix}{}
+\newcommand*{\codep@backreflabel}{Used in}
+\newcommand*{\codep@marginfont}{\scriptsize}
 
 \pgfkeys{%
-  /semtex/.is family,%
-  /semtex/.cd,%
-  depth/.store in = \semtex@depth,%
+  /codep/.is family,%
+  /codep/.cd,%
+  depth/.store in = \codep@depth,%
   depth/.default = 1,%
   backrefs/.is choice,%
   backrefs/inline/.code = {%
-    \booltrue{semtex@backrefs}%
-    \boolfalse{semtex@appendix}%
-    \renewcommand*{\semtex@backrefmode}{inline}%
+    \booltrue{codep@backrefs}%
+    \boolfalse{codep@appendix}%
+    \renewcommand*{\codep@backrefmode}{inline}%
   },%
   backrefs/appendix/.code = {%
-    \booltrue{semtex@backrefs}%
-    \booltrue{semtex@appendix}%
-    \renewcommand*{\semtex@backrefmode}{appendix}%
+    \booltrue{codep@backrefs}%
+    \booltrue{codep@appendix}%
+    \renewcommand*{\codep@backrefmode}{appendix}%
   },%
   backrefs/none/.code = {%
-    \boolfalse{semtex@backrefs}%
-    \boolfalse{semtex@appendix}%
-    \renewcommand*{\semtex@backrefmode}{none}%
+    \boolfalse{codep@backrefs}%
+    \boolfalse{codep@appendix}%
+    \renewcommand*{\codep@backrefmode}{none}%
   },%
   backrefs/.default = inline,%
   proofs/.is choice,%
-  proofs/on/.code = {\booltrue{semtex@proofsnumbered}},%
-  proofs/off/.code = {\boolfalse{semtex@proofsnumbered}},%
+  proofs/on/.code = {\booltrue{codep@proofsnumbered}},%
+  proofs/off/.code = {\boolfalse{codep@proofsnumbered}},%
   proofs/.default = on,%
   proof-warnings/.is choice,%
-  proof-warnings/on/.code = {\booltrue{semtex@proofwarnings}},%
-  proof-warnings/off/.code = {\boolfalse{semtex@proofwarnings}},%
+  proof-warnings/on/.code = {\booltrue{codep@proofwarnings}},%
+  proof-warnings/off/.code = {\boolfalse{codep@proofwarnings}},%
   proof-warnings/.default = on,%
   conceptwarnings/.is choice,%
-  conceptwarnings/on/.code = {\booltrue{semtex@conceptwarnings}},%
-  conceptwarnings/off/.code = {\boolfalse{semtex@conceptwarnings}},%
+  conceptwarnings/on/.code = {\booltrue{codep@conceptwarnings}},%
+  conceptwarnings/off/.code = {\boolfalse{codep@conceptwarnings}},%
   conceptwarnings/.default = on,%
   paragraphs/.is choice,%
-  paragraphs/on/.code = {\booltrue{semtex@paragraphs}},%
-  paragraphs/off/.code = {\boolfalse{semtex@paragraphs}},%
+  paragraphs/on/.code = {\booltrue{codep@paragraphs}},%
+  paragraphs/off/.code = {\boolfalse{codep@paragraphs}},%
   paragraphs/.default = on,%
   backref-style/.is choice,%
-  backref-style/block/.code = {\renewcommand*{\semtex@backrefstyle}{block}},%
-  backref-style/inline/.code = {\renewcommand*{\semtex@backrefstyle}{inline}},%
-  backref-style/margin/.code = {\renewcommand*{\semtex@backrefstyle}{margin}},%
+  backref-style/block/.code = {\renewcommand*{\codep@backrefstyle}{block}},%
+  backref-style/inline/.code = {\renewcommand*{\codep@backrefstyle}{inline}},%
+  backref-style/margin/.code = {\renewcommand*{\codep@backrefstyle}{margin}},%
   backref-style/.default = block,%
-  backref-margin-max/.store in = \semtex@backrefmarginmax,%
+  backref-margin-max/.store in = \codep@backrefmarginmax,%
   backref-align/.is choice,%
-  backref-align/left/.code = {\renewcommand*{\semtex@backrefalign}{left}},%
-  backref-align/right/.code = {\renewcommand*{\semtex@backrefalign}{right}},%
+  backref-align/left/.code = {\renewcommand*{\codep@backrefalign}{left}},%
+  backref-align/right/.code = {\renewcommand*{\codep@backrefalign}{right}},%
   backref-align/.default = right,%
-  backref-font/.store in = \semtex@backreffont,%
-  backref-color/.store in = \semtex@backrefcolor,%
-  backref-prefix/.store in = \semtex@backrefprefix,%
-  backref-label/.store in = \semtex@backreflabel,%
-  margin-font/.store in = \semtex@marginfont,%
+  backref-font/.store in = \codep@backreffont,%
+  backref-color/.store in = \codep@backrefcolor,%
+  backref-prefix/.store in = \codep@backrefprefix,%
+  backref-label/.store in = \codep@backreflabel,%
+  margin-font/.store in = \codep@marginfont,%
 }
 
 % Collect all options and forward to pgfkeys.
-\def\semtex@rawopts{}%
+\def\codep@rawopts{}%
 \DeclareOption*{%
-  \ifx\semtex@rawopts\@empty
-    \edef\semtex@rawopts{\CurrentOption}%
+  \ifx\codep@rawopts\@empty
+    \edef\codep@rawopts{\CurrentOption}%
   \else
-    \edef\semtex@rawopts{\semtex@rawopts,\CurrentOption}%
+    \edef\codep@rawopts{\codep@rawopts,\CurrentOption}%
   \fi
 }%
 \ProcessOptions\relax
-\ifx\semtex@rawopts\@empty\else
-  \edef\semtex@tmp@opts{%
-    \noexpand\pgfkeys{/semtex/.cd,\semtex@rawopts}%
+\ifx\codep@rawopts\@empty\else
+  \edef\codep@tmp@opts{%
+    \noexpand\pgfkeys{/codep/.cd,\codep@rawopts}%
   }%
-  \semtex@tmp@opts
+  \codep@tmp@opts
 \fi
 
-% \semtexsetup{key=value,...}  Configure semtex in preamble or body.
-\newcommand*{\semtexsetup}[1]{\pgfkeys{/semtex/.cd,#1}}
+% \codepsetup{key=value,...}  Configure codependent in preamble or body.
+\newcommand*{\codepsetup}[1]{\pgfkeys{/codep/.cd,#1}}
 
 %% ===================================================================
 %% Section 4: Internal state
 %% ===================================================================
 
-% Base counter name: auto-detected from the first env in \semtextrack.
-\newcommand*{\semtex@basecounter}{}
+% Base counter name: auto-detected from the first env in \codeptrack.
+\newcommand*{\codep@basecounter}{}
 
 % Suppression nesting depth.  When > 0, para/begin skips numbering.
-\newcount\semtex@nestlevel
-\semtex@nestlevel=0\relax
+\newcount\codep@nestlevel
+\codep@nestlevel=0\relax
 
 % Tracked-env nesting depth.  When > 1, inner tracked envs are
 % suppressed (no atom record, no SBL entry).  Uses \global\advance
 % because hooks may run inside groups.
-\newcount\semtex@trackedlevel
-\semtex@trackedlevel=0\relax
+\newcount\codep@trackedlevel
+\codep@trackedlevel=0\relax
 
 % Pending back-reference text (flushed at para/end or env end).
-\newtoks\semtex@pendingbr
+\newtoks\codep@pendingbr
 
 % Current atom display number (set when atom is created).
-\newcommand*{\semtex@currentatom}{}
+\newcommand*{\codep@currentatom}{}
 
 % Last theorem atom number for proof adjacency detection.
 % Set at theorem end, cleared at next top-level para/begin.
 % When non-empty, a standalone proof inherits this number
 % with a star suffix instead of getting its own atom number.
-\newcommand*{\semtex@lasttheorematom}{}
+\newcommand*{\codep@lasttheorematom}{}
 
-% Override source atom for \semtex@writeatomref.  When non-empty,
-% \semtex@writeatomref uses this instead of \theatom as the source
+% Override source atom for \codep@writeatomref.  When non-empty,
+% \codep@writeatomref uses this instead of \theatom as the source
 % atom number in aux records.  Used by adjacent proofs to emit
 % starred atom numbers (e.g. "2.1*") in backref records.
-\newcommand*{\semtex@sourceatom}{}
+\newcommand*{\codep@sourceatom}{}
 
 % Saved atom number for the outermost tracked env.  When nesting
 % occurs, \theatom at end-time reflects the LAST \refstepcounter
 % (the inner env), not the outermost.  This macro captures the
 % correct value after the outermost env's \refstepcounter fires.
-\newcommand*{\semtex@outeratom}{}
+\newcommand*{\codep@outeratom}{}
 
 % Flag: true inside a tracked theorem environment.
-\newbool{semtex@intheorem}
-\boolfalse{semtex@intheorem}
+\newbool{codep@intheorem}
+\boolfalse{codep@intheorem}
 
-% Flag: true when \semtextrack has been called.
-\newbool{semtex@tracked}
-\boolfalse{semtex@tracked}
+% Flag: true when \codeptrack has been called.
+\newbool{codep@tracked}
+\boolfalse{codep@tracked}
 
 % Flag: true when a sectioning heading paragraph is pending.
 % Set by the \@startsection wrapper, cleared after one para/begin.
-\newbool{semtex@sectioning}
-\boolfalse{semtex@sectioning}
+\newbool{codep@sectioning}
+\boolfalse{codep@sectioning}
 
 % Flag: true when a standalone proof's margin number is pending.
 % Set by the proof hook, cleared after one para/begin emission.
-\newbool{semtex@proofpending}
-\boolfalse{semtex@proofpending}
+\newbool{codep@proofpending}
+\boolfalse{codep@proofpending}
 
 % Restate guard: counter-indexed LIFO stack for save/clear/restore
-% of \semtex@currentatom across restated theorem occurrences
+% of \codep@currentatom across restated theorem occurrences
 % (§8a.5.a).  Depth 0 = no active restate; each push increments.
-\newcount\semtex@restate@depth
-\semtex@restate@depth=0\relax
+\newcount\codep@restate@depth
+\codep@restate@depth=0\relax
 
-% \semtex@pushcurrentatom
-%   Save \semtex@currentatom onto the restate stack and clear it
+% \codep@pushcurrentatom
+%   Save \codep@currentatom onto the restate stack and clear it
 %   to \@empty so semantic commands inside the restated body no-op.
-\newcommand*{\semtex@pushcurrentatom}{%
-  \global\advance\semtex@restate@depth 1\relax
+\newcommand*{\codep@pushcurrentatom}{%
+  \global\advance\codep@restate@depth 1\relax
   \expandafter\xdef
-    \csname semtex@saved@currentatom@%
-      \the\semtex@restate@depth\endcsname
-    {\semtex@currentatom}%
-  \global\let\semtex@currentatom\@empty
+    \csname codep@saved@currentatom@%
+      \the\codep@restate@depth\endcsname
+    {\codep@currentatom}%
+  \global\let\codep@currentatom\@empty
 }
 
-% \semtex@popcurrentatom
-%   Restore \semtex@currentatom from the restate stack, undefine
+% \codep@popcurrentatom
+%   Restore \codep@currentatom from the restate stack, undefine
 %   the slot, and decrement the depth counter.
-\newcommand*{\semtex@popcurrentatom}{%
-  \global\expandafter\let\expandafter\semtex@currentatom
-    \csname semtex@saved@currentatom@%
-      \the\semtex@restate@depth\endcsname
+\newcommand*{\codep@popcurrentatom}{%
+  \global\expandafter\let\expandafter\codep@currentatom
+    \csname codep@saved@currentatom@%
+      \the\codep@restate@depth\endcsname
   \global\expandafter\let
-    \csname semtex@saved@currentatom@%
-      \the\semtex@restate@depth\endcsname\@undefined
-  \global\advance\semtex@restate@depth -1\relax
+    \csname codep@saved@currentatom@%
+      \the\codep@restate@depth\endcsname\@undefined
+  \global\advance\codep@restate@depth -1\relax
 }
 
 % Accumulated appendix data (token register).
-% Still referenced by \semtexappendix (Section 10); Wave 3 rewires
+% Still referenced by \codepappendix (Section 10); Wave 3 rewires
 % its population path per §8a.6.g.
-\newtoks\semtex@appendixdata
+\newtoks\codep@appendixdata
 
 % Count-indexed atom array for appendix mode (§8a.6.g).
-% Each \semtex@atom@<n> expands to {<num>}{<type>}.
-% O(1) append via csname array; O(N) walk in \semtexappendix.
-\newcount\semtex@atomcount
+% Each \codep@atom@<n> expands to {<num>}{<type>}.
+% O(1) append via csname array; O(N) walk in \codepappendix.
+\newcount\codep@atomcount
 
 % Sidecar (.sbl) stream state (§9a).
-\newbool{semtex@sblopen}
-\boolfalse{semtex@sblopen}
+\newbool{codep@sblopen}
+\boolfalse{codep@sblopen}
 
 % Deferred sbl writes: preamble cmddef records accumulate here
 % and flush once the .sbl stream opens at begindocument/before.
-\def\semtex@sbl@deferred{}
+\def\codep@sbl@deferred{}
 
 %% ===================================================================
 %% Section 5: Core numbering machinery
 %% ===================================================================
 
-% \semtex@removefromreset{counter}{parent}
+% \codep@removefromreset{counter}{parent}
 %   Remove counter from parent's reset list.
-\newcommand*{\semtex@removefromreset}[2]{%
+\newcommand*{\codep@removefromreset}[2]{%
   \@ifundefined{@removefromreset}{%
     % Manual: rewrite \cl@parent without #1.
     \begingroup
-      \expandafter\let\expandafter\semtex@resetlist
+      \expandafter\let\expandafter\codep@resetlist
         \csname cl@#2\endcsname%
       \expandafter\global\expandafter\let
         \csname cl@#2\endcsname\@empty%
       \def\@elt##1{%
-        \def\semtex@cur{##1}%
-        \def\semtex@tgt{#1}%
-        \ifx\semtex@cur\semtex@tgt\else
+        \def\codep@cur{##1}%
+        \def\codep@tgt{#1}%
+        \ifx\codep@cur\codep@tgt\else
           \expandafter\g@addto@macro
             \csname cl@#2\endcsname{\@elt{##1}}%
         \fi
       }%
-      \semtex@resetlist
+      \codep@resetlist
     \endgroup
   }{%
     \@removefromreset{#1}{#2}%
   }%
 }
 
-% \semtex@setupcounter
+% \codep@setupcounter
 %   Create the atom counter and wire it to the base counter
-%   (auto-detected from the first env in \semtextrack).
-%   Called by \semtextrack.
-\newcommand*{\semtex@setupcounter}{%
+%   (auto-detected from the first env in \codeptrack).
+%   Called by \codeptrack.
+\newcommand*{\codep@setupcounter}{%
   \newcounter{atom}%
   % Copy current base counter value (if it exists).
   % Note: \@ifundefined uses \csname internally, which expands
-  % \semtex@basecounter automatically.
-  \@ifundefined{c@\semtex@basecounter}{}{%
-    \setcounter{atom}{\value{\semtex@basecounter}}%
+  % \codep@basecounter automatically.
+  \@ifundefined{c@\codep@basecounter}{}{%
+    \setcounter{atom}{\value{\codep@basecounter}}%
     % Alias: \c@<basecounter> -> \c@atom.
-    \expandafter\let\csname c@\semtex@basecounter\endcsname\c@atom
+    \expandafter\let\csname c@\codep@basecounter\endcsname\c@atom
   }%
-  \semtex@configuredepth
+  \codep@configuredepth
   % Sync base counter display format with atom display format.
-  \@ifundefined{c@\semtex@basecounter}{}{%
-    \expandafter\let\csname the\semtex@basecounter\endcsname\theatom
+  \@ifundefined{c@\codep@basecounter}{}{%
+    \expandafter\let\csname the\codep@basecounter\endcsname\theatom
   }%
 }
 
-% \semtex@configuredepth
+% \codep@configuredepth
 %   Set up counter resets and display format based on depth option
 %   and document class.
-\newcommand*{\semtex@configuredepth}{%
+\newcommand*{\codep@configuredepth}{%
   % Remove base counter from any existing reset parent.
-  \@ifundefined{c@\semtex@basecounter}{}{%
+  \@ifundefined{c@\codep@basecounter}{}{%
     \@ifundefined{cl@section}{}{%
-      \expandafter\semtex@removefromreset\expandafter{\semtex@basecounter}{section}%
+      \expandafter\codep@removefromreset\expandafter{\codep@basecounter}{section}%
     }%
     \@ifundefined{cl@chapter}{}{%
-      \expandafter\semtex@removefromreset\expandafter{\semtex@basecounter}{chapter}%
+      \expandafter\codep@removefromreset\expandafter{\codep@basecounter}{chapter}%
     }%
   }%
   \@ifundefined{chapter}{%
-    \semtex@configuredepth@article
+    \codep@configuredepth@article
   }{%
-    \semtex@configuredepth@book
+    \codep@configuredepth@book
   }%
 }
 
 % Article-class depth configuration.
-\newcommand*{\semtex@configuredepth@article}{%
-  \ifnum\semtex@depth=1\relax
+\newcommand*{\codep@configuredepth@article}{%
+  \ifnum\codep@depth=1\relax
     \@addtoreset{atom}{section}%
     \renewcommand*{\theatom}{\thesection.\arabic{atom}}%
-  \else\ifnum\semtex@depth=2\relax
+  \else\ifnum\codep@depth=2\relax
     \@addtoreset{atom}{subsection}%
     \renewcommand*{\theatom}{%
       \thesection.\arabic{subsection}.\arabic{atom}}%
-  \else\ifnum\semtex@depth=3\relax
+  \else\ifnum\codep@depth=3\relax
     \@addtoreset{atom}{subsubsection}%
     \renewcommand*{\theatom}{%
       \thesection.\arabic{subsection}.%
       \arabic{subsubsection}.\arabic{atom}}%
   \else
-    \PackageError{semtex}{Invalid depth '\semtex@depth'}{%
+    \PackageError{codependent}{Invalid depth '\codep@depth'}{%
       The depth option must be 1, 2, or 3.}%
   \fi\fi\fi
 }
 
 % Book/report-class depth configuration.
-\newcommand*{\semtex@configuredepth@book}{%
-  \ifnum\semtex@depth=1\relax
+\newcommand*{\codep@configuredepth@book}{%
+  \ifnum\codep@depth=1\relax
     \@addtoreset{atom}{chapter}%
     \renewcommand*{\theatom}{\thechapter.\arabic{atom}}%
-  \else\ifnum\semtex@depth=2\relax
+  \else\ifnum\codep@depth=2\relax
     \@addtoreset{atom}{section}%
     \renewcommand*{\theatom}{%
       \thechapter.\arabic{section}.\arabic{atom}}%
-  \else\ifnum\semtex@depth=3\relax
+  \else\ifnum\codep@depth=3\relax
     \@addtoreset{atom}{subsection}%
     \renewcommand*{\theatom}{%
       \thechapter.\arabic{section}.%
       \arabic{subsection}.\arabic{atom}}%
   \else
-    \PackageError{semtex}{Invalid depth '\semtex@depth'}{%
+    \PackageError{codependent}{Invalid depth '\codep@depth'}{%
       The depth option must be 1, 2, or 3.}%
   \fi\fi\fi
 }
@@ -356,7 +356,7 @@
 %% Section 6: Theorem environment hooks
 %% ===================================================================
 
-% \semtex@hooktheorem{envname}
+% \codep@hooktheorem{envname}
 %   Install begin/end hooks for a tracked theorem environment.
 %   Uses LaTeX 2021+ cmd hooks (cmd/<env>/before) instead of
 %   etoolbox's \AtBeginEnvironment so that hooks also fire when
@@ -368,11 +368,11 @@
 %   begin-time is the PREVIOUS atom's number.  The queuebackref
 %   call is therefore in the end hook, where the env body has
 %   run and \theatom reflects the current atom.
-%   \semtex@currentatom is demoted to a sentinel — its value
+%   \codep@currentatom is demoted to a sentinel — its value
 %   is not used, only its emptiness; we set it to a literal
 %   "1" on begin and clear to \@empty on end.
 %
-%   Restatable guard (§8a.5.a): \semtex@setupcounter aliases
+%   Restatable guard (§8a.5.a): \codep@setupcounter aliases
 %   \c@<basecounter> to \c@atom.  When thmtools' thm-restate.sty
 %   re-fires the env for \restate, it breaks this alias
 %   (\c@<basecounter> -> \c@thmt@dummyctr).  The \ifx guard
@@ -383,40 +383,40 @@
 %   \newtheorem{...}[<basecounter>] share
 %   \c@<basecounter>, so the guard covers all shared-counter
 %   envs.  Envs with independent counters are not supported by
-%   this guard and should not be passed to \semtextrack.
+%   this guard and should not be passed to \codeptrack.
 %
 %   Note: the env name is captured via the hook argument (#1)
 %   rather than \@currenvir, because under restatable the
 %   current environment is "restatable", not the theorem type.
-\newcommand*{\semtex@hooktheorem}[1]{%
+\newcommand*{\codep@hooktheorem}[1]{%
   \AddToHook{cmd/#1/before}{%
-    \expandafter\ifx\csname c@\semtex@basecounter\endcsname\c@atom
+    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
       % Original occurrence: alias intact, normal hook body.
-      \global\advance\semtex@trackedlevel by 1\relax
-      \advance\semtex@nestlevel by 1\relax
-      \ifnum\semtex@trackedlevel>1\relax
+      \global\advance\codep@trackedlevel by 1\relax
+      \advance\codep@nestlevel by 1\relax
+      \ifnum\codep@trackedlevel>1\relax
         % Nested tracked env: suppress atom creation.
-        \PackageWarning{semtex}{Nested tracked environment '#1'
+        \PackageWarning{codependent}{Nested tracked environment '#1'
           inside another tracked environment. The inner
           environment will not be assigned its own atom number}%
       \else
-        \booltrue{semtex@intheorem}%
+        \booltrue{codep@intheorem}%
         % Sentinel only — the actual atom number is read at write
         % time via \theatom (see §8a.5.0).
-        \def\semtex@currentatom{1}%
+        \def\codep@currentatom{1}%
       \fi
     \else
       % Restate occurrence: \c@<basecounter> re-let to dummy
       % counter by thm-restate.sty.  Suppress the hook body to avoid
       %   (a) reading the wrong \theatom,
-      %   (b) writing a duplicate \semtex@sbl@atom record,
+      %   (b) writing a duplicate \codep@sbl@atom record,
       %   (c) queuing back-refs against a stale atom number.
       % Bump nestlevel so paragraph numbering is suppressed
       % inside the restated body (matching normal theorem
       % semantics), and save/clear currentatom so semantic
       % commands inside the restated body no-op.
-      \advance\semtex@nestlevel by 1\relax
-      \semtex@pushcurrentatom
+      \advance\codep@nestlevel by 1\relax
+      \codep@pushcurrentatom
     \fi
   }%
   % Save \theatom after \refstepcounter fires for the outermost env.
@@ -426,59 +426,59 @@
   % trackedlevel=1 saves.  The restate guard is not needed here
   % because trackedlevel is only incremented on the original path.
   \AddToHook{cmd/#1/after}{%
-    \ifnum\semtex@trackedlevel=1\relax
-      \xdef\semtex@outeratom{\theatom}%
+    \ifnum\codep@trackedlevel=1\relax
+      \xdef\codep@outeratom{\theatom}%
       % Write atom→anchor mapping for hyperlinks (no-op without hyperref).
-      \semtex@writeanchormap{\theatom}%
+      \codep@writeanchormap{\theatom}%
     \fi
   }%
   \AddToHook{cmd/end#1/before}{%
-    \expandafter\ifx\csname c@\semtex@basecounter\endcsname\c@atom
+    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
       % Original occurrence: normal end body.
-      \ifnum\semtex@trackedlevel>1\relax
+      \ifnum\codep@trackedlevel>1\relax
         % Nested end: skip SBL/backref, just decrement.
-        \global\advance\semtex@trackedlevel by -1\relax
-        \advance\semtex@nestlevel by -1\relax
+        \global\advance\codep@trackedlevel by -1\relax
+        \advance\codep@nestlevel by -1\relax
       \else
         % Outermost end: write SBL records and flush backrefs.
-        % Use \semtex@outeratom (captured after the outermost
+        % Use \codep@outeratom (captured after the outermost
         % env's \refstepcounter) instead of \theatom, because
         % nested tracked envs may have advanced the counter.
-        \semtex@sblwrite@atom{%
-          \string\semtex@sbl@atom{\semtex@outeratom}{#1}}%
-        \semtex@sblwrite@atom{%
-          \string\semtex@sbl@meta{\semtex@outeratom}{env}{#1}}%
-        \semtex@sblwrite@atom{%
-          \string\semtex@sbl@meta{\semtex@outeratom}{src}%
+        \codep@sblwrite@atom{%
+          \string\codep@sbl@atom{\codep@outeratom}{#1}}%
+        \codep@sblwrite@atom{%
+          \string\codep@sbl@meta{\codep@outeratom}{env}{#1}}%
+        \codep@sblwrite@atom{%
+          \string\codep@sbl@meta{\codep@outeratom}{src}%
             {\jobname.tex:\the\inputlineno:1}}%
-        \global\advance\semtex@atomcount by 1\relax
-        \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
-          {\semtex@outeratom}{#1}}%
-        \semtex@queuebackref{\semtex@outeratom}%
+        \global\advance\codep@atomcount by 1\relax
+        \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
+          {\codep@outeratom}{#1}}%
+        \codep@queuebackref{\codep@outeratom}%
         % Inline style: flush NOW (still in hmode, inside the env
         % body, before amsthm's \popQED / endmark mechanism runs).
         % Block/margin styles flush later in \AfterEndEnvironment.
-        \ifx\semtex@backrefstyle\semtex@const@inline
-          \semtex@flushbackref
+        \ifx\codep@backrefstyle\codep@const@inline
+          \codep@flushbackref
         \fi
         % §8a.5 atom-end clear of the in-atom sentinel.
-        \let\semtex@currentatom\@empty
-        \global\advance\semtex@trackedlevel by -1\relax
-        \advance\semtex@nestlevel by -1\relax
-        \ifnum\semtex@nestlevel=0\relax
-          \boolfalse{semtex@intheorem}%
+        \let\codep@currentatom\@empty
+        \global\advance\codep@trackedlevel by -1\relax
+        \advance\codep@nestlevel by -1\relax
+        \ifnum\codep@nestlevel=0\relax
+          \boolfalse{codep@intheorem}%
         \fi
         % Set adjacency flag for proof inheritance.
         % A proof immediately following this theorem (before any
         % intervening paragraph) inherits this atom number with
         % a star suffix instead of getting its own number.
-        \global\edef\semtex@lasttheorematom{\semtex@outeratom}%
+        \global\edef\codep@lasttheorematom{\codep@outeratom}%
       \fi
     \else
       % Restate end: restore currentatom from the stack, then
       % decrement nestlevel (LIFO order per §8a.5.a).
-      \semtex@popcurrentatom
-      \advance\semtex@nestlevel by -1\relax
+      \codep@popcurrentatom
+      \advance\codep@nestlevel by -1\relax
     \fi
   }%
   % Flush backrefs: timing depends on backref-style.
@@ -496,13 +496,13 @@
   % so \AtEndEnvironment does nothing for inline.
   % (Block/margin flush in \AfterEndEnvironment below.)
   \AfterEndEnvironment{#1}{%
-    \ifx\semtex@backrefstyle\semtex@const@inline\else
-      \semtex@flushbackref
+    \ifx\codep@backrefstyle\codep@const@inline\else
+      \codep@flushbackref
     \fi
   }%
 }
 
-% \semtex@hookproof
+% \codep@hookproof
 %   Install hooks for the proof environment.
 %   When proofs=on (default), adjacent proofs inherit the
 %   preceding theorem's atom number with a star suffix (e.g.
@@ -512,78 +512,78 @@
 %   Standalone proofs defer margin emission to para/begin so
 %   the number appears on the "Proof." line, not on a
 %   separate line.
-\newcommand*{\semtex@hookproof}{%
+\newcommand*{\codep@hookproof}{%
   \@ifundefined{proof}{}{%
     \AtBeginEnvironment{proof}{%
-      \ifbool{semtex@proofsnumbered}{%
-        \ifnum\semtex@nestlevel>0\relax
+      \ifbool{codep@proofsnumbered}{%
+        \ifnum\codep@nestlevel>0\relax
           % Inside a tracked env: just suppress.
-          \advance\semtex@nestlevel by 1\relax
+          \advance\codep@nestlevel by 1\relax
         \else
           % Standalone proof: check adjacency.
-          \ifx\semtex@lasttheorematom\@empty
+          \ifx\codep@lasttheorematom\@empty
             % No preceding theorem: fallback to own atom number.
             \refstepcounter{atom}%
-            \semtex@writeanchormap{\theatom}%
-            \advance\semtex@nestlevel by 1\relax
-            \edef\semtex@currentatom{\theatom}%
-            \semtex@sblwrite@atom{%
-              \string\semtex@sbl@atom{\theatom}{proof}}%
-            \semtex@sblwrite@atom{%
-              \string\semtex@sbl@meta{\theatom}{src}%
+            \codep@writeanchormap{\theatom}%
+            \advance\codep@nestlevel by 1\relax
+            \edef\codep@currentatom{\theatom}%
+            \codep@sblwrite@atom{%
+              \string\codep@sbl@atom{\theatom}{proof}}%
+            \codep@sblwrite@atom{%
+              \string\codep@sbl@meta{\theatom}{src}%
                 {\jobname.tex:\the\inputlineno:1}}%
-            \global\advance\semtex@atomcount by 1\relax
-            \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
+            \global\advance\codep@atomcount by 1\relax
+            \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
               {\theatom}{proof}}%
-            \global\booltrue{semtex@proofpending}%
-            \semtex@queuebackref{\theatom}%
-            \ifbool{semtex@proofwarnings}{%
-              \PackageWarning{semtex}{Proof not adjacent to a tracked
+            \global\booltrue{codep@proofpending}%
+            \codep@queuebackref{\theatom}%
+            \ifbool{codep@proofwarnings}{%
+              \PackageWarning{codependent}{Proof not adjacent to a tracked
                 environment; assigned independent atom number \theatom}%
             }{}%
           \else
             % Adjacent to theorem: inherit atom number with star.
-            \advance\semtex@nestlevel by 1\relax
-            \edef\semtex@currentatom{\semtex@lasttheorematom*}%
-            % Override source atom for \semtex@writeatomref so
+            \advance\codep@nestlevel by 1\relax
+            \edef\codep@currentatom{\codep@lasttheorematom*}%
+            % Override source atom for \codep@writeatomref so
             % that \ref inside this proof writes "2.1*" (starred)
             % instead of "2.1" (bare \theatom).
-            \edef\semtex@sourceatom{\semtex@lasttheorematom*}%
-            \global\let\semtex@lasttheorematom\@empty
+            \edef\codep@sourceatom{\codep@lasttheorematom*}%
+            \global\let\codep@lasttheorematom\@empty
             % SBL sub-record for the inherited proof.
-            \semtex@sblwrite@atom{%
-              \string\semtex@sbl@proof{\semtex@currentatom}}%
+            \codep@sblwrite@atom{%
+              \string\codep@sbl@proof{\codep@currentatom}}%
             % No \refstepcounter -- inheriting the theorem's number.
             % No margin number -- proof shares theorem's visual
             % identity; the proof heading ("Proof.") is sufficient.
             % No atomcount append -- proof is not a separate atom.
             % No proofpending -- no deferred margin emission needed.
-            \semtex@queuebackref{\semtex@currentatom}%
+            \codep@queuebackref{\codep@currentatom}%
           \fi
         \fi
       }{%
         % proofs=off: just suppress paragraph numbering.
-        \advance\semtex@nestlevel by 1\relax
+        \advance\codep@nestlevel by 1\relax
       }%
     }%
     \AtEndEnvironment{proof}{%
-      \ifbool{semtex@proofsnumbered}{%
+      \ifbool{codep@proofsnumbered}{%
         % §8a.5 atom-end clear of the in-atom sentinel.
-        \let\semtex@currentatom\@empty
+        \let\codep@currentatom\@empty
         % Clear source atom override (adjacent proof path).
-        \let\semtex@sourceatom\@empty
+        \let\codep@sourceatom\@empty
         % Inline style: flush before env closes (hmode, before QED).
-        \ifx\semtex@backrefstyle\semtex@const@inline
-          \semtex@flushbackref
+        \ifx\codep@backrefstyle\codep@const@inline
+          \codep@flushbackref
         \fi
       }{}%
-      \advance\semtex@nestlevel by -1\relax
+      \advance\codep@nestlevel by -1\relax
     }%
     \AfterEndEnvironment{proof}{%
-      \ifbool{semtex@proofsnumbered}{%
+      \ifbool{codep@proofsnumbered}{%
         % Block/margin style: flush after env closes (vmode, after QED).
-        \ifx\semtex@backrefstyle\semtex@const@inline\else
-          \semtex@flushbackref
+        \ifx\codep@backrefstyle\codep@const@inline\else
+          \codep@flushbackref
         \fi
       }{}%
     }%
@@ -594,95 +594,95 @@
 %% Section 7: Paragraph numbering
 %% ===================================================================
 
-% \semtex@emitmargin{number}
+% \codep@emitmargin{number}
 %   Typeset a superscript atom number in the left margin.
-\newcommand*{\semtex@emitmargin}[1]{%
+\newcommand*{\codep@emitmargin}[1]{%
   \leavevmode%
   \smash{%
     \llap{%
-      {\semtex@marginfont\textsuperscript{#1}\kern0.5em}%
+      {\codep@marginfont\textsuperscript{#1}\kern0.5em}%
     }%
   }%
 }
 
-% \semtex@suppressenv{envname}
+% \codep@suppressenv{envname}
 %   Increment nestlevel on entry, decrement on exit.
-\newcommand*{\semtex@suppressenv}[1]{%
+\newcommand*{\codep@suppressenv}[1]{%
   \AtBeginEnvironment{#1}{%
-    \advance\semtex@nestlevel by 1\relax
+    \advance\codep@nestlevel by 1\relax
   }%
   \AtEndEnvironment{#1}{%
-    \advance\semtex@nestlevel by -1\relax
+    \advance\codep@nestlevel by -1\relax
   }%
 }
 
-% \semtex@suppresscmd{command}
+% \codep@suppresscmd{command}
 %   Patch a command to suppress numbering in its body.
-\newcommand*{\semtex@suppresscmd}[1]{%
-  \pretocmd{#1}{\advance\semtex@nestlevel by 1\relax}{}{}%
-  \apptocmd{#1}{\advance\semtex@nestlevel by -1\relax}{}{}%
+\newcommand*{\codep@suppresscmd}[1]{%
+  \pretocmd{#1}{\advance\codep@nestlevel by 1\relax}{}{}%
+  \apptocmd{#1}{\advance\codep@nestlevel by -1\relax}{}{}%
 }
 
-% \semtex@installsuppress
+% \codep@installsuppress
 %   Hook suppression for standard environments.
-\newcommand*{\semtex@installsuppress}{%
-  \semtex@suppressenv{enumerate}%
-  \semtex@suppressenv{itemize}%
-  \semtex@suppressenv{description}%
-  \semtex@suppressenv{quote}%
-  \semtex@suppressenv{quotation}%
-  \semtex@suppressenv{figure}%
-  \semtex@suppressenv{table}%
-  \semtex@suppressenv{minipage}%
-  \semtex@suppressenv{tabular}%
-  \semtex@suppressenv{tabularx}%
-  \semtex@suppressenv{longtable}%
-  \semtex@suppressenv{trivlist}%
+\newcommand*{\codep@installsuppress}{%
+  \codep@suppressenv{enumerate}%
+  \codep@suppressenv{itemize}%
+  \codep@suppressenv{description}%
+  \codep@suppressenv{quote}%
+  \codep@suppressenv{quotation}%
+  \codep@suppressenv{figure}%
+  \codep@suppressenv{table}%
+  \codep@suppressenv{minipage}%
+  \codep@suppressenv{tabular}%
+  \codep@suppressenv{tabularx}%
+  \codep@suppressenv{longtable}%
+  \codep@suppressenv{trivlist}%
   % Display math: suppress margin numbers inside displayed equations.
-  \semtex@suppressenv{equation}%
-  \semtex@suppressenv{equation*}%
-  \semtex@suppressenv{displaymath}%
-  \semtex@suppressenv{align}%
-  \semtex@suppressenv{align*}%
-  \semtex@suppressenv{gather}%
-  \semtex@suppressenv{gather*}%
-  \semtex@suppressenv{multline}%
-  \semtex@suppressenv{multline*}%
-  \semtex@suppressenv{flalign}%
-  \semtex@suppressenv{flalign*}%
+  \codep@suppressenv{equation}%
+  \codep@suppressenv{equation*}%
+  \codep@suppressenv{displaymath}%
+  \codep@suppressenv{align}%
+  \codep@suppressenv{align*}%
+  \codep@suppressenv{gather}%
+  \codep@suppressenv{gather*}%
+  \codep@suppressenv{multline}%
+  \codep@suppressenv{multline*}%
+  \codep@suppressenv{flalign}%
+  \codep@suppressenv{flalign*}%
 }
 
-% \semtex@suppresssectioning
+% \codep@suppresssectioning
 %   Suppress atom numbering for sectioning heading paragraphs.
 %   Uses LaTeX 2021+ generic cmd/<level>/before hooks, which
 %   fire universally across standard classes, KOMA-Script,
 %   memoir, and titlesec (unlike the old \@startsection wrapper
 %   which was a no-op under those packages).
-\newcommand*{\semtex@suppresssectioning}{%
-  \AddToHook{cmd/section/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/subsection/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/subsubsection/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/chapter/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/paragraph/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/subparagraph/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
+\newcommand*{\codep@suppresssectioning}{%
+  \AddToHook{cmd/section/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/subsection/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/subsubsection/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/chapter/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/paragraph/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/subparagraph/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
 }
 
 % Auto-suppress enumitem \newlist environments.
 %   When enumitem is loaded, wraps \newlist so that every
 %   user-defined list environment is automatically registered
 %   for paragraph-number suppression.
-\AddToHook{begindocument/before}[semtex/suppress/enumitem]{%
+\AddToHook{begindocument/before}[codependent/suppress/enumitem]{%
   \@ifpackageloaded{enumitem}{%
-    \let\semtex@orig@newlist\newlist
+    \let\codep@orig@newlist\newlist
     \def\newlist#1#2#3{%
-      \semtex@orig@newlist{#1}{#2}{#3}%
-      \semtex@suppressenv{#1}%
+      \codep@orig@newlist{#1}{#2}{#3}%
+      \codep@suppressenv{#1}%
     }%
   }{}%
 }
@@ -690,82 +690,82 @@
 % Auto-suppress tcolorbox / mdframed environments.
 %   Conditionally suppresses boxed-content environments when
 %   the respective package is loaded.
-\AddToHook{begindocument/before}[semtex/suppress/boxes]{%
+\AddToHook{begindocument/before}[codependent/suppress/boxes]{%
   \@ifpackageloaded{tcolorbox}{%
-    \semtex@suppressenv{tcolorbox}%
+    \codep@suppressenv{tcolorbox}%
   }{}%
   \@ifpackageloaded{mdframed}{%
-    \semtex@suppressenv{mdframed}%
+    \codep@suppressenv{mdframed}%
   }{}%
 }
 
-% \semtex@suppresscommands
+% \codep@suppresscommands
 %   Suppress numbering inside footnote, parbox.
 %   Note: \caption is NOT patched here because its complex
 %   calling convention (\@ifstar + optional arg) makes
 %   etoolbox patching unreliable.  Captions appear only
 %   inside figure/table environments, which are already
 %   suppressed at the env level.
-\newcommand*{\semtex@suppresscommands}{%
-  \semtex@suppresscmd{\footnote}%
-  \semtex@suppresscmd{\parbox}%
-  \semtex@suppresscmd{\maketitle}%
+\newcommand*{\codep@suppresscommands}{%
+  \codep@suppresscmd{\footnote}%
+  \codep@suppresscmd{\parbox}%
+  \codep@suppresscmd{\maketitle}%
 }
 
-% \semtex@installparahook
+% \codep@installparahook
 %   Install the para/begin hook for paragraph numbering.
 %   Checks three suppression conditions:
-%   - semtex@sectioning: one-shot flag for heading paragraphs
-%   - semtex@proofpending: deferred proof margin emission
-%   - semtex@nestlevel > 0: inside a suppressed env/command
+%   - codep@sectioning: one-shot flag for heading paragraphs
+%   - codep@proofpending: deferred proof margin emission
+%   - codep@nestlevel > 0: inside a suppressed env/command
 %   Also emits any deferred backref from the previous
 %   paragraph (saved by para/end to avoid mode-change error).
-\newcommand*{\semtex@installparahook}{%
+\newcommand*{\codep@installparahook}{%
   \AddToHook{para/begin}{%
-    \ifbool{semtex@tracked}{%
+    \ifbool{codep@tracked}{%
       % Emit deferred backref from previous paragraph.
       % Uses \vadjust{pre} to inject the "Used in X." line
       % above the current line (i.e. at the end of the
       % previous paragraph's output) without a mode change.
-      \ifx\semtex@deferredbr\@empty\else
+      \ifx\codep@deferredbr\@empty\else
         \vadjust pre{%
-          \semtex@renderdeferred{\semtex@deferredbr}%
+          \codep@renderdeferred{\codep@deferredbr}%
         }%
-        \global\let\semtex@deferredbr\@empty
+        \global\let\codep@deferredbr\@empty
       \fi
       % Clear proof adjacency flag on any top-level paragraph.
       % A paragraph between a theorem and a proof means the
       % proof is not adjacent and must get its own atom number.
-      \ifnum\semtex@nestlevel=0\relax
-        \global\let\semtex@lasttheorematom\@empty
+      \ifnum\codep@nestlevel=0\relax
+        \global\let\codep@lasttheorematom\@empty
       \fi
       % Sectioning heading paragraph: skip entirely.
-      \ifbool{semtex@sectioning}{%
-        \global\boolfalse{semtex@sectioning}%
+      \ifbool{codep@sectioning}{%
+        \global\boolfalse{codep@sectioning}%
       }{%
         % Proof pending: emit deferred margin number on the
         % proof's first line (the "Proof." heading).
-        \ifbool{semtex@proofpending}{%
-          \global\boolfalse{semtex@proofpending}%
-          \semtex@emitmargin{\semtex@currentatom}%
+        \ifbool{codep@proofpending}{%
+          \global\boolfalse{codep@proofpending}%
+          \codep@emitmargin{\codep@currentatom}%
         }{%
           % Normal paragraph (not suppressed).
-          \ifnum\semtex@nestlevel>0\relax\else
-            \ifbool{semtex@paragraphs}{%
+          \ifnum\codep@nestlevel>0\relax\else
+            \ifbool{codep@paragraphs}{%
               \refstepcounter{atom}%
-              \semtex@writeanchormap{\theatom}%
-              \edef\semtex@currentatom{\theatom}%
-              \semtex@sblwrite@atom{%
-                \string\semtex@sbl@atom
+              \codep@writeanchormap{\theatom}%
+              \edef\codep@currentatom{\theatom}%
+              \codep@sblwrite@atom{%
+                \string\codep@sbl@atom
                   {\theatom}{paragraph}}%
-              \semtex@sblwrite@atom{%
-                \string\semtex@sbl@meta{\theatom}{src}%
+              \codep@sblwrite@atom{%
+                \string\codep@sbl@meta{\theatom}{src}%
                   {\jobname.tex:\the\inputlineno:1}}%
-              \global\advance\semtex@atomcount by 1\relax
-              \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
+              \global\advance\codep@atomcount by 1\relax
+              \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
                 {\theatom}{paragraph}}%
-              \semtex@emitmargin{\semtex@currentatom}%
-              \semtex@queuebackref{\theatom}%
+              \codep@emitmargin{\codep@currentatom}%
+              \codep@queuebackref{\theatom}%
             }{}%
           \fi
         }%
@@ -793,89 +793,89 @@
 %% \hyperref[]{} is deliberately uncovered (manual link, not a
 %% cross-reference).
 
-% Pass-1 safety: \semtex@atomref must be defined to SOMETHING at
+% Pass-1 safety: \codep@atomref must be defined to SOMETHING at
 % package-load time so that if a stale .aux still references it
 % (or a user script injects a record), LaTeX's aux read does not
 % error.  A \providecommand no-op suits.
-\providecommand*{\semtex@atomref}[2]{}
+\providecommand*{\codep@atomref}[2]{}
 
-% Pass-1 safety: \semtex@anchormap records atom→hyperref anchor
+% Pass-1 safety: \codep@anchormap records atom→hyperref anchor
 % mappings.  No-op until hyperref is detected at \AtBeginDocument.
-\providecommand*{\semtex@anchormap}[2]{}
+\providecommand*{\codep@anchormap}[2]{}
 
-% \semtex@writeanchormap{atomnum}
+% \codep@writeanchormap{atomnum}
 %   Write an atom→anchor aux record.  No-op by default; activated
 %   at \AtBeginDocument when hyperref is loaded, so the write only
 %   happens when \@currentHref is meaningful.
-\newcommand*{\semtex@writeanchormap}[1]{}
+\newcommand*{\codep@writeanchormap}[1]{}
 
 % Pass-1 safety for concept-tracking aux records (§9a User API).
 % Active definitions installed at begindocument/before
 % (§8a.9 concept resolution).
-\providecommand*{\semtex@concept}[2]{}
-\providecommand*{\semtex@conceptref}[2]{}
+\providecommand*{\codep@concept}[2]{}
+\providecommand*{\codep@conceptref}[2]{}
 
 % Concept pending-list: deferred resolveconcept calls for
 % forward refs whose def record has not yet been read.
 % Flushed at begindocument/end after the full aux read.
-\gdef\semtex@conceptpending{}
+\gdef\codep@conceptpending{}
 
-% Concept name list: each concept whose \semtex@emit@use
+% Concept name list: each concept whose \codep@emit@use
 % fires at least once appends \do{name} here.  The
-% \semtex@conceptwarnscan at \AtEndDocument walks this list
+% \codep@conceptwarnscan at \AtEndDocument walks this list
 % to detect concepts with uses but no def site.
-\def\semtex@conceptnames{}
+\def\codep@conceptnames{}
 
-% \semtex@writeatomref{target}
+% \codep@writeatomref{target}
 %   Shared aux-write helper called by all patch sites.  Guards
-%   on \semtex@currentatom (in-atom sentinel: empty = not inside
+%   on \codep@currentatom (in-atom sentinel: empty = not inside
 %   a tracked atom, so no write) and on \if@filesw so --draftmode
 %   / -no-aux compiles work.  The src field is normally read from
 %   \theatom at write time per DESIGN.md §8a.5.0.  However, when
-%   \semtex@sourceatom is non-empty (adjacent proofs), it overrides
+%   \codep@sourceatom is non-empty (adjacent proofs), it overrides
 %   \theatom to emit starred atom numbers (e.g. "2.1*").
-\def\semtex@writeatomref#1{%
-  \ifx\semtex@currentatom\@empty\else
+\def\codep@writeatomref#1{%
+  \ifx\codep@currentatom\@empty\else
     \if@filesw
-      % Determine source atom: use \semtex@sourceatom override
+      % Determine source atom: use \codep@sourceatom override
       % (set by adjacent proofs for starred numbers) or fall
       % back to \theatom (normal path).
-      \ifx\semtex@sourceatom\@empty
-        \edef\semtex@tmp@srcatom{\theatom}%
+      \ifx\codep@sourceatom\@empty
+        \edef\codep@tmp@srcatom{\theatom}%
       \else
-        \edef\semtex@tmp@srcatom{\semtex@sourceatom}%
+        \edef\codep@tmp@srcatom{\codep@sourceatom}%
       \fi
       \protected@write\@auxout{}{%
-        \string\semtex@atomref
-          {\semtex@tmp@srcatom}{#1}%
+        \string\codep@atomref
+          {\codep@tmp@srcatom}{#1}%
       }%
     \fi
   \fi
 }
 
-% \semtex@installatomrefpatch
+% \codep@installatomrefpatch
 %   Install all three patch sites.  Called from the
 %   begindocument/before hook (Section 8a.7), AFTER
 %   hyperref/cleveref have finished wrapping their respective
 %   dispatchers.  Patching at this point wraps the OUTERMOST
 %   live definition, preserving every prior hook (hyperlink
 %   emission, cref formatting).
-\def\semtex@installatomrefpatch{%
+\def\codep@installatomrefpatch{%
   %% ---- Patch 1: kernel \@setref ----
   %% Covers \ref, \eqref, \pageref (via \@pagesetref
   %% delegation), \vref, \Vref, \vpageref, \nameref.
-  \let\semtex@orig@setref\@setref
+  \let\codep@orig@setref\@setref
   \def\@setref##1##2##3{%
-    \semtex@orig@setref{##1}{##2}{##3}%
-    \semtex@writeatomref{##3}%
+    \codep@orig@setref{##1}{##2}{##3}%
+    \codep@writeatomref{##3}%
   }%
   %% ---- Patch 2: cleveref \cref@getlabel ----
   %% Covers every cleveref family command.
   \@ifpackageloaded{cleveref}{%
-    \let\semtex@orig@crefgetlabel\cref@getlabel
+    \let\codep@orig@crefgetlabel\cref@getlabel
     \def\cref@getlabel##1##2{%
-      \semtex@orig@crefgetlabel{##1}{##2}%
-      \semtex@writeatomref{##1}%
+      \codep@orig@crefgetlabel{##1}{##2}%
+      \codep@writeatomref{##1}%
     }%
   }{}%
   %% ---- Patch 3: hyperref \HyRef@autosetref / \HyRef@@StarSetRef ----
@@ -883,17 +883,17 @@
   %% \HyRef@@StarSetRef covers \ref* and \Ref.
   \@ifpackageloaded{hyperref}{%
     \@ifundefined{HyRef@autosetref}{}{%
-      \let\semtex@orig@HyRefautosetref\HyRef@autosetref
+      \let\codep@orig@HyRefautosetref\HyRef@autosetref
       \def\HyRef@autosetref##1##2##3{%
-        \semtex@orig@HyRefautosetref{##1}{##2}{##3}%
-        \semtex@writeatomref{##2}%
+        \codep@orig@HyRefautosetref{##1}{##2}{##3}%
+        \codep@writeatomref{##2}%
       }%
     }%
     \@ifundefined{HyRef@@StarSetRef}{}{%
-      \let\semtex@orig@HyRefStarSetRef\HyRef@@StarSetRef
+      \let\codep@orig@HyRefStarSetRef\HyRef@@StarSetRef
       \def\HyRef@@StarSetRef##1##2##3{%
-        \semtex@orig@HyRefStarSetRef{##1}{##2}{##3}%
-        \semtex@writeatomref{##2}%
+        \codep@orig@HyRefStarSetRef{##1}{##2}{##3}%
+        \codep@writeatomref{##2}%
       }%
     }%
   }{}%
@@ -902,33 +902,33 @@
 %% --- Section 8a.1: Defer queue (csname linked list) ---
 %% Per REVIEW_C finding #2, the toks-register pattern from dpmac
 %% is O(N^2) at 15k refs; replaced with a csname linked list
-%% keyed by a monotonic \semtex@brid counter.
+%% keyed by a monotonic \codep@brid counter.
 
-\newcount\semtex@brid
-\semtex@brid=0\relax
+\newcount\codep@brid
+\codep@brid=0\relax
 
-% \semtex@recordbr{src}{tgt}
+% \codep@recordbr{src}{tgt}
 %   Enqueue a processbackref call.  O(1) per append.
-\def\semtex@recordbr#1#2{%
-  \global\advance\semtex@brid by 1\relax
+\def\codep@recordbr#1#2{%
+  \global\advance\codep@brid by 1\relax
   \expandafter\xdef
-    \csname semtex@brq@\the\semtex@brid\endcsname{%
-      \noexpand\semtex@processbr{#2}{#1}%
+    \csname codep@brq@\the\codep@brid\endcsname{%
+      \noexpand\codep@processbr{#2}{#1}%
     }%
 }
 
-% \semtex@flushbrqueue
+% \codep@flushbrqueue
 %   Walk the linked list once, O(N) total.  Called from the
 %   begindocument/end hook (Section 8a.7).
-\def\semtex@flushbrqueue{%
+\def\codep@flushbrqueue{%
   \begingroup
     \count@=\z@
     \loop
-      \ifnum\count@<\semtex@brid
+      \ifnum\count@<\codep@brid
         \advance\count@ by 1\relax
-        \csname semtex@brq@\the\count@\endcsname
+        \csname codep@brq@\the\count@\endcsname
         \global\expandafter\let
-          \csname semtex@brq@\the\count@\endcsname\relax
+          \csname codep@brq@\the\count@\endcsname\relax
     \repeat
   \endgroup
 }
@@ -937,64 +937,64 @@
 %% The \providecommand no-op from Section 8a.0 is REPLACED by
 %% this active definition at begindocument/before (Section
 %% 8a.7), before LaTeX reads .aux in \begin{document}.  From
-%% that point on, every \semtex@atomref{src}{tgt} that the .aux
+%% that point on, every \codep@atomref{src}{tgt} that the .aux
 %% read fires lands here and enqueues a processbackref call.
 %%
 %% Per REVIEW_C finding #4, guard on empty src (orphan refs
 %% emitted between atoms).  Belt-and-braces: the \@setref patch
-%% already skips the write when \semtex@currentatom is empty.
+%% already skips the write when \codep@currentatom is empty.
 
-\def\semtex@atomref@active#1#2{%
-  \edef\semtex@tmp@src{#1}%
-  \ifx\semtex@tmp@src\@empty\else
-    \semtex@recordbr{#1}{#2}%
+\def\codep@atomref@active#1#2{%
+  \edef\codep@tmp@src{#1}%
+  \ifx\codep@tmp@src\@empty\else
+    \codep@recordbr{#1}{#2}%
   \fi
 }
 
 %% --- Section 8a.3: Per-target linked list, processbr, collapsebr ---
 %% For each target atom we maintain:
-%%   \semtex@brcount@<num>     -- count of appended refs
-%%   \semtex@brnode@<num>@<k>  -- the k-th ref text
+%%   \codep@brcount@<num>     -- count of appended refs
+%%   \codep@brnode@<num>@<k>  -- the k-th ref text
 %% At typeset time the nodes are collapsed into the display
-%% macro \semtex@br@<num>.  Per REVIEW_C finding #2 second half,
+%% macro \codep@br@<num>.  Per REVIEW_C finding #2 second half,
 %% this turns O(degree^2) into O(degree).
 
-% \semtex@processbr{tgt}{src}
+% \codep@processbr{tgt}{src}
 %   #1 = target label key (display number via lblnum map)
 %   #2 = source atom display number
-\def\semtex@processbr#1#2{%
-  \expandafter\ifx\csname semtex@lblnum@#1\endcsname\relax
+\def\codep@processbr#1#2{%
+  \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax
     % Unknown target: silently drop.
   \else
-    \edef\semtex@tmp@tgt{\csname semtex@lblnum@#1\endcsname}%
-    \edef\semtex@tmp@src{#2}%
+    \edef\codep@tmp@tgt{\csname codep@lblnum@#1\endcsname}%
+    \edef\codep@tmp@src{#2}%
     % Self-ref guard (REVIEW_C finding #10).
-    \ifx\semtex@tmp@src\semtex@tmp@tgt\else
+    \ifx\codep@tmp@src\codep@tmp@tgt\else
       % Dedup against previous append for this target.
-      \edef\semtex@tmp@last{%
-        \csname semtex@brlast@\semtex@tmp@tgt\endcsname}%
-      \ifx\semtex@tmp@last\semtex@tmp@src
+      \edef\codep@tmp@last{%
+        \csname codep@brlast@\codep@tmp@tgt\endcsname}%
+      \ifx\codep@tmp@last\codep@tmp@src
         % Consecutive duplicate: skip.
       \else
         \global\expandafter\let
-          \csname semtex@brlast@\semtex@tmp@tgt\endcsname
-          \semtex@tmp@src
+          \csname codep@brlast@\codep@tmp@tgt\endcsname
+          \codep@tmp@src
         % Append a new linked-list node.
         \expandafter\ifx
-            \csname semtex@brcount@\semtex@tmp@tgt\endcsname\relax
+            \csname codep@brcount@\codep@tmp@tgt\endcsname\relax
           \global\expandafter\def
-            \csname semtex@brcount@\semtex@tmp@tgt\endcsname{0}%
+            \csname codep@brcount@\codep@tmp@tgt\endcsname{0}%
         \fi
-        \edef\semtex@tmp@k{%
-          \csname semtex@brcount@\semtex@tmp@tgt\endcsname}%
-        \count@=\semtex@tmp@k\relax
+        \edef\codep@tmp@k{%
+          \csname codep@brcount@\codep@tmp@tgt\endcsname}%
+        \count@=\codep@tmp@k\relax
         \advance\count@ by 1\relax
         \expandafter\xdef
-          \csname semtex@brcount@\semtex@tmp@tgt\endcsname
+          \csname codep@brcount@\codep@tmp@tgt\endcsname
           {\the\count@}%
         \expandafter\xdef
           \csname
-            semtex@brnode@\semtex@tmp@tgt @\the\count@%
+            codep@brnode@\codep@tmp@tgt @\the\count@%
           \endcsname
           {#2}%
       \fi
@@ -1002,79 +1002,79 @@
   \fi
 }
 
-% \semtex@appendbr{tgtnum}{srcnum}
+% \codep@appendbr{tgtnum}{srcnum}
 %   Append a backref edge directly using display numbers
 %   (no lblnum lookup).  Used by concept resolution where
 %   both source and target atom numbers are already known.
 %   Includes self-ref and consecutive-dedup guards.
-\def\semtex@appendbr#1#2{%
-  \edef\semtex@tmp@tgt{#1}%
-  \edef\semtex@tmp@src{#2}%
+\def\codep@appendbr#1#2{%
+  \edef\codep@tmp@tgt{#1}%
+  \edef\codep@tmp@src{#2}%
   % Self-ref guard.
-  \ifx\semtex@tmp@src\semtex@tmp@tgt\else
+  \ifx\codep@tmp@src\codep@tmp@tgt\else
     % Dedup against previous append for this target.
-    \edef\semtex@tmp@last{%
-      \csname semtex@brlast@\semtex@tmp@tgt\endcsname}%
-    \ifx\semtex@tmp@last\semtex@tmp@src
+    \edef\codep@tmp@last{%
+      \csname codep@brlast@\codep@tmp@tgt\endcsname}%
+    \ifx\codep@tmp@last\codep@tmp@src
       % Consecutive duplicate: skip.
     \else
       \global\expandafter\let
-        \csname semtex@brlast@\semtex@tmp@tgt\endcsname
-        \semtex@tmp@src
+        \csname codep@brlast@\codep@tmp@tgt\endcsname
+        \codep@tmp@src
       \expandafter\ifx
-          \csname semtex@brcount@\semtex@tmp@tgt%
+          \csname codep@brcount@\codep@tmp@tgt%
           \endcsname\relax
         \global\expandafter\def
-          \csname semtex@brcount@\semtex@tmp@tgt%
+          \csname codep@brcount@\codep@tmp@tgt%
           \endcsname{0}%
       \fi
-      \edef\semtex@tmp@k{%
-        \csname semtex@brcount@\semtex@tmp@tgt%
+      \edef\codep@tmp@k{%
+        \csname codep@brcount@\codep@tmp@tgt%
         \endcsname}%
-      \count@=\semtex@tmp@k\relax
+      \count@=\codep@tmp@k\relax
       \advance\count@ by 1\relax
       \expandafter\xdef
-        \csname semtex@brcount@\semtex@tmp@tgt%
+        \csname codep@brcount@\codep@tmp@tgt%
         \endcsname{\the\count@}%
       \expandafter\xdef
         \csname
-          semtex@brnode@\semtex@tmp@tgt @\the\count@%
+          codep@brnode@\codep@tmp@tgt @\the\count@%
         \endcsname
         {#2}%
     \fi
   \fi
 }
 
-% \semtex@collapsebr{targetnum}
-%   Build a comma-joined display macro \semtex@br@<num> from
+% \codep@collapsebr{targetnum}
+%   Build a comma-joined display macro \codep@br@<num> from
 %   the per-target node csnames.  Called lazily the first time
-%   \semtex@queuebackref looks up <num>.
-\def\semtex@collapsebr#1{%
-  \expandafter\ifx\csname semtex@brcount@#1\endcsname\relax
+%   \codep@queuebackref looks up <num>.
+\def\codep@collapsebr#1{%
+  \expandafter\ifx\csname codep@brcount@#1\endcsname\relax
     % No refs to this target.
     \global\expandafter\let
-      \csname semtex@br@#1\endcsname\@empty
+      \csname codep@br@#1\endcsname\@empty
   \else
     \begingroup
-      \edef\semtex@tmp@n{\csname semtex@brcount@#1\endcsname}%
-      \def\semtex@tmp@acc{}%
+      \edef\codep@tmp@n{\csname codep@brcount@#1\endcsname}%
+      \def\codep@tmp@acc{}%
       \count@=\z@
       \loop
-        \ifnum\count@<\semtex@tmp@n
+        \ifnum\count@<\codep@tmp@n
           \advance\count@ by 1\relax
-          \edef\semtex@tmp@node{%
-            \csname semtex@brnode@#1@\the\count@\endcsname}%
-          \ifx\semtex@tmp@acc\@empty
-            \edef\semtex@tmp@acc{%
-              \noexpand\semtex@brhyper{\semtex@tmp@node}}%
+          \edef\codep@tmp@node{%
+            \csname codep@brnode@#1@\the\count@\endcsname}%
+          \ifx\codep@tmp@acc\@empty
+            \edef\codep@tmp@acc{%
+              \noexpand\codep@brhyper{\codep@tmp@node}}%
           \else
-            \edef\semtex@tmp@acc{%
-              \unexpanded\expandafter{\semtex@tmp@acc}, %
-              \noexpand\semtex@brhyper{\semtex@tmp@node}}%
+            \edef\codep@tmp@acc{%
+              \unexpanded\expandafter{\codep@tmp@acc}, %
+              \noexpand\codep@brhyper{\codep@tmp@node}}%
           \fi
       \repeat
       \global\expandafter\let
-        \csname semtex@br@#1\endcsname\semtex@tmp@acc
+        \csname codep@br@#1\endcsname\codep@tmp@acc
     \endgroup
   \fi
 }
@@ -1086,140 +1086,140 @@
 %% block does not clobber it.  Also override \newlabelxx for
 %% the pre-2023 hyperref pathway.
 
-% \semtex@grabfirst#1#2\@nil -> #1
+% \codep@grabfirst#1#2\@nil -> #1
 %   Grab the first brace group of a delimited argument.
-\def\semtex@grabfirst#1#2\@nil{#1}
+\def\codep@grabfirst#1#2\@nil{#1}
 
-% \semtex@grab4th#1#2#3#4#5\@nil -> #4
+% \codep@grab4th#1#2#3#4#5\@nil -> #4
 %   Grab the 4th brace group.  Used to extract hyperref's
 %   anchor name from \newlabel's value ({num}{page}{title}{anchor}{}).
-\def\semtex@grab4th#1#2#3#4#5\@nil{#4}
+\def\codep@grab4th#1#2#3#4#5\@nil{#4}
 
-% \semtex@extractanchor{key}{value}
+% \codep@extractanchor{key}{value}
 %   Extract hyperref's anchor (4th field of \newlabel value)
 %   and store a reverse mapping: atom number -> anchor name.
 %   No-ops for @cref keys or when value has fewer than 4 fields.
-\def\semtex@extractanchor#1#2{%
-  \semtex@ifcrefkey{#1}{}{%
-    \semtex@ifdatakey{#1}{}{%
-      \expandafter\semtex@extractanchor@ii
-        \expandafter{\semtex@grab4th#2{}{}{}{}\@nil}{#1}%
+\def\codep@extractanchor#1#2{%
+  \codep@ifcrefkey{#1}{}{%
+    \codep@ifdatakey{#1}{}{%
+      \expandafter\codep@extractanchor@ii
+        \expandafter{\codep@grab4th#2{}{}{}{}\@nil}{#1}%
     }%
   }%
 }
-\def\semtex@extractanchor@ii#1#2{%
+\def\codep@extractanchor@ii#1#2{%
   % #1 = anchor (4th field or empty), #2 = label key
-  \def\semtex@tmp{#1}%
-  \ifx\semtex@tmp\@empty\else
-    \expandafter\ifx\csname semtex@lblnum@#2\endcsname\relax\else
+  \def\codep@tmp{#1}%
+  \ifx\codep@tmp\@empty\else
+    \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax\else
       % Resolve atom number first, then define the anchor mapping.
       % Use \protected@edef to survive non-expandable tokens in
       % unusual \newlabel values (e.g. thm-restate counter saves).
-      \protected@edef\semtex@tmp@num{%
-        \csname semtex@lblnum@#2\endcsname}%
+      \protected@edef\codep@tmp@num{%
+        \csname codep@lblnum@#2\endcsname}%
       \expandafter\xdef
-        \csname semtex@anchor@\semtex@tmp@num\endcsname{#1}%
+        \csname codep@anchor@\codep@tmp@num\endcsname{#1}%
     \fi
   \fi
 }
-% \semtex@ifdatakey{key}{then}{else}
+% \codep@ifdatakey{key}{then}{else}
 %   True iff the label key ends in "@data" (thm-restate internal).
 %   These contain \setcounter calls, not display numbers.
-\def\semtex@ifdatakey#1{%
-  \semtex@isdatafalse
-  \def\semtex@ifdatakey@probe##1@data##2\@nil{%
-    \def\semtex@tmp@b{##2}%
-    \ifx\semtex@tmp@b\@empty\else
-      \def\semtex@tmp@c{@data}%
-      \ifx\semtex@tmp@b\semtex@tmp@c
-        \semtex@isdatatrue
+\def\codep@ifdatakey#1{%
+  \codep@isdatafalse
+  \def\codep@ifdatakey@probe##1@data##2\@nil{%
+    \def\codep@tmp@b{##2}%
+    \ifx\codep@tmp@b\@empty\else
+      \def\codep@tmp@c{@data}%
+      \ifx\codep@tmp@b\codep@tmp@c
+        \codep@isdatatrue
       \fi
     \fi
   }%
-  \semtex@ifdatakey@probe#1@data\@nil
-  \ifsemtex@isdata
+  \codep@ifdatakey@probe#1@data\@nil
+  \ifcodep@isdata
     \expandafter\@firstoftwo
   \else
     \expandafter\@secondoftwo
   \fi
 }
 
-% Flag used only inside \semtex@ifcrefkey.
-\newif\ifsemtex@iscref
-% Flag used only inside \semtex@ifdatakey (separate from \ifsemtex@iscref).
-\newif\ifsemtex@isdata
+% Flag used only inside \codep@ifcrefkey.
+\newif\ifcodep@iscref
+% Flag used only inside \codep@ifdatakey (separate from \ifcodep@iscref).
+\newif\ifcodep@isdata
 
-\def\semtex@installnewlabel{%
-  \let\semtex@orig@newlabel\newlabel
+\def\codep@installnewlabel{%
+  \let\codep@orig@newlabel\newlabel
   \def\newlabel##1##2{%
-    \semtex@orig@newlabel{##1}{##2}%
-    \semtex@extractlblnum{##1}{##2}%
-    \semtex@extractanchor{##1}{##2}%
+    \codep@orig@newlabel{##1}{##2}%
+    \codep@extractlblnum{##1}{##2}%
+    \codep@extractanchor{##1}{##2}%
   }%
   % Pre-2023 hyperref path: \newlabelxx has 6 args.  Hyperref
   % installs it in \AtBeginDocument and it races with our
   % override, so we override it too.
   \@ifundefined{newlabelxx}{}{%
-    \let\semtex@orig@newlabelxx\newlabelxx
+    \let\codep@orig@newlabelxx\newlabelxx
     \def\newlabelxx##1##2##3##4##5##6{%
-      \semtex@orig@newlabelxx
+      \codep@orig@newlabelxx
         {##1}{##2}{##3}{##4}{##5}{##6}%
       % ##2 is already the display number for the 6-arg form.
       \expandafter\gdef
-        \csname semtex@lblnum@##1\endcsname{##2}%
+        \csname codep@lblnum@##1\endcsname{##2}%
       % ##5 is the hyperref anchor name; store reverse mapping.
-      \semtex@ifcrefkey{##1}{}{%
-        \def\semtex@tmp{##5}%
-        \ifx\semtex@tmp\@empty\else
+      \codep@ifcrefkey{##1}{}{%
+        \def\codep@tmp{##5}%
+        \ifx\codep@tmp\@empty\else
           \expandafter\xdef
-            \csname semtex@anchor@##2\endcsname{##5}%
+            \csname codep@anchor@##2\endcsname{##5}%
         \fi
       }%
     }%
   }%
 }
 
-% \semtex@extractlblnum{key}{value}
+% \codep@extractlblnum{key}{value}
 %   value is the raw 2nd arg of \newlabel; after TeX brace-
 %   stripping it is "{num}{page}{...}{...}{...}".  Grab the
 %   first brace group and stash it under the key.  Skip keys
 %   that END in @cref (cleveref internal records).
-\def\semtex@extractlblnum#1#2{%
-  \semtex@ifcrefkey{#1}{%
+\def\codep@extractlblnum#1#2{%
+  \codep@ifcrefkey{#1}{%
     % @cref-suffixed: skip silently.
   }{%
-    \expandafter\semtex@extractlblnum@ii
-      \expandafter{\semtex@grabfirst#2\@nil}{#1}%
+    \expandafter\codep@extractlblnum@ii
+      \expandafter{\codep@grabfirst#2\@nil}{#1}%
   }%
 }
-\def\semtex@extractlblnum@ii#1#2{%
-  \expandafter\gdef\csname semtex@lblnum@#2\endcsname{#1}%
+\def\codep@extractlblnum@ii#1#2{%
+  \expandafter\gdef\csname codep@lblnum@#2\endcsname{#1}%
 }
 
-% Sentinel used by \semtex@ifcrefkey.
-\def\semtex@ifcrefsentinel{@cref}
+% Sentinel used by \codep@ifcrefkey.
+\def\codep@ifcrefsentinel{@cref}
 
-% \semtex@ifcrefkey{key}{then}{else}
+% \codep@ifcrefkey{key}{then}{else}
 %   True iff the label key ENDS in "@cref".  Per REVIEW_D
 %   finding #4, matching "any key containing @cref" incorrectly
 %   dropped keys like "lemma@crefnum".  The delimited-arg probe
 %   splits "<key>@cref\@nil" on the FIRST occurrence of "@cref";
 %   the key ends in @cref iff the tail is exactly "@cref".
-\def\semtex@ifcrefkey#1{%
-  \semtex@iscreffalse
-  \def\semtex@ifcrefkey@probe##1@cref##2\@nil{%
-    \def\semtex@tmp@b{##2}%
-    \ifx\semtex@tmp@b\@empty
+\def\codep@ifcrefkey#1{%
+  \codep@iscreffalse
+  \def\codep@ifcrefkey@probe##1@cref##2\@nil{%
+    \def\codep@tmp@b{##2}%
+    \ifx\codep@tmp@b\@empty
       % No @cref in the key at all; the probe's own trailing
       % @cref absorbed the split -> NOT a cref key.
     \else
-      \ifx\semtex@tmp@b\semtex@ifcrefsentinel
-        \semtex@iscreftrue
+      \ifx\codep@tmp@b\codep@ifcrefsentinel
+        \codep@iscreftrue
       \fi
     \fi
   }%
-  \semtex@ifcrefkey@probe#1@cref\@nil
-  \ifsemtex@iscref
+  \codep@ifcrefkey@probe#1@cref\@nil
+  \ifcodep@iscref
     \expandafter\@firstoftwo
   \else
     \expandafter\@secondoftwo
@@ -1227,187 +1227,187 @@
 }
 
 %% --- Section 8a.7: Hook installation ---
-%% Per REVIEW_D finding #2, semtex-owned labels on
+%% Per REVIEW_D finding #2, codependent-owned labels on
 %% begindocument/before get EXPLICIT relative ordering rather
 %% than both claiming "before *".  The \DeclareHookRule below
-%% pins \semtex/backref/install to run before hyperref.
+%% pins \codep/backref/install to run before hyperref.
 
 % Install the three \@setref-family patches AND the \newlabel
-% override AND the active \semtex@atomref callback at
+% override AND the active \codep@atomref callback at
 % begindocument/before.  All three belong together because
 % they co-depend on being in place before the .aux read during
 % \begin{document}.
-\AddToHook{begindocument/before}[semtex/backref/install]{%
-  \semtex@installatomrefpatch
-  \semtex@installnewlabel
+\AddToHook{begindocument/before}[codependent/backref/install]{%
+  \codep@installatomrefpatch
+  \codep@installnewlabel
   % Swap the providecommand no-op for the active callback.
-  \let\semtex@atomref\semtex@atomref@active
+  \let\codep@atomref\codep@atomref@active
 }
 
 %% --- Section 8a.9: Concept-aware forward-reference resolution ---
-%% Active callbacks for \semtex@concept and \semtex@conceptref.
+%% Active callbacks for \codep@concept and \codep@conceptref.
 %% Defined here (at package-load time, under \makeatletter);
 %% swapped in at begindocument/before by \let, following the
-%% same pattern as \semtex@atomref@active.
+%% same pattern as \codep@atomref@active.
 
-% \semtex@concept@active{name}{atomnum}
+% \codep@concept@active{name}{atomnum}
 %   Populate the concept def-site map.  Per J3, silently
 %   overwrite on duplicate aux records (stale prior-run).
-\def\semtex@concept@active#1#2{%
+\def\codep@concept@active#1#2{%
   \expandafter\gdef
-    \csname semtex@conceptdef@#1\endcsname{#2}%
+    \csname codep@conceptdef@#1\endcsname{#2}%
 }
 
-% \semtex@conceptref@active{srcatom}{conceptname}
+% \codep@conceptref@active{srcatom}{conceptname}
 %   If the def site is already in the concept map, resolve
-%   immediately; otherwise defer to \semtex@conceptpending
+%   immediately; otherwise defer to \codep@conceptpending
 %   for retry after the full aux read completes.
-\def\semtex@conceptref@active#1#2{%
-  \@ifundefined{semtex@conceptdef@#2}%
-    {\g@addto@macro\semtex@conceptpending{%
-       \semtex@resolveconcept{#1}{#2}}}%
-    {\semtex@resolveconcept{#1}{#2}}%
+\def\codep@conceptref@active#1#2{%
+  \@ifundefined{codep@conceptdef@#2}%
+    {\g@addto@macro\codep@conceptpending{%
+       \codep@resolveconcept{#1}{#2}}}%
+    {\codep@resolveconcept{#1}{#2}}%
 }
 
-% \semtex@resolveconcept{srcatom}{conceptname}
+% \codep@resolveconcept{srcatom}{conceptname}
 %   Look up the def atom for the named concept and feed the
 %   resolved edge directly into the per-target node list via
-%   \semtex@appendbr (bypasses the label lookup in processbr,
+%   \codep@appendbr (bypasses the label lookup in processbr,
 %   since concept edges carry raw atom display numbers).
-%   If the concept has no def site (semtex@conceptdef@<name>
+%   If the concept has no def site (codep@conceptdef@<name>
 %   undefined), silently no-op — the missing-def warning
 %   fires at \AtEndDocument via the concept name scan.
-\def\semtex@resolveconcept#1#2{%
-  \@ifundefined{semtex@conceptdef@#2}{}{%
-    \edef\semtex@cr@tgt{%
-      \csname semtex@conceptdef@#2\endcsname}%
-    \edef\semtex@cr@act{%
-      \noexpand\semtex@appendbr
-        {\semtex@cr@tgt}{#1}}%
-    \semtex@cr@act
+\def\codep@resolveconcept#1#2{%
+  \@ifundefined{codep@conceptdef@#2}{}{%
+    \edef\codep@cr@tgt{%
+      \csname codep@conceptdef@#2\endcsname}%
+    \edef\codep@cr@act{%
+      \noexpand\codep@appendbr
+        {\codep@cr@tgt}{#1}}%
+    \codep@cr@act
   }%
 }
 
 % Swap the providecommand no-ops for the active callbacks
 % at begindocument/before, before the .aux read.
-\AddToHook{begindocument/before}[semtex/concept/install]{%
-  \let\semtex@concept\semtex@concept@active
-  \let\semtex@conceptref\semtex@conceptref@active
+\AddToHook{begindocument/before}[codependent/concept/install]{%
+  \let\codep@concept\codep@concept@active
+  \let\codep@conceptref\codep@conceptref@active
 }
 
 % Flush the backref queue AFTER aux has been read.  The aux
 % read happens during the kernel's \document macro before any
 % \AtBeginDocument hook fires, so begindocument/end is safe.
-\AddToHook{begindocument/end}[semtex/backref/flush]{%
-  \semtex@flushbrqueue
+\AddToHook{begindocument/end}[codependent/backref/flush]{%
+  \codep@flushbrqueue
 }
 
 % Flush the concept pending list AFTER the backref queue
-% flush.  Deferred \semtex@resolveconcept calls expand here;
+% flush.  Deferred \codep@resolveconcept calls expand here;
 % the concept map is now complete from the full aux read.
-\AddToHook{begindocument/end}[semtex/concept/flush]{%
-  \semtex@conceptpending
-  \global\let\semtex@conceptpending\@empty
+\AddToHook{begindocument/end}[codependent/concept/flush]{%
+  \codep@conceptpending
+  \global\let\codep@conceptpending\@empty
 }
 
 % External ordering: run before hyperref wraps \@setref a
 % second time in its \AtBeginDocument-equivalent hooks.
 \DeclareHookRule{begindocument/before}%
-  {semtex/backref/install}{before}{hyperref}
+  {codependent/backref/install}{before}{hyperref}
 
 % Internal dependency: sbl open sees the backref install.
-\DeclareHookRule{begindocument/before}{semtex/sbl/open}%
-                {after}{semtex/backref/install}
+\DeclareHookRule{begindocument/before}{codependent/sbl/open}%
+                {after}{codependent/backref/install}
 
 % Concept install fires AFTER backref install (needs
-% \semtex@recordbr to be in place).
+% \codep@recordbr to be in place).
 \DeclareHookRule{begindocument/before}%
-  {semtex/concept/install}{after}{semtex/backref/install}
+  {codependent/concept/install}{after}{codependent/backref/install}
 
 % Concept flush fires AFTER backref flush.  Concept edges
-% use \semtex@appendbr (direct node-list append, no queue),
+% use \codep@appendbr (direct node-list append, no queue),
 % so ordering with the queue flush is not critical.  The
 % "after" ordering ensures the backref queue processes first
 % and concept edges are appended on top.
 \DeclareHookRule{begindocument/end}%
-  {semtex/concept/flush}{after}{semtex/backref/flush}
+  {codependent/concept/flush}{after}{codependent/backref/flush}
 
 %% ===================================================================
 %% Section 8: Back-reference emission
 %% ===================================================================
 
-% \semtex@queuebackref{atomnumber}
+% \codep@queuebackref{atomnumber}
 %   Look up back-refs for the given atom and queue for emission.
-%   Lazily materialises \semtex@br@#1 via \semtex@collapsebr
+%   Lazily materialises \codep@br@#1 via \codep@collapsebr
 %   (§8a.3), which walks the per-target linked-list nodes built
-%   from \semtex@atomref aux records.  Collapse is idempotent, so
+%   from \codep@atomref aux records.  Collapse is idempotent, so
 %   calling it unconditionally is fine.
-\newcommand*{\semtex@queuebackref}[1]{%
-  \ifbool{semtex@backrefs}{%
-    \semtex@pendingbr={}%
-    \semtex@collapsebr{#1}%
-    % After collapse, semtex@br@#1 is either \@empty (no refs)
+\newcommand*{\codep@queuebackref}[1]{%
+  \ifbool{codep@backrefs}{%
+    \codep@pendingbr={}%
+    \codep@collapsebr{#1}%
+    % After collapse, codep@br@#1 is either \@empty (no refs)
     % or a comma-joined ref list.  \@ifundefined cannot
     % distinguish \@empty from real data (collapsebr always
     % defines the csname), so use \ifx against \@empty instead.
-    \expandafter\ifx\csname semtex@br@#1\endcsname\@empty
+    \expandafter\ifx\csname codep@br@#1\endcsname\@empty
       % No refs to this target (collapsed to \@empty): skip.
     \else
-      \ifbool{semtex@appendix}{}{%
+      \ifbool{codep@appendix}{}{%
         % Inline mode: store ref list for flush.
-        \semtex@pendingbr=\expandafter{%
-          \csname semtex@br@#1\endcsname}%
+        \codep@pendingbr=\expandafter{%
+          \csname codep@br@#1\endcsname}%
       }%
     \fi
   }{}%
 }
 
-% \semtex@flushbackref
+% \codep@flushbackref
 %   Emit the pending back-reference and clear it.
 %   The pendingbr register is cleared BEFORE rendering so that
-%   the \par inside \semtex@renderinline cannot re-enter
+%   the \par inside \codep@renderinline cannot re-enter
 %   flushbackref with the same data (para/end → flushbackref
 %   → renderinline → \par → para/end → flushbackref loop).
-\newcommand*{\semtex@flushbackref}{%
-  \ifbool{semtex@backrefs}{%
-    \ifbool{semtex@appendix}{}{%
-      \expandafter\def\expandafter\semtex@tmp\expandafter{%
-        \the\semtex@pendingbr}%
-      \semtex@pendingbr={}%
-      \ifx\semtex@tmp\@empty\else
-        \semtex@renderinline{\semtex@tmp}%
+\newcommand*{\codep@flushbackref}{%
+  \ifbool{codep@backrefs}{%
+    \ifbool{codep@appendix}{}{%
+      \expandafter\def\expandafter\codep@tmp\expandafter{%
+        \the\codep@pendingbr}%
+      \codep@pendingbr={}%
+      \ifx\codep@tmp\@empty\else
+        \codep@renderinline{\codep@tmp}%
       \fi
     }%
   }{}%
 }
 
-% \semtex@formatusedin{reflist}
+% \codep@formatusedin{reflist}
 %   Shared formatting helper for "Used in" lines.  Both the
-%   inline path (\semtex@renderinline) and the deferred
-%   paragraph path (\vadjust pre in \semtex@installparahook)
+%   inline path (\codep@renderinline) and the deferred
+%   paragraph path (\vadjust pre in \codep@installparahook)
 %   call this, so overriding it changes ALL rendering.
-%   Reads font/prefix/label from \semtexsetup configuration.
-\newcommand*{\semtex@formatusedin}[1]{%
-  {\normalfont\semtex@backreffont
-   \semtex@applycolor{\semtex@backrefprefix\semtex@backreflabel\space#1.}}}
-% \semtex@applycolor{text}
+%   Reads font/prefix/label from \codepsetup configuration.
+\newcommand*{\codep@formatusedin}[1]{%
+  {\normalfont\codep@backreffont
+   \codep@applycolor{\codep@backrefprefix\codep@backreflabel\space#1.}}}
+% \codep@applycolor{text}
 %   Wrap text in \textcolor if backref-color is set.
 %   Requires xcolor or color package loaded by user.
-\newcommand*{\semtex@applycolor}[1]{%
-  \ifx\semtex@backrefcolor\@empty#1\else\textcolor{\semtex@backrefcolor}{#1}\fi}
+\newcommand*{\codep@applycolor}[1]{%
+  \ifx\codep@backrefcolor\@empty#1\else\textcolor{\codep@backrefcolor}{#1}\fi}
 
-% \semtex@truncatereflist{reflist}
-%   If reflist has more than \semtex@backrefmarginmax comma-separated
+% \codep@truncatereflist{reflist}
+%   If reflist has more than \codep@backrefmarginmax comma-separated
 %   entries, truncate and append "...".  Currently a pass-through
 %   stub; proper comma-counting can be added later without changing
 %   the rendering contract.
-\newcommand*{\semtex@truncatereflist}[1]{#1}
+\newcommand*{\codep@truncatereflist}[1]{#1}
 
-% \semtex@rendermargin{reflist}
+% \codep@rendermargin{reflist}
 %   Render "Used in X, Y." in the right margin (past \linewidth).
 %   Uses \rlap so it does not conflict with atom numbers in the left margin.
 %   Used for margin backref-style on theorem atoms (non-paragraph).
-\newcommand*{\semtex@rendermargin}[1]{%
+\newcommand*{\codep@rendermargin}[1]{%
   \nobreak
   \vbox{%
     \hbox to \linewidth{%
@@ -1415,9 +1415,9 @@
       \smash{%
         \rlap{%
           \kern0.5em
-          {\semtex@backreffont\semtex@backrefprefix
-           \semtex@backreflabel\space
-           \semtex@truncatereflist{#1}.}%
+          {\codep@backreffont\codep@backrefprefix
+           \codep@backreflabel\space
+           \codep@truncatereflist{#1}.}%
         }%
       }%
     }%
@@ -1425,22 +1425,22 @@
   }%
 }
 
-% \semtex@renderinline{reflist}
+% \codep@renderinline{reflist}
 %   Render "Used in X, Y." at the end of the current atom.
 %   Used for theorem/definition/lemma atoms (non-paragraph).
 %   Respects backref-style and backref-align configuration.
-\newcommand*{\semtex@renderinline}[1]{%
-  \ifx\semtex@backrefstyle\semtex@const@block
+\newcommand*{\codep@renderinline}[1]{%
+  \ifx\codep@backrefstyle\codep@const@block
     % Block style: separate line after the atom.
-    \ifx\semtex@backrefalign\semtex@const@right
+    \ifx\codep@backrefalign\codep@const@right
       \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
-      \quad\semtex@formatusedin{#1}%
+      \quad\codep@formatusedin{#1}%
     \else
       \leavevmode\unskip\par\nobreak
-      \semtex@formatusedin{#1}\hfill\null
+      \codep@formatusedin{#1}\hfill\null
     \fi
     \par\addvspace{\medskipamount}%
-  \else\ifx\semtex@backrefstyle\semtex@const@inline
+  \else\ifx\codep@backrefstyle\codep@const@inline
     % Inline style: same line as content, flows with text.
     % Flush happens from cmd/end#1/before (hmode, before endmark).
     % After display math the hlist is empty (\lastnodetype=-1);
@@ -1455,7 +1455,7 @@
     % time via \toks@: TeX inserts the tokens unexpanded, and the
     % \ifvmode / \lastnodetype checks fire when TeX processes them
     % in the env body.
-    \def\semtex@inline@arg{#1}%
+    \def\codep@inline@arg{#1}%
     \toks@{%
       \ifvmode
         \noindent
@@ -1470,40 +1470,40 @@
           \unskip\hspace{0.5em}%
         \fi
       \fi
-      \expandafter\semtex@formatusedin\expandafter{\semtex@inline@arg}%
+      \expandafter\codep@formatusedin\expandafter{\codep@inline@arg}%
     }%
     \the\toks@
   \else
     % Margin style: emit in right margin.
-    \semtex@rendermargin{#1}%
+    \codep@rendermargin{#1}%
   \fi\fi
 }
 
-% \semtex@renderdeferred{reflist}
+% \codep@renderdeferred{reflist}
 %   Render "Used in" inside a \vadjust pre context (vertical
 %   mode).  Used for paragraph atoms via the deferred-backref
-%   mechanism.  Calls \semtex@formatusedin for the text.
+%   mechanism.  Calls \codep@formatusedin for the text.
 %   Respects backref-style and backref-align configuration.
-\newcommand*{\semtex@renderdeferred}[1]{%
+\newcommand*{\codep@renderdeferred}[1]{%
   \nobreak
-  \ifx\semtex@backrefstyle\semtex@const@block
+  \ifx\codep@backrefstyle\codep@const@block
     % Block style
     \vbox{%
       \hbox to \linewidth{%
-        \ifx\semtex@backrefalign\semtex@const@right
-          \hfil\semtex@formatusedin{#1}%
+        \ifx\codep@backrefalign\codep@const@right
+          \hfil\codep@formatusedin{#1}%
         \else
-          \semtex@formatusedin{#1}\hfil
+          \codep@formatusedin{#1}\hfil
         \fi
       }%
       \vskip\medskipamount
     }%
-  \else\ifx\semtex@backrefstyle\semtex@const@inline
+  \else\ifx\codep@backrefstyle\codep@const@inline
     % Inline style for paragraphs: falls back to block-like rendering
     % (no clean way to inline at paragraph end).  Compact spacing.
     \vbox{%
       \hbox to \linewidth{%
-        \hfil\semtex@formatusedin{#1}%
+        \hfil\codep@formatusedin{#1}%
       }%
       \vskip\smallskipamount
     }%
@@ -1512,16 +1512,16 @@
     % Uses \rlap without \vtop — paragraph mode inside a box
     % here triggers the para/begin hook recursively (LaTeX 2022+
     % para hooks bypass \everypar).  Long reflists are handled
-    % by \semtex@truncatereflist instead of line-wrapping.
+    % by \codep@truncatereflist instead of line-wrapping.
     \vbox{%
       \hbox to \linewidth{%
         \hfil
         \smash{%
           \rlap{%
             \kern0.5em
-            {\semtex@backreffont\semtex@backrefprefix
-             \semtex@backreflabel\space
-             \semtex@truncatereflist{#1}.}%
+            {\codep@backreffont\codep@backrefprefix
+             \codep@backreflabel\space
+             \codep@truncatereflist{#1}.}%
           }%
         }%
       }%
@@ -1533,34 +1533,34 @@
 % Deferred backref: data saved at para/end, emitted at the
 % next para/begin.  Avoids mode-change error (para/end must
 % stay in horizontal mode; \renderinline needs \par).
-\gdef\semtex@deferredbr{}
+\gdef\codep@deferredbr{}
 
-% \semtex@installparendhook
+% \codep@installparendhook
 %   Install the para/end hook for flushing back-refs.
-%   Per §8a.5, clears \semtex@currentatom after the flush so
+%   Per §8a.5, clears \codep@currentatom after the flush so
 %   that any \ref firing between paragraphs is not attributed
 %   to the just-closed atom.
-%   Instead of calling \semtex@flushbackref (which does \par
+%   Instead of calling \codep@flushbackref (which does \par
 %   via \renderinline), we snapshot the pending br data into
-%   \semtex@deferredbr and clear the register.  The deferred
+%   \codep@deferredbr and clear the register.  The deferred
 %   data is emitted at the NEXT para/begin, before the new
 %   atom's margin number.
-\newcommand*{\semtex@installparendhook}{%
+\newcommand*{\codep@installparendhook}{%
   \AddToHook{para/end}{%
-    \ifbool{semtex@tracked}{%
-      \ifbool{semtex@intheorem}{}{%
+    \ifbool{codep@tracked}{%
+      \ifbool{codep@intheorem}{}{%
         % Snapshot pending backref data for deferred emission.
-        \ifbool{semtex@backrefs}{%
-          \ifbool{semtex@appendix}{}{%
-            \expandafter\def\expandafter\semtex@tmp\expandafter{%
-              \the\semtex@pendingbr}%
-            \semtex@pendingbr={}%
-            \ifx\semtex@tmp\@empty\else
-              \global\let\semtex@deferredbr\semtex@tmp
+        \ifbool{codep@backrefs}{%
+          \ifbool{codep@appendix}{}{%
+            \expandafter\def\expandafter\codep@tmp\expandafter{%
+              \the\codep@pendingbr}%
+            \codep@pendingbr={}%
+            \ifx\codep@tmp\@empty\else
+              \global\let\codep@deferredbr\codep@tmp
             \fi
           }%
         }{}%
-        \let\semtex@currentatom\@empty
+        \let\codep@currentatom\@empty
       }%
     }{}%
   }%
@@ -1572,25 +1572,25 @@
 %%
 %% Write-only sidecar file for Layer 2 (semantic CLI).  The .sty
 %% never reads .sbl — it is strictly one-way output.  Record format
-%% is line-oriented: one \semtex@sbl@* control sequence per line
+%% is line-oriented: one \codep@sbl@* control sequence per line
 %% with fixed-arity brace-delimited arguments (no kv blobs).
 %%
 
-% \semtex@sblwrite{text}
+% \codep@sblwrite{text}
 %   Guarded write to the .sbl stream.  No-op when the stream
 %   is not open (e.g. \if@filesw is false).
-\newcommand*{\semtex@sblwrite}[1]{%
-  \ifbool{semtex@sblopen}{%
-    \immediate\write\semtex@sblout{#1}%
+\newcommand*{\codep@sblwrite}[1]{%
+  \ifbool{codep@sblopen}{%
+    \immediate\write\codep@sblout{#1}%
   }{}%
 }
 
-% \semtex@sblwrite@atom{text}
+% \codep@sblwrite@atom{text}
 %   Atom-scoped guard: drops the write when not inside a tracked
-%   atom (\semtex@currentatom is empty).
-\newcommand*{\semtex@sblwrite@atom}[1]{%
-  \ifx\semtex@currentatom\@empty\else
-    \semtex@sblwrite{#1}%
+%   atom (\codep@currentatom is empty).
+\newcommand*{\codep@sblwrite@atom}[1]{%
+  \ifx\codep@currentatom\@empty\else
+    \codep@sblwrite{#1}%
   \fi
 }
 
@@ -1598,28 +1598,28 @@
 %% Per REVIEW_C finding #5, the stream opens at begindocument/before
 %% (before any \AtBeginDocument hook), so atoms emitted from user
 %% hooks are never silently dropped.
-\AddToHook{begindocument/before}[semtex/sbl/open]{%
+\AddToHook{begindocument/before}[codependent/sbl/open]{%
   \if@filesw
-    \newwrite\semtex@sblout
-    \immediate\openout\semtex@sblout=\jobname.sbl\relax
-    \global\booltrue{semtex@sblopen}%
-    \immediate\write\semtex@sblout{%
-      \string\semtex@sbl@version{1}}%
-    \immediate\write\semtex@sblout{%
-      \string\semtex@sbl@source{\jobname.tex}}%
+    \newwrite\codep@sblout
+    \immediate\openout\codep@sblout=\jobname.sbl\relax
+    \global\booltrue{codep@sblopen}%
+    \immediate\write\codep@sblout{%
+      \string\codep@sbl@version{1}}%
+    \immediate\write\codep@sblout{%
+      \string\codep@sbl@source{\jobname.tex}}%
   \fi
 }
 
 %% --- Section 9a close hook (\AtEndDocument) ---
-%% Write the \semtex@sbl@end{OK} sentinel and close the stream.
+%% Write the \codep@sbl@end{OK} sentinel and close the stream.
 %% Per REVIEW_C finding #7, the sentinel's presence is the CLI's
 %% test for "complete file".
 \AtEndDocument{%
-  \ifbool{semtex@sblopen}{%
-    \immediate\write\semtex@sblout{%
-      \string\semtex@sbl@end{OK}}%
-    \immediate\closeout\semtex@sblout
-    \global\boolfalse{semtex@sblopen}%
+  \ifbool{codep@sblopen}{%
+    \immediate\write\codep@sblout{%
+      \string\codep@sbl@end{OK}}%
+    \immediate\closeout\codep@sblout
+    \global\boolfalse{codep@sblopen}%
   }{}%
 }
 
@@ -1627,96 +1627,96 @@
 %% Installed at begindocument/before so we capture \label BEFORE
 %% cleveref's \AtBeginDocument wrapper installs around us (see
 %% DESIGN.md §9a "Label wrap" double-wrap explanation).
-\AddToHook{begindocument/before}[semtex/sbl/labelwrap]{%
-  \let\semtex@orig@label\label
+\AddToHook{begindocument/before}[codependent/sbl/labelwrap]{%
+  \let\codep@orig@label\label
   \@ifpackageloaded{cleveref}{%
     %% cleveref path: \label[type]{key}, optional arg.
     \def\label{%
       \@ifnextchar[%]
-        \semtex@sbl@label@withopt
-        \semtex@sbl@label@noopt
+        \codep@sbl@label@withopt
+        \codep@sbl@label@noopt
     }%
   }{%
     %% No cleveref: \label{key} only.
     \def\label#1{%
-      \semtex@sblwrite@atom{%
-        \string\semtex@sbl@label
+      \codep@sblwrite@atom{%
+        \string\codep@sbl@label
           {\theatom}{#1}}%
-      \semtex@orig@label{#1}%
+      \codep@orig@label{#1}%
     }%
   }%
 }
-\def\semtex@sbl@label@withopt[#1]#2{%
-  \semtex@sblwrite@atom{%
-    \string\semtex@sbl@label
+\def\codep@sbl@label@withopt[#1]#2{%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@label
       {\theatom}{#2}}%
-  \semtex@orig@label[#1]{#2}%
+  \codep@orig@label[#1]{#2}%
 }
-\def\semtex@sbl@label@noopt#1{%
-  \semtex@sblwrite@atom{%
-    \string\semtex@sbl@label
+\def\codep@sbl@label@noopt#1{%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@label
       {\theatom}{#1}}%
-  \semtex@orig@label{#1}%
+  \codep@orig@label{#1}%
 }
 
 %% --- Section 9a concept-tracking helpers ---
-%% Supporting macros for \semtexnewcommand / \semtexNewDocumentCommand.
+%% Supporting macros for \codepnewcommand / \codepNewDocumentCommand.
 %% The public API lives in Section 10; the emit helpers live here
 %% because they write to both .sbl and .aux.
 
-% \semtex@sblwrite@deferred{text}
+% \codep@sblwrite@deferred{text}
 %   Accumulate a deferred .sbl write for preamble-time emission.
 %   Records queued here are flushed once the .sbl stream opens.
-%   Used for \semtex@sbl@cmddef records whose declarations occur
+%   Used for \codep@sbl@cmddef records whose declarations occur
 %   in the preamble before the stream is available.
 %   IMPORTANT: the argument must already be fully expanded (no
-%   transient macros like \semtex@tmp@name) because \g@addto@macro
+%   transient macros like \codep@tmp@name) because \g@addto@macro
 %   does not expand its argument.  Callers use \edef to pre-build
 %   the record string.
-\newcommand*{\semtex@sblwrite@deferred}[1]{%
-  \ifbool{semtex@sblopen}{%
+\newcommand*{\codep@sblwrite@deferred}[1]{%
+  \ifbool{codep@sblopen}{%
     % Stream already open (late declaration): write immediately.
-    \semtex@sblwrite{#1}%
+    \codep@sblwrite{#1}%
   }{%
-    \g@addto@macro\semtex@sbl@deferred{%
-      \semtex@sblwrite{#1}}%
+    \g@addto@macro\codep@sbl@deferred{%
+      \codep@sblwrite{#1}}%
   }%
 }
 
 % Flush deferred sbl writes after the stream opens.
-\AddToHook{begindocument/before}[semtex/sbl/cmddef]{%
-  \semtex@sbl@deferred
-  \global\let\semtex@sbl@deferred\@empty
+\AddToHook{begindocument/before}[codependent/sbl/cmddef]{%
+  \codep@sbl@deferred
+  \global\let\codep@sbl@deferred\@empty
 }
 % Must run AFTER the sbl open hook.
-\DeclareHookRule{begindocument/before}{semtex/sbl/cmddef}%
-                {after}{semtex/sbl/open}
+\DeclareHookRule{begindocument/before}{codependent/sbl/cmddef}%
+                {after}{codependent/sbl/open}
 
-% \semtex@emit@def{name}
+% \codep@emit@def{name}
 %   Star-branch handler: fires when \cmd* is used (defining site).
 %   Records the current atom as the defining site for the named
 %   concept.  Emits both .aux and .sbl records.  Per J2: empty-
 %   currentatom short-circuit fires BEFORE the duplicate-def check.
 %   name -- bare command name (e.g. "Hom")
-\newcommand*{\semtex@emit@def}[1]{%
-  \ifx\semtex@currentatom\@empty
+\newcommand*{\codep@emit@def}[1]{%
+  \ifx\codep@currentatom\@empty
     % No atom context (footnote, caption, orphan): silent no-op
     % per §8a.9 error model.
   \else
-    \@ifundefined{semtex@concept@#1}%
+    \@ifundefined{codep@concept@#1}%
       {\expandafter\xdef
-         \csname semtex@concept@#1\endcsname
+         \csname codep@concept@#1\endcsname
          {\theatom}%
        \if@filesw
          \immediate\write\@auxout{%
-           \string\semtex@concept{#1}{\theatom}}%
+           \string\codep@concept{#1}{\theatom}}%
        \fi
-       \semtex@sblwrite@atom{%
-         \string\semtex@sbl@def{\theatom}{#1}}%
+       \codep@sblwrite@atom{%
+         \string\codep@sbl@def{\theatom}{#1}}%
       }%
-      {\PackageError{semtex}%
+      {\PackageError{codependent}%
         {\string\\#1* defined at atoms
-         \csname semtex@concept@#1\endcsname\space and
+         \csname codep@concept@#1\endcsname\space and
          \theatom}%
         {Exactly one definition site is permitted per
          concept.  Use \string\\#1\space (without star)
@@ -1724,26 +1724,26 @@
       }%
   \fi}
 
-% \semtex@emit@use{name}
+% \codep@emit@use{name}
 %   Non-star-branch handler: fires when \cmd is used (use site).
 %   Emits both .aux and .sbl records under the current atom guard.
 %   Registers the concept name for the missing-def-site scan at
 %   \AtEndDocument (first-use only, guarded by conceptused csname).
 %   name -- bare command name (e.g. "Hom")
-\newcommand*{\semtex@emit@use}[1]{%
-  \ifx\semtex@currentatom\@empty\else
+\newcommand*{\codep@emit@use}[1]{%
+  \ifx\codep@currentatom\@empty\else
     % Register concept name for end-document missing-def scan.
-    \@ifundefined{semtex@conceptused@#1}{%
+    \@ifundefined{codep@conceptused@#1}{%
       \expandafter\gdef
-        \csname semtex@conceptused@#1\endcsname{1}%
-      \g@addto@macro\semtex@conceptnames{\do{#1}}%
+        \csname codep@conceptused@#1\endcsname{1}%
+      \g@addto@macro\codep@conceptnames{\do{#1}}%
     }{}%
     \if@filesw
       \immediate\write\@auxout{%
-        \string\semtex@conceptref{\theatom}{#1}}%
+        \string\codep@conceptref{\theatom}{#1}}%
     \fi
-    \semtex@sblwrite@atom{%
-      \string\semtex@sbl@use{\theatom}{#1}}%
+    \codep@sblwrite@atom{%
+      \string\codep@sbl@use{\theatom}{#1}}%
   \fi}
 
 %% --- Section 9a.9: Concept missing-def-site scan ---
@@ -1751,40 +1751,40 @@
 %% concept for a matching def site.  Concepts with uses but no
 %% def site trigger a warning (or info per conceptwarnings option).
 
-% \semtex@conceptwarnscan
-%   Walk \semtex@conceptnames via \do.  For each concept name,
-%   check if semtex@conceptdef@<name> is defined.  If not, the
+% \codep@conceptwarnscan
+%   Walk \codep@conceptnames via \do.  For each concept name,
+%   check if codep@conceptdef@<name> is defined.  If not, the
 %   concept has uses but no \cmd* def-site marker; warn.
-\def\semtex@conceptwarnscan{%
+\def\codep@conceptwarnscan{%
   \def\do##1{%
-    \@ifundefined{semtex@conceptdef@##1}{%
-      \ifbool{semtex@conceptwarnings}{%
-        \PackageWarning{semtex}{%
+    \@ifundefined{codep@conceptdef@##1}{%
+      \ifbool{codep@conceptwarnings}{%
+        \PackageWarning{codependent}{%
           \expandafter\string\csname ##1\endcsname\space
           used but no starred definition site found;\MessageBreak
           backrefs for this concept are disabled}%
       }{%
-        \PackageInfo{semtex}{%
+        \PackageInfo{codependent}{%
           \expandafter\string\csname ##1\endcsname\space
           used but no starred definition site found
           (conceptwarnings=off)}%
       }%
     }{}%
   }%
-  \semtex@conceptnames
+  \codep@conceptnames
 }
 
 \AtEndDocument{%
-  \semtex@conceptwarnscan
+  \codep@conceptwarnscan
 }
 
 % Flush any deferred backref from the last paragraph.
 % Without this, a backref on the final paragraph is lost because
 % there is no subsequent para/begin to emit it.
 \AtEndDocument{%
-  \ifx\semtex@deferredbr\@empty\else
-    \semtex@renderdeferred{\semtex@deferredbr}%
-    \global\let\semtex@deferredbr\@empty
+  \ifx\codep@deferredbr\@empty\else
+    \codep@renderdeferred{\codep@deferredbr}%
+    \global\let\codep@deferredbr\@empty
   \fi
 }
 
@@ -1792,139 +1792,139 @@
 %% Section 10: User-facing API
 %% ===================================================================
 
-% \semtex@extractfirst  env1,env2,...\@nil
-%   Extract the first comma-separated element into \semtex@basecounter.
-\def\semtex@extractfirst#1,#2\@nil{\def\semtex@basecounter{#1}}
+% \codep@extractfirst  env1,env2,...\@nil
+%   Extract the first comma-separated element into \codep@basecounter.
+\def\codep@extractfirst#1,#2\@nil{\def\codep@basecounter{#1}}
 
-% \semtextrack{env1,env2,...}
+% \codeptrack{env1,env2,...}
 %   Post-hoc alias base counter to atom counter and install all
 %   hooks.  Must be called AFTER all \newtheorem declarations.
 %   env1, env2, ... -- comma-separated environment names to track.
 %   The first env name is auto-detected as the base counter name.
-\newcommand*{\semtextrack}[1]{%
+\newcommand*{\codeptrack}[1]{%
   % Guard against double invocation (newcounter{atom} would crash).
-  \ifbool{semtex@tracked}{%
-    \PackageError{semtex}%
-      {\string\semtextrack\space called twice}%
-      {Call \string\semtextrack\space only once, after all
+  \ifbool{codep@tracked}{%
+    \PackageError{codependent}%
+      {\string\codeptrack\space called twice}%
+      {Call \string\codeptrack\space only once, after all
        theorem declarations.}%
   }{}%
-  \booltrue{semtex@tracked}%
+  \booltrue{codep@tracked}%
   % Auto-detect the base counter from the first environment name.
-  \semtex@extractfirst#1,\@nil
+  \codep@extractfirst#1,\@nil
   % Check that the base counter exists (i.e. \newtheorem was called).
-  \@ifundefined{c@\semtex@basecounter}{%
-    \PackageError{semtex}%
-      {Counter '\semtex@basecounter' undefined -- %
-       \string\semtextrack\space called before
+  \@ifundefined{c@\codep@basecounter}{%
+    \PackageError{codependent}%
+      {Counter '\codep@basecounter' undefined -- %
+       \string\codeptrack\space called before
        \string\newtheorem}%
       {Declare all theorem environments with
        \string\newtheorem\space before calling
-       \string\semtextrack.}%
+       \string\codeptrack.}%
   }{}%
-  \semtex@setupcounter
+  \codep@setupcounter
   % Hook each listed environment and its starred variant.
   % Note: \expandafter ensures the env name is fully expanded
-  % before \semtex@hooktheorem captures it in \AddToHook
-  % bodies; without this, a stale \semtex@tmp reference would
+  % before \codep@hooktheorem captures it in \AddToHook
+  % bodies; without this, a stale \codep@tmp reference would
   % resolve to the wrong name at hook-fire time.
-  \@for\semtex@tmp:=#1\do{%
-    \ifx\semtex@tmp\@empty\else
+  \@for\codep@tmp:=#1\do{%
+    \ifx\codep@tmp\@empty\else
       % Re-alias this env's counter to \c@atom.  When thmtools
       % declares an env with sibling=<base>, it \let-aliases
       % \c@<env> to \c@<base> at declaration time.  But
-      % \semtex@setupcounter later replaces \c@<base> with
+      % \codep@setupcounter later replaces \c@<base> with
       % \c@atom; the sibling counters still point to the old
       % register.  This re-let ensures every tracked env's
       % counter is \c@atom, regardless of declaration order.
       \expandafter\@ifundefined\expandafter{%
-        \expandafter c@\semtex@tmp
+        \expandafter c@\codep@tmp
       }{}{%
-        \expandafter\let\csname c@\semtex@tmp\endcsname\c@atom
+        \expandafter\let\csname c@\codep@tmp\endcsname\c@atom
         % Also alias the display macro \the<env> to \theatom.
         % When thmtools declares an env with sibling=<base>, it
-        % snapshots \the<base> at declaration time.  If semtex
+        % snapshots \the<base> at declaration time.  If codependent
         % later rewires \the<base> to \theatom, the sibling's
         % display macro still has the old format.  This re-let
         % ensures every tracked env uses the atom display format.
-        \expandafter\let\csname the\semtex@tmp\endcsname\theatom
+        \expandafter\let\csname the\codep@tmp\endcsname\theatom
       }%
-      \expandafter\semtex@hooktheorem
-        \expandafter{\semtex@tmp}%
+      \expandafter\codep@hooktheorem
+        \expandafter{\codep@tmp}%
       % Auto-register starred variant (amsthm creates foo*).
-      \edef\semtex@starred{\semtex@tmp*}%
+      \edef\codep@starred{\codep@tmp*}%
       \expandafter\@ifundefined\expandafter{%
-        \semtex@starred
+        \codep@starred
       }{}{%
-        \expandafter\semtex@hooktheorem
-          \expandafter{\semtex@starred}%
+        \expandafter\codep@hooktheorem
+          \expandafter{\codep@starred}%
       }%
     \fi
   }%
-  \semtex@hookproof
+  \codep@hookproof
   % Install suppression and paragraph hooks.
-  \semtex@installsuppress
-  \semtex@suppresssectioning
-  \semtex@suppresscommands
-  \semtex@installparahook
-  \semtex@installparendhook
+  \codep@installsuppress
+  \codep@suppresssectioning
+  \codep@suppresscommands
+  \codep@installparahook
+  \codep@installparendhook
 }
 
-% \semtextag{kind}{value}
+% \codeptag{kind}{value}
 %   Emit a semantic tag record to the .sbl sidecar, scoped to the
 %   current atom.  No visible typesetting effect.  Ignored outside
 %   a tracked atom.
 %   kind  -- tag category (e.g. uid, introduces, type)
 %   value -- tag payload (free-form UTF-8)
-\newcommand*{\semtextag}[2]{%
-  \semtex@sblwrite@atom{%
-    \string\semtex@sbl@tag
+\newcommand*{\codeptag}[2]{%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@tag
     {\theatom}{#1}{#2}}%
 }
 
-% \semtexproofof{label}
+% \codepproofof{label}
 %   Associate a separated proof with its theorem.  Must be called
 %   inside a \begin{proof}...\end{proof} environment.  Looks up
 %   the label's atom number and sets the current atom to the
 %   starred version (e.g., 2.1*), enabling correct backref
 %   attribution.
 %
-%   Edge case: if the proof was non-adjacent, \semtex@hookproof
+%   Edge case: if the proof was non-adjacent, \codep@hookproof
 %   already called \refstepcounter{atom} and wrote SBL records for
-%   a standalone atom.  Then \semtexproofof overrides
-%   \semtex@currentatom.  This means:
+%   a standalone atom.  Then \codepproofof overrides
+%   \codep@currentatom.  This means:
 %   - The counter was already incremented (gap exists, acceptable)
-%   - The SBL has both a standalone \semtex@sbl@atom{N}{proof}
-%     AND a \semtex@sbl@proof{M*} -- the CLI can handle this
+%   - The SBL has both a standalone \codep@sbl@atom{N}{proof}
+%     AND a \codep@sbl@proof{M*} -- the CLI can handle this
 %     (the proofof record takes precedence)
 %   - The backref source switches to starred mid-proof -- any
-%     \ref calls BEFORE \semtexproofof use the standalone number,
+%     \ref calls BEFORE \codepproofof use the standalone number,
 %     after it use the starred number
-\newcommand*{\semtexproofof}[1]{%
-  \ifbool{semtex@proofsnumbered}{%
-    \expandafter\ifx\csname semtex@lblnum@#1\endcsname\relax
-      \PackageWarning{semtex}{\string\semtexproofof: unknown label '#1'.
+\newcommand*{\codepproofof}[1]{%
+  \ifbool{codep@proofsnumbered}{%
+    \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax
+      \PackageWarning{codependent}{\string\codepproofof: unknown label '#1'.
         The label may not exist or may not have been processed yet}%
     \else
-      \edef\semtex@currentatom{\csname semtex@lblnum@#1\endcsname*}%
+      \edef\codep@currentatom{\csname codep@lblnum@#1\endcsname*}%
       % Update source atom for starred backref emission.
-      \edef\semtex@sourceatom{\semtex@currentatom}%
+      \edef\codep@sourceatom{\codep@currentatom}%
       % Write SBL sub-record.
-      \semtex@sblwrite@atom{%
-        \string\semtex@sbl@proof{\semtex@currentatom}}%
+      \codep@sblwrite@atom{%
+        \string\codep@sbl@proof{\codep@currentatom}}%
     \fi
   }{}%
 }
 
-% \semtexnewcommand{\cmd}[arity]{body}
-%   Define a command with semtex concept tracking.  Mirrors
+% \codepnewcommand{\cmd}[arity]{body}
+%   Define a command with codependent concept tracking.  Mirrors
 %   \newcommand exactly: \cmd with backslash, optional [arity]
 %   (default 0), mandatory {body} using #1..#N.
 %
 %   At declaration time, emits three global .sbl records:
-%     \semtex@sbl@cmddef{name}{kind}{newcommand}
-%     \semtex@sbl@cmddef{name}{arity}{N}
-%     \semtex@sbl@cmddef{name}{src}{file:line:1}
+%     \codep@sbl@cmddef{name}{kind}{newcommand}
+%     \codep@sbl@cmddef{name}{arity}{N}
+%     \codep@sbl@cmddef{name}{src}{file:line:1}
 %
 %   At invocation time, the wrapped command answers both
 %   \cmd (use site) and \cmd* (def site).  Both forms typeset
@@ -1933,29 +1933,29 @@
 %   \cmd  -- command to define (with backslash, e.g. \Hom)
 %   arity -- optional integer 0..9 (default 0)
 %   body  -- replacement text, uses #1..#N
-\NewDocumentCommand{\semtexnewcommand}{m O{0} +m}{%
+\NewDocumentCommand{\codepnewcommand}{m O{0} +m}{%
   % #1 = \cmd (with backslash), #2 = arity, #3 = body.
-  \edef\semtex@tmp@name{%
+  \edef\codep@tmp@name{%
     \expandafter\@gobble\string#1}%
   % 1. Define the command via \newcommand (handles all #-
   %    numbering naturally).
   \newcommand#1[#2]{#3}%
   % 2. Save the original definition.
   \expandafter\let
-    \csname semtex@body@\semtex@tmp@name\endcsname#1%
+    \csname codep@body@\codep@tmp@name\endcsname#1%
   % 3. Define star/nostar dispatch targets first (the \edef
   %    expands \csname...\endcsname at def-time, capturing the
   %    resolved control sequences).
   \expandafter\edef
-    \csname semtex@star@\semtex@tmp@name\endcsname{%
-      \noexpand\semtex@emit@def{\semtex@tmp@name}%
+    \csname codep@star@\codep@tmp@name\endcsname{%
+      \noexpand\codep@emit@def{\codep@tmp@name}%
       \expandafter\noexpand
-        \csname semtex@body@\semtex@tmp@name\endcsname}%
+        \csname codep@body@\codep@tmp@name\endcsname}%
   \expandafter\edef
-    \csname semtex@nostar@\semtex@tmp@name\endcsname{%
-      \noexpand\semtex@emit@use{\semtex@tmp@name}%
+    \csname codep@nostar@\codep@tmp@name\endcsname{%
+      \noexpand\codep@emit@use{\codep@tmp@name}%
       \expandafter\noexpand
-        \csname semtex@body@\semtex@tmp@name\endcsname}%
+        \csname codep@body@\codep@tmp@name\endcsname}%
   % 4. Redefine the command with star dispatch via \@ifstar.
   %    \protected\edef makes the wrapper robust so it survives
   %    expansion in moving arguments (\section titles, captions,
@@ -1963,151 +1963,151 @@
   \protected\edef#1{%
     \noexpand\@ifstar
       \expandafter\noexpand
-        \csname semtex@star@\semtex@tmp@name\endcsname
+        \csname codep@star@\codep@tmp@name\endcsname
       \expandafter\noexpand
-        \csname semtex@nostar@\semtex@tmp@name\endcsname}%
+        \csname codep@nostar@\codep@tmp@name\endcsname}%
   % 5. Emit global declaration records (deferred: the .sbl
   %    stream may not be open yet during the preamble).
   %    Records are pre-expanded via \edef so transient values
-  %    (\semtex@tmp@name, \inputlineno) are captured eagerly.
-  \edef\semtex@tmp@rec{%
-    \noexpand\semtex@sblwrite@deferred{%
-      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+  %    (\codep@tmp@name, \inputlineno) are captured eagerly.
+  \edef\codep@tmp@rec{%
+    \noexpand\codep@sblwrite@deferred{%
+      \string\codep@sbl@cmddef{\codep@tmp@name}%
       {kind}{newcommand}}%
-    \noexpand\semtex@sblwrite@deferred{%
-      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+    \noexpand\codep@sblwrite@deferred{%
+      \string\codep@sbl@cmddef{\codep@tmp@name}%
       {arity}{\number#2}}%
-    \noexpand\semtex@sblwrite@deferred{%
-      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+    \noexpand\codep@sblwrite@deferred{%
+      \string\codep@sbl@cmddef{\codep@tmp@name}%
       {src}{\jobname.tex:\the\inputlineno:1}}%
   }%
-  \semtex@tmp@rec
+  \codep@tmp@rec
 }
-% Deprecated alias — old documents using \semtexNewCommand still work.
-\let\semtexNewCommand\semtexnewcommand
+% Deprecated alias — old documents using \codepNewCommand still work.
+\let\codepNewCommand\codepnewcommand
 
-% \semtexNewDocumentCommand{\cmd}{argspec}{body}
-%   Define a command with semtex concept tracking, using xparse's
+% \codepNewDocumentCommand{\cmd}{argspec}{body}
+%   Define a command with codependent concept tracking, using xparse's
 %   full argument specification.  Mirrors \NewDocumentCommand
 %   exactly: \cmd with backslash, {argspec} string, {body}.
 %
 %   At declaration time, emits three global .sbl records:
-%     \semtex@sbl@cmddef{name}{kind}{NewDocumentCommand}
-%     \semtex@sbl@cmddef{name}{argspec}{<user-spec>}
-%     \semtex@sbl@cmddef{name}{src}{file:line:1}
+%     \codep@sbl@cmddef{name}{kind}{NewDocumentCommand}
+%     \codep@sbl@cmddef{name}{argspec}{<user-spec>}
+%     \codep@sbl@cmddef{name}{src}{file:line:1}
 %
-%   At invocation time, the wrapped command prepends a semtex
+%   At invocation time, the wrapped command prepends a codependent
 %   star to the user's argspec.  \cmd* marks a def site; \cmd
 %   marks a use site.  Both typeset the same body.  If the
 %   user's argspec itself starts with "s", the user's star
 %   requires a second "*" at call time (e.g. \cmd** for
-%   semtex-def + user-star).
+%   codependent-def + user-star).
 %
 %   \cmd    -- command to define (with backslash)
 %   argspec -- xparse argument specification string
 %   body    -- replacement text, uses #1..#N per the spec
-\NewDocumentCommand{\semtexNewDocumentCommand}{m m +m}{%
+\NewDocumentCommand{\codepNewDocumentCommand}{m m +m}{%
   % #1 = \cmd, #2 = argspec, #3 = body.
-  \edef\semtex@tmp@name{%
+  \edef\codep@tmp@name{%
     \expandafter\@gobble\string#1}%
   % 1. Define the command via \NewDocumentCommand (handles
   %    all xparse arg types and #-numbering naturally).
   \NewDocumentCommand{#1}{#2}{#3}%
   % 2. Save the original xparse definition.
   \expandafter\let
-    \csname semtex@body@\semtex@tmp@name\endcsname#1%
+    \csname codep@body@\codep@tmp@name\endcsname#1%
   % 3. Define star/nostar dispatch targets.
   \expandafter\edef
-    \csname semtex@star@\semtex@tmp@name\endcsname{%
-      \noexpand\semtex@emit@def{\semtex@tmp@name}%
+    \csname codep@star@\codep@tmp@name\endcsname{%
+      \noexpand\codep@emit@def{\codep@tmp@name}%
       \expandafter\noexpand
-        \csname semtex@body@\semtex@tmp@name\endcsname}%
+        \csname codep@body@\codep@tmp@name\endcsname}%
   \expandafter\edef
-    \csname semtex@nostar@\semtex@tmp@name\endcsname{%
-      \noexpand\semtex@emit@use{\semtex@tmp@name}%
+    \csname codep@nostar@\codep@tmp@name\endcsname{%
+      \noexpand\codep@emit@use{\codep@tmp@name}%
       \expandafter\noexpand
-        \csname semtex@body@\semtex@tmp@name\endcsname}%
+        \csname codep@body@\codep@tmp@name\endcsname}%
   % 4. Redefine with star dispatch (\protected = robust).
   \protected\edef#1{%
     \noexpand\@ifstar
       \expandafter\noexpand
-        \csname semtex@star@\semtex@tmp@name\endcsname
+        \csname codep@star@\codep@tmp@name\endcsname
       \expandafter\noexpand
-        \csname semtex@nostar@\semtex@tmp@name\endcsname}%
+        \csname codep@nostar@\codep@tmp@name\endcsname}%
   % 5. Emit global declaration records (deferred, pre-expanded).
-  \edef\semtex@tmp@rec{%
-    \noexpand\semtex@sblwrite@deferred{%
-      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+  \edef\codep@tmp@rec{%
+    \noexpand\codep@sblwrite@deferred{%
+      \string\codep@sbl@cmddef{\codep@tmp@name}%
       {kind}{NewDocumentCommand}}%
-    \noexpand\semtex@sblwrite@deferred{%
-      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+    \noexpand\codep@sblwrite@deferred{%
+      \string\codep@sbl@cmddef{\codep@tmp@name}%
       {argspec}{#2}}%
-    \noexpand\semtex@sblwrite@deferred{%
-      \string\semtex@sbl@cmddef{\semtex@tmp@name}%
+    \noexpand\codep@sblwrite@deferred{%
+      \string\codep@sbl@cmddef{\codep@tmp@name}%
       {src}{\jobname.tex:\the\inputlineno:1}}%
   }%
-  \semtex@tmp@rec
+  \codep@tmp@rec
 }
 
-% \semtexsuppress{envname}
+% \codepsuppress{envname}
 %   Register a user environment for paragraph-number suppression.
 %   envname -- environment name to suppress
-\newcommand*{\semtexsuppress}[1]{%
-  \semtex@suppressenv{#1}%
+\newcommand*{\codepsuppress}[1]{%
+  \codep@suppressenv{#1}%
 }
 
-% \semtexsuppresscmd{\command}
+% \codepsuppresscmd{\command}
 %   Register a user command for paragraph-number suppression.
 %   \command -- command to patch
-\newcommand*{\semtexsuppresscmd}[1]{%
-  \semtex@suppresscmd{#1}%
+\newcommand*{\codepsuppresscmd}[1]{%
+  \codep@suppresscmd{#1}%
 }
 
-% \semtexappendix
+% \codepappendix
 %   Typeset the dependency index (appendix mode only).
 %   Walks the atom array (populated at each atom site) and
 %   emits an entry for every atom that has at least one
 %   back-reference.
-\newcommand*{\semtexappendix}{%
-  \ifbool{semtex@appendix}{%
+\newcommand*{\codepappendix}{%
+  \ifbool{codep@appendix}{%
     \section*{Dependency Index}%
     \begingroup
       \small
       \count@=\z@
       \loop
-        \ifnum\count@<\semtex@atomcount
+        \ifnum\count@<\codep@atomcount
         \advance\count@ by 1\relax
-        \expandafter\expandafter\expandafter\semtex@appendix@emit
-          \csname semtex@atom@\the\count@\endcsname
+        \expandafter\expandafter\expandafter\codep@appendix@emit
+          \csname codep@atom@\the\count@\endcsname
       \repeat
     \endgroup
   }{%
-    \PackageWarning{semtex}{%
-      \string\semtexappendix\space ignored: %
+    \PackageWarning{codependent}{%
+      \string\codepappendix\space ignored: %
       backrefs mode is not 'appendix'}%
   }%
 }
 
-% \semtex@appendix@emit{num}{type}
+% \codep@appendix@emit{num}{type}
 %   Collapse back-refs for atom num and emit an appendix entry
 %   if any back-references exist.
-\def\semtex@appendix@emit#1#2{%
-  \semtex@collapsebr{#1}%
-  \expandafter\ifx\csname semtex@br@#1\endcsname\@empty\else
-    \semtex@appendixentry{#1}{#2}{%
-      \csname semtex@br@#1\endcsname}%
+\def\codep@appendix@emit#1#2{%
+  \codep@collapsebr{#1}%
+  \expandafter\ifx\csname codep@br@#1\endcsname\@empty\else
+    \codep@appendixentry{#1}{#2}{%
+      \csname codep@br@#1\endcsname}%
   \fi
 }
 
 % Appendix rendering helpers.
-% \semtex@appendixsection{number}{title}
-\newcommand*{\semtex@appendixsection}[2]{%
+% \codep@appendixsection{number}{title}
+\newcommand*{\codep@appendixsection}[2]{%
   \par\medskip\noindent
   \textbf{#1\quad #2}\par
 }
 
-% \semtex@appendixentry{atomnumber}{atomname}{reflist}
-\newcommand*{\semtex@appendixentry}[3]{%
+% \codep@appendixentry{atomnumber}{atomname}{reflist}
+\newcommand*{\codep@appendixentry}[3]{%
   \par\noindent
   \hspace{1.5em}%
   #1\quad #2\quad\dotfill\quad
@@ -2122,9 +2122,9 @@
 
 % Guard: require LaTeX2e kernel with hook management.
 \@ifundefined{AddToHook}{%
-  \PackageError{semtex}{%
+  \PackageError{codependent}{%
     LaTeX kernel too old (need 2021+)}{%
-    semtex requires \string\AddToHook\space
+    codependent requires \string\AddToHook\space
     (TeX Live 2021 or later).%
   }%
 }{}
@@ -2132,37 +2132,37 @@
 % Hyperref link wrapping for backref numbers.
 % Default is identity (plain text); redefined when hyperref
 % is loaded to use anchor names extracted from \newlabel (§8a.4).
-\newcommand*{\semtex@brhyper}[1]{#1}
+\newcommand*{\codep@brhyper}[1]{#1}
 
 \AtBeginDocument{%
   \@ifpackageloaded{hyperref}{%
-    \PackageInfo{semtex}{hyperref detected, enabling links}%
-    \renewcommand*{\semtex@brhyper}[1]{%
-      \expandafter\ifx\csname semtex@anchor@#1\endcsname\relax
-        \semtex@brhyper@star{#1}%
+    \PackageInfo{codependent}{hyperref detected, enabling links}%
+    \renewcommand*{\codep@brhyper}[1]{%
+      \expandafter\ifx\csname codep@anchor@#1\endcsname\relax
+        \codep@brhyper@star{#1}%
       \else
-        \hyperlink{\csname semtex@anchor@#1\endcsname}{#1}%
+        \hyperlink{\csname codep@anchor@#1\endcsname}{#1}%
       \fi}%
-    \def\semtex@brhyper@star#1{\semtex@stripstar#1*\@nil{#1}}%
-    \def\semtex@stripstar#1*#2\@nil#3{%
-      \def\semtex@tmp{#2}%
-      \ifx\semtex@tmp\@empty
+    \def\codep@brhyper@star#1{\codep@stripstar#1*\@nil{#1}}%
+    \def\codep@stripstar#1*#2\@nil#3{%
+      \def\codep@tmp{#2}%
+      \ifx\codep@tmp\@empty
         #3%
       \else
-        \expandafter\ifx\csname semtex@anchor@#1\endcsname\relax
+        \expandafter\ifx\csname codep@anchor@#1\endcsname\relax
           #3%
         \else
-          \hyperlink{\csname semtex@anchor@#1\endcsname}{#3}%
+          \hyperlink{\csname codep@anchor@#1\endcsname}{#3}%
         \fi
       \fi}%
     % Activate atom→anchor aux record reading and writing.
-    \def\semtex@anchormap@active#1#2{%
-      \expandafter\gdef\csname semtex@anchor@#1\endcsname{#2}}%
-    \let\semtex@anchormap\semtex@anchormap@active
-    \renewcommand*{\semtex@writeanchormap}[1]{%
+    \def\codep@anchormap@active#1#2{%
+      \expandafter\gdef\csname codep@anchor@#1\endcsname{#2}}%
+    \let\codep@anchormap\codep@anchormap@active
+    \renewcommand*{\codep@writeanchormap}[1]{%
       \if@filesw
         \protected@write\@auxout{}{%
-          \string\semtex@anchormap{#1}{\@currentHref}}%
+          \string\codep@anchormap{#1}{\@currentHref}}%
       \fi}%
   }{}%
 }

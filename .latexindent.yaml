@@ -1,5 +1,5 @@
-# latexindent configuration for semtex.sty
-# Run: latexindent -w semtex.sty
+# latexindent configuration for codependent.sty
+# Run: latexindent -w codependent.sty
 
 # Global indent: 2 spaces, no tabs
 defaultIndent: "  "

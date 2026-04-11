@@ -2,41 +2,41 @@
 %% TEST-WHAT: Verify a \ref AFTER an atom but BEFORE the next atom does
 %%            NOT get attributed to the just-ended atom. The \ref fires
 %%            in a between-atoms gap (e.g., section heading, caption,
-%%            footnote) where \semtex@currentatom must be \@empty.
-%% TEST-SOURCE: REVIEW_A finding 3 (LIVE DEFECT in current semtex.sty),
+%%            footnote) where \codep@currentatom must be \@empty.
+%% TEST-SOURCE: REVIEW_A finding 3 (LIVE DEFECT in current codependent.sty),
 %%              REVIEW_C #4 (MAJOR), REVIEW_E reaffirmation
 %% TEST-SECTION: DESIGN.md §8a.5 currentatom state management
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-AUX-NOT-CONTAINS: \semtex@atomref{1.1.2}{thm:A}
-%% TEST-PACKAGES: hyperref,amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.1.2}{thm:A}
+%% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
 %%
-%% Current semtex.sty (v0.1, lines 244-255 area) sets
-%% \semtex@currentatom on theorem-begin and on para/begin but
+%% Current codependent.sty (v0.1, lines 244-255 area) sets
+%% \codep@currentatom on theorem-begin and on para/begin but
 %% does NOT clear it on atom-end. As a result, a \ref fired
 %% between atoms (in a section heading, caption, or after the
 %% paragraph but before another paragraph starts) gets
 %% attributed to the LAST atom, producing a wrong-source edge
 %% in the backref graph.
 %%
-%% The fix in §8a.5 adds \let\semtex@currentatom\@empty to
+%% The fix in §8a.5 adds \let\codep@currentatom\@empty to
 %% three sites:
 %%   1. \AtEndEnvironment for tracked theorem envs (after the
 %%      backref flush)
 %%   2. \AtEndEnvironment{proof} (after the flush)
-%%   3. \AddToHook{para/end} after \semtex@flushbackref
+%%   3. \AddToHook{para/end} after \codep@flushbackref
 %%
 %% With the fix: the \ref{thm:A} in the section heading below
-%% fires with \semtex@currentatom = \@empty, so the
+%% fires with \codep@currentatom = \@empty, so the
 %% \@setref/\HyRef@autosetref/\cref@getlabel patches
-%% short-circuit and DO NOT write \semtex@atomref records.
+%% short-circuit and DO NOT write \codep@atomref records.
 %% The expected result: zero atomref edges from atom 1.1.2
 %% (the section heading paragraph, which itself is suppressed)
 %% to thm:A.
 %%
-%% Without the fix: there would be a stale \semtex@atomref
+%% Without the fix: there would be a stale \codep@atomref
 %% record attributing the section-heading \ref to whichever
 %% paragraph finished last.
 
@@ -44,8 +44,8 @@
 \usepackage{hyperref}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START
@@ -58,7 +58,7 @@ A paragraph in the first section.
   Statement of theorem A.
 \end{theorem}
 
-% After the theorem ends, \semtex@currentatom must be cleared.
+% After the theorem ends, \codep@currentatom must be cleared.
 % A paragraph follows, which sets a new currentatom.
 
 A second paragraph in the first section.
@@ -71,7 +71,7 @@ A second paragraph in the first section.
 
 % The \ref above fires INSIDE \section's heading body, after
 % the previous paragraph ended and before the new section's
-% first paragraph begins. \semtex@currentatom must be empty
+% first paragraph begins. \codep@currentatom must be empty
 % at that point.
 
 A paragraph in the second section. This one IS a real atom.

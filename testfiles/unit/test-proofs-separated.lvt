@@ -1,29 +1,29 @@
 %% TEST-NAME: test-proofs-separated
-%% TEST-WHAT: \semtexproofof associates a separated proof with its theorem;
+%% TEST-WHAT: \codepproofof associates a separated proof with its theorem;
 %%            the proof gets the theorem's starred atom number.
-%% TEST-SOURCE: DESIGN.md §Proof environments, \semtexproofof command
+%% TEST-SOURCE: DESIGN.md §Proof environments, \codepproofof command
 %% TEST-SECTION: DESIGN.md §8a
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.1*}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{2.1}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{2.1*}
-%% TEST-AUX-CONTAINS: \semtex@atomref{2.1*}{thm:main}
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.1*}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{2.1}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{2.1*}
+%% TEST-AUX-CONTAINS: \codep@atomref{2.1*}{thm:main}
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Tests two scenarios:
-%% 1. Theorem in section 1, proof in section 2 with \semtexproofof{thm:main}
-%% 2. The SBL contains a \semtex@sbl@proof record for the starred atom
+%% 1. Theorem in section 1, proof in section 2 with \codepproofof{thm:main}
+%% 2. The SBL contains a \codep@sbl@proof record for the starred atom
 %% 3. Cross-references from inside the separated proof use starred numbers
 
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START
@@ -47,9 +47,9 @@
   A target theorem.
 \end{theorem}
 
-% Non-adjacent proof with \semtexproofof
+% Non-adjacent proof with \codepproofof
 \begin{proof}[Proof of Theorem~\ref{thm:main}]
-  \semtexproofof{thm:main}
+  \codepproofof{thm:main}
   We reference \ref{thm:target} from inside this separated proof.
 \end{proof}
 

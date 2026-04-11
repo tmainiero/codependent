@@ -1,20 +1,20 @@
-# semtex.sty Code Conventions
+# codependent.sty Code Conventions
 
-These conventions are mandatory for all code in `semtex.sty`.
+These conventions are mandatory for all code in `codependent.sty`.
 The goal is CTAN-publishable quality.
 
 ## Naming
 
-- **Internal macros**: `\semtex@name`. Always `@`-guarded.
+- **Internal macros**: `\codep@name`. Always `@`-guarded.
   Never leak into the user namespace.
-- **Public macros**: `\semtex` prefix or short documented names
-  (e.g., `\semtextrack`, `\semtexsuppress`). Minimal public API.
+- **Public macros**: `\codep` prefix or short documented names
+  (e.g., `\codeptrack`, `\codepsuppress`). Minimal public API.
 - **Counters**: user-visible counter is `atom`.  Internal
-  counters use `\semtex@nestlevel`, etc.
-- **Booleans**: `\ifsemtex@backrefs`, `\ifsemtex@appendix`, etc.
-- **Lengths/skips**: `\semtex@backrefskip`, etc.
-- **Token registers**: `\semtex@toks@...`
-- **Key-value keys**: all under the `/semtex/` family.
+  counters use `\codep@nestlevel`, etc.
+- **Booleans**: `\ifcodep@backrefs`, `\ifcodep@appendix`, etc.
+- **Lengths/skips**: `\codep@backrefskip`, etc.
+- **Token registers**: `\codep@toks@...`
+- **Key-value keys**: all under the `/codep/` family.
 
 ## Structure
 
@@ -59,9 +59,9 @@ Each section separated by a comment block:
 
 ## Error handling
 
-- Use `\PackageError{semtex}{message}{help}` for fatal errors.
-- Use `\PackageWarning{semtex}{message}` for non-fatal issues.
-- Use `\PackageInfo{semtex}{message}` for diagnostics.
+- Use `\PackageError{codependent}{message}{help}` for fatal errors.
+- Use `\PackageWarning{codependent}{message}` for non-fatal issues.
+- Use `\PackageInfo{codependent}{message}` for diagnostics.
 - Never `\errmessage` or `\message` directly.
 - Guard optional features:
   ```tex
@@ -111,7 +111,7 @@ Each section separated by a comment block:
 
 All of these must pass before code is considered done.
 
-- **latexindent** — formatter. Run `latexindent -w semtex.sty`
+- **latexindent** — formatter. Run `latexindent -w codependent.sty`
   with a project `.latexindent.yaml` enforcing 2-space indent.
   Agents must not hand-format when the tool exists. Pure
   structural tool — works fine on .sty internals.

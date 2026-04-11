@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch.py - arxiv corpus fetcher for semtex.sty real-world integration tests.
+fetch.py - arxiv corpus fetcher for codependent.sty real-world integration tests.
 
 Downloads a fixed set of arxiv paper source tarballs as declared in
 corpus.lock. Verifies sha256, extracts into papers/<id>/, writes a
@@ -51,7 +51,7 @@ CORPUS_LOCK = SCRIPT_DIR / "corpus.lock"
 PAPERS_DIR = SCRIPT_DIR / "papers"
 
 ARXIV_EPRINT_BASE = "https://export.arxiv.org/e-print"
-USER_AGENT = "semtex-sty test corpus / semtex-arxiv-corpus 0.1"
+USER_AGENT = "codependent test corpus / codependent-arxiv-corpus 0.1"
 
 # arxiv "be nice" policy: max 4 req/s. We use ~3.3 req/s (300 ms gap).
 REQUEST_GAP_SECONDS = 0.3
@@ -186,7 +186,7 @@ def already_fetched(paper_dir: Path, expected_sha: str) -> bool:
 
 
 def action_list(manifest: dict) -> int:
-    print("semtex.sty real-world corpus manifest")
+    print("codependent.sty real-world corpus manifest")
     print("=" * 60)
     papers = manifest.get("papers", [])
     for p in papers:
@@ -340,7 +340,7 @@ def action_fetch(
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
         prog="fetch.py",
-        description="Fetch arxiv source tarballs for semtex.sty "
+        description="Fetch arxiv source tarballs for codependent.sty "
         "real-world integration testing.",
     )
     ap.add_argument(

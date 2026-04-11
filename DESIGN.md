@@ -1,4 +1,4 @@
-# semtex.sty Design
+# codependent.sty Design
 
 LaTeX package for Pavlov-style automatic atom numbering and
 back-reference display.  **The back-reference machinery is a
@@ -9,15 +9,15 @@ tooling is required for the back-reference-display use case:
 graph inversion happens inside pdflatex on pass 2.
 
 This architecture was settled after three rounds of adversarial
-review (see `tools/semtex-cli/reviews/`).  An earlier design
+review (see `tools/codependent-cli/reviews/`).  An earlier design
 delegated graph inversion to an external Haskell CLI via a
 `.sbr` sidecar; that design has been **superseded**.  The new
 architecture is three-layered:
 
 | Layer | Tooling | Role |
 |---|---|---|
-| 1. `semtex.sty` | pure TeX, GPLv3 | Numbering + generic back-refs (this file) |
-| 2. `semtex-cli` | Haskell (future) | **Semantic** analysis only (UIDs, deps, concepts) |
+| 1. `codependent.sty` | pure TeX, GPLv3 | Numbering + generic back-refs (this file) |
+| 2. `codependent-cli` | Haskell (future) | **Semantic** analysis only (UIDs, deps, concepts) |
 | 3. mwablab ext. | project-specific | Builds on Layer 2 |
 
 Layers 1 and 2 communicate one-way: the `.sty` writes a
@@ -27,13 +27,13 @@ two-way persistence is LaTeX's own `.aux` file.
 
 ## Separation of concerns
 
-The semtex ecosystem has three layers.  The `.sty` is the
+The codependent ecosystem has three layers.  The `.sty` is the
 bottom layer — it knows nothing about the layers above.
 
 | Layer | What | Audience |
 |---|---|---|
-| **semtex.sty** | Atom numbering + generic back-ref display (pure TeX, dpmac port) | Anyone (CTAN) |
-| **semtex-cli** | Semantic analysis: `.tex` + `.sbl` -> concept/UID/dep outputs | Anyone using the `.sty` for structured docs |
+| **codependent.sty** | Atom numbering + generic back-ref display (pure TeX, dpmac port) | Anyone (CTAN) |
+| **codependent-cli** | Semantic analysis: `.tex` + `.sbl` -> concept/UID/dep outputs | Anyone using the `.sty` for structured docs |
 | **mwablab extension** | Project-specific semantic tooling on top of the CLI | Project-specific |
 
 The `.sty` is fully standalone for the back-reference-display
@@ -50,13 +50,13 @@ the back-reference-display pipeline at all.
 pdflatex main.tex          pass 1: .sty numbers atoms, writes .aux + .sbl
 pdflatex main.tex          pass 2: .sty reads .aux, inverts the ref graph
                                    in TeX, appends "Used in X, Y." per atom
-semtex-cli analyse main.tex optional: reads .tex + .sbl (+ .aux), writes
+codependent-cli analyse main.tex optional: reads .tex + .sbl (+ .aux), writes
                                       semantic-analysis artifacts
 ```
 
 The two pdflatex runs are LaTeX's ordinary rerun cycle.  No
 external tool is involved for back-ref display.  On pass 1,
-the `.aux` has no `\semtex@atomref` records from a previous
+the `.aux` has no `\codep@atomref` records from a previous
 run (or only stale ones), so the flushed back-ref queue is
 empty and nothing is rendered.  On pass 2 the `.aux` is
 populated and the "Used in" lines appear.  A single-pass
@@ -77,12 +77,12 @@ is correct within that file but not globally unique.
 \newtheorem{theorem}{...}[section]
 \newtheorem{definition}[theorem]{Definition}
 ...                           % all \newtheorem declarations
-\usepackage{semtex}          % after all \newtheorem
-\semtextrack{definition,theorem,proposition,...}
+\usepackage{codependent}          % after all \newtheorem
+\codeptrack{definition,theorem,proposition,...}
 ```
 
-semtex.sty loads AFTER the theorem backend and AFTER all
-`\newtheorem` declarations.  `\semtextrack{...}` performs
+codependent.sty loads AFTER the theorem backend and AFTER all
+`\newtheorem` declarations.  `\codeptrack{...}` performs
 post-hoc aliasing of the shared theorem counter to the `atom`
 counter.  It also auto-registers starred variants (e.g.,
 `definition` → both `definition` and `definition*`, which
@@ -96,7 +96,7 @@ One counter (`atom`) for all block types: paragraphs,
 definitions, theorems, propositions, lemmas, corollaries,
 remarks, examples, proofs.
 
-When `\semtextrack` is called, it:
+When `\codeptrack` is called, it:
 
 1. Creates the `atom` counter.
 2. Copies the current value of the `theorem` counter to
@@ -128,9 +128,9 @@ The `depth` option controls how many sectioning levels appear
 in the atom number and where the counter resets:
 
 ```latex
-\usepackage[depth=1]{semtex}  % 2.3      (default)
-\usepackage[depth=2]{semtex}  % 2.1.3
-\usepackage[depth=3]{semtex}  % 2.1.3.4  (if you must)
+\usepackage[depth=1]{codependent}  % 2.3      (default)
+\usepackage[depth=2]{codependent}  % 2.1.3
+\usepackage[depth=3]{codependent}  % 2.1.3.4  (if you must)
 ```
 
 Depth is relative to the document's top-level sectioning
@@ -156,8 +156,8 @@ numbering.  Atoms render as superscript margin numbers;
 equations render as standard parenthesized numbers.
 
 ```latex
-\usepackage[equations=separate]{semtex}  % independent (default)
-\usepackage[equations=shared]{semtex}    % single counter for everything
+\usepackage[equations=separate]{codependent}  % independent (default)
+\usepackage[equations=shared]{codependent}    % single counter for everything
 ```
 
 In `shared` mode, `\let\c@equation\c@atom` — unstarred
@@ -186,7 +186,7 @@ numbers.
   expects "one atom for the whole display" instead
   consumes 5 atom numbers, and the atom sequence becomes
   `para 2.4 -> align lines 2.5, 2.6, 2.7, 2.8, 2.9 ->
-  next para 2.10`.  `\semtex@currentatom` is also
+  next para 2.10`.  `\codep@currentatom` is also
   stamped to the per-line value on each line, so any
   `\ref{...}` inside the RHS is attributed to the
   current line's atom number — which may or may not
@@ -253,10 +253,10 @@ Small, unobtrusive, does not interrupt text flow.
 
 #### Suppression mechanism
 
-A depth counter `\semtex@nestlevel` controls suppression.
-When `\semtex@nestlevel > 0`, the `para/begin` hook skips
+A depth counter `\codep@nestlevel` controls suppression.
+When `\codep@nestlevel > 0`, the `para/begin` hook skips
 numbering.  Any environment or command that should suppress
-numbering increments `\semtex@nestlevel` on entry and decrements
+numbering increments `\codep@nestlevel` on entry and decrements
 on exit.
 
 **Suppressed environments** (via `\AtBeginEnvironment` /
@@ -271,15 +271,15 @@ on exit.
 
 **Suppressed commands** (via `etoolbox` `\pretocmd` /
 `\apptocmd` patching):
-- `\footnote` — increment `\semtex@nestlevel` before body,
+- `\footnote` — increment `\codep@nestlevel` before body,
   decrement after
 - `\parbox` — same
 - `\caption` — same
 
 **User-extensible:**
 ```latex
-\semtexsuppress{myenvironment}   % for environments
-\semtexsuppresscmd{\mycommand}   % for commands
+\codepsuppress{myenvironment}   % for environments
+\codepsuppresscmd{\mycommand}   % for commands
 ```
 
 **Sectioning commands** (`\section`, `\subsection`, etc.)
@@ -290,12 +290,12 @@ paragraph after a section heading IS numbered.
 
 Hooked via `etoolbox`'s `\AtBeginEnvironment` and
 `\AtEndEnvironment` for each environment name registered
-with `\semtextrack{...}`.  No dependency on `thmtools` —
+with `\codeptrack{...}`.  No dependency on `thmtools` —
 works with plain `amsthm`, `ntheorem`, or raw `\newtheorem`.
 
 When a tracked environment opens:
 
-1. Set `\semtex@nestlevel > 0` so paragraphs within the
+1. Set `\codep@nestlevel > 0` so paragraphs within the
    environment don't get separate numbers.
 2. Adjust the displayed number to use the atom format.
 
@@ -311,31 +311,31 @@ prepended to `\begin`'s expansion); amsthm.sty:129-149
 Consequence: the hook body cannot reliably *cache* the
 current atom number.  Instead, every site that needs the
 current atom number reads `\theatom` directly at use time
-(e.g. `\semtex@writeatomref` reads `\theatom` when emitting
-the source field of a `\semtex@atomref` record, not the
-cached `\semtex@currentatom`).  The cached
-`\semtex@currentatom` is repurposed as an **in-atom
+(e.g. `\codep@writeatomref` reads `\theatom` when emitting
+the source field of a `\codep@atomref` record, not the
+cached `\codep@currentatom`).  The cached
+`\codep@currentatom` is repurposed as an **in-atom
 sentinel**: empty = no current atom; non-empty = inside a
 tracked atom (specific value irrelevant).
 
 The hook still runs (it sets the in-atom sentinel,
-increments `\semtex@nestlevel`, queues backref display, and
+increments `\codep@nestlevel`, queues backref display, and
 clears the sentinel at atom end).  What it does NOT do is
 freeze the atom number into a macro.
 
-When it closes, decrement `\semtex@nestlevel`.
+When it closes, decrement `\codep@nestlevel`.
 
 Result: "Definition 2.3." uses the same counter as
 paragraph 2.2 before it.  Multiple paragraphs within a
 single definition share one number.
 
-**Nested tracked environments:** if `\semtex@nestlevel > 0`
+**Nested tracked environments:** if `\codep@nestlevel > 0`
 when a tracked environment opens (i.e., it's inside another
 tracked environment), the counter is NOT advanced.  The inner
 environment is part of the outer atom.  Example: a
 `definition` containing an `example` gets one atom number.
 
-**Starred environments:** `\semtextrack{definition}` auto-
+**Starred environments:** `\codeptrack{definition}` auto-
 registers both `definition` and `definition*`.  Both get atom
 numbers.
 
@@ -349,8 +349,8 @@ The number renders as a superscript margin number (like
 paragraphs); the "Proof." heading from `amsthm` stays as-is.
 
 ```latex
-\usepackage[proofs=numbered]{semtex}    % default
-\usepackage[proofs=unnumbered]{semtex}  % skip numbering
+\usepackage[proofs=numbered]{codependent}    % default
+\usepackage[proofs=unnumbered]{codependent}  % skip numbering
 ```
 
 ### Labels
@@ -363,7 +363,7 @@ reorganization.
 ## Aux file protocol
 
 The `.sty` writes structured data to the `.aux` file so that
-the semtex CLI can compute back-references.  This follows the
+the codependent CLI can compute back-references.  This follows the
 standard LaTeX pattern used by `hyperref`, `cleveref`, etc.
 
 ### Atom registration
@@ -372,11 +372,11 @@ When each atom is created (in the `para/begin` hook or at
 theorem environment entry), the `.sty` writes:
 
 ```tex
-\semtex@atom{1.2.3}{paragraph}
-\semtex@atom{1.2.4}{Definition}
+\codep@atom{1.2.3}{paragraph}
+\codep@atom{1.2.4}{Definition}
 ```
 
-Format: `\semtex@atom{display-number}{type}`.  The type is
+Format: `\codep@atom{display-number}{type}`.  The type is
 the display name for theorem environments (e.g., "Definition",
 "Theorem") or "paragraph" for plain paragraphs.  This is a
 display name, not a programmatic identifier.
@@ -397,18 +397,18 @@ When `\@setref` fires inside a tracked atom, the `.sty`
 writes:
 
 ```tex
-\semtex@atomref{1.2.5}{def:category}
-\semtex@atomref{1.2.5}{eq:composition}
+\codep@atomref{1.2.5}{def:category}
+\codep@atomref{1.2.5}{eq:composition}
 ```
 
-Format: `\semtex@atomref{current-atom-number}{target-label}`.
-Only written when `\semtex@currentatom` is non-empty (i.e.,
+Format: `\codep@atomref{current-atom-number}{target-label}`.
+Only written when `\codep@currentatom` is non-empty (i.e.,
 inside a tracked atom context).
 
 ### Safety
 
-On pass 1 (no prior `.aux` exists), both `\semtex@atom` and
-`\semtex@atomref` are defined as `\providecommand` no-ops in
+On pass 1 (no prior `.aux` exists), both `\codep@atom` and
+`\codep@atomref` are defined as `\providecommand` no-ops in
 the preamble so that LaTeX's aux read (which happens at
 `\begin{document}`) does not error when no records are
 present.
@@ -417,7 +417,7 @@ On pass 2 (and all subsequent reruns), the preamble installs
 active definitions **before** the aux read (pin point:
 `\AtEndPreamble` / `begindocument/before`, see Section 8a
 "Load order" for the exact hook).  The active definitions
-turn `\semtex@atomref{src}{tgt}` into an enqueue onto the
+turn `\codep@atomref{src}{tgt}` into an enqueue onto the
 back-ref defer queue — exactly Pavlov's `\recordbackref`
 pattern, adapted to LaTeX's `.aux` rerun as the inter-pass
 persistence layer.
@@ -429,7 +429,7 @@ detect `.sbr` / `.aux` drift; with the `.sbr` file gone,
 LaTeX's own rerun mechanism (`rerunfilecheck`, latexmk,
 kernel `Label(s) may have changed` warnings) already handles
 drift detection.  The `.sty` emits a `\PackageInfo` when a
-pass 2 flush produces a different `\semtex@br@*` population
+pass 2 flush produces a different `\codep@br@*` population
 than the preamble expected.
 
 ## Back-references
@@ -438,8 +438,8 @@ than the preamble expected.
 It is entirely in-TeX (ported from dpmac), runs during the
 normal pdflatex rerun cycle, and does not use any external
 tool or `.sbr` sidecar.  The previous three-file design
-(`.aux -> semtex-cli -> .sbr`) is archived under
-`tools/semtex-cli/reviews/` as the pre-port architecture.
+(`.aux -> codependent-cli -> .sbr`) is archived under
+`tools/codependent-cli/reviews/` as the pre-port architecture.
 
 ### Display modes (unchanged)
 
@@ -455,15 +455,15 @@ back-ref data exists, the `.sty` appends
 
 rendered in `\small\sffamily`.  Each number is a hyperlink
 when `hyperref` is loaded.  The rendering is performed by
-`\semtex@renderinline` (currently present in `semtex.sty`
+`\codep@renderinline` (currently present in `codependent.sty`
 Section 8).  The only change required by the port is the
 *source* of the pending list: instead of being populated
 from `.sbr`-file data, it is populated from the csname
-`\semtex@br@<num>` that Section 8a's graph inversion
+`\codep@br@<num>` that Section 8a's graph inversion
 produced during the `begindocument` flush.
 
 **Appendix mode.**  Back-refs are collected during the same
-csname walk and typeset via `\semtexappendix`.  Grouping
+csname walk and typeset via `\codepappendix`.  Grouping
 by section title is derived from the TOC entries LaTeX
 already writes to `.aux`.
 
@@ -485,10 +485,10 @@ displayed.  The Section-8a graph inversion is still run
 > Portions of this section are derived from `dpmac.tex` by
 > **Dmitri Pavlov** (Copyright 2017, 2018 Dmitri Pavlov,
 > distributed under GNU GPL version 3).  The derivative in
-> `semtex.sty` is Copyright 2026 and is also distributed under
+> `codependent.sty` is Copyright 2026 and is also distributed under
 > GNU GPL version 3.  Original source:
 > <https://dmitripavlov.org/tex/dpmac.tex>.  See
-> `tools/semtex-sty/CREDITS.md` for the provenance table.
+> `tools/codependent/CREDITS.md` for the provenance table.
 
 ### Intent
 
@@ -510,31 +510,31 @@ LaTeX rerun cycle:
 
 1. **Pass 1 (collection).**  On each `\ref` (via the
    `\@setref` patch installed by Section 8a.0 below), the
-   `.sty` writes `\semtex@atomref{src}{tgt}` to `.aux`,
+   `.sty` writes `\codep@atomref{src}{tgt}` to `.aux`,
    where `src` is the current atom display number and `tgt`
    is the label key.  If no current atom is active
-   (`\semtex@currentatom` is empty), nothing is written —
+   (`\codep@currentatom` is empty), nothing is written —
    see Section 8a.5 "currentatom state management" below.
 
 2. **Pass 2 (inversion).**  Before LaTeX reads `.aux`
    inside `\begin{document}`, the preamble installs active
-   definitions for `\semtex@atomref` and for a `\newlabel`
+   definitions for `\codep@atomref` and for a `\newlabel`
    override (pinned at `\AtEndPreamble` per REVIEW_C
    finding #3; see "Load order" below).  As `.aux` is read,
    each `\newlabel` entry populates
-   `\semtex@lblnum@<key>` with the label's display number,
-   and each `\semtex@atomref` call enqueues a
-   `\semtex@processbr` invocation onto the defer queue.
+   `\codep@lblnum@<key>` with the label's display number,
+   and each `\codep@atomref` call enqueues a
+   `\codep@processbr` invocation onto the defer queue.
    After `.aux` is fully read, a single flush iterates the
    queue, populating per-target node csnames
-   `\semtex@brnode@<num>@<k>` with the inverted lists.
+   `\codep@brnode@<num>@<k>` with the inverted lists.
    Typesetting then proceeds; at each atom's
-   `\semtex@queuebackref` call site, `\semtex@collapsebr`
-   lazily materialises `\semtex@br@<num>` from the per-
+   `\codep@queuebackref` call site, `\codep@collapsebr`
+   lazily materialises `\codep@br@<num>` from the per-
    target nodes (see Section 8a.6 for the edit to
-   `\semtex@queuebackref` that triggers this collapse); the
-   `\semtex@flushbackref` hook then reads that csname and
-   the existing `\semtex@renderinline` prints "Used in X, Y."
+   `\codep@queuebackref` that triggers this collapse); the
+   `\codep@flushbackref` hook then reads that csname and
+   the existing `\codep@renderinline` prints "Used in X, Y."
 
 The persistence layer is LaTeX's `.aux`; no `.sbr` file is
 involved.  Graph inversion runs once per pdflatex pass, in
@@ -548,52 +548,52 @@ specific section of the sketch:
 
 ```
 Pass 1 (collection):
-  para/begin (semtex.sty Section 7)
+  para/begin (codependent.sty Section 7)
     -> \refstepcounter{atom}
-    -> \edef\semtex@currentatom{\theatom}
-    -> \semtex@queuebackref{\semtex@currentatom}
+    -> \edef\codep@currentatom{\theatom}
+    -> \codep@queuebackref{\codep@currentatom}
          [on pass 1 this is a no-op; the csnames do not
           exist yet.  Edit lives in Section 8a.6.]
   \ref / \eqref / \autoref / \cref  (any reference command)
     -> \@setref (patched in Section 8a.0)
-    -> if \semtex@currentatom non-empty:
+    -> if \codep@currentatom non-empty:
          \immediate\write \@auxout
-           \semtex@atomref{\semtex@currentatom}{<label>}
-  para/end  (semtex.sty Section 7)
-    -> \semtex@flushbackref         [no-op on pass 1]
-    -> \let\semtex@currentatom\@empty   (Section 8a.5)
+           \codep@atomref{\codep@currentatom}{<label>}
+  para/end  (codependent.sty Section 7)
+    -> \codep@flushbackref         [no-op on pass 1]
+    -> \let\codep@currentatom\@empty   (Section 8a.5)
 Between passes:
   LaTeX rewrites main.aux with the current set of
-  \semtex@atomref records (interleaved with standard
+  \codep@atomref records (interleaved with standard
   \newlabel records).
 Pass 2 (inversion + render):
   \AtEndPreamble / begindocument/before
-    -> \semtex@installatomrefpatch   (Section 8a.0)
-    -> \semtex@installnewlabel       (Section 8a.4)
+    -> \codep@installatomrefpatch   (Section 8a.0)
+    -> \codep@installnewlabel       (Section 8a.4)
   \begin{document} -> kernel \@input{\jobname.aux}
     -> each \newlabel record:
-         \semtex@extractlblnum updates \semtex@lblnum@<key>
-    -> each \semtex@atomref{src}{tgt} record:
-         \semtex@recordbr           (Section 8a.1)
-         -> \xdef \csname semtex@brq@N \endcsname
-              {\semtex@processbr{tgt}{src}}
+         \codep@extractlblnum updates \codep@lblnum@<key>
+    -> each \codep@atomref{src}{tgt} record:
+         \codep@recordbr           (Section 8a.1)
+         -> \xdef \csname codep@brq@N \endcsname
+              {\codep@processbr{tgt}{src}}
   begindocument/end
-    -> \semtex@flushbrqueue         (Section 8a.1)
-    -> walks brq@1..brq@brid, firing \semtex@processbr
-    -> \semtex@processbr            (Section 8a.3)
-    -> populates \semtex@brcount@<tgt>
-       and \semtex@brnode@<tgt>@<k>
+    -> \codep@flushbrqueue         (Section 8a.1)
+    -> walks brq@1..brq@brid, firing \codep@processbr
+    -> \codep@processbr            (Section 8a.3)
+    -> populates \codep@brcount@<tgt>
+       and \codep@brnode@<tgt>@<k>
   para/begin for atom N, or AtBeginEnvironment for tracked env
-    -> \semtex@queuebackref{N}      (Section 8a.6 EDIT)
-    -> \semtex@collapsebr{N} (lazy; first call only)
+    -> \codep@queuebackref{N}      (Section 8a.6 EDIT)
+    -> \codep@collapsebr{N} (lazy; first call only)
        -> joins brnode@N@1 .. brnode@N@count with ", "
-       -> \xdef \csname semtex@br@N \endcsname{<joined>}
-    -> reads \csname semtex@br@N \endcsname into
-       \semtex@pendingbr
+       -> \xdef \csname codep@br@N \endcsname{<joined>}
+    -> reads \csname codep@br@N \endcsname into
+       \codep@pendingbr
   para/end (or \AtEndEnvironment)
-    -> \semtex@flushbackref -> \semtex@renderinline
+    -> \codep@flushbackref -> \codep@renderinline
        -> typesets "Used in X, Y."
-    -> \let\semtex@currentatom\@empty
+    -> \let\codep@currentatom\@empty
 ```
 
 The pipeline has TWO halves that must both be in place:
@@ -604,7 +604,7 @@ skip either half.
 ### Reference implementation sketch
 
 The following TeX code is the blueprint for the Section 8a
-insertion into `semtex.sty`.  It incorporates the fixes
+insertion into `codependent.sty`.  It incorporates the fixes
 from REVIEW_C (findings #1, #2, #3, #4) and is written to
 be valid-shape — every brace and `\fi` balances, every
 `\csname` closes, every `\expandafter` has a target.
@@ -708,10 +708,10 @@ common use dispatches through its own internal macro:
 **Load-bearing consequence: `\cref@getlabel` is called
 MULTIPLE TIMES per `\cref` invocation** — once for each
 label in a cref list like `\cref{thm:A,thm:B,thm:C}`.
-Every call produces a `\semtex@atomref` write.  The
-downstream deduplication in `\semtex@processbr`
+Every call produces a `\codep@atomref` write.  The
+downstream deduplication in `\codep@processbr`
 (Section 8a.3) must absorb this multiplicity; the
-per-target `\semtex@brlast@<tgt>` consecutive-dedup
+per-target `\codep@brlast@<tgt>` consecutive-dedup
 handles the common case (same source atom to same target
 target on the same line) automatically.  For the
 multi-label-list case, deduplication happens on pass 2
@@ -724,7 +724,7 @@ visible to anyone who greps `.aux`.
 Per REVIEW_E finding #16 (NITPICK): `\hyperref[foo]{text}`
 is an author-hand-rolled hyperlink, not a
 cross-reference.  The author is explicitly saying "I
-want a link here, not a semantic reference."  semtex
+want a link here, not a semantic reference."  codependent
 does **not** record it as a back-reference edge.  Users
 who want back-ref tracking should write `\cref{label}`
 (or `\ref{label}`) instead.
@@ -732,7 +732,7 @@ who want back-ref tracking should write `\cref{label}`
 If a user genuinely wants both the hand-rolled display
 text AND back-ref tracking, they can write
 `\cref{label}` inline with a `\footnote{see ...}` — or
-explicitly call `\semtex@recordmanualref{label}` (a
+explicitly call `\codep@recordmanualref{label}` (a
 helper we may provide in a later revision; not
 promised).
 
@@ -751,49 +751,49 @@ promised).
 %% the \HyRef@@StarSetRef patch below.
 %% ------------------------------------------------------------
 
-% Pass-1 safety: \semtex@atomref must be defined to SOMETHING
+% Pass-1 safety: \codep@atomref must be defined to SOMETHING
 % at package-load time so that if a stale pass-0 .aux still
 % references it (or a user-script injects a record), LaTeX's
 % aux read does not error.  A \providecommand no-op suits.
-\providecommand*{\semtex@atomref}[2]{}
+\providecommand*{\codep@atomref}[2]{}
 
 % Shared aux-write helper called by all patch sites.
-% Guards on \semtex@currentatom per Section 8a.5, and on
+% Guards on \codep@currentatom per Section 8a.5, and on
 % \if@filesw so --draftmode / -no-aux compiles work.
-\def\semtex@writeatomref#1{%
-  \ifx\semtex@currentatom\@empty\else
+\def\codep@writeatomref#1{%
+  \ifx\codep@currentatom\@empty\else
     \if@filesw
       \protected@write\@auxout{}{%
-        \string\semtex@atomref
-          {\semtex@currentatom}{#1}%
+        \string\codep@atomref
+          {\codep@currentatom}{#1}%
       }%
     \fi
   \fi
 }
 
-% \semtex@installatomrefpatch
+% \codep@installatomrefpatch
 %   Install all three patch sites.  Called from the
 %   begindocument/before hook (Section 8a.7), AFTER
 %   hyperref/cleveref have finished wrapping their
 %   respective dispatchers.  Patching at this point means
 %   we wrap the OUTERMOST live definition, preserving
 %   every prior hook (hyperlink emission, cref formatting).
-\def\semtex@installatomrefpatch{%
+\def\codep@installatomrefpatch{%
   %% ---- Patch 1: kernel \@setref ----
   %% Covers \ref, \eqref, \pageref (via \@pagesetref
   %% delegation), \vref, \Vref, \vpageref, \nameref.
-  \let\semtex@orig@setref\@setref
+  \let\codep@orig@setref\@setref
   \def\@setref##1##2##3{%
-    \semtex@orig@setref{##1}{##2}{##3}%
-    \semtex@writeatomref{##3}%
+    \codep@orig@setref{##1}{##2}{##3}%
+    \codep@writeatomref{##3}%
   }%
   %% ---- Patch 2: cleveref \cref@getlabel ----
   %% Covers every cleveref family command.
   \@ifpackageloaded{cleveref}{%
-    \let\semtex@orig@crefgetlabel\cref@getlabel
+    \let\codep@orig@crefgetlabel\cref@getlabel
     \def\cref@getlabel##1##2{%
-      \semtex@orig@crefgetlabel{##1}{##2}%
-      \semtex@writeatomref{##1}%
+      \codep@orig@crefgetlabel{##1}{##2}%
+      \codep@writeatomref{##1}%
     }%
   }{}%
   %% ---- Patch 3: hyperref \HyRef@autosetref / \HyRef@@StarSetRef ----
@@ -802,17 +802,17 @@ promised).
   %% Subsumes REVIEW_E finding #3 (\ref* bypass).
   \@ifpackageloaded{hyperref}{%
     \@ifundefined{HyRef@autosetref}{}{%
-      \let\semtex@orig@HyRefautosetref\HyRef@autosetref
+      \let\codep@orig@HyRefautosetref\HyRef@autosetref
       \def\HyRef@autosetref##1##2##3{%
-        \semtex@orig@HyRefautosetref{##1}{##2}{##3}%
-        \semtex@writeatomref{##2}%
+        \codep@orig@HyRefautosetref{##1}{##2}{##3}%
+        \codep@writeatomref{##2}%
       }%
     }%
     \@ifundefined{HyRef@@StarSetRef}{}{%
-      \let\semtex@orig@HyRefStarSetRef\HyRef@@StarSetRef
+      \let\codep@orig@HyRefStarSetRef\HyRef@@StarSetRef
       \def\HyRef@@StarSetRef##1##2##3{%
-        \semtex@orig@HyRefStarSetRef{##1}{##2}{##3}%
-        \semtex@writeatomref{##2}%
+        \codep@orig@HyRefStarSetRef{##1}{##2}{##3}%
+        \codep@writeatomref{##2}%
       }%
     }%
   }{}%
@@ -822,32 +822,32 @@ promised).
 %% Section 8a.1: defer queue via csname linked list.
 %% Per REVIEW_C finding #2, the toks-register pattern from
 %% dpmac is O(N^2) at 15k refs; replaced with a csname
-%% linked list keyed by a monotonic \semtex@brid counter.
+%% linked list keyed by a monotonic \codep@brid counter.
 %% ------------------------------------------------------------
-\newcount\semtex@brid
-\semtex@brid=0\relax
+\newcount\codep@brid
+\codep@brid=0\relax
 
-% \semtex@recordbr{src}{tgt}
+% \codep@recordbr{src}{tgt}
 %   Enqueue a processbackref call.  O(1) per append.
-\def\semtex@recordbr#1#2{%
-  \global\advance\semtex@brid by 1\relax
-  \expandafter\xdef\csname semtex@brq@\the\semtex@brid\endcsname
-    {\noexpand\semtex@processbr{#2}{#1}}%
+\def\codep@recordbr#1#2{%
+  \global\advance\codep@brid by 1\relax
+  \expandafter\xdef\csname codep@brq@\the\codep@brid\endcsname
+    {\noexpand\codep@processbr{#2}{#1}}%
 }
 
-% \semtex@flushbrqueue
+% \codep@flushbrqueue
 %   Walk the linked list once, O(N) total.  Called from the
 %   begindocument hook with explicit ordering (see "Queue
 %   flush timing" below).
-\def\semtex@flushbrqueue{%
+\def\codep@flushbrqueue{%
   \begingroup
     \count@=\z@
     \loop
-      \ifnum\count@<\semtex@brid
+      \ifnum\count@<\codep@brid
         \advance\count@ by 1\relax
-        \csname semtex@brq@\the\count@\endcsname
+        \csname codep@brq@\the\count@\endcsname
         \global\expandafter\let
-          \csname semtex@brq@\the\count@\endcsname\relax
+          \csname codep@brq@\the\count@\endcsname\relax
     \repeat
   \endgroup
 }
@@ -857,22 +857,22 @@ promised).
 %% The providecommand no-op from Section 8a.0 is REPLACED by
 %% this active definition at begindocument/before (Section
 %% 8a.7), before LaTeX reads .aux in \begin{document}.  From
-%% that point on, every \semtex@atomref{src}{tgt} that the
+%% that point on, every \codep@atomref{src}{tgt} that the
 %% .aux read fires lands here and enqueues a processbackref
 %% call.
 %%
 %% Per REVIEW_C finding #4, guard on empty src (orphan refs
 %% emitted between atoms).  The guard is belt-and-braces: the
 %% \@setref patch in Section 8a.0 already skips the write
-%% when \semtex@currentatom is empty, so a well-formed .aux
+%% when \codep@currentatom is empty, so a well-formed .aux
 %% should never deliver an empty-src record here; we guard
 %% anyway in case a user hand-edits the aux or a legacy file
 %% sneaks in.
 %% ------------------------------------------------------------
-\def\semtex@atomref@active#1#2{%
-  \edef\semtex@tmp@src{#1}%
-  \ifx\semtex@tmp@src\@empty\else
-    \semtex@recordbr{#1}{#2}%
+\def\codep@atomref@active#1#2{%
+  \edef\codep@tmp@src{#1}%
+  \ifx\codep@tmp@src\@empty\else
+    \codep@recordbr{#1}{#2}%
   \fi
 }
 
@@ -881,82 +881,82 @@ promised).
 %% O(degree^2)).  Per REVIEW_C finding #2 second half.
 %%
 %% For each target atom we maintain:
-%%   \semtex@brcount@<num>  -- count of appended refs
-%%   \semtex@brnode@<num>@<k> -- the k-th ref text
+%%   \codep@brcount@<num>  -- count of appended refs
+%%   \codep@brnode@<num>@<k> -- the k-th ref text
 %% At typeset time the nodes are collapsed into the
-%% display macro \semtex@br@<num>.
+%% display macro \codep@br@<num>.
 %% ------------------------------------------------------------
-\def\semtex@processbr#1#2{%
+\def\codep@processbr#1#2{%
   % #1 = target label key
   % #2 = source atom display number
-  \expandafter\ifx\csname semtex@lblnum@#1\endcsname\relax
+  \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax
     % Unknown target: silently drop.  This is the same
     % behaviour as dpmac's \ewarningline, minus the warning.
   \else
-    \edef\semtex@tmp@tgt{\csname semtex@lblnum@#1\endcsname}%
-    \edef\semtex@tmp@src{#2}%
+    \edef\codep@tmp@tgt{\csname codep@lblnum@#1\endcsname}%
+    \edef\codep@tmp@src{#2}%
     % Self-ref guard (REVIEW_C finding #10).  Both sides are
     % \edef'd so comparison is on display-number strings.
-    \ifx\semtex@tmp@src\semtex@tmp@tgt\else
+    \ifx\codep@tmp@src\codep@tmp@tgt\else
       % Dedup against previous append for this target.
       % (Per REVIEW_D finding #1, an earlier draft had a
       % dead \ifx placeholder here; removed.)
-      \edef\semtex@tmp@last{%
-        \csname semtex@brlast@\semtex@tmp@tgt\endcsname}%
-      \ifx\semtex@tmp@last\semtex@tmp@src
+      \edef\codep@tmp@last{%
+        \csname codep@brlast@\codep@tmp@tgt\endcsname}%
+      \ifx\codep@tmp@last\codep@tmp@src
         % Consecutive duplicate: skip.
       \else
         \global\expandafter\let
-          \csname semtex@brlast@\semtex@tmp@tgt\endcsname
-          \semtex@tmp@src
+          \csname codep@brlast@\codep@tmp@tgt\endcsname
+          \codep@tmp@src
         % Append a new linked-list node.
         \expandafter\ifx
-            \csname semtex@brcount@\semtex@tmp@tgt\endcsname\relax
+            \csname codep@brcount@\codep@tmp@tgt\endcsname\relax
           \global\expandafter\def
-            \csname semtex@brcount@\semtex@tmp@tgt\endcsname{0}%
+            \csname codep@brcount@\codep@tmp@tgt\endcsname{0}%
         \fi
-        \edef\semtex@tmp@k{%
-          \csname semtex@brcount@\semtex@tmp@tgt\endcsname}%
-        \count@=\semtex@tmp@k\relax
+        \edef\codep@tmp@k{%
+          \csname codep@brcount@\codep@tmp@tgt\endcsname}%
+        \count@=\codep@tmp@k\relax
         \advance\count@ by 1\relax
         \expandafter\xdef
-          \csname semtex@brcount@\semtex@tmp@tgt\endcsname
+          \csname codep@brcount@\codep@tmp@tgt\endcsname
           {\the\count@}%
         \expandafter\xdef
-          \csname semtex@brnode@\semtex@tmp@tgt @\the\count@\endcsname
+          \csname codep@brnode@\codep@tmp@tgt @\the\count@\endcsname
           {#2}%
       \fi
     \fi
   \fi
 }
 
-% \semtex@collapsebr{targetnum}
-%   Build a comma-joined display macro \semtex@br@<num>
+% \codep@collapsebr{targetnum}
+%   Build a comma-joined display macro \codep@br@<num>
 %   from the per-target node csnames.  Called lazily the
-%   first time \semtex@queuebackref looks up <num>.
-\def\semtex@collapsebr#1{%
-  \expandafter\ifx\csname semtex@brcount@#1\endcsname\relax
+%   first time \codep@queuebackref looks up <num>.
+\def\codep@collapsebr#1{%
+  \expandafter\ifx\csname codep@brcount@#1\endcsname\relax
     % No refs to this target.
-    \global\expandafter\let\csname semtex@br@#1\endcsname\@empty
+    \global\expandafter\let\csname codep@br@#1\endcsname\@empty
   \else
     \begingroup
-      \edef\semtex@tmp@n{\csname semtex@brcount@#1\endcsname}%
-      \def\semtex@tmp@acc{}%
+      \edef\codep@tmp@n{\csname codep@brcount@#1\endcsname}%
+      \def\codep@tmp@acc{}%
       \count@=\z@
       \loop
-        \ifnum\count@<\semtex@tmp@n
+        \ifnum\count@<\codep@tmp@n
           \advance\count@ by 1\relax
-          \edef\semtex@tmp@node{%
-            \csname semtex@brnode@#1@\the\count@\endcsname}%
-          \ifx\semtex@tmp@acc\@empty
-            \edef\semtex@tmp@acc{\semtex@tmp@node}%
+          \edef\codep@tmp@node{%
+            \csname codep@brnode@#1@\the\count@\endcsname}%
+          \ifx\codep@tmp@acc\@empty
+            \edef\codep@tmp@acc{\codep@tmp@node}%
           \else
-            \edef\semtex@tmp@acc{%
-              \semtex@tmp@acc, \semtex@tmp@node}%
+            \edef\codep@tmp@acc{%
+              \codep@tmp@acc, \codep@tmp@node}%
           \fi
       \repeat
       \global\expandafter\let
-        \csname semtex@br@#1\endcsname\semtex@tmp@acc
+        \csname codep@br@#1\endcsname\codep@tmp@acc
     \endgroup
   \fi
 }
@@ -969,46 +969,46 @@ promised).
 %% aux-injection block does not clobber it.  Also patch
 %% \newlabelxx to cover the pre-2023 hyperref pathway.
 %% ------------------------------------------------------------
-\def\semtex@grabfirst#1#2\@nil{#1}
-\def\semtex@installnewlabel{%
-  \let\semtex@orig@newlabel\newlabel
+\def\codep@grabfirst#1#2\@nil{#1}
+\def\codep@installnewlabel{%
+  \let\codep@orig@newlabel\newlabel
   \def\newlabel##1##2{%
-    \semtex@orig@newlabel{##1}{##2}%
-    \semtex@extractlblnum{##1}{##2}%
+    \codep@orig@newlabel{##1}{##2}%
+    \codep@extractlblnum{##1}{##2}%
   }%
   % Pre-2023 hyperref path: \newlabelxx#1#2#3#4#5#6 -> \oldnewlabel
   % We override \newlabelxx too, since hyperref installs it in
   % \AtBeginDocument and it races with our override.
   \@ifundefined{newlabelxx}{}{%
-    \let\semtex@orig@newlabelxx\newlabelxx
+    \let\codep@orig@newlabelxx\newlabelxx
     \def\newlabelxx##1##2##3##4##5##6{%
-      \semtex@orig@newlabelxx{##1}{##2}{##3}{##4}{##5}{##6}%
+      \codep@orig@newlabelxx{##1}{##2}{##3}{##4}{##5}{##6}%
       % ##2 is already the display number for the 6-arg form.
       \expandafter\gdef
-        \csname semtex@lblnum@##1\endcsname{##2}%
+        \csname codep@lblnum@##1\endcsname{##2}%
     }%
   }%
 }
 
-% \semtex@extractlblnum{key}{value}
+% \codep@extractlblnum{key}{value}
 %   value is the raw 2nd arg of \newlabel, which after TeX
 %   brace-stripping is already "{num}{page}{...}{...}{...}".
 %   We grab the first brace group and stash it under the key.
 %   Skip keys that end in @cref (cleveref internal records).
-\def\semtex@extractlblnum#1#2{%
-  \semtex@ifcrefkey{#1}{%
+\def\codep@extractlblnum#1#2{%
+  \codep@ifcrefkey{#1}{%
     % @cref-suffixed: skip silently.
   }{%
-    % Extract first subgroup via \semtex@grabfirst.
-    \expandafter\semtex@extractlblnum@ii
-      \expandafter{\semtex@grabfirst#2\@nil}{#1}%
+    % Extract first subgroup via \codep@grabfirst.
+    \expandafter\codep@extractlblnum@ii
+      \expandafter{\codep@grabfirst#2\@nil}{#1}%
   }%
 }
-\def\semtex@extractlblnum@ii#1#2{%
-  \expandafter\gdef\csname semtex@lblnum@#2\endcsname{#1}%
+\def\codep@extractlblnum@ii#1#2{%
+  \expandafter\gdef\csname codep@lblnum@#2\endcsname{#1}%
 }
 
-% \semtex@ifcrefkey{key}{then}{else}
+% \codep@ifcrefkey{key}{then}{else}
 %   True iff the label key ENDS in "@cref" (not merely
 %   contains it).  Per REVIEW_D finding #4, an earlier draft
 %   matched any key containing "@cref", which incorrectly
@@ -1032,40 +1032,40 @@ promised).
 % sentinel-only tail, which happens exactly when the
 % ORIGINAL key ended in "@cref" and the probe's own trailing
 % "@cref" is what matched.
-\def\semtex@ifcrefsentinel{@cref}
-\def\semtex@ifcrefkey#1{%
+\def\codep@ifcrefsentinel{@cref}
+\def\codep@ifcrefkey#1{%
   % Side-effect style: set a boolean, then dispatch on it.
   % Clearer than nested-\expandafter skip-out-of-two-\fis,
   % and avoids the three-\expandafter trick that REVIEW_D
   % finding #4 cautions against.
-  \semtex@iscreffalse
-  \def\semtex@ifcrefkey@probe##1@cref##2\@nil{%
-    \def\semtex@tmp@b{##2}%
-    \ifx\semtex@tmp@b\@empty
+  \codep@iscreffalse
+  \def\codep@ifcrefkey@probe##1@cref##2\@nil{%
+    \def\codep@tmp@b{##2}%
+    \ifx\codep@tmp@b\@empty
       % No @cref in the key at all -> the probe's own
       % trailing @cref absorbed the split -> NOT a cref key.
     \else
       % @cref found somewhere.  IS-cref iff the tail is
       % EXACTLY "@cref" (meaning the probe's own trailing
       % @cref is what matched, i.e. the key ended in @cref).
-      \ifx\semtex@tmp@b\semtex@ifcrefsentinel
-        \semtex@iscreftrue
+      \ifx\codep@tmp@b\codep@ifcrefsentinel
+        \codep@iscreftrue
       \fi
     \fi
   }%
-  \semtex@ifcrefkey@probe#1@cref\@nil
-  \ifsemtex@iscref
+  \codep@ifcrefkey@probe#1@cref\@nil
+  \ifcodep@iscref
     \expandafter\@firstoftwo
   \else
     \expandafter\@secondoftwo
   \fi
 }
-% Flag declared once; used only inside \semtex@ifcrefkey.
-\newif\ifsemtex@iscref
+% Flag declared once; used only inside \codep@ifcrefkey.
+\newif\ifcodep@iscref
 
 %% ------------------------------------------------------------
 %% Section 8a.7: hook installation.
-%% Per REVIEW_D finding #2, the two semtex-owned labels on
+%% Per REVIEW_D finding #2, the two codependent-owned labels on
 %% begindocument/before get EXPLICIT relative ordering rather
 %% than both claiming "before *".  Two "before *" rules in
 %% the same package pile up and give no guarantee about their
@@ -1073,45 +1073,45 @@ promised).
 %% ------------------------------------------------------------
 
 % Install the \@setref aux-write patch AND the \newlabel
-% override + the active \semtex@atomref callback at
+% override + the active \codep@atomref callback at
 % begindocument/before.  All three belong together in one
 % hook because they co-depend on being in place before the
 % .aux read during \begin{document}.
-\AddToHook{begindocument/before}[semtex/backref/install]{%
-  \semtex@installatomrefpatch
-  \semtex@installnewlabel
+\AddToHook{begindocument/before}[codependent/backref/install]{%
+  \codep@installatomrefpatch
+  \codep@installnewlabel
   % Swap the providecommand no-op for the active callback.
-  \let\semtex@atomref\semtex@atomref@active
+  \let\codep@atomref\codep@atomref@active
 }
 
 % Flush the queue AFTER aux has been read.  The aux read
 % happens during the kernel's \document macro before any
 % \AtBeginDocument hook fires, so begindocument/end is a
-% safe point.  No internal ordering constraint vs. semtex's
+% safe point.  No internal ordering constraint vs. codependent's
 % own labels on this hook (there is only one).
-\AddToHook{begindocument/end}[semtex/backref/flush]{%
-  \semtex@flushbrqueue
+\AddToHook{begindocument/end}[codependent/backref/flush]{%
+  \codep@flushbrqueue
 }
 ```
 
 **Hook-rule declarations** (per REVIEW_D #2).  The two
-semtex labels on `begindocument/before`
-(`semtex/backref/install` from Section 8a.7 and
-`semtex/sbl/open` from Section 9a) are given an explicit
+codependent labels on `begindocument/before`
+(`codependent/backref/install` from Section 8a.7 and
+`codependent/sbl/open` from Section 9a) are given an explicit
 internal order: the backref install must run before the
 sbl open, because the sbl writer depends on the
-`\semtex@currentatom` / `\@setref` patch infrastructure
+`\codep@currentatom` / `\@setref` patch infrastructure
 being live.  No label claims `before *` any longer.
 
 ```tex
 % Internal dependency: sbl open sees the backref install.
-\DeclareHookRule{begindocument/before}{semtex/sbl/open}%
-                {after}{semtex/backref/install}
+\DeclareHookRule{begindocument/before}{codependent/sbl/open}%
+                {after}{codependent/backref/install}
 
-% Note (REVIEW_F #3): semtex/sbl/labelwrap (defined in §9a)
+% Note (REVIEW_F #3): codependent/sbl/labelwrap (defined in §9a)
 % has NO ordering rule and needs none.  It depends on
 % neither backref/install nor sbl/open: the label-wrap
-% machinery only forwards through \semtex@orig@label and
+% machinery only forwards through \codep@orig@label and
 % emits its sidecar record at user-call time, never at
 % install time.  Documented here so future readers don't
 % wonder about the missing rule.
@@ -1122,7 +1122,7 @@ being live.  No label claims `before *` any longer.
 % subsection for the ordering contract with third-party
 % packages.
 \DeclareHookRule{begindocument/before}%
-                {semtex/backref/install}{before}{hyperref}
+                {codependent/backref/install}{before}{hyperref}
 ```
 
 External ordering conflicts (hyperref, `acmart`, `biblatex`)
@@ -1135,61 +1135,61 @@ can be added.
 
 Notes on the sketch:
 
-- The `\semtex@grabfirst` macro is the `\@secondoftwo`-style
+- The `\codep@grabfirst` macro is the `\@secondoftwo`-style
   "grab first brace group, throw away the tail up to
   `\@nil`" pattern called for by REVIEW_C finding #1.
   Correct for both the 5-tuple (kernel/modern hyperref) and
   the 2-tuple (pre-2023 hyperref fallback).  For cleveref's
   `<key>@cref` records, the entire record is skipped via
-  `\semtex@ifcrefkey`.
-- `\semtex@recordbr` uses `\expandafter\xdef\csname ... brq@N
+  `\codep@ifcrefkey`.
+- `\codep@recordbr` uses `\expandafter\xdef\csname ... brq@N
   \endcsname` — the O(1) append from REVIEW_C finding #2.
   No toks register is touched; no growing `\the` is
   performed.
-- `\semtex@processbr` uses a *second* csname linked list
-  (`semtex@brnode@<tgt>@<k>`) for the per-target append.
-  The display macro `\semtex@br@<tgt>` is only materialised
-  lazily by `\semtex@collapsebr`, which runs once per
+- `\codep@processbr` uses a *second* csname linked list
+  (`codep@brnode@<tgt>@<k>`) for the per-target append.
+  The display macro `\codep@br@<tgt>` is only materialised
+  lazily by `\codep@collapsebr`, which runs once per
   queried target.  This turns the O(K^2) from REVIEW_C
   finding #11 into O(K).
-- Self-ref is checked via `\ifx\semtex@tmp@src
-  \semtex@tmp@tgt` where both are built by `\edef`, so the
+- Self-ref is checked via `\ifx\codep@tmp@src
+  \codep@tmp@tgt` where both are built by `\edef`, so the
   comparison is on the fully expanded display-number
   strings.  REVIEW_C finding #10 is a minor risk around
   brace wrapping; a stricter normaliser can be added later.
-- **The `\semtex@currentatom` clearing from REVIEW_A
+- **The `\codep@currentatom` clearing from REVIEW_A
   finding #3 / REVIEW_C finding #4 is handled at the
   atom-end hooks** (not shown in the sketch since it
-  belongs in Sections 6 and 7 of `semtex.sty`, not
+  belongs in Sections 6 and 7 of `codependent.sty`, not
   Section 8).  See Section 8a.5 below.
-- **The `\semtex@queuebackref` collapse call** (required
-  for `\semtex@collapsebr` to ever fire) is not shown in
+- **The `\codep@queuebackref` collapse call** (required
+  for `\codep@collapsebr` to ever fire) is not shown in
   the Section 8a.3 sketch because it is a modification to
   an existing macro.  See Section 8a.6 below for the
   concrete edit list.
 
-### Section 8a.5 — `\semtex@currentatom` state management
+### Section 8a.5 — `\codep@currentatom` state management
 
 > Upstream motivation: REVIEW_A finding #3 and REVIEW_C
 > finding #4.  Promoted from a prose subsection to a
 > numbered subsection per REVIEW_D finding #8 so an
 > implementer cannot miss it.
 
-The stale-`\semtex@currentatom` bug is the single most
+The stale-`\codep@currentatom` bug is the single most
 impactful correctness hazard in the port.  The package at
-`semtex.sty` lines 245, 274, and 399 *sets*
-`\semtex@currentatom` inside atom-begin hooks but never
+`codependent.sty` lines 245, 274, and 399 *sets*
+`\codep@currentatom` inside atom-begin hooks but never
 *clears* it.  Without the clear, every `\@setref` that
 fires between atoms (in a section heading, caption,
 footnote, or inter-paragraph remark) is attributed to the
-PREVIOUS atom, and the resulting `\semtex@atomref` record
+PREVIOUS atom, and the resulting `\codep@atomref` record
 points at the wrong source.
 
 #### 8a.5.0 — Timing: why the hook-time `\edef` was wrong
 
 > **Critical correction to v0.1.** The version 0.1 stub at
-> `semtex.sty` line 245 contained
-> `\edef\semtex@currentatom{\theatom}` inside an
+> `codependent.sty` line 245 contained
+> `\edef\codep@currentatom{\theatom}` inside an
 > `\AtBeginEnvironment{theorem}` hook body, on the assumption
 > that `\refstepcounter{theorem}` had already fired by the time
 > the hook ran.  **It had not.**  The triage of REVIEW post-Wave 1
@@ -1217,10 +1217,10 @@ points at the wrong source.
 
 **Consequence.**  At hook entry, `\theatom` expands to the
 previous atom's display number.  Caching it via `\edef`
-(`\edef\semtex@currentatom{\theatom}`) freezes the wrong value
+(`\edef\codep@currentatom{\theatom}`) freezes the wrong value
 into the macro for the rest of the atom's body.  Any
-downstream consumer that reads `\semtex@currentatom` —
-`\semtex@writeatomref`, the planned `.sbl` writer, the
+downstream consumer that reads `\codep@currentatom` —
+`\codep@writeatomref`, the planned `.sbl` writer, the
 backref-display lookup — picks up the wrong number.
 
 Empirical confirmation under the v0.1 stub plus Wave 1's
@@ -1229,11 +1229,11 @@ working aux-write patches:
 ```
 \begin{theorem}\label{thm:A}First.\end{theorem}      % becomes 1.1
 \begin{theorem}By \cref{thm:A}, second.\end{theorem} % becomes 1.2
-%% expected aux record: \semtex@atomref{1.2}{thm:A}
-%% actual   aux record: \semtex@atomref{1.1}{thm:A}  (off by one)
+%% expected aux record: \codep@atomref{1.2}{thm:A}
+%% actual   aux record: \codep@atomref{1.1}{thm:A}  (off by one)
 ```
 
-Inside theorem 1's body, the cached `\semtex@currentatom` was
+Inside theorem 1's body, the cached `\codep@currentatom` was
 observed to be `1.0` — a "ghost atom" number that never
 existed in any sense, because the counter step had not yet
 fired and `\theatom` therefore returned the pre-section-reset
@@ -1242,37 +1242,37 @@ value.
 **Fix (folded into Wave 2's §8a.5 edits).**  Two
 complementary changes:
 
-1. **`\semtex@writeatomref` reads `\theatom` at write time**,
-   not the cached `\semtex@currentatom`.  The src argument of
-   the emitted `\semtex@atomref{<src>}{<tgt>}` record is now
+1. **`\codep@writeatomref` reads `\theatom` at write time**,
+   not the cached `\codep@currentatom`.  The src argument of
+   the emitted `\codep@atomref{<src>}{<tgt>}` record is now
    `\theatom`, which by definition reflects the current
    atom counter state at the moment the `\ref`/`\cref`/etc.
    fires inside the user content — i.e. *after* the
    `\refstepcounter` for the enclosing atom.
 
-2. **`\semtex@currentatom` is demoted to an in-atom
+2. **`\codep@currentatom` is demoted to an in-atom
    sentinel.**  Its semantics become: empty (`\@empty`) means
    "not currently inside any tracked atom"; any non-empty
    value means "currently inside an atom".  The specific
    value is irrelevant.  The three set sites in Section 6/7
    (theorem hook, proof hook, paragraph hook) can keep their
-   existing structure as `\edef\semtex@currentatom{\theatom}`
+   existing structure as `\edef\codep@currentatom{\theatom}`
    — the *value* assigned no longer matters, only that it is
    non-empty.  The clear sites (added per the §8a.5 edit list
    below) set it to `\@empty`.
 
 **Why the paragraph-atom and standalone-proof sites are
-unaffected.**  Both `\semtex@installparahook` (semtex.sty
-line ~406) and `\semtex@hookproof`'s standalone branch (line
+unaffected.**  Both `\codep@installparahook` (codependent.sty
+line ~406) and `\codep@hookproof`'s standalone branch (line
 ~280) call `\refstepcounter{atom}` *before* the `\edef`, so
 their `\theatom` reads were already correct.  They were
 accidentally right under the v0.1 misconception.  Only the
 theorem hook path (which depends on amsthm's internal
 `\refstepcounter` happening later) was broken.
 
-**Why `\semtex@queuebackref` callers must also pass
+**Why `\codep@queuebackref` callers must also pass
 `\theatom`.**  The three call sites at
-`\semtex@queuebackref{\semtex@currentatom}` (semtex.sty
+`\codep@queuebackref{\codep@currentatom}` (codependent.sty
 lines 254, 284, 409) currently pass the cached value.  Under
 the new sentinel semantics, they must pass `\theatom`
 explicitly so the lookup key matches the per-target node
@@ -1280,67 +1280,67 @@ csnames built from `\newlabel` display numbers.  Three-line
 edit, included in Wave 2's §8a.5 patch set.
 
 **Latent secondary bug.**  The nest-branch
-`\addtocounter{atom}{-1}` at semtex.sty:249 was a v0.1
+`\addtocounter{atom}{-1}` at codependent.sty:249 was a v0.1
 attempt to "undo" amsthm's `\refstepcounter`.  Under the
 correct timing (hook fires *before* the counter step), the
 undo decrements a counter that was never advanced.  Wave 2
 deletes this line as part of the same fix.
 
-#### Sites that set `\semtex@currentatom`
+#### Sites that set `\codep@currentatom`
 
 These are the three existing set sites, listed by
-`semtex.sty` line number so the patch is unambiguous:
+`codependent.sty` line number so the patch is unambiguous:
 
 | Line | Site | Current code |
 |---|---|---|
-| 245 | `\semtex@hooktheorem` `AtBeginEnvironment` | `\edef\semtex@currentatom{\theatom}` |
-| 274 | `\semtex@hookproof` `AtBeginEnvironment` standalone | `\edef\semtex@currentatom{\theatom}` |
-| 399 | `\semtex@installparahook` normal branch | `\edef\semtex@currentatom{\theatom}` |
+| 245 | `\codep@hooktheorem` `AtBeginEnvironment` | `\edef\codep@currentatom{\theatom}` |
+| 274 | `\codep@hookproof` `AtBeginEnvironment` standalone | `\edef\codep@currentatom{\theatom}` |
+| 399 | `\codep@installparahook` normal branch | `\edef\codep@currentatom{\theatom}` |
 
-#### Sites that must clear `\semtex@currentatom`
+#### Sites that must clear `\codep@currentatom`
 
 The three corresponding atom-end sites.  Each clear goes
-AFTER the existing `\semtex@flushbackref` (so the flush
+AFTER the existing `\codep@flushbackref` (so the flush
 still reads the correct atom number) and BEFORE the
-`\semtex@nestlevel` decrement (which restores
+`\codep@nestlevel` decrement (which restores
 pre-environment state).  The concrete edits:
 
 | Line (area) | Site | Patch (insert after flush) |
 |---|---|---|
-| 249 | `\semtex@hooktheorem`'s `AtEndEnvironment` block (after `\semtex@flushbackref`) | `\let\semtex@currentatom\@empty` |
-| 286 | `\semtex@hookproof`'s `AtEndEnvironment` block (inside the `\ifbool{semtex@proofsnumbered}` conditional, after the flush) | `\let\semtex@currentatom\@empty` |
-| 460 | `\semtex@installparendhook`'s `para/end` hook body (after `\semtex@flushbackref`) | `\let\semtex@currentatom\@empty` |
+| 249 | `\codep@hooktheorem`'s `AtEndEnvironment` block (after `\codep@flushbackref`) | `\let\codep@currentatom\@empty` |
+| 286 | `\codep@hookproof`'s `AtEndEnvironment` block (inside the `\ifbool{codep@proofsnumbered}` conditional, after the flush) | `\let\codep@currentatom\@empty` |
+| 460 | `\codep@installparendhook`'s `para/end` hook body (after `\codep@flushbackref`) | `\let\codep@currentatom\@empty` |
 
 #### Why the clear prevents the bug
 
 Section 8a.0's `\@setref` patch guards its `\immediate\write`
-on `\ifx\semtex@currentatom\@empty`.  With the three clears
+on `\ifx\codep@currentatom\@empty`.  With the three clears
 in place:
 
 - A `\ref` in a section heading (which runs with
-  `\semtex@nestlevel > 0` and no atom context) fires
-  `\@setref` with `\semtex@currentatom` empty; the write is
+  `\codep@nestlevel > 0` and no atom context) fires
+  `\@setref` with `\codep@currentatom` empty; the write is
   skipped; no ghost edge is created.
 - A `\ref` in a stray paragraph between a tracked theorem
   and the next atom fires after the theorem's
   `\AtEndEnvironment` has cleared the state; the write is
   skipped; no ghost edge.
 - A `\ref` inside a caption or footnote is protected by
-  the `\semtex@nestlevel` guard AND by the cleared
-  `\semtex@currentatom` — belt and braces.
+  the `\codep@nestlevel` guard AND by the cleared
+  `\codep@currentatom` — belt and braces.
 
 #### Cross-cutting consequences
 
 Every site that emits a `.sbl` record (Section 9a's
-`\semtex@sblwrite@atom` helper) also guards on
-`\semtex@currentatom`.  Implementing the clear at
+`\codep@sblwrite@atom` helper) also guards on
+`\codep@currentatom`.  Implementing the clear at
 atom-end is therefore a prerequisite for both back-ref
 correctness (Section 8a) and `.sbl` correctness
 (Section 9a) — fix once, benefit twice.
 
 #### Regression test
 
-Add a test case under `tools/semtex-sty/testfiles/` named
+Add a test case under `tools/codependent/testfiles/` named
 `test-stale-currentatom.lvt`.  The fixture:
 
 1. Opens a tracked theorem with `\label{thm:first}`.
@@ -1348,8 +1348,8 @@ Add a test case under `tools/semtex-sty/testfiles/` named
 3. Places a plain paragraph with `\ref{thm:first}` BEFORE
    any new atom starts.
 4. Opens a second tracked theorem with `\label{thm:second}`.
-5. Asserts via `\semtex@debug@aux` (a test helper that
-   greps the `.aux`) that NO `\semtex@atomref` record names
+5. Asserts via `\codep@debug@aux` (a test helper that
+   greps the `.aux`) that NO `\codep@atomref` record names
    `thm:first`'s number as `src` for the stray ref.
    Equivalently, asserts that `thm:second` has no
    "Used in ..." line.
@@ -1383,16 +1383,16 @@ The four bugs documented in REVIEW_E Section R:
   detects this state and skips the entire hook body on the
   restate branch, so no spurious atom number gets associated
   with the restated theorem and no duplicate
-  `\semtex@sbl@atom` record is emitted.  (Note: this is a
+  `\codep@sbl@atom` record is emitted.  (Note: this is a
   separate concern from §8a.5.0's hook-timing fix; the two
   interact but address different defects.)
 - **R-2.** amsthm's `\refstepcounter{theorem}` advances
   `\c@thmt@dummyctr` on the restate branch (harmless to
   `\c@atom` since the alias is broken), but our hook
-  still calls `\edef\semtex@currentatom{\theatom}` which
+  still calls `\edef\codep@currentatom{\theatom}` which
   confirms the R-1 wrong-number attribution.
 - **R-3.** The `.sbl` writer emits a duplicate
-  `\semtex@sbl@atom{<previous-real-atom>}{theorem}` with
+  `\codep@sbl@atom{<previous-real-atom>}{theorem}` with
   a conflicting type — the CLI cannot disambiguate.
 - **R-4.** `\label` inside the restated body is gobbled
   by `thm-restate`'s `\thmt@gobble@label`, and when
@@ -1408,8 +1408,8 @@ walk of each bug against `thm-restate.sty v0.76` lines
 
 On the **original** occurrence of a restatable theorem,
 `\c@theorem` is still aliased to `\c@atom` by
-`\semtex@setupcounter` — exactly as it was at
-`\semtextrack` time.  On the **restate** occurrence,
+`\codep@setupcounter` — exactly as it was at
+`\codeptrack` time.  On the **restate** occurrence,
 `thm-restate.sty` line 132 executes
 `\@xa\let\csname c@#2\endcsname=\c@thmt@dummyctr`,
 breaking the alias.  The guard at the top of the hook
@@ -1420,25 +1420,25 @@ overhead:
 \AtBeginEnvironment{#1}{%
   \ifx\c@theorem\c@atom
     %% Original occurrence: normal hook body.
-    ...existing \semtex@hooktheorem body...
+    ...existing \codep@hooktheorem body...
   \else
     %% Restate occurrence (\c@theorem re-let to dummy):
     %% suppress the whole hook body to avoid
     %%   (a) reading the wrong \theatom,
-    %%   (b) writing a duplicate \semtex@sbl@atom record,
+    %%   (b) writing a duplicate \codep@sbl@atom record,
     %%   (c) queuing back-refs against a stale atom number.
-    %% Still bump \semtex@nestlevel so inner paragraph
+    %% Still bump \codep@nestlevel so inner paragraph
     %% numbering is suppressed inside the restated body
     %% (matching the normal theorem semantics).
-    \advance\semtex@nestlevel by 1\relax
+    \advance\codep@nestlevel by 1\relax
   \fi
 }
 \AtEndEnvironment{#1}{%
   \ifx\c@theorem\c@atom
-    ...existing \semtex@hooktheorem end body...
+    ...existing \codep@hooktheorem end body...
   \else
     %% Matching end guard for the restate branch.
-    \advance\semtex@nestlevel by -1\relax
+    \advance\codep@nestlevel by -1\relax
   \fi
 }
 ```
@@ -1455,19 +1455,19 @@ hooks.  An alternative is to set a boolean at begin-time
 and read it at end-time:
 
 ```tex
-\newif\ifsemtex@suppressed@hook
+\newif\ifcodep@suppressed@hook
 \AtBeginEnvironment{#1}{%
   \ifx\c@theorem\c@atom
-    \semtex@suppressed@hookfalse
+    \codep@suppressed@hookfalse
     ...normal body...
   \else
-    \semtex@suppressed@hooktrue
-    \advance\semtex@nestlevel by 1\relax
+    \codep@suppressed@hooktrue
+    \advance\codep@nestlevel by 1\relax
   \fi
 }
 \AtEndEnvironment{#1}{%
-  \ifsemtex@suppressed@hook
-    \advance\semtex@nestlevel by -1\relax
+  \ifcodep@suppressed@hook
+    \advance\codep@nestlevel by -1\relax
   \else
     ...normal end body...
   \fi
@@ -1484,19 +1484,19 @@ the conditional is idempotent against `\c@theorem`
 aliasing state, which is the same check at begin and
 end, and no stack is required.
 
-#### Save / clear / restore of `\semtex@currentatom` on the restate branch
+#### Save / clear / restore of `\codep@currentatom` on the restate branch
 
 > Upstream motivation: **Section 8a.9 concept-aware
 > forward references.**  The inline guard above correctly
 > skips the atom-numbering, `.sbl@atom`, and back-ref
 > queue work on the restate branch.  But it does NOT
-> touch `\semtex@currentatom`, which still holds whatever
+> touch `\codep@currentatom`, which still holds whatever
 > value the enclosing context left behind — typically the
 > atom number of the intro paragraph that surrounds a
 > `\restate{thm:main}` teaser, or of the appendix
 > paragraph that surrounds an appendix restate.  Any
 > semantic command inside the restated body
-> (`\Hom`, `\Hom*`, `\semtextag`, `\label`) would then
+> (`\Hom`, `\Hom*`, `\codeptag`, `\label`) would then
 > register against that STALE currentatom instead of
 > no-op'ing.  For `\Hom*` in particular this is a
 > correctness bug: the def site would be recorded as the
@@ -1505,16 +1505,16 @@ end, and no stack is required.
 > atom number.
 
 The fix extends the else-branch of the guard with a
-save-clear-restore of `\semtex@currentatom`.  On restate
+save-clear-restore of `\codep@currentatom`.  On restate
 begin, save the current value onto a counter-indexed
 stack and clear to `\@empty`.  On restate end, pop from
 the stack.  The enclosing paragraph's currentatom is
 restored verbatim, so nothing outside the restated body
 is perturbed.  Inside the restated body, every atom-scoped
-emission helper (`\semtex@sblwrite@atom`, the
+emission helper (`\codep@sblwrite@atom`, the
 `\Hom`/`\Hom*` dispatcher, the `\label` wrap, the
-`\semtextag` macro) guards on
-`\ifx\semtex@currentatom\@empty` and silently drops — the
+`\codeptag` macro) guards on
+`\ifx\codep@currentatom\@empty` and silently drops — the
 restated body becomes a semantic-command no-op zone.
 
 **Why a counter-indexed stack, not a single save slot:**
@@ -1525,27 +1525,27 @@ when the inner restate begins.  The counter makes the
 stack trivially LIFO-correct.
 
 ```tex
-\newcount\semtex@restate@depth
+\newcount\codep@restate@depth
 % depth starts at 0; every push increments, every pop
 % decrements. The saved value lives at csname
-% semtex@saved@currentatom@<depth>.
+% codep@saved@currentatom@<depth>.
 
-\newcommand*{\semtex@pushcurrentatom}{%
-  \global\advance\semtex@restate@depth1\relax
+\newcommand*{\codep@pushcurrentatom}{%
+  \global\advance\codep@restate@depth1\relax
   \expandafter\xdef
-    \csname semtex@saved@currentatom@%
-      \the\semtex@restate@depth\endcsname
-    {\semtex@currentatom}%
-  \global\let\semtex@currentatom\@empty}
+    \csname codep@saved@currentatom@%
+      \the\codep@restate@depth\endcsname
+    {\codep@currentatom}%
+  \global\let\codep@currentatom\@empty}
 
-\newcommand*{\semtex@popcurrentatom}{%
-  \global\let\semtex@currentatom
-    \csname semtex@saved@currentatom@%
-      \the\semtex@restate@depth\endcsname
+\newcommand*{\codep@popcurrentatom}{%
+  \global\let\codep@currentatom
+    \csname codep@saved@currentatom@%
+      \the\codep@restate@depth\endcsname
   \global\expandafter\let
-    \csname semtex@saved@currentatom@%
-      \the\semtex@restate@depth\endcsname\@undefined
-  \global\advance\semtex@restate@depth-1\relax}
+    \csname codep@saved@currentatom@%
+      \the\codep@restate@depth\endcsname\@undefined
+  \global\advance\codep@restate@depth-1\relax}
 ```
 
 Hook wiring.  The existing else-branch of the theorem
@@ -1555,46 +1555,46 @@ hook becomes:
 \AtBeginEnvironment{#1}{%
   \ifx\c@theorem\c@atom
     %% Original occurrence: normal hook body (unchanged).
-    ...existing \semtex@hooktheorem body...
+    ...existing \codep@hooktheorem body...
   \else
     %% Restate occurrence: guard body + save/clear currentatom.
-    \advance\semtex@nestlevel by 1\relax
-    \semtex@pushcurrentatom
+    \advance\codep@nestlevel by 1\relax
+    \codep@pushcurrentatom
   \fi
 }
 \AtEndEnvironment{#1}{%
   \ifx\c@theorem\c@atom
-    ...existing \semtex@hooktheorem end body...
+    ...existing \codep@hooktheorem end body...
   \else
     %% Matching end guard for the restate branch.
-    \semtex@popcurrentatom
-    \advance\semtex@nestlevel by -1\relax
+    \codep@popcurrentatom
+    \advance\codep@nestlevel by -1\relax
   \fi
 }
 ```
 
-The `\semtex@pushcurrentatom` call comes AFTER the
-nestlevel advance on begin, and `\semtex@popcurrentatom`
+The `\codep@pushcurrentatom` call comes AFTER the
+nestlevel advance on begin, and `\codep@popcurrentatom`
 comes BEFORE the nestlevel decrement on end, so nested
 restates see both state pieces in consistent LIFO order.
 
 **Effect on concept registration (cross-reference §8a.9).**
 A `\Hom*` call inside a restated body now sees
-`\semtex@currentatom = \@empty` and silently no-ops —
+`\codep@currentatom = \@empty` and silently no-ops —
 the concept-def record is NOT written against the
 teaser/appendix atom.  The ONLY firing that registers the
 def site is the original declaration (first firing, alias
-intact, normal hook body), where `\semtex@currentatom`
+intact, normal hook body), where `\codep@currentatom`
 holds the restatable theorem's own atom number.  Teaser
 uses of `\Hom` in the intro correctly forward-resolve (at
 pass 2 via the concept -> atom map) to the main-body
 declaration atom.
 
-**Effect on `\semtex@sblwrite@atom` generally.**  Any
-`.sbl` record routed through `\semtex@sblwrite@atom` —
+**Effect on `\codep@sblwrite@atom` generally.**  Any
+`.sbl` record routed through `\codep@sblwrite@atom` —
 not just the concept machinery — is dropped inside a
-restated body.  `\semtex@sbl@label`, `\semtex@sbl@use`,
-`\semtex@sbl@tag`, and a hypothetical future atom-scoped
+restated body.  `\codep@sbl@label`, `\codep@sbl@use`,
+`\codep@sbl@tag`, and a hypothetical future atom-scoped
 record all become no-ops on the restate branch.  This is
 the intended semantics: the restate is a visual
 rerender, not a semantic re-declaration.
@@ -1604,9 +1604,9 @@ rerender, not a semantic re-declaration.
 ```tex
 \documentclass{article}
 \usepackage{amsthm,thmtools}
-\usepackage{semtex}
+\usepackage{codependent}
 \newtheorem{theorem}{Theorem}
-\semtextrack{theorem}
+\codeptrack{theorem}
 
 \begin{document}
 \begin{restatable}{theorem}{thmA}\label{thm:A}
@@ -1621,108 +1621,108 @@ A recap follows.  % stray paragraph to advance atom ctr
 
 Assertions the fixture must verify:
 
-- `\semtex@sbl@atom{<N>}{theorem}` for `thm:A` appears
+- `\codep@sbl@atom{<N>}{theorem}` for `thm:A` appears
   **exactly once** in the `.sbl` (the original
   occurrence), never twice.
 - The display number printed for `thm:A` on the first
   (original) occurrence matches the display number
   printed on the restate (i.e. `\ref{thm:A}` resolves
   to the same value in both spots).
-- No `\semtex@atomref` record inside the restated body
+- No `\codep@atomref` record inside the restated body
   cites the stray paragraph atom as `src`.
 - The margin atom number on the section heading
   "Appendix" is absent (verified via PDF text
   extraction; this also exercises E#3).
 
-### Section 8a.6 — Edits to existing `semtex.sty` macros
+### Section 8a.6 — Edits to existing `codependent.sty` macros
 
 > Per REVIEW_D finding #5 (BLOCKER): the Section 8a.1-8a.4
 > sketch defines new macros but does not specify how the
-> existing `semtex.sty` macros interact with them.  An
+> existing `codependent.sty` macros interact with them.  An
 > implementer who reads only the new sketch will leave
-> `\semtex@queuebackref` unchanged, never call
-> `\semtex@collapsebr`, and ship a fully broken port that
+> `\codep@queuebackref` unchanged, never call
+> `\codep@collapsebr`, and ship a fully broken port that
 > compiles cleanly but renders no "Used in" lines.  This
 > subsection enumerates every existing-macro edit needed
 > to wire the port end-to-end.
 
-Line numbers are against the current `semtex.sty` (the
+Line numbers are against the current `codependent.sty` (the
 one referenced throughout this design doc; 654 lines).
 
-#### 8a.6.a — `\semtex@queuebackref` (lines 415-427): REWRITE
+#### 8a.6.a — `\codep@queuebackref` (lines 415-427): REWRITE
 
-Before the existing lookup of `\csname semtex@br@#1\endcsname`,
-call `\semtex@collapsebr{#1}` so that per-target nodes are
+Before the existing lookup of `\csname codep@br@#1\endcsname`,
+call `\codep@collapsebr{#1}` so that per-target nodes are
 lazily materialised on first query.  The collapse macro
 itself is idempotent (it short-circuits if the display
 csname is already set), so calling it unconditionally on
-every `\semtex@queuebackref` is fine; subsequent calls for
+every `\codep@queuebackref` is fine; subsequent calls for
 the same atom number are cheap.
 
 New body:
 
 ```tex
-\newcommand*{\semtex@queuebackref}[1]{%
-  \ifbool{semtex@backrefs}{%
-    \semtex@pendingbr={}%
-    % Lazy collapse: first call materialises \semtex@br@#1.
-    \expandafter\ifx\csname semtex@brcount@#1\endcsname\relax
+\newcommand*{\codep@queuebackref}[1]{%
+  \ifbool{codep@backrefs}{%
+    \codep@pendingbr={}%
+    % Lazy collapse: first call materialises \codep@br@#1.
+    \expandafter\ifx\csname codep@brcount@#1\endcsname\relax
       % No refs to this target; collapse is a no-op but
       % still runs to set the empty sentinel.
-      \semtex@collapsebr{#1}%
+      \codep@collapsebr{#1}%
     \else
-      \semtex@collapsebr{#1}%
+      \codep@collapsebr{#1}%
     \fi
-    \@ifundefined{semtex@br@#1}{%
+    \@ifundefined{codep@br@#1}{%
       % Still undefined after collapse means the sentinel
       % set it to \empty; treat as no back-refs.
     }{%
-      \ifbool{semtex@appendix}{}{%
-        \semtex@pendingbr=\expandafter{%
-          \csname semtex@br@#1\endcsname}%
+      \ifbool{codep@appendix}{}{%
+        \codep@pendingbr=\expandafter{%
+          \csname codep@br@#1\endcsname}%
       }%
     }%
   }{}%
 }
 ```
 
-Note: `\semtex@collapsebr` (defined in Section 8a.3)
+Note: `\codep@collapsebr` (defined in Section 8a.3)
 already handles both the has-refs and no-refs cases, so
 the outer `\ifx\relax` guard in the new body is strictly
 redundant — I included it only so the reader can trace the
 control flow without jumping back to Section 8a.3.  An
 implementer may simplify to a single unconditional
-`\semtex@collapsebr{#1}` call.
+`\codep@collapsebr{#1}` call.
 
-#### 8a.6.b — `\semtex@flushbackref` (lines 431-441): MINIMAL EDIT
+#### 8a.6.b — `\codep@flushbackref` (lines 431-441): MINIMAL EDIT
 
-Unchanged body.  The macro still reads `\semtex@pendingbr`
+Unchanged body.  The macro still reads `\codep@pendingbr`
 into a temp via `\the`, tests empty, and calls
-`\semtex@renderinline`.  The token register is populated
+`\codep@renderinline`.  The token register is populated
 from the collapsed display csname in 8a.6.a above, so the
 flush mechanism does not need to change.
 
 However, per Section 8a.5, **after** the existing
-`\semtex@pendingbr={}` reset, ADD:
+`\codep@pendingbr={}` reset, ADD:
 
 ```tex
-  \let\semtex@currentatom\@empty
+  \let\codep@currentatom\@empty
 ```
 
 This clears the state machine after the flush.  See
 Section 8a.5 for the full currentatom edit list.
 
-#### 8a.6.c — `\semtex@readsbr` (lines 502-519): DELETE ENTIRELY
+#### 8a.6.c — `\codep@readsbr` (lines 502-519): DELETE ENTIRELY
 
 The `.sbr` file no longer exists.  The new model reads
 `.aux` on pass 2 via LaTeX's normal rerun; there is no
 separate `.sbr` to `\IfFileExists` or `\input`.  Delete
-the whole `\newcommand*{\semtex@readsbr}{...}` block.
+the whole `\newcommand*{\codep@readsbr}{...}` block.
 
-Also remove the `\AtBeginDocument{\semtex@readsbr}` call
-at line 578 (inside `\semtextrack`).
+Also remove the `\AtBeginDocument{\codep@readsbr}` call
+at line 578 (inside `\codeptrack`).
 
-#### 8a.6.d — `\semtex@writeauxhash` (lines 523-532): DELETE ENTIRELY
+#### 8a.6.d — `\codep@writeauxhash` (lines 523-532): DELETE ENTIRELY
 
 No content hash is written.  `rerunfilecheck` /
 `latexmk` handle staleness via the normal
@@ -1730,16 +1730,16 @@ aux-content-changed-between-passes mechanism; the kernel's
 "Label(s) may have changed" warning is the only staleness
 signal the user needs.
 
-Also remove the `\AtEndDocument{\semtex@writeauxhash}`
-call at line 580 (inside `\semtextrack`).
+Also remove the `\AtEndDocument{\codep@writeauxhash}`
+call at line 580 (inside `\codeptrack`).
 
-#### 8a.6.e — `\semtex@auxversion` (lines 537-539): DELETE ENTIRELY
+#### 8a.6.e — `\codep@auxversion` (lines 537-539): DELETE ENTIRELY
 
-The `\providecommand*{\semtex@auxversion}[1]{...}` aux
+The `\providecommand*{\codep@auxversion}[1]{...}` aux
 callback is no longer emitted by any writer, so the
 callback has nothing to consume.  Delete.
 
-#### 8a.6.f — `\semtex@sbrversion` / `\semtex@backref` / `\semtex@section` (lines 472-498): DELETE ENTIRELY
+#### 8a.6.f — `\codep@sbrversion` / `\codep@backref` / `\codep@section` (lines 472-498): DELETE ENTIRELY
 
 These three callbacks existed to consume `.sbr` records.
 With the `.sbr` file gone, nothing calls them.  Delete all
@@ -1748,74 +1748,74 @@ three macro definitions.
 #### 8a.6.g — Appendix-mode plumbing: KEEP, RE-PLUMB
 
 The appendix machinery is retained but its data source
-changes from "accumulated during `\semtex@backref`
-callbacks" to "walked from per-target `\semtex@br@<num>`
-csnames at `\semtexappendix` call time".
+changes from "accumulated during `\codep@backref`
+callbacks" to "walked from per-target `\codep@br@<num>`
+csnames at `\codepappendix` call time".
 
-- **`\semtex@appendixdata` token register (line 118):**
+- **`\codep@appendixdata` token register (line 118):**
   KEEP the declaration, but it is no longer populated
   incrementally.
-- **`\semtex@appendixsection{num}{title}` / `\semtex@appendixentry{num}{type}{list}` (lines 616-629):**
+- **`\codep@appendixsection{num}{title}` / `\codep@appendixentry{num}{type}{list}` (lines 616-629):**
   KEEP as-is — they are the rendering primitives.
-- **`\semtexappendix` (lines 600-612):** REWRITE the body
+- **`\codepappendix` (lines 600-612):** REWRITE the body
   to walk the set of known atoms (derivable from the
-  `\semtex@brnode@*` csname family, or equivalently from a
-  list that `semtex.sty` maintains as atoms are created)
+  `\codep@brnode@*` csname family, or equivalently from a
+  list that `codependent.sty` maintains as atoms are created)
   and, for each atom with a non-empty collapsed display
-  macro, emit a `\semtex@appendixentry`.  Section titles
+  macro, emit a `\codep@appendixentry`.  Section titles
   come from the TOC entries LaTeX already writes to `.aux`
   (the standard `\contentsline` records).
 
-The rewrite of `\semtexappendix` is a ~15-line
+The rewrite of `\codepappendix` is a ~15-line
 single-pass loop; it replaces the token-register
 accumulator pattern.  Concrete sketch:
 
 ```tex
-\newcommand*{\semtexappendix}{%
-  \ifbool{semtex@appendix}{%
+\newcommand*{\codepappendix}{%
+  \ifbool{codep@appendix}{%
     \section*{Dependency Index}%
     \begingroup
       \small
-      % Walk \semtex@atomlist (a list macro that
+      % Walk \codep@atomlist (a list macro that
       % para/begin, hooktheorem, and hookproof all append
       % to as atoms are created).  Each entry is a
       % (num, type) pair.
       \def\do##1{%
-        \semtex@appendix@emit##1%
+        \codep@appendix@emit##1%
       }%
-      \semtex@atomlist
+      \codep@atomlist
     \endgroup
   }{%
-    \PackageWarning{semtex}{%
-      \string\semtexappendix\space ignored: %
+    \PackageWarning{codependent}{%
+      \string\codepappendix\space ignored: %
       backrefs mode is not 'appendix'}%
   }%
 }
-\def\semtex@appendix@emit#1#2{%
+\def\codep@appendix@emit#1#2{%
   % #1 = display number, #2 = atom type
-  \semtex@collapsebr{#1}%
-  \expandafter\ifx\csname semtex@br@#1\endcsname\@empty\else
-    \semtex@appendixentry{#1}{#2}{%
-      \csname semtex@br@#1\endcsname}%
+  \codep@collapsebr{#1}%
+  \expandafter\ifx\csname codep@br@#1\endcsname\@empty\else
+    \codep@appendixentry{#1}{#2}{%
+      \csname codep@br@#1\endcsname}%
   \fi
 }
 ```
 
-Where `\semtex@atomlist` is a new list macro initialised
+Where `\codep@atomlist` is a new list macro initialised
 empty and appended to at every atom-begin site (lines
 245, 274, 399).  Append style:
 
 ```tex
-  \xdef\semtex@atomlist{%
-    \semtex@atomlist
+  \xdef\codep@atomlist{%
+    \codep@atomlist
     \do{{\theatom}{<type>}}}
 ```
 
 The append is O(1) per atom (list grows by one
-`\do{...}` entry); the walk at `\semtexappendix` call
+`\do{...}` entry); the walk at `\codepappendix` call
 time is O(N) in the atom count.
 
-#### 8a.6.i — `\semtex@suppresssectioning` (lines 349-365): REPLACE WITH KERNEL HOOKS
+#### 8a.6.i — `\codep@suppresssectioning` (lines 349-365): REPLACE WITH KERNEL HOOKS
 
 > Upstream motivation: **REVIEW_E finding #5 (BLOCKER).**
 > The current implementation wraps `\@startsection`, which
@@ -1830,34 +1830,34 @@ time is O(N) in the atom count.
 > the standard math-monograph class, so this issue affects
 > a **majority** of the target audience.
 
-**Delete** the existing `\semtex@suppresssectioning`
+**Delete** the existing `\codep@suppresssectioning`
 (`.sty` lines 349-365) which wraps `\@startsection` and
 depends on the
-`\AddToHook{begindocument/end}{\makeatletter\let\semtex@orig@startsection\@startsection\def\@startsection{...}\makeatother}`
+`\AddToHook{begindocument/end}{\makeatletter\let\codep@orig@startsection\@startsection\def\@startsection{...}\makeatother}`
 pattern.
 
 **Replace** with LaTeX 2021+ generic command hooks on
 each sectioning command directly:
 
 ```tex
-\newcommand*{\semtex@suppresssectioning}{%
-  \AddToHook{cmd/section/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/subsection/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/subsubsection/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/chapter/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/paragraph/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
-  \AddToHook{cmd/subparagraph/before}[semtex/sectioning]{%
-    \global\booltrue{semtex@sectioning}}%
+\newcommand*{\codep@suppresssectioning}{%
+  \AddToHook{cmd/section/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/subsection/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/subsubsection/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/chapter/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/paragraph/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
+  \AddToHook{cmd/subparagraph/before}[codependent/sectioning]{%
+    \global\booltrue{codep@sectioning}}%
   \@ifundefined{@makechapterhead}{}{%
-    \semtex@suppresscmd{\@makechapterhead}%
+    \codep@suppresscmd{\@makechapterhead}%
   }%
   \@ifundefined{@makeschapterhead}{}{%
-    \semtex@suppresscmd{\@makeschapterhead}%
+    \codep@suppresscmd{\@makeschapterhead}%
   }%
 }
 ```
@@ -1887,17 +1887,17 @@ command.  Specifically:
   `cmd/<level>/before` first.
 
 The LaTeX 2021+ generic command hooks are a hard
-dependency of `semtex.sty` already — the package
+dependency of `codependent.sty` already — the package
 requires `[2021/06/01]` in its `\NeedsTeXFormat` line
 and uses `\AddToHook{para/begin}` etc.  No new
 dependency is introduced.
 
 **`\@makechapterhead` / `\@makeschapterhead`.**  These
-are still wrapped via `\semtex@suppresscmd` because
+are still wrapped via `\codep@suppresscmd` because
 they are called from inside `\chapter`'s body after
 `cmd/chapter/before` has fired.  `cmd/chapter/before`
 sets the flag for the section-title paragraph; the
-`\@makechapterhead` wrapper keeps `\semtex@nestlevel`
+`\@makechapterhead` wrapper keeps `\codep@nestlevel`
 incremented inside the chapter-head block (for
 multi-line chapter titles in book classes).
 
@@ -1923,7 +1923,7 @@ is a separate paragraph, which is also handled
 correctly because the flag is set BEFORE the heading's
 own `para/begin` fires.
 
-#### 8a.6.j — `trivlist` added to `\semtex@installsuppress`
+#### 8a.6.j — `trivlist` added to `\codep@installsuppress`
 
 > Upstream motivation: **REVIEW_E finding #7 (MAJOR).**
 > amsthm wraps theorem environments in a `trivlist` for
@@ -1933,11 +1933,11 @@ own `para/begin` fires.
 > paragraphs exposed to `para/begin` numbering if
 > `trivlist` is not in the suppress list.
 
-In `\semtex@installsuppress` (currently `.sty` lines
+In `\codep@installsuppress` (currently `.sty` lines
 327-339), add:
 
 ```tex
-  \semtex@suppressenv{trivlist}%
+  \codep@suppressenv{trivlist}%
 ```
 
 Tradeoff: this suppresses paragraph numbering inside any
@@ -1973,14 +1973,14 @@ usually "it's inside a `trivlist`".
 
 **Future-work API (TODO).**  If a real use case for
 `\trivlist`-based numbered content appears, expose
-`\semtexuntrack{trivlist}` (or a per-use `\semtexatom`
+`\codepuntrack{trivlist}` (or a per-use `\codepatom`
 explicit-marker command).  Not in v1; flagged so the
 implementer remembers the option exists.
 
 **Why this doesn't double-suppress the theorem body.**
-`\semtex@hooktheorem`'s begin body already increments
-`\semtex@nestlevel` for the theorem environment
-(`semtex.sty` line 243).  The `\trivlist` suppression
+`\codep@hooktheorem`'s begin body already increments
+`\codep@nestlevel` for the theorem environment
+(`codependent.sty` line 243).  The `\trivlist` suppression
 is additive: on theorem begin, nestlevel is incremented
 once by the theorem hook and once by the trivlist
 hook, so inside the body nestlevel is 2.  On theorem
@@ -2002,14 +2002,14 @@ between, and asserting the atom count.
 > `itemize`, `description`).
 
 Inside the `begindocument/before` install path (or inside
-`\semtex@installsuppress`), add:
+`\codep@installsuppress`), add:
 
 ```tex
 \@ifpackageloaded{enumitem}{%
-  \let\semtex@orig@newlist\newlist
+  \let\codep@orig@newlist\newlist
   \def\newlist#1#2#3{%
-    \semtex@orig@newlist{#1}{#2}{#3}%
-    \semtex@suppressenv{#1}%
+    \codep@orig@newlist{#1}{#2}{#3}%
+    \codep@suppressenv{#1}%
   }%
 }{}
 ```
@@ -2024,7 +2024,7 @@ suppresses the freshly-created environment name.
 Install after enumitem has loaded, which means the
 wrapper install site is `begindocument/before` (not
 package-load time, because enumitem may load after
-semtex).
+codependent).
 
 Regression fixture: `testfiles/test-enumitem-newlist.lvt`.
 
@@ -2035,17 +2035,17 @@ Regression fixture: `testfiles/test-enumitem-newlist.lvt`.
 > naturally contain paragraphs; those paragraphs should
 > not become atoms.
 
-In `\semtex@installsuppress`, conditionally suppress
+In `\codep@installsuppress`, conditionally suppress
 these environments only if the respective package is
 loaded:
 
 ```tex
-\AddToHook{begindocument/before}[semtex/suppress/boxes]{%
+\AddToHook{begindocument/before}[codependent/suppress/boxes]{%
   \@ifpackageloaded{tcolorbox}{%
-    \semtex@suppressenv{tcolorbox}%
+    \codep@suppressenv{tcolorbox}%
   }{}%
   \@ifpackageloaded{mdframed}{%
-    \semtex@suppressenv{mdframed}%
+    \codep@suppressenv{mdframed}%
   }{}%
 }
 ```
@@ -2056,7 +2056,7 @@ variants via `\newtcolorbox{myname}{...}`.  Parallel to
 `\newtcolorbox` to auto-register the new environment;
 for v0.1 that is deferred.  Users with custom tcolorbox
 variants must manually call
-`\semtexsuppress{myname}` after `\newtcolorbox`.
+`\codepsuppress{myname}` after `\newtcolorbox`.
 
 Regression fixture: `testfiles/test-tcolorbox.lvt`.
 
@@ -2065,23 +2065,23 @@ Regression fixture: `testfiles/test-tcolorbox.lvt`.
 | Kind | Lines added | Lines deleted |
 |---|---|---|
 | New (Section 8a.0-8a.4, 8a.7, helpers) | ~200 | — |
-| `\semtex@queuebackref` rewrite (8a.6.a) | ~15 | 13 |
-| `\semtex@flushbackref` edit (8a.6.b) | 1 | 0 |
-| `\semtex@readsbr` deletion (8a.6.c) | 0 | 18 |
-| `\semtex@writeauxhash` deletion (8a.6.d) | 0 | 10 |
-| `\semtex@auxversion` deletion (8a.6.e) | 0 | 3 |
-| `\semtex@sbrversion` / `@backref` / `@section` deletion (8a.6.f) | 0 | 27 |
-| `\semtexappendix` re-plumb (8a.6.g) + `\semtex@atomlist` plumbing | ~25 | ~13 |
+| `\codep@queuebackref` rewrite (8a.6.a) | ~15 | 13 |
+| `\codep@flushbackref` edit (8a.6.b) | 1 | 0 |
+| `\codep@readsbr` deletion (8a.6.c) | 0 | 18 |
+| `\codep@writeauxhash` deletion (8a.6.d) | 0 | 10 |
+| `\codep@auxversion` deletion (8a.6.e) | 0 | 3 |
+| `\codep@sbrversion` / `@backref` / `@section` deletion (8a.6.f) | 0 | 27 |
+| `\codepappendix` re-plumb (8a.6.g) + `\codep@atomlist` plumbing | ~25 | ~13 |
 | currentatom clears (Section 8a.5) | 3 | 0 |
 | `\restatable` guard (Section 8a.5.a, E#2) | ~20 | 0 |
-| `\semtex@suppresssectioning` replacement (8a.6.i, E#3) | ~20 | 17 |
+| `\codep@suppresssectioning` replacement (8a.6.i, E#3) | ~20 | 17 |
 | `trivlist` suppress (8a.6.j, E#7) | 1 | 0 |
 | `enumitem \newlist` wrap (8a.6.k, E#10) | ~8 | 0 |
 | `tcolorbox` / `mdframed` suppress (8a.6.l, E#13) | ~8 | 0 |
 | **Total** | **~301** | **~101** |
 
 Net change: roughly **+200 lines** on the current
-`semtex.sty`, bringing it from ~654 to ~854.  The
+`codependent.sty`, bringing it from ~654 to ~854.  The
 REVIEW_E fixes add ~60 lines beyond the REVIEW_D
 baseline, primarily in the three-site reference
 interception (Section 8a.0) and the `\restatable`
@@ -2139,27 +2139,27 @@ The ONLY signal the tool has to distinguish a forward
 gesture from a definition is the author's intent.  There
 is no lexical hint.  The author must mark explicitly.
 
-#### User API: star dispatch inside `\semtexnewcommand`
+#### User API: star dispatch inside `\codepnewcommand`
 
-`\semtexnewcommand{\Hom}[2]{body}` now defines TWO
+`\codepnewcommand{\Hom}[2]{body}` now defines TWO
 variants of the command for the price of one
 declaration:
 
 - `\Hom{A}{B}` — normal use.  Typesets the body, emits
-  a `\semtex@sbl@use` record and a `\semtex@conceptref`
+  a `\codep@sbl@use` record and a `\codep@conceptref`
   aux record under the current atom.
 - `\Hom*{A}{B}` — defining-site marker.  Typesets the
   body IDENTICALLY to the unstarred form; the star is
   purely metadata saying "this atom is the defining
-  site for concept `Hom`".  Emits a `\semtex@sbl@def`
-  record and a `\semtex@concept` aux record.
+  site for concept `Hom`".  Emits a `\codep@sbl@def`
+  record and a `\codep@concept` aux record.
 
 Exactly ONE `\Hom*` call per defined concept is
 permitted (enforced by error).  Zero `\Hom*` calls plus
 any `\Hom` uses is a warning (concept backrefs
 disabled).  See "Error handling" below.
 
-The same dispatch applies to `\semtexNewDocumentCommand`:
+The same dispatch applies to `\codepNewDocumentCommand`:
 a star is prepended to whatever argspec the user
 supplies, and the wrapped command dispatches on
 `\IfBooleanTF`.  See §9a's implementation sketch.
@@ -2167,7 +2167,7 @@ supplies, and the wrapped command dispatches on
 Author source looks like:
 
 ```latex
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \section{Introduction}
 We study the $\Hom{X}{Y}$ functor...     % use, forward
@@ -2189,16 +2189,16 @@ difference is purely in the backref metadata.
 Concept-tracking records are written to BOTH sidecars.
 Each sidecar serves a different consumer:
 
-- **`.aux`** (read by `semtex.sty` itself at pass 2).
+- **`.aux`** (read by `codependent.sty` itself at pass 2).
   Two new record types allow the .sty to resolve
   concept references in TeX-time without any CLI
   involvement.  The typeset PDF's "Used in X, Y" lists
   at each def atom are complete after a normal pdflatex
   run cycle.
 - **`.sbl`** (read by the semantic CLI, Layer 2).  One
-  new record type (`\semtex@sbl@def`) gives the CLI
+  new record type (`\codep@sbl@def`) gives the CLI
   source-location-grounded concept def sites; the
-  existing `\semtex@sbl@use` record is reused for
+  existing `\codep@sbl@use` record is reused for
   non-star concept uses.  The CLI can build a richer
   concept graph with source locations, JSON exports,
   dot renderings, and whatever else Layer 2 wants to
@@ -2223,38 +2223,38 @@ the existing `\@setref`/`\cref@getlabel` patches in
 `\begin{document}`.
 
 ```tex
-% Written by \Hom*  (emitted via \semtex@emit@def).
-\semtex@concept{Hom}{<def-atom-num>}
+% Written by \Hom*  (emitted via \codep@emit@def).
+\codep@concept{Hom}{<def-atom-num>}
 
-% Written by \Hom (emitted via \semtex@emit@use).
-\semtex@conceptref{<use-atom-num>}{Hom}
+% Written by \Hom (emitted via \codep@emit@use).
+\codep@conceptref{<use-atom-num>}{Hom}
 ```
 
-Package-load-time no-op defaults (in `semtex.sty`'s
+Package-load-time no-op defaults (in `codependent.sty`'s
 startup code, before any `.aux` is read):
 
 ```tex
-\providecommand*{\semtex@concept}[2]{}
-\providecommand*{\semtex@conceptref}[2]{}
+\providecommand*{\codep@concept}[2]{}
+\providecommand*{\codep@conceptref}[2]{}
 ```
 
 Real callbacks (installed at `\AtEndPreamble` / hook
-`begindocument/before`, labelled `semtex/backref/install`
+`begindocument/before`, labelled `codependent/backref/install`
 for ordering; see §8a.7):
 
 ```tex
-\AddToHook{begindocument/before}[semtex/concept/install]{%
-  % Concept def-site map: csname semtex@conceptdef@<name>
+\AddToHook{begindocument/before}[codependent/concept/install]{%
+  % Concept def-site map: csname codep@conceptdef@<name>
   % holds the atom number of the def site.
-  \def\semtex@concept##1##2{%
-    \@ifundefined{semtex@conceptdef@##1}%
+  \def\codep@concept##1##2{%
+    \@ifundefined{codep@conceptdef@##1}%
       {\expandafter\gdef
-         \csname semtex@conceptdef@##1\endcsname{##2}}%
+         \csname codep@conceptdef@##1\endcsname{##2}}%
       {% Second def record for same concept from aux.
        % This can happen if the author is editing and a
        % stale aux record lingers; prefer the latest
        % firing (overwrite).  The in-TeX emitter
-       % \semtex@emit@def catches the duplicate at
+       % \codep@emit@def catches the duplicate at
        % source-emit time via the same csname check and
        % issues the PackageError there; by the time the
        % aux is read, a duplicate can only come from a
@@ -2262,50 +2262,50 @@ for ordering; see §8a.7):
        % on the next pass.  Overwrite silently at
        % aux-read time.
        \expandafter\gdef
-         \csname semtex@conceptdef@##1\endcsname{##2}}%
+         \csname codep@conceptdef@##1\endcsname{##2}}%
   }%
   % Concept use: feed the edge into the existing backref
   % defer queue.  The src atom is ##1 (the atom where
   % \Hom fired); the target atom is the def atom stored
-  % under csname semtex@conceptdef@##2.  If the def
+  % under csname codep@conceptdef@##2.  If the def
   % site is not yet known at aux-read time (forward
   % reference on a missing def), the resolve call
   % defers to a second-pass retry: we push a pending
-  % record into \semtex@conceptpending and retry after
+  % record into \codep@conceptpending and retry after
   % the full aux read completes.
-  \def\semtex@conceptref##1##2{%
-    \@ifundefined{semtex@conceptdef@##2}%
+  \def\codep@conceptref##1##2{%
+    \@ifundefined{codep@conceptdef@##2}%
       {% Def site not yet seen in this aux read.  It
        % may appear later in the same aux (the aux is
        % not sorted by document order after the first
        % pass).  Push onto the pending list and retry
        % at \AtBeginDocument.
-       \g@addto@macro\semtex@conceptpending{%
-         \semtex@resolveconcept{##1}{##2}}}%
-      {\semtex@resolveconcept{##1}{##2}}%
+       \g@addto@macro\codep@conceptpending{%
+         \codep@resolveconcept{##1}{##2}}}%
+      {\codep@resolveconcept{##1}{##2}}%
   }%
   % The resolver feeds a resolved (src, tgt) edge into
-  % the existing \semtex@recordbr linked-list queue
+  % the existing \codep@recordbr linked-list queue
   % from §8a.1.  The target is the def atom's number,
   % looked up in the concept map.
-  \def\semtex@resolveconcept##1##2{%
-    \edef\semtex@tmp@tgt{%
-      \csname semtex@conceptdef@##2\endcsname}%
-    \semtex@recordbr{##1}{\semtex@tmp@tgt}%
+  \def\codep@resolveconcept##1##2{%
+    \edef\codep@tmp@tgt{%
+      \csname codep@conceptdef@##2\endcsname}%
+    \codep@recordbr{##1}{\codep@tmp@tgt}%
   }%
 }
-\gdef\semtex@conceptpending{}
+\gdef\codep@conceptpending{}
 ```
 
 The pending-list retry handles the case where the aux
 file order does not match document order — specifically,
-the case where a `\semtex@conceptref` record is read
-before its matching `\semtex@concept` record.  This can
+the case where a `\codep@conceptref` record is read
+before its matching `\codep@concept` record.  This can
 happen because LaTeX's aux file is written in the order
 the aux-writing calls fire during typesetting; if a
 forward-ref use (intro) precedes the def site (§3) in
-source order, the `.aux` will have the `\semtex@conceptref`
-line BEFORE the `\semtex@concept` line.  On a first
+source order, the `.aux` will have the `\codep@conceptref`
+line BEFORE the `\codep@concept` line.  On a first
 aux-read pass we cannot resolve; we defer to the pending
 queue and flush at `\AtBeginDocument`, by which time the
 full aux has been read and the concept map is complete.
@@ -2314,16 +2314,16 @@ The flush is a simple expansion of the saved pending
 list:
 
 ```tex
-\AddToHook{begindocument/end}[semtex/concept/flush]{%
-  \semtex@conceptpending
-  \global\let\semtex@conceptpending\@empty
+\AddToHook{begindocument/end}[codependent/concept/flush]{%
+  \codep@conceptpending
+  \global\let\codep@conceptpending\@empty
 }
 ```
 
-The resolved edges feed into `\semtex@recordbr` exactly
+The resolved edges feed into `\codep@recordbr` exactly
 like the edges from `\@setref`, `\cref@getlabel`, and
-`\HyRef@autosetref`.  Downstream, `\semtex@flushbrqueue`
-and `\semtex@collapsebr` (§8a.1, §8a.3) do not care
+`\HyRef@autosetref`.  Downstream, `\codep@flushbrqueue`
+and `\codep@collapsebr` (§8a.1, §8a.3) do not care
 whether an edge came from a `\ref`, a `\cref`, or a
 concept resolution — they all flow through the same
 per-target linked list and the same "Used in X, Y"
@@ -2334,28 +2334,28 @@ display path.
 One new record type, plus reuse of an existing one.
 
 ```
-\semtex@sbl@def{<atom>}{Hom}     % NEW: emitted by \Hom*
-\semtex@sbl@use{<atom>}{Hom}     % EXISTING: emitted by \Hom
+\codep@sbl@def{<atom>}{Hom}     % NEW: emitted by \Hom*
+\codep@sbl@use{<atom>}{Hom}     % EXISTING: emitted by \Hom
 ```
 
-`\semtex@sbl@def` is a new record added to the §9a
+`\codep@sbl@def` is a new record added to the §9a
 schema table.  It is atom-scoped (routed through
-`\semtex@sblwrite@atom`).  It has the same shape as
-`\semtex@sbl@use` (two arguments: atom number, concept
+`\codep@sblwrite@atom`).  It has the same shape as
+`\codep@sbl@use` (two arguments: atom number, concept
 name) but different semantics — `def` is the unique
 def site, `use` is any (non-star) use.
 
-The existing `\semtex@sbl@use` record is **reused
+The existing `\codep@sbl@use` record is **reused
 verbatim** for non-star `\Hom` uses.  No schema change
 to `@use` itself; the CLI already parses it and builds
 per-command use lists.  What the CLI now additionally
-consumes is the `\semtex@sbl@def` record, which lets
+consumes is the `\codep@sbl@def` record, which lets
 it mark the def-site atom specifically.  For any
 concept `C`, the CLI computes:
 
-- `def_site(C)` = the unique `\semtex@sbl@def{_}{C}`
+- `def_site(C)` = the unique `\codep@sbl@def{_}{C}`
   record's atom number (or warning/error per below).
-- `use_sites(C)` = all `\semtex@sbl@use{_}{C}` records'
+- `use_sites(C)` = all `\codep@sbl@use{_}{C}` records'
   atom numbers.
 
 This gives a per-concept def/use split without any new
@@ -2366,38 +2366,38 @@ parsing machinery beyond the one-line addition of the
 
 1. **Pass 1.** User's `\Hom*` fires inside the
    definition environment.  At emit time,
-   `\semtex@emit@def` writes
-   `\semtex@concept{Hom}{<def-atom>}` to the current
-   `.aux` file and `\semtex@sbl@def{<def-atom>}{Hom}`
+   `\codep@emit@def` writes
+   `\codep@concept{Hom}{<def-atom>}` to the current
+   `.aux` file and `\codep@sbl@def{<def-atom>}{Hom}`
    to the `.sbl`.  User's `\Hom` uses (intro and
-   later) each fire `\semtex@emit@use`, which writes
-   `\semtex@conceptref{<use-atom>}{Hom}` to aux and
-   `\semtex@sbl@use{<use-atom>}{Hom}` to sbl.  Pass 1
+   later) each fire `\codep@emit@use`, which writes
+   `\codep@conceptref{<use-atom>}{Hom}` to aux and
+   `\codep@sbl@use{<use-atom>}{Hom}` to sbl.  Pass 1
    finishes with aux containing all these records.
-2. **Pass 2 preamble.** `semtex.sty` is loaded.  The
-   `\providecommand*{\semtex@concept}[2]{}` defaults
+2. **Pass 2 preamble.** `codependent.sty` is loaded.  The
+   `\providecommand*{\codep@concept}[2]{}` defaults
    install so that if the aux is read early for any
    reason, the records are harmless no-ops.  At
-   `\AtEndPreamble`, the `semtex/concept/install` hook
+   `\AtEndPreamble`, the `codependent/concept/install` hook
    runs and replaces the no-op defaults with the real
    callbacks above.  Ordering rule (§8a.7):
-   `semtex/concept/install` fires AFTER
-   `semtex/backref/install` but BEFORE the aux read at
+   `codependent/concept/install` fires AFTER
+   `codependent/backref/install` but BEFORE the aux read at
    `\@input{\jobname.aux}`.
 3. **Pass 2 aux read.** LaTeX's `\@input{\jobname.aux}`
-   runs inside `\document`.  Every `\semtex@concept`
+   runs inside `\document`.  Every `\codep@concept`
    call populates the concept map
-   `\csname semtex@conceptdef@<name>\endcsname`.  Every
-   `\semtex@conceptref` call either resolves immediately
+   `\csname codep@conceptdef@<name>\endcsname`.  Every
+   `\codep@conceptref` call either resolves immediately
    (if the def record has already been seen during this
-   aux read) or pushes onto `\semtex@conceptpending`
+   aux read) or pushes onto `\codep@conceptpending`
    for the end-of-read flush.
 4. **Pass 2 begindocument/end flush.** The pending list
-   is expanded.  Each deferred `\semtex@resolveconcept`
+   is expanded.  Each deferred `\codep@resolveconcept`
    looks up the now-complete concept map and feeds the
-   resolved edge into `\semtex@recordbr`.  The linked-
+   resolved edge into `\codep@recordbr`.  The linked-
    list defer queue from §8a.1 holds the edges until
-   the per-target `\semtex@collapsebr` is called at
+   the per-target `\codep@collapsebr` is called at
    each def atom's "Used in" display site.
 5. **Pass 2 typeset.** The def atom's "Used in X, Y"
    list now naturally includes the atom numbers of
@@ -2415,13 +2415,13 @@ parsing machinery beyond the one-line addition of the
   against the concept-def map.  Action:
 
   ```tex
-  \ifsemtex@conceptwarnings
-    \PackageWarning{semtex}{%
+  \ifcodep@conceptwarnings
+    \PackageWarning{codependent}{%
       \string\Hom\space used N times but no
       \string\Hom*\space definition site found;
       backrefs for \string\Hom\space are disabled}%
   \else
-    \PackageInfo{semtex}{%
+    \PackageInfo{codependent}{%
       \string\Hom\space used N times but no
       \string\Hom*\space definition site found;
       backrefs for \string\Hom\space are disabled
@@ -2446,21 +2446,21 @@ parsing machinery beyond the one-line addition of the
   info lines), but the standard `Warning|Error` grep
   used by test runners no longer fires.  This mode is
   intended for the real-world arxiv corpus under
-  `tools/semtex-sty/testfiles/real-world/`, where
+  `tools/codependent/testfiles/real-world/`, where
   wrappers mechanically rewrite the paper's
-  `\newcommand`s into `\semtexnewcommand`s but cannot
+  `\newcommand`s into `\codepnewcommand`s but cannot
   insert `\Hom*` markers (which would require domain
   knowledge of which atom is the canonical definition).
   For hand-authored documents, leave this option at
   its default value `on`.
 
 - **Duplicate def site** (`\Hom*` fires twice or more,
-  at different atoms).  Detected in `\semtex@emit@def`
-  via `\@ifundefined{semtex@concept@Hom}`: if already
+  at different atoms).  Detected in `\codep@emit@def`
+  via `\@ifundefined{codep@concept@Hom}`: if already
   defined, error and halt:
 
   ```tex
-  \PackageError{semtex}{%
+  \PackageError{codependent}{%
     \string\\Hom* defined at atoms X and Y}{%
     Exactly one definition site is permitted per
     concept.  Use \string\\Hom\space (without star) at
@@ -2474,18 +2474,18 @@ parsing machinery beyond the one-line addition of the
   separately-named concepts.
 
   Implementation note: the check uses
-  `\@ifundefined{semtex@concept@Hom}` where
-  `semtex@concept@Hom` is a csname set the first time
-  `\semtex@emit@def` fires for `Hom`.  On subsequent
+  `\@ifundefined{codep@concept@Hom}` where
+  `codep@concept@Hom` is a csname set the first time
+  `\codep@emit@def` fires for `Hom`.  On subsequent
   firings the csname is already defined, triggering
   the error branch.  This is a TeX-time check, not a
   pass-2 aux-read check: the error fires during pass 1
   at the second `\Hom*` invocation's typeset time.
 
 - **Def site in empty-currentatom context** (`\Hom*`
-  fires with `\semtex@currentatom = \@empty`, e.g.,
+  fires with `\codep@currentatom = \@empty`, e.g.,
   inside a footnote, caption, or orphaned paragraph
-  that semtex does not track).  Silent no-op.  The
+  that codependent does not track).  Silent no-op.  The
   author may legitimately have `\Hom*` inside a
   footnote or caption where atom numbering is
   suppressed; in that case there is no atom to register
@@ -2497,17 +2497,17 @@ parsing machinery beyond the one-line addition of the
 - **Def site inside a restated body** (`\Hom*` inside
   `\restate{thm:main}`).  Silent no-op by construction:
   the extended §8a.5.a guard saves and clears
-  `\semtex@currentatom` on the restate branch, so
-  `\semtex@emit@def` sees the empty currentatom and
+  `\codep@currentatom` on the restate branch, so
+  `\codep@emit@def` sees the empty currentatom and
   takes the silent-no-op branch above.  The original
   declaration firing (where `\Hom*` lives in the
   restatable body with the counter alias still intact)
   is the one that registers the def site.  See
   "Interaction with restatable" below.
 
-#### Interaction with `\semtex@currentatom` clearing (cross-reference §8a.5)
+#### Interaction with `\codep@currentatom` clearing (cross-reference §8a.5)
 
-§8a.5 clears `\semtex@currentatom` at every atom-end
+§8a.5 clears `\codep@currentatom` at every atom-end
 site (theorem end, proof end, paragraph end) and after
 the three-site reference-interception helpers run.
 This is what makes the "empty-currentatom silent no-op"
@@ -2519,13 +2519,13 @@ against whatever atom happened to precede the
 orphaned call.
 
 The concept machinery inherits this correctness for
-free — it uses the same `\semtex@currentatom` guard
+free — it uses the same `\codep@currentatom` guard
 pattern as every other atom-scoped emitter in §9a.
 
 #### Interaction with restatable (cross-reference §8a.5.a)
 
 §8a.5.a's extended guard saves and clears
-`\semtex@currentatom` at the start of a restated
+`\codep@currentatom` at the start of a restated
 theorem body and restores it at the end.  Inside the
 restated body, every semantic-command emitter sees the
 empty currentatom and no-ops.  Consequences:
@@ -2565,39 +2565,39 @@ against the teaser or appendix invocation atom.
 
 The TeX-time emit helpers and the pass-2 aux callbacks
 are shown in §9a's implementation sketch for
-`\semtexnewcommand` (the `\semtex@emit@def` /
-`\semtex@emit@use` helpers) and in the
-`semtex/concept/install` hook code block above
-(the `\semtex@concept` / `\semtex@conceptref` aux
+`\codepnewcommand` (the `\codep@emit@def` /
+`\codep@emit@use` helpers) and in the
+`codependent/concept/install` hook code block above
+(the `\codep@concept` / `\codep@conceptref` aux
 callbacks and the pending-list retry).  See those
 code blocks for the full detail.
 
 The split is:
 
 - **§9a sketch.** Per-command machinery: how a
-  `\semtexnewcommand`-defined macro dispatches on the
+  `\codepnewcommand`-defined macro dispatches on the
   star, how emit-time records are written to aux and
   sbl, how duplicate def sites and empty-currentatom
   contexts are handled.
 - **§8a.9 sketch (this section).** Pass-2 aux-read
   machinery: how the concept map is populated, how
   forward references are deferred, how resolved edges
-  feed into `\semtex@recordbr`.
+  feed into `\codep@recordbr`.
 
 Both sides are ~20 lines of TeX each.  The split
 mirrors the existing design: §9a owns the user API and
 the declaration-time wrappers, §8a owns the backref
 pipeline and the aux-read callbacks.
 
-The package option is implemented in semtex.sty's
+The package option is implemented in codependent.sty's
 existing pgfkeys block (Section 3) by adding:
 
 ```tex
   conceptwarnings/.is choice,%
   conceptwarnings/on/.code =
-    {\booltrue{semtex@conceptwarnings}},%
+    {\booltrue{codep@conceptwarnings}},%
   conceptwarnings/off/.code =
-    {\boolfalse{semtex@conceptwarnings}},%
+    {\boolfalse{codep@conceptwarnings}},%
   conceptwarnings/.default = on,%
 ```
 
@@ -2605,18 +2605,18 @@ with the corresponding boolean declaration in Section 4
 (Internal state):
 
 ```tex
-\newbool{semtex@conceptwarnings}
-\booltrue{semtex@conceptwarnings}
+\newbool{codep@conceptwarnings}
+\booltrue{codep@conceptwarnings}
 ```
 
 The boolean must be declared before the pgfkeys block
-references it.  The `\ifsemtex@conceptwarnings` branch
+references it.  The `\ifcodep@conceptwarnings` branch
 in the `\AtEndDocument` scan (see Error handling above)
 is the only call site.
 
 #### Regression fixtures
 
-Five fixtures under `tools/semtex-sty/testfiles/unit/`,
+Five fixtures under `tools/codependent/testfiles/unit/`,
 each pinning a distinct correctness case of the
 concept machinery.  See the fixture files themselves
 for header metadata and assertion specifics:
@@ -2631,11 +2631,11 @@ for header metadata and assertion specifics:
 
 All five fixtures FAIL today (the concept machinery is
 unimplemented); they turn green as §8a.9 lands in
-`semtex.sty`.
+`codependent.sty`.
 
 ### Load order
 
-`semtex.sty` **must be loaded after `hyperref` and after
+`codependent.sty` **must be loaded after `hyperref` and after
 `cleveref` (if either is used)**.  This has always been
 required because `hyperref` redefines `\@setref`; the
 requirement is strengthened in the port because the
@@ -2654,16 +2654,16 @@ after the read, every record is missed.
 
 The queue flush is a separate hook at `begindocument/end`,
 which fires after the aux read has populated the queue
-via the `\semtex@atomref` callbacks.  Ordered `before` `*`
+via the `\codep@atomref` callbacks.  Ordered `before` `*`
 so that other packages' `\AtBeginDocument` hooks see a
-populated `\semtex@br@<num>` namespace.
+populated `\codep@br@<num>` namespace.
 
 ### Performance
 
 Per REVIEW_C finding #2, the **rejected** approach is
 dpmac's token-register defer queue.  At 15 000 cross
 references, a toks-register append of an existing
-`\the\semtex@brqueue` is O(k) per append, giving O(N^2/2)
+`\the\codep@brqueue` is O(k) per append, giving O(N^2/2)
 total token copies.  At ~30 tokens per record and ~75 ns
 per token copy, that is:
 
@@ -2674,7 +2674,7 @@ per token copy, that is:
 | 100 000 | ~150 B | ~3.1 hours |
 
 The **accepted** approach (Section 8a.1 above) uses a
-csname linked list: each `\semtex@recordbr` is O(1)
+csname linked list: each `\codep@recordbr` is O(1)
 (one `\xdef` and one counter bump), the flush is O(N)
 total, and the per-target collapse is O(K) per target
 (not O(K^2)).  Realistic timings:
@@ -2694,9 +2694,9 @@ interactive build budget.
 With the three-patch design of Section 8a.0, a cref list
 `\cref{thm:A,thm:B,thm:C}` fires `\cref@getlabel` once
 per label — three times for this example.  Each call
-issues one `\semtex@writeatomref`, so a single cref
+issues one `\codep@writeatomref`, so a single cref
 command writes K records where K is the list length.
-At pass 2 the downstream dedup in `\semtex@processbr`
+At pass 2 the downstream dedup in `\codep@processbr`
 collapses these correctly: each (src, tgt) edge is
 recorded once via the consecutive-dedup gate.  The
 overhead is therefore K aux-write calls per cref list
@@ -2711,15 +2711,15 @@ document, but still tiny relative to the typeset content.
 **Hash-table saturation at very large scale (per REVIEW_D
 finding #13).** At ~100 000 atoms, TeX's csname hash table
 (default ~15 000 strings) saturates and lookup degrades.
-Each `\semtex@brnode@<tgt>@<k>` and each
-`\semtex@br@<num>` lives in that hash table, so a worst-
+Each `\codep@brnode@<tgt>@<k>` and each
+`\codep@br@<num>` lives in that hash table, so a worst-
 case document with 100 000 atoms and 100 000 backref
 edges allocates ~200 000 csnames.  Users on documents
 that large must increase `hash_extra` (and possibly
 `pool_size`) in `texmf.cnf`, or accept that csname
 lookups slow down as the hash overflows.  This is a TeX
 engine limitation inherited by all heavy csname-based
-machinery, not a semtex bug.  For documents up to ~30 000
+machinery, not a codependent bug.  For documents up to ~30 000
 atoms (the practical ceiling of even very large
 monographs) the default hash table is fine.  Document in
 the user-facing README when one exists.
@@ -2738,7 +2738,7 @@ read completes.  Therefore:
 - The queue flush must run **after** line ~9489 but
   preferably before other `\AtBeginDocument` hooks run,
   so that third-party hooks can read the populated
-  `\semtex@br@*` namespace.  `begindocument/end` is the
+  `\codep@br@*` namespace.  `begindocument/end` is the
   correct pin, declared `before` `*` via
   `\DeclareHookRule` (LaTeX 2021+).  This is the pattern
   REVIEW_C finding #8 asks for and is already in the
@@ -2755,7 +2755,7 @@ weakened.
 Known issues, each with a one-line mitigation drawn from
 the review record:
 
-- **Stale `\semtex@currentatom` between atoms** (REVIEW_A
+- **Stale `\codep@currentatom` between atoms** (REVIEW_A
   #3 / REVIEW_C #4): clear at atom-end in Sections 6/7;
   guard at every write site.  See the "currentatom
   clearing" subsection above.
@@ -2770,19 +2770,19 @@ the review record:
   brace-wrapped variants (REVIEW_C #10) which is a minor
   visual bug and can be tightened with a normaliser.
 - **Refs in captions / footnotes**: suppressed because
-  `\semtex@nestlevel > 0` at those sites, so
-  `\semtex@currentatom` is not written to.
+  `\codep@nestlevel > 0` at those sites, so
+  `\codep@currentatom` is not written to.
 - **Cleveref `<key>@cref` records**: skipped by the
-  `\semtex@ifcrefkey` filter (REVIEW_C #12); the real
+  `\codep@ifcrefkey` filter (REVIEW_C #12); the real
   record for the same key (without suffix) is used.
 - **pre-2023 hyperref `\newlabelxx` pathway** (REVIEW_C
   #3): patched alongside `\newlabel` in
-  `\semtex@installnewlabel`.
+  `\codep@installnewlabel`.
 - **Kernels older than `\AddToHook`**: the package already
-  errors out at `semtex.sty` line 636-642.
+  errors out at `codependent.sty` line 636-642.
 - **Restated theorems via `\restatable` / `\restate`**
   (REVIEW_E #1): detected by `\ifx\c@theorem\c@atom`
-  guard at the top of `\semtex@hooktheorem`'s begin/end
+  guard at the top of `\codep@hooktheorem`'s begin/end
   hooks.  See Section 8a.5.a.
 - **`\@startsection`-wrapping classes (KOMA, memoir,
   titlesec)** (REVIEW_E #5): suppression now uses
@@ -2792,7 +2792,7 @@ the review record:
   (REVIEW_E #9): see "Recommended preamble snippets"
   below.
 - **cref lists `\cref{a,b,c}` producing K aux-writes**:
-  the downstream `\semtex@processbr` dedup absorbs the
+  the downstream `\codep@processbr` dedup absorbs the
   multiplicity; see Section 8a.0 "Why so many patch
   sites?" for details.
 
@@ -2806,20 +2806,20 @@ the review record:
 > the diagram's internal node structure, producing
 > spurious atom numbers.
 
-The default `\semtex@installsuppress` covers the
+The default `\codep@installsuppress` covers the
 `tikzpicture` environment (when tikz is loaded), but
 **inline** forms are commands, not environments, and
-must be registered via `\semtexsuppresscmd`.  Add to
+must be registered via `\codepsuppresscmd`.  Add to
 your preamble, AFTER `\usepackage{tikz}` /
-`\usepackage{tikz-cd}` and AFTER `\usepackage{semtex}`:
+`\usepackage{tikz-cd}` and AFTER `\usepackage{codependent}`:
 
 ```latex
 % If you use inline tikz or tikzcd in atom bodies,
 % suppress para/begin inside them so nodes do not become
 % sub-atoms:
-\semtexsuppresscmd{\tikz}
+\codepsuppresscmd{\tikz}
 \@ifpackageloaded{tikz-cd}{%
-  \semtexsuppresscmd{\tikzcd}%
+  \codepsuppresscmd{\tikzcd}%
 }{}%
 ```
 
@@ -2828,7 +2828,7 @@ For users who define their own tikz wrapper macros
 the underlying environment is already suppressed, so no
 additional action is needed.  For wrappers that use
 inline `\tikz{...}` form, add
-`\semtexsuppresscmd{\smallcd}` after the definition.
+`\codepsuppresscmd{\smallcd}` after the definition.
 
 Similar wrappers for the other MINOR-class compatibility
 issues:
@@ -2839,7 +2839,7 @@ issues:
 % variants created via \newtcolorbox need manual
 % registration:
 \newtcolorbox{mybox}{...}
-\semtexsuppress{mybox}
+\codepsuppress{mybox}
 
 % enumitem \newlist variants are auto-suppressed via the
 % \newlist wrapper installed in Section 8a.6.k; no
@@ -2848,11 +2848,11 @@ issues:
 % Custom verbatim wrappers (listings, minted user
 % environments) should be suppressed manually:
 \lstnewenvironment{mylisting}{...}{...}
-\semtexsuppress{mylisting}
+\codepsuppress{mylisting}
 ```
 
 These snippets are optional for users who do not use
-the corresponding packages.  The core semtex.sty
+the corresponding packages.  The core codependent.sty
 package imposes no hard dependencies on tikz,
 tcolorbox, mdframed, listings, or enumitem.
 
@@ -2861,7 +2861,7 @@ tcolorbox, mdframed, listings, or enumitem.
 New regression fixtures introduced by REVIEW_D and
 REVIEW_E, in addition to the existing
 `test-basic`/`test-backrefs`/`test-options`/etc. set.
-Each fixture lives under `tools/semtex-sty/testfiles/`
+Each fixture lives under `tools/codependent/testfiles/`
 and runs under `l3build check`.
 
 | Fixture | Tests | Source finding |
@@ -2880,14 +2880,14 @@ and runs under `l3build check`.
 | `test-latexml.lvt` | LaTeXML binding emits stable CSS classes | REVIEW_D LaTeXML test / E#11 |
 
 **Test infrastructure helpers.** Several fixtures need a
-small `\semtex@debug@aux` macro (greps the current
+small `\codep@debug@aux` macro (greps the current
 `.aux` file from inside `l3build check`) and a way to
 extract PDF text for the section-heading-not-numbered
 check.  Both are standard `l3build` patterns; no
 custom tooling required.
 
 **Running the suite.** `l3build check` from
-`tools/semtex-sty/` runs every `.lvt` in `testfiles/`.
+`tools/codependent/` runs every `.lvt` in `testfiles/`.
 Fixtures that depend on optional packages (cleveref,
 hyperref, KOMA, etc.) should `\RequirePackage` with
 `\@ifpackageloaded` guards or use `l3build`'s
@@ -2896,14 +2896,14 @@ dependencies.
 
 ### License note
 
-The whole of `semtex.sty` is distributed under **GNU GPL
+The whole of `codependent.sty` is distributed under **GNU GPL
 version 3** as a derivative work of `dpmac.tex`.  The
 Section 8a port brings in the defer-queue /
 `\processbackref` / `\predefbackref` pattern and the
 two-register structure; those are the derivative elements.
 Downstream users must retain GPLv3 obligations when
-redistributing `semtex.sty` as part of a larger work.
-See `tools/semtex-sty/CREDITS.md` for the provenance
+redistributing `codependent.sty` as part of a larger work.
+See `tools/codependent/CREDITS.md` for the provenance
 table and the intent to reach out to Pavlov about a
 possible LPPL dual-license courtesy.
 
@@ -2911,7 +2911,7 @@ possible LPPL dual-license courtesy.
 
 ### Problem
 
-LaTeXML renders `\semtex@renderinline`'s
+LaTeXML renders `\codep@renderinline`'s
 `\rightline{\small\sffamily Used in X, Y.}` as
 presentational HTML with no semantic class — typically a
 generic `<ltx:text>` wrapper that loses the "this is a
@@ -2921,13 +2921,13 @@ external reader) cannot then hide, style, or collapse
 back-reference blocks via CSS because there is no stable
 selector to target.  The same problem applies to the
 superscript atom margin numbers emitted by
-`\semtex@emitmargin`.
+`\codep@emitmargin`.
 
 The Section 8a back-reference *graph computation* is
 unaffected by this — LaTeXML honours LaTeX's `.aux` rerun
 semantics, so the same queue-flush dance in Section 8a
 runs during LaTeXML processing, and
-`\semtex@br@<num>` csnames become populated exactly as they
+`\codep@br@<num>` csnames become populated exactly as they
 do under pdflatex.  Only the **rendering** step has a
 LaTeXML-specific wrinkle, and only because LaTeXML's
 default bindings for `\rightline` and `\textsuperscript`
@@ -2935,50 +2935,50 @@ emit presentational markup.
 
 ### Solution
 
-Ship a **LaTeXML binding file** `semtex.ltxml` alongside
-`semtex.sty` in the CTAN package.  The binding is written
+Ship a **LaTeXML binding file** `codependent.ltxml` alongside
+`codependent.sty` in the CTAN package.  The binding is written
 in Perl against the LaTeXML `Package` API and overrides
-exactly two rendering macros — `\semtex@renderinline` and
-`\semtex@emitmargin` — to emit semantic HTML spans with
+exactly two rendering macros — `\codep@renderinline` and
+`\codep@emitmargin` — to emit semantic HTML spans with
 stable class names.  Users of pdflatex, lualatex, or
 xelatex see no change; only the LaTeXML processing
 pipeline picks up the override.
 
 ### Stable class contract
 
-`semtex.sty` promises the following CSS class names as a
+`codependent.sty` promises the following CSS class names as a
 **public interface**.  Downstream HTML consumers may rely
-on these class names being stable across semtex.sty
+on these class names being stable across codependent.sty
 versions; additions are allowed, renames and removals are
 breaking changes.
 
 | Class | Wraps |
 |---|---|
-| `semtex-usedby` | The entire "Used in X, Y." block |
-| `semtex-usedby-label` | The leader text "Used in" |
-| `semtex-usedby-list` | The comma-separated ref list |
-| `semtex-usedby-ref` | Each individual back-ref anchor |
-| `semtex-usedby-trailer` | The trailing period |
-| `semtex-atomnum` | The superscript atom number in the margin |
-| `semtex-atomnum-value` | The numeric text inside the atom number |
+| `codependent-usedby` | The entire "Used in X, Y." block |
+| `codependent-usedby-label` | The leader text "Used in" |
+| `codependent-usedby-list` | The comma-separated ref list |
+| `codependent-usedby-ref` | Each individual back-ref anchor |
+| `codependent-usedby-trailer` | The trailing period |
+| `codependent-atomnum` | The superscript atom number in the margin |
+| `codependent-atomnum-value` | The numeric text inside the atom number |
 
-`semtex.sty` **does not ship CSS**.  The web toolchain
+`codependent.sty` **does not ship CSS**.  The web toolchain
 (currently the mwablab site generator) supplies the
-stylesheet.  A one-line `.semtex-usedby { display: none; }`
-hides all back-references; `.semtex-usedby { display:
+stylesheet.  A one-line `.codependent-usedby { display: none; }`
+hides all back-references; `.codependent-usedby { display:
 block; }` shows them.  Authors who want collapsible
 disclosure can wrap the block in `<details>` via a tiny
 post-processing step or via CSS `content:` tricks; that is
-out of scope for `semtex.sty` itself.
+out of scope for `codependent.sty` itself.
 
-### Reference `semtex.ltxml` sketch
+### Reference `codependent.ltxml` sketch
 
 ```perl
 # -*- mode: Perl -*-
-# semtex.ltxml -- LaTeXML binding for semtex.sty
-# Copyright 2026, GNU GPL v3.  Part of the semtex package.
+# codependent.ltxml -- LaTeXML binding for codependent.sty
+# Copyright 2026, GNU GPL v3.  Part of the codependent package.
 #
-# Graph computation is done by semtex.sty via LaTeX's
+# Graph computation is done by codependent.sty via LaTeX's
 # normal .aux rerun, which LaTeXML honours.  This file
 # only redefines the RENDERING macros so HTML output
 # carries semantic class names.
@@ -2990,27 +2990,27 @@ use LaTeXML::Package;
 
 # ---- "Used in X, Y." block ---------------------------------
 
-DefMacro('\semtex@renderinline{}',
-  '\lxML@semtex@renderinline{#1}');
+DefMacro('\codep@renderinline{}',
+  '\lxML@codep@renderinline{#1}');
 
-DefConstructor('\lxML@semtex@renderinline{}',
-    "<ltx:text class='semtex-usedby'>"
-  . "<ltx:text class='semtex-usedby-label'>Used in </ltx:text>"
-  . "<ltx:text class='semtex-usedby-list'>#1</ltx:text>"
-  . "<ltx:text class='semtex-usedby-trailer'>.</ltx:text>"
+DefConstructor('\lxML@codep@renderinline{}',
+    "<ltx:text class='codependent-usedby'>"
+  . "<ltx:text class='codependent-usedby-label'>Used in </ltx:text>"
+  . "<ltx:text class='codependent-usedby-list'>#1</ltx:text>"
+  . "<ltx:text class='codependent-usedby-trailer'>.</ltx:text>"
   . "</ltx:text>");
 
 # ---- Margin atom number ------------------------------------
 
-DefMacro('\semtex@emitmargin{}',
-  '\lxML@semtex@atomnum{#1}');
+DefMacro('\codep@emitmargin{}',
+  '\lxML@codep@atomnum{#1}');
 
-DefConstructor('\lxML@semtex@atomnum{}',
-    "<ltx:text class='semtex-atomnum'>"
-  . "<ltx:text class='semtex-atomnum-value'>#1</ltx:text>"
+DefConstructor('\lxML@codep@atomnum{}',
+    "<ltx:text class='codependent-atomnum'>"
+  . "<ltx:text class='codependent-atomnum-value'>#1</ltx:text>"
   . "</ltx:text>");
 
-# ---- .sbl / \semtextag / \semtexnewcommand etc. -----------
+# ---- .sbl / \codeptag / \codepnewcommand etc. -----------
 #
 # These produce no typeset output under pdflatex (they are
 # write-only sidecar records -- see Section 9a).  Under
@@ -3018,8 +3018,8 @@ DefConstructor('\lxML@semtex@atomnum{}',
 # define them as no-ops on the typeset side.  The .sbl
 # file is still written because LaTeXML honours
 # \immediate\write.
-DefMacro('\semtextag{}{}', '');
-# \semtexnewcommand and \semtexNewDocumentCommand are
+DefMacro('\codeptag{}{}', '');
+# \codepnewcommand and \codepNewDocumentCommand are
 # handled in the .sty itself (not in this file) because
 # their wrappers must generate TeX tokens to define the
 # wrapped command at LaTeXML parse time.  LaTeXML honours
@@ -3034,56 +3034,56 @@ DefMacro('\semtextag{}{}', '');
 tokenised sequence of `\hyperlink{...}{num}` calls (from
 Section 8a), which LaTeXML's hyperref binding already
 turns into `<ltx:ref>` elements.  The outer
-`semtex-usedby-list` span is sufficient to address those
-via the CSS selector `.semtex-usedby-list > ltx:ref`.
+`codependent-usedby-list` span is sufficient to address those
+via the CSS selector `.codependent-usedby-list > ltx:ref`.
 
-**Per-anchor `semtex-usedby-ref` class (per REVIEW_D
+**Per-anchor `codependent-usedby-ref` class (per REVIEW_D
 finding #12).**  An explicit per-anchor class is
 implementable via a scoped `\hyperlink` override in
-`semtex.ltxml`.  The override is gated on a state flag
-that `\lxML@semtex@renderinline` raises on entry and
+`codependent.ltxml`.  The override is gated on a state flag
+that `\lxML@codep@renderinline` raises on entry and
 clears on exit, so it is active only inside a "Used in"
 list and harmless to other `\hyperlink` uses elsewhere in
 the document:
 
 ```perl
-# In semtex.ltxml, alongside the binding above:
+# In codependent.ltxml, alongside the binding above:
 
-DefMacro('\semtex@usedby@begin', '');
-DefMacro('\semtex@usedby@end',   '');
+DefMacro('\codep@usedby@begin', '');
+DefMacro('\codep@usedby@end',   '');
 
 # Track whether we are inside a "Used in" list.  LaTeXML
 # state via AssignValue / LookupValue.
-DefPrimitive('\semtex@usedby@begin', sub {
-  AssignValue('semtex@usedby@active' => 1, 'global'); });
-DefPrimitive('\semtex@usedby@end', sub {
-  AssignValue('semtex@usedby@active' => 0, 'global'); });
+DefPrimitive('\codep@usedby@begin', sub {
+  AssignValue('codep@usedby@active' => 1, 'global'); });
+DefPrimitive('\codep@usedby@end', sub {
+  AssignValue('codep@usedby@active' => 0, 'global'); });
 
 # Wrap the renderinline DefConstructor so the begin/end
 # fire around the list.
-DefConstructor('\lxML@semtex@renderinline {}',
-  "<ltx:text class='semtex-usedby'>"
-  . "<ltx:text class='semtex-usedby-label'>Used in </ltx:text>"
-  . "<ltx:text class='semtex-usedby-list'>"
-  . "?&semtex_usedby_open()(#1)?&semtex_usedby_close()"
+DefConstructor('\lxML@codep@renderinline {}',
+  "<ltx:text class='codependent-usedby'>"
+  . "<ltx:text class='codependent-usedby-label'>Used in </ltx:text>"
+  . "<ltx:text class='codependent-usedby-list'>"
+  . "?&codependent_usedby_open()(#1)?&codependent_usedby_close()"
   . "</ltx:text>"
-  . "<ltx:text class='semtex-usedby-trailer'>.</ltx:text>"
+  . "<ltx:text class='codependent-usedby-trailer'>.</ltx:text>"
   . "</ltx:text>");
 
 # Override \hyperlink only when the flag is set.
 DefConstructor('\hyperlink {} {}',
   sub {
     my ($document, $key, $text) = @_;
-    if (LookupValue('semtex@usedby@active')) {
+    if (LookupValue('codep@usedby@active')) {
       $document->openElement('ltx:ref',
         labelref => ToString($key),
-        class    => 'semtex-usedby-ref');
+        class    => 'codependent-usedby-ref');
       $document->absorb($text);
       $document->closeElement('ltx:ref');
     } else {
       # Default behaviour: hand off to LaTeXML's stock
       # \hyperlink binding (do not collide).
-      Digest(T_CS('\@semtex@hyperlink@orig')
+      Digest(T_CS('\@codep@hyperlink@orig')
         . T_BEGIN . $key->unlist . T_END
         . T_BEGIN . $text->unlist . T_END);
     }
@@ -3095,17 +3095,17 @@ binding" varies by LaTeXML version; the comment "do not
 collide" flags that the implementer must consult LaTeXML
 docs for the current invocation pattern.  The shape above
 is illustrative.  An alternative simpler approach: skip
-the override entirely and rely on `.semtex-usedby-list >
+the override entirely and rely on `.codependent-usedby-list >
 ltx:ref` CSS selectors, which works with zero `.ltxml`
 complexity.
 
 ### Cross-reference to `.sbl` and the semantic CLI
 
-`.sbl` records, `\semtextag`, and `\semtexnewcommand` /
-`\semtexNewDocumentCommand` metadata do
+`.sbl` records, `\codeptag`, and `\codepnewcommand` /
+`\codepNewDocumentCommand` metadata do
 **not** need LaTeXML bindings, because they produce no
 typeset output.  They are write-only sidecar data consumed
-by `semtex-cli` (Layer 2).  LaTeXML processes `.tex`
+by `codependent-cli` (Layer 2).  LaTeXML processes `.tex`
 source to produce HTML; it has no reason to see `.sbl`.
 The semantic CLI is the thing that reads `.sbl`, and it
 never emits HTML directly in the current design — though
@@ -3114,19 +3114,19 @@ index pages.  That is out of scope for Section 8b.
 
 ### File layout update
 
-Add `semtex.ltxml` to `tools/semtex-sty/`:
+Add `codependent.ltxml` to `tools/codependent/`:
 
 ```
-tools/semtex-sty/
-  semtex.sty              the package
-  semtex.ltxml            LaTeXML binding (Section 8b)
+tools/codependent/
+  codependent.sty              the package
+  codependent.ltxml            LaTeXML binding (Section 8b)
   CREDITS.md              GPLv3 notice for the dpmac port
   DESIGN.md               this file
   ...
 ```
 
-`semtex.ltxml` is part of the CTAN-publishable package and
-ships alongside `semtex.sty` in the same directory.  Both
+`codependent.ltxml` is part of the CTAN-publishable package and
+ships alongside `codependent.sty` in the same directory.  Both
 files fall under the same GPLv3 license.
 
 ### Testing strategy
@@ -3137,9 +3137,9 @@ fixture under `testfiles/`) that:
 1. Runs LaTeXML on a tiny document with a tracked theorem
    and a single `\ref` back into it.
 2. Greps the generated XML for the expected class
-   structure: `class="semtex-usedby"`,
-   `class="semtex-usedby-label"`, and
-   `class="semtex-atomnum"` must all be present.
+   structure: `class="codependent-usedby"`,
+   `class="codependent-usedby-label"`, and
+   `class="codependent-atomnum"` must all be present.
 3. Runs under the project's test harness alongside the
    pdflatex-based golden tests.
 
@@ -3148,7 +3148,7 @@ ripgrep check is sufficient to assert the class hooks are
 emitted.
 
 **Pre-commit validation (per REVIEW_D finding #11).**
-Before committing `semtex.ltxml`, run
+Before committing `codependent.ltxml`, run
 
 ```
 latexml --dest=/tmp/out.xml testfiles/test-minimal.tex
@@ -3179,7 +3179,7 @@ valid.  This check is cheap and should be wired into
 
 ### Purpose
 
-`.sbl` is a write-only sidecar file that `semtex.sty`
+`.sbl` is a write-only sidecar file that `codependent.sty`
 emits during pass 1 (and every subsequent pass) alongside
 the standard `.aux`.  Its purpose is to give Layer 2 (the
 semantic CLI) enough per-atom context to analyse the
@@ -3191,14 +3191,14 @@ semantic tools.
 `.sbl` does **not** duplicate anything LaTeX already writes
 to `.aux`.  Labels are the one borderline case: the `.aux`
 has `\newlabel{key}{{num}...}` entries already, but the
-`.sbl` ALSO emits `\semtex@sbl@label{num}{key}` records so
+`.sbl` ALSO emits `\codep@sbl@label{num}{key}` records so
 that the CLI can read atom-scoped cross-references without
 parsing `.aux` at all.  This redundancy is deliberate and
 documented.
 
 ### Record format
 
-Line-oriented.  One call to a `\semtex@sbl@*` control
+Line-oriented.  One call to a `\codep@sbl@*` control
 sequence per line.  Keys are pure ASCII; values are UTF-8.
 Per **REVIEW_C finding #6**, the format is **flattened**:
 no comma-separated key-value blobs.  Each metadata pair is
@@ -3206,46 +3206,46 @@ a dedicated record with a fixed number of brace-delimited
 arguments.  The CLI parses N `{}`-groups and stops.
 
 ```
-\semtex@sbl@version{1}
-\semtex@sbl@source{main.tex}
-\semtex@sbl@atom{1.2.3}{paragraph}
-\semtex@sbl@meta{1.2.3}{src}{main.tex:42:1}
-\semtex@sbl@atom{1.2.4}{Definition}
-\semtex@sbl@meta{1.2.4}{src}{main.tex:48:1}
-\semtex@sbl@meta{1.2.4}{env}{definition}
-\semtex@sbl@label{1.2.4}{def:category}
-\semtex@sbl@label{1.2.4}{def:cat-alias}
-\semtex@sbl@tag{1.2.4}{uid}{cat:category}
-\semtex@sbl@tag{1.2.4}{introduces}{Hom}
-\semtex@sbl@tag{1.2.4}{introduces}{id}
-\semtex@sbl@tag{1.2.4}{type}{Cat}
-\semtex@sbl@use{1.2.5}{Hom}
-\semtex@sbl@use{1.2.5}{circ}
-\semtex@sbl@cmddef{Hom}{kind}{newcommand}
-\semtex@sbl@cmddef{Hom}{arity}{2}
-\semtex@sbl@cmddef{Hom}{src}{main.tex:15:1}
-\semtex@sbl@cmddef{Cite}{kind}{NewDocumentCommand}
-\semtex@sbl@cmddef{Cite}{argspec}{s o m}
-\semtex@sbl@cmddef{Cite}{src}{main.tex:18:1}
-\semtex@sbl@end{OK}
+\codep@sbl@version{1}
+\codep@sbl@source{main.tex}
+\codep@sbl@atom{1.2.3}{paragraph}
+\codep@sbl@meta{1.2.3}{src}{main.tex:42:1}
+\codep@sbl@atom{1.2.4}{Definition}
+\codep@sbl@meta{1.2.4}{src}{main.tex:48:1}
+\codep@sbl@meta{1.2.4}{env}{definition}
+\codep@sbl@label{1.2.4}{def:category}
+\codep@sbl@label{1.2.4}{def:cat-alias}
+\codep@sbl@tag{1.2.4}{uid}{cat:category}
+\codep@sbl@tag{1.2.4}{introduces}{Hom}
+\codep@sbl@tag{1.2.4}{introduces}{id}
+\codep@sbl@tag{1.2.4}{type}{Cat}
+\codep@sbl@use{1.2.5}{Hom}
+\codep@sbl@use{1.2.5}{circ}
+\codep@sbl@cmddef{Hom}{kind}{newcommand}
+\codep@sbl@cmddef{Hom}{arity}{2}
+\codep@sbl@cmddef{Hom}{src}{main.tex:15:1}
+\codep@sbl@cmddef{Cite}{kind}{NewDocumentCommand}
+\codep@sbl@cmddef{Cite}{argspec}{s o m}
+\codep@sbl@cmddef{Cite}{src}{main.tex:18:1}
+\codep@sbl@end{OK}
 ```
 
 **Record types.**
 
 | Macro | Arity | Meaning |
 |---|---|---|
-| `\semtex@sbl@version{v}` | 1 | File format version. Current: `1`. |
-| `\semtex@sbl@source{file}` | 1 | Master source file name. |
-| `\semtex@sbl@atom{num}{type}` | 2 | Atom begins. `type` is `paragraph`, `Definition`, `Theorem`, `proof`, etc. |
-| `\semtex@sbl@meta{num}{k}{v}` | 3 | Per-atom metadata pair. Keys: `src` (file:line:col), `env`, `depth`. Extensible. |
-| `\semtex@sbl@label{num}{key}` | 2 | Each `\label{key}` inside atom `num`. |
-| `\semtex@sbl@tag{num}{kind}{value}` | 3 | User `\semtextag{kind}{value}` record. Free-form. |
-| `\semtex@sbl@use{num}{cmd}` | 2 | Invocation of a `\semtexnewcommand`/`\semtexNewDocumentCommand`-wrapped command inside atom `num`. |
-| `\semtex@sbl@cmddef{cmd}{k}{v}` | 3 | Command-definition metadata (one record per property). Keys: `kind` (always present, value `newcommand` or `NewDocumentCommand`), `arity` (integer, only when `kind=newcommand`), `argspec` (xparse string, only when `kind=NewDocumentCommand`), `src` (always present). NOT per-atom; global. |
-| `\semtex@sbl@end{OK}` | 1 | Sentinel at `\AtEndDocument`. |
+| `\codep@sbl@version{v}` | 1 | File format version. Current: `1`. |
+| `\codep@sbl@source{file}` | 1 | Master source file name. |
+| `\codep@sbl@atom{num}{type}` | 2 | Atom begins. `type` is `paragraph`, `Definition`, `Theorem`, `proof`, etc. |
+| `\codep@sbl@meta{num}{k}{v}` | 3 | Per-atom metadata pair. Keys: `src` (file:line:col), `env`, `depth`. Extensible. |
+| `\codep@sbl@label{num}{key}` | 2 | Each `\label{key}` inside atom `num`. |
+| `\codep@sbl@tag{num}{kind}{value}` | 3 | User `\codeptag{kind}{value}` record. Free-form. |
+| `\codep@sbl@use{num}{cmd}` | 2 | Invocation of a `\codepnewcommand`/`\codepNewDocumentCommand`-wrapped command inside atom `num`. |
+| `\codep@sbl@cmddef{cmd}{k}{v}` | 3 | Command-definition metadata (one record per property). Keys: `kind` (always present, value `newcommand` or `NewDocumentCommand`), `arity` (integer, only when `kind=newcommand`), `argspec` (xparse string, only when `kind=NewDocumentCommand`), `src` (always present). NOT per-atom; global. |
+| `\codep@sbl@end{OK}` | 1 | Sentinel at `\AtEndDocument`. |
 
 **End marker** (per REVIEW_C finding #7).  The **last line**
-of a complete `.sbl` file is `\semtex@sbl@end{OK}`,
+of a complete `.sbl` file is `\codep@sbl@end{OK}`,
 written from the `\AtEndDocument` hook.  Presence of this
 line is the CLI's test for "complete file"; absence means
 pdflatex was killed or crashed mid-run and the CLI must
@@ -3266,10 +3266,10 @@ inside their own `\AtBeginDocument` blocks (e.g.,
 frontmatter definitions, preface theorems injected by a
 class or by user glue code).  `\AtBeginDocument` hooks
 fire in registration order, and there is no guarantee
-that `semtex.sty`'s hook runs before a user hook that
+that `codependent.sty`'s hook runs before a user hook that
 emits an atom.  If the stream is opened at
 `\AtBeginDocument`, the first atom emitted from any
-earlier-registered user hook sees `\semtex@sblwrite` as a
+earlier-registered user hook sees `\codep@sblwrite` as a
 no-op and is silently dropped from the sidecar.
 
 At `\AtEndPreamble`, the preamble has finished but no
@@ -3277,21 +3277,21 @@ At `\AtEndPreamble`, the preamble has finished but no
 precedes every atom write.
 
 ```tex
-\AddToHook{begindocument/before}[semtex/sbl/open]{%
+\AddToHook{begindocument/before}[codependent/sbl/open]{%
   \if@filesw
-    \newwrite\semtex@sblout
-    \immediate\openout\semtex@sblout=\jobname.sbl\relax
-    \global\booltrue{semtex@sblopen}%
-    \immediate\write\semtex@sblout{%
-      \string\semtex@sbl@version{1}}%
-    \immediate\write\semtex@sblout{%
-      \string\semtex@sbl@source{\jobname.tex}}%
+    \newwrite\codep@sblout
+    \immediate\openout\codep@sblout=\jobname.sbl\relax
+    \global\booltrue{codep@sblopen}%
+    \immediate\write\codep@sblout{%
+      \string\codep@sbl@version{1}}%
+    \immediate\write\codep@sblout{%
+      \string\codep@sbl@source{\jobname.tex}}%
   \fi
 }
 % The explicit ordering rule is declared once, centrally, in
 % Section 8a.7 (hook installation).  See that section for
-% the internal ordering between semtex/backref/install and
-% semtex/sbl/open, and the external rule against hyperref.
+% the internal ordering between codependent/backref/install and
+% codependent/sbl/open, and the external rule against hyperref.
 ```
 
 #### biblatex hook ordering (REVIEW_E #8)
@@ -3301,28 +3301,28 @@ precedes every atom write.
 > via `begindocument/before`-adjacent hooks.  Our `.sbl`
 > writer does NOT collide with these (different
 > namespace), but the relative ordering of
-> `semtex/sbl/open` and biblatex's own install hooks is
+> `codependent/sbl/open` and biblatex's own install hooks is
 > not pinned.
 
-Our existing ordering rule (`semtex/backref/install`
-declared `before` `hyperref`, and `semtex/sbl/open`
-declared `after` `semtex/backref/install` — see Section
+Our existing ordering rule (`codependent/backref/install`
+declared `before` `hyperref`, and `codependent/sbl/open`
+declared `after` `codependent/backref/install` — see Section
 8a.7) places our install chain at the front of the hook
 firing order, which is safe against biblatex because
 biblatex does not depend on our csname namespace and we
 do not read biblatex's `\abx@aux@*` records.  The
-ordering is effectively "semtex fires first, biblatex
+ordering is effectively "codependent fires first, biblatex
 fires later" — the natural order, with no conflict.
 
 If a future biblatex release installs a hook that
 collides with our label/ref machinery (e.g., wraps
 `\newlabel` in a way that breaks our
-`\semtex@installnewlabel` override chain), add:
+`\codep@installnewlabel` override chain), add:
 
 ```tex
 \@ifpackageloaded{biblatex}{%
   \DeclareHookRule{begindocument/before}%
-    {semtex/backref/install}{after}{biblatex}%
+    {codependent/backref/install}{after}{biblatex}%
 }{}
 ```
 
@@ -3331,16 +3331,16 @@ biblatex releases; document for forward-compat.
 
 ### Close timing
 
-At `\AtEndDocument`: write the `\semtex@sbl@end{OK}`
+At `\AtEndDocument`: write the `\codep@sbl@end{OK}`
 sentinel, then `\closeout` the stream.
 
 ```tex
 \AtEndDocument{%
-  \ifbool{semtex@sblopen}{%
-    \immediate\write\semtex@sblout{%
-      \string\semtex@sbl@end{OK}}%
-    \immediate\closeout\semtex@sblout
-    \global\boolfalse{semtex@sblopen}%
+  \ifbool{codep@sblopen}{%
+    \immediate\write\codep@sblout{%
+      \string\codep@sbl@end{OK}}%
+    \immediate\closeout\codep@sblout
+    \global\boolfalse{codep@sblopen}%
   }{}%
 }
 ```
@@ -3351,32 +3351,32 @@ rejects the file on the next analysis run.
 
 ### Emission points
 
-At each hook site in `semtex.sty`, the following records
+At each hook site in `codependent.sty`, the following records
 are written.  All calls go through the guarded helper
-`\semtex@sblwrite@atom` (see "Guard pattern" below), which
-checks `\semtex@currentatom` before emitting atom-scoped
+`\codep@sblwrite@atom` (see "Guard pattern" below), which
+checks `\codep@currentatom` before emitting atom-scoped
 records.
 
 > **Note (per §8a.5.0).**  Atom-scoped emission helpers must
-> pass `\theatom` (not the cached `\semtex@currentatom`
+> pass `\theatom` (not the cached `\codep@currentatom`
 > sentinel) when the record's payload includes the atom
 > display number, e.g.
-> `\semtex@sbl@atom{\theatom}{paragraph}`.  The
-> `\semtex@sblwrite@atom` guard still uses
-> `\ifx\semtex@currentatom\@empty` to gate emission on "in
+> `\codep@sbl@atom{\theatom}{paragraph}`.  The
+> `\codep@sblwrite@atom` guard still uses
+> `\ifx\codep@currentatom\@empty` to gate emission on "in
 > tracked atom" — only the *value* of the atom number is
 > read fresh from `\theatom` at emit time.
 
-| Hook site (in `semtex.sty`) | Records emitted |
+| Hook site (in `codependent.sty`) | Records emitted |
 |---|---|
-| `\semtex@hooktheorem`, `\AtBeginEnvironment{<env>}` after setting `\semtex@currentatom` | `\semtex@sbl@atom{num}{<env>}` + `\semtex@sbl@meta{num}{env}{<env>}` + `\semtex@sbl@meta{num}{src}{<file:line:col>}` |
-| `\semtex@hookproof`, `\AtBeginEnvironment{proof}` standalone branch | `\semtex@sbl@atom{num}{proof}` + `\semtex@sbl@meta{num}{src}{...}` |
-| `\semtex@installparahook`, normal paragraph branch after `\refstepcounter` | `\semtex@sbl@atom{num}{paragraph}` + `\semtex@sbl@meta{num}{src}{...}` |
-| `\label` wrap (new site; cleveref-aware, see "Label wrap: cleveref optional argument" below) | `\semtex@sbl@label{num}{key}` — one per `\label` call inside a current atom |
-| `\semtextag{kind}{value}` | `\semtex@sbl@tag{num}{kind}{value}` |
-| `\semtexnewcommand{\cmd}[n]{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{newcommand}` + `\semtex@sbl@cmddef{cmd}{arity}{n}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
-| `\semtexNewDocumentCommand{\cmd}{spec}{...}` (definition time) | `\semtex@sbl@cmddef{cmd}{kind}{NewDocumentCommand}` + `\semtex@sbl@cmddef{cmd}{argspec}{spec}` + `\semtex@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped |
-| Wrapped command (either kind), every invocation inside an atom | `\semtex@sbl@use{num}{cmd}` |
+| `\codep@hooktheorem`, `\AtBeginEnvironment{<env>}` after setting `\codep@currentatom` | `\codep@sbl@atom{num}{<env>}` + `\codep@sbl@meta{num}{env}{<env>}` + `\codep@sbl@meta{num}{src}{<file:line:col>}` |
+| `\codep@hookproof`, `\AtBeginEnvironment{proof}` standalone branch | `\codep@sbl@atom{num}{proof}` + `\codep@sbl@meta{num}{src}{...}` |
+| `\codep@installparahook`, normal paragraph branch after `\refstepcounter` | `\codep@sbl@atom{num}{paragraph}` + `\codep@sbl@meta{num}{src}{...}` |
+| `\label` wrap (new site; cleveref-aware, see "Label wrap: cleveref optional argument" below) | `\codep@sbl@label{num}{key}` — one per `\label` call inside a current atom |
+| `\codeptag{kind}{value}` | `\codep@sbl@tag{num}{kind}{value}` |
+| `\codepnewcommand{\cmd}[n]{...}` (definition time) | `\codep@sbl@cmddef{cmd}{kind}{newcommand}` + `\codep@sbl@cmddef{cmd}{arity}{n}` + `\codep@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
+| `\codepNewDocumentCommand{\cmd}{spec}{...}` (definition time) | `\codep@sbl@cmddef{cmd}{kind}{NewDocumentCommand}` + `\codep@sbl@cmddef{cmd}{argspec}{spec}` + `\codep@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped |
+| Wrapped command (either kind), every invocation inside an atom | `\codep@sbl@use{num}{cmd}` |
 
 The `src` metadata is built from LaTeX's
 `\currfilename`, `\the\inputlineno`, and a column counter
@@ -3391,7 +3391,7 @@ writer; the `:0` suffix means "unknown column").
 > `\thmt@gobble@label` to accept one too when cleveref
 > is loaded.  A naive `\pretocmd{\label}{...}` swallows
 > the optional argument and either errors or emits a
-> corrupted `\semtex@sbl@label{num}{[type]key}` record.
+> corrupted `\codep@sbl@label{num}{[type]key}` record.
 
 The label wrap must detect the optional argument.  The
 pattern uses `\@ifnextchar[` plus two helper macros,
@@ -3405,38 +3405,38 @@ present), not at package-load time:
 %% Called from the begindocument/before install hook after
 %% cleveref has had its chance to redefine \label.
 %% ------------------------------------------------------------
-\AddToHook{begindocument/before}[semtex/sbl/labelwrap]{%
-  \let\semtex@orig@label\label
+\AddToHook{begindocument/before}[codependent/sbl/labelwrap]{%
+  \let\codep@orig@label\label
   \@ifpackageloaded{cleveref}{%
     %% cleveref path: \label[type]{key}, where [type] is optional.
     \def\label{%
       \@ifnextchar[%]
-        \semtex@sbl@label@withopt
-        \semtex@sbl@label@noopt
+        \codep@sbl@label@withopt
+        \codep@sbl@label@noopt
     }%
   }{%
     %% No cleveref: \label{key} only.
     \def\label##1{%
-      \semtex@sblwrite@atom{%
-        \string\semtex@sbl@label
-          {\semtex@currentatom}{##1}}%
-      \semtex@orig@label{##1}%
+      \codep@sblwrite@atom{%
+        \string\codep@sbl@label
+          {\codep@currentatom}{##1}}%
+      \codep@orig@label{##1}%
     }%
   }%
 }
 
-\def\semtex@sbl@label@withopt[#1]#2{%
-  \semtex@sblwrite@atom{%
-    \string\semtex@sbl@label
-      {\semtex@currentatom}{#2}}%
-  \semtex@orig@label[#1]{#2}%
+\def\codep@sbl@label@withopt[#1]#2{%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@label
+      {\codep@currentatom}{#2}}%
+  \codep@orig@label[#1]{#2}%
 }
 
-\def\semtex@sbl@label@noopt#1{%
-  \semtex@sblwrite@atom{%
-    \string\semtex@sbl@label
-      {\semtex@currentatom}{#1}}%
-  \semtex@orig@label{#1}%
+\def\codep@sbl@label@noopt#1{%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@label
+      {\codep@currentatom}{#1}}%
+  \codep@orig@label{#1}%
 }
 ```
 
@@ -3448,7 +3448,7 @@ that point cleveref has NOT yet installed its own `\label`
 wrapper (cleveref does that inside its own
 `\AtBeginDocument`, which fires later than
 `begindocument/before`).  So when we capture
-`\semtex@orig@label`, it is the **kernel**
+`\codep@orig@label`, it is the **kernel**
 `\label`/`\@newl@bel` pair, not cleveref's wrapper.
 
 When cleveref's `\AtBeginDocument` runs later, cleveref
@@ -3460,16 +3460,16 @@ captured target — which is our dispatcher.  Our
 dispatcher's `\@ifnextchar[` then sees no bracket
 (cleveref already stripped it) and falls through to the
 no-optional-arg branch, emitting
-`\semtex@sbl@label{num}{key}` with the correct mandatory
+`\codep@sbl@label{num}{key}` with the correct mandatory
 key and forwarding to the kernel `\label` via
-`\semtex@orig@label`.
+`\codep@orig@label`.
 
 Net effect:
 
 ```
 user: \label[type]{key}
   -> cleveref's outer wrap: strips [type], records r@key@cref
-       -> semtex's wrap: emits .sbl record with `key`
+       -> codependent's wrap: emits .sbl record with `key`
             -> kernel \label: writes \newlabel{key}{...}
 ```
 
@@ -3492,7 +3492,7 @@ AFTER the mandatory argument has been consumed.  If a user
 writes pathological source like
 `\label[theorem]{thm:A}[some stuff]` (where `[some stuff]`
 is an unrelated bracket group following the label),
-semtex's dispatcher would consume `[some stuff]` as a
+codependent's dispatcher would consume `[some stuff]` as a
 spurious optional argument.  This is theoretical only —
 no real document writes this — but it is documented here
 for completeness alongside the `\hyperref[label]{text}`
@@ -3509,7 +3509,7 @@ we install at `begindocument/before` and thm-restate
 dispatches its alias inside the restate branch at
 typeset time).  Under the `\restate`, `\label` is
 `\thmt@gobble@label`, not our wrapped version — so
-we do NOT emit a duplicate `\semtex@sbl@label` record
+we do NOT emit a duplicate `\codep@sbl@label` record
 on the restate.  This is the correct behaviour
 (REVIEW_E Section R marks R-4 as "not actually a bug"
 for precisely this reason: the restate occurrence is
@@ -3521,9 +3521,9 @@ a visual rerender, not a new label site).
 \documentclass{article}
 \usepackage{amsthm}
 \usepackage{cleveref}
-\usepackage{semtex}
+\usepackage{codependent}
 \newtheorem{theorem}{Theorem}
-\semtextrack{theorem}
+\codeptrack{theorem}
 
 \begin{document}
 \begin{theorem}
@@ -3537,7 +3537,7 @@ Later, \cref{thm:A} is referenced.
 
 Assertions:
 
-- `.sbl` contains `\semtex@sbl@label{<N>}{thm:A}`
+- `.sbl` contains `\codep@sbl@label{<N>}{thm:A}`
   (KEY only, no brackets, no `[theorem]` prefix).
 - `.aux` contains both the kernel `\newlabel{thm:A}{...}`
   and cleveref's `\newlabel{thm:A@cref}{...}`.
@@ -3547,58 +3547,58 @@ Assertions:
 ### Guard pattern
 
 All emission points route through one of two helpers.
-Atom-scoped records (everything except `\semtex@sbl@cmddef`)
-use `\semtex@sblwrite@atom`, which drops the write if
-`\semtex@currentatom` is empty:
+Atom-scoped records (everything except `\codep@sbl@cmddef`)
+use `\codep@sblwrite@atom`, which drops the write if
+`\codep@currentatom` is empty:
 
 ```tex
-\newcommand*{\semtex@sblwrite}[1]{%
-  \ifbool{semtex@sblopen}{%
-    \immediate\write\semtex@sblout{#1}%
+\newcommand*{\codep@sblwrite}[1]{%
+  \ifbool{codep@sblopen}{%
+    \immediate\write\codep@sblout{#1}%
   }{%
     % Should be impossible once the file is opened at
     % begindocument/before.  Log once for debugging.
-    \semtex@sblwrite@warnonce
+    \codep@sblwrite@warnonce
   }%
 }
 
-\newcommand*{\semtex@sblwrite@atom}[1]{%
-  \ifx\semtex@currentatom\@empty
+\newcommand*{\codep@sblwrite@atom}[1]{%
+  \ifx\codep@currentatom\@empty
     % Orphan: not inside an atom context.  Drop per
     % REVIEW_C finding #4.
   \else
-    \semtex@sblwrite{#1}%
+    \codep@sblwrite{#1}%
   \fi
 }
 ```
 
-Global records (`\semtex@sbl@cmddef`) bypass the
-atom guard and go through `\semtex@sblwrite` directly.
-The `\semtex@sblwrite@warnonce` branch exists to catch
+Global records (`\codep@sbl@cmddef`) bypass the
+atom guard and go through `\codep@sblwrite` directly.
+The `\codep@sblwrite@warnonce` branch exists to catch
 the debugging nightmare REVIEW_C finding #5 calls out;
 under normal operation it should never fire because the
 stream is opened at `\AtEndPreamble`.
 
-### User API: `\semtextag`
+### User API: `\codeptag`
 
 One new public command is added to the `.sty`'s user API:
 
 ```tex
-\newcommand*{\semtextag}[2]{%
-  \semtex@sblwrite@atom{%
-    \string\semtex@sbl@tag
-    {\semtex@currentatom}{#1}{#2}}%
+\newcommand*{\codeptag}[2]{%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@tag
+    {\codep@currentatom}{#1}{#2}}%
 }
 ```
 
-Usage: `\semtextag{uid}{cat:category}` inside a definition
-emits one `\semtex@sbl@tag` record with the current atom's
+Usage: `\codeptag{uid}{cat:category}` inside a definition
+emits one `\codep@sbl@tag` record with the current atom's
 display number.  **It has no visible typesetting effect.**
 It is a pure sidecar channel for semantic metadata that
 does not belong in `.aux`.  Authors who do not use the
-semantic CLI can ignore `\semtextag` entirely.
+semantic CLI can ignore `\codeptag` entirely.
 
-### User API: `\semtexnewcommand` and `\semtexNewDocumentCommand`
+### User API: `\codepnewcommand` and `\codepNewDocumentCommand`
 
 Two new public commands replace the original `\newmath`
 proposal (REVIEW_D finding #6 was the trigger; subsequent
@@ -3610,16 +3610,16 @@ unaffected unless you explicitly migrate them.
 
 | Public macro | Wraps | Argument syntax mirror |
 |---|---|---|
-| `\semtexnewcommand` | `\newcommand` | `[n]` integer arity (LaTeX 2e) |
-| `\semtexNewDocumentCommand` | `\NewDocumentCommand` | `{spec}` xparse arg-spec string |
+| `\codepnewcommand` | `\newcommand` | `[n]` integer arity (LaTeX 2e) |
+| `\codepNewDocumentCommand` | `\NewDocumentCommand` | `{spec}` xparse arg-spec string |
 
 **Naming convention** (per user direction 2026-04-09):
-lowercase `semtex` prefix to match the existing public
-API (`\semtextrack`, `\semtexsuppress`, `\semtextag`),
+lowercase `codependent` prefix to match the existing public
+API (`\codeptrack`, `\codepsuppress`, `\codeptag`),
 CamelCase suffix to mirror the LaTeX kernel command being
 wrapped.  Migration is a literal find-and-replace per
-file: `s/\\newcommand/\\semtexnewcommand/` and
-`s/\\NewDocumentCommand/\\semtexNewDocumentCommand/`,
+file: `s/\\newcommand/\\codepnewcommand/` and
+`s/\\NewDocumentCommand/\\codepNewDocumentCommand/`,
 with manual review for helpers you want to leave
 untracked.
 
@@ -3628,10 +3628,10 @@ untracked.
 if real use cases appear.  The two macros above cover the
 common case (definitive command introduction).
 
-#### Signature: `\semtexnewcommand`
+#### Signature: `\codepnewcommand`
 
 ```tex
-\semtexnewcommand{<\cmd>}[<arity>]{<body>}
+\codepnewcommand{<\cmd>}[<arity>]{<body>}
 ```
 
 - `<\cmd>` is the command, **with leading backslash**
@@ -3648,10 +3648,10 @@ records carry the bare name.  This keeps the user-facing
 syntax identical to `\newcommand` while keeping the
 sidecar records readable.
 
-#### Signature: `\semtexNewDocumentCommand`
+#### Signature: `\codepNewDocumentCommand`
 
 ```tex
-\semtexNewDocumentCommand{<\cmd>}{<argspec>}{<body>}
+\codepNewDocumentCommand{<\cmd>}{<argspec>}{<body>}
 ```
 
 - `<\cmd>` is the command with leading backslash.
@@ -3669,19 +3669,19 @@ Same backslash-stripping convention as above.
 
 ```tex
 % \newcommand-style (math notation):
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
-\semtexnewcommand{\id}{\mathrm{id}}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\id}{\mathrm{id}}
 
 % \newcommand-style (text macro):
-\semtexnewcommand{\TheoremOfX}{Theorem of X}
+\codepnewcommand{\TheoremOfX}{Theorem of X}
 
 % NewDocumentCommand-style (with optional arg):
-\semtexNewDocumentCommand{\Cat}{O{}}{%
+\codepNewDocumentCommand{\Cat}{O{}}{%
   \mathsf{Cat}\IfValueT{#1}{_{#1}}%
 }
 
 % NewDocumentCommand-style (with star variant):
-\semtexNewDocumentCommand{\Cite}{s o m}{%
+\codepNewDocumentCommand{\Cite}{s o m}{%
   \IfBooleanTF{#1}{[\textbf{#3}]}{[#3]}%
 }
 ```
@@ -3692,22 +3692,22 @@ auto-`\ensuremath` the body; the user controls that.
 
 #### Side effects at declaration time
 
-For `\semtexnewcommand`, two global (not atom-scoped)
+For `\codepnewcommand`, two global (not atom-scoped)
 `.sbl` records:
 
 ```tex
-\semtex@sbl@cmddef{Hom}{kind}{newcommand}
-\semtex@sbl@cmddef{Hom}{arity}{2}
-\semtex@sbl@cmddef{Hom}{src}{main.tex:15:1}
+\codep@sbl@cmddef{Hom}{kind}{newcommand}
+\codep@sbl@cmddef{Hom}{arity}{2}
+\codep@sbl@cmddef{Hom}{src}{main.tex:15:1}
 ```
 
-For `\semtexNewDocumentCommand`, the parallel set with
+For `\codepNewDocumentCommand`, the parallel set with
 `argspec` instead of `arity`:
 
 ```tex
-\semtex@sbl@cmddef{Cat}{kind}{NewDocumentCommand}
-\semtex@sbl@cmddef{Cat}{argspec}{O{}}
-\semtex@sbl@cmddef{Cat}{src}{main.tex:18:1}
+\codep@sbl@cmddef{Cat}{kind}{NewDocumentCommand}
+\codep@sbl@cmddef{Cat}{argspec}{O{}}
+\codep@sbl@cmddef{Cat}{src}{main.tex:18:1}
 ```
 
 The `kind` record always comes first; the CLI's parser
@@ -3720,13 +3720,13 @@ Identical for both kinds.  The defined command is wrapped
 so every invocation inside an atom emits
 
 ```tex
-\semtex@sbl@use{<current-atom>}{Hom}
+\codep@sbl@use{<current-atom>}{Hom}
 ```
 
-via `\semtex@sblwrite@atom`.  The wrapper guards on
-`\ifx\semtex@currentatom\@empty`: invocations OUTSIDE
+via `\codep@sblwrite@atom`.  The wrapper guards on
+`\ifx\codep@currentatom\@empty`: invocations OUTSIDE
 any atom (section heading, caption, untracked
-environment) emit **no** `\semtex@sbl@use` record.
+environment) emit **no** `\codep@sbl@use` record.
 Rationale: such invocations cannot be attributed to any
 atom and the CLI has no useful inference to make from
 the orphaned record; the alternative of emitting a
@@ -3739,22 +3739,22 @@ Both macros are purely optional.  A project that does not
 use the semantic CLI never needs to call them; ordinary
 `\newcommand` and `\NewDocumentCommand` work fine and
 produce no `.sbl` records.  The `.sty` does **not**
-enforce usage of the semtex variants.
+enforce usage of the codependent variants.
 
 Migration from a vanilla preamble to a tracked one is
 literal find-and-replace per file:
 
 ```
-sed -i 's/\\newcommand/\\semtexnewcommand/g' main.tex
-sed -i 's/\\NewDocumentCommand/\\semtexNewDocumentCommand/g' main.tex
+sed -i 's/\\newcommand/\\codepnewcommand/g' main.tex
+sed -i 's/\\NewDocumentCommand/\\codepNewDocumentCommand/g' main.tex
 ```
 
 with manual review for any internal helper macros you
-want to leave untracked (e.g. `\newcommand{\@semtex@helper}...`
+want to leave untracked (e.g. `\newcommand{\@codep@helper}...`
 inside a package).  Two-line sed script, one git commit.
 
 For automated/batch workflows that rewrite `\newcommand`
-to `\semtexnewcommand` mechanically (e.g., `wrap.py` for
+to `\codepnewcommand` mechanically (e.g., `wrap.py` for
 the arxiv test corpus), pair the rewrite with the
 `conceptwarnings=off` package option to suppress the
 noise from concepts that have no `\Hom*` marker.  See
@@ -3765,10 +3765,10 @@ Package options below.
 The wrapped command is defined via `\NewDocumentCommand`
 with an `s` (star) specifier prepended to the user's
 argspec.  At call time, `\IfBooleanTF` dispatches: the
-star branch emits a `\semtex@sbl@def` record (and the
-`\semtex@concept` aux callback via §8a.9), the non-star
-branch emits a `\semtex@sbl@use` record (and the
-`\semtex@conceptref` aux callback).  Both branches
+star branch emits a `\codep@sbl@def` record (and the
+`\codep@concept` aux callback via §8a.9), the non-star
+branch emits a `\codep@sbl@use` record (and the
+`\codep@conceptref` aux callback).  Both branches
 typeset the same body.  Because the star occupies `#1`
 inside the wrapper, the user's own arguments are shifted
 by one position: the user writes `#1..#N` in their body
@@ -3777,16 +3777,16 @@ but the wrapper sees them at `#2..#(N+1)`.  xparse's
 the sketch below uses a temporary `\def` helper so the
 user body can keep its natural `#1..#N` numbering.
 
-For `\semtexnewcommand`, the integer arity is translated
-to a repeated-`m` argspec via `\semtex@build@argspec`
+For `\codepnewcommand`, the integer arity is translated
+to a repeated-`m` argspec via `\codep@build@argspec`
 (arity 0 -> empty, arity 1 -> `m`, arity 2 -> `m m`, and
 so on up to 9).
 
 ```tex
 % Helper: integer -> repeated xparse "m" spec.
-% \semtex@build@argspec{0} -> (empty)
-% \semtex@build@argspec{2} -> m m
-\newcommand*{\semtex@build@argspec}[1]{%
+% \codep@build@argspec{0} -> (empty)
+% \codep@build@argspec{2} -> m m
+\newcommand*{\codep@build@argspec}[1]{%
   \ifcase\number#1\relax
     \or m%
     \or m m%
@@ -3798,55 +3798,55 @@ so on up to 9).
     \or m m m m m m m m%
     \or m m m m m m m m m%
   \else
-    \PackageError{semtex}%
-      {\string\semtexnewcommand\space arity \number#1\space
+    \PackageError{codependent}%
+      {\string\codepnewcommand\space arity \number#1\space
        out of range (max 9)}%
       {\string\newcommand\space itself is limited to arity 9;
-       use \string\semtexNewDocumentCommand\space for more.}%
+       use \string\codepNewDocumentCommand\space for more.}%
   \fi}
 
-% \semtexnewcommand{\cmd}[arity]{body}
-\NewDocumentCommand{\semtexnewcommand}{m O{0} m}{%
+% \codepnewcommand{\cmd}[arity]{body}
+\NewDocumentCommand{\codepnewcommand}{m O{0} m}{%
   % #1 = \cmd (with backslash), #2 = arity, #3 = body.
-  \edef\semtex@tmp@name{\expandafter\@gobble\string#1}%
+  \edef\codep@tmp@name{\expandafter\@gobble\string#1}%
   % 1. Define the command via \NewDocumentCommand with a
   %    star prepended, so \Hom*  dispatches separately
   %    from \Hom.  The user's body (#3) is wrapped in a
-  %    \semtex@wrapcmd helper that (a) checks the star
+  %    \codep@wrapcmd helper that (a) checks the star
   %    boolean at call time, (b) emits the def/use record
   %    under the currentatom guard, (c) typesets #3.
-  \expandafter\semtex@definewrapped
-    \expandafter{\semtex@tmp@name}{#1}%
-    {\semtex@build@argspec{#2}}{#3}%
+  \expandafter\codep@definewrapped
+    \expandafter{\codep@tmp@name}{#1}%
+    {\codep@build@argspec{#2}}{#3}%
   % 2. Emit the global declaration records (unchanged).
-  \semtex@sblwrite{%
-    \string\semtex@sbl@cmddef{\semtex@tmp@name}{kind}{newcommand}}%
-  \semtex@sblwrite{%
-    \string\semtex@sbl@cmddef{\semtex@tmp@name}{arity}{\number#2}}%
-  \semtex@sblwrite{%
-    \string\semtex@sbl@cmddef{\semtex@tmp@name}{src}%
+  \codep@sblwrite{%
+    \string\codep@sbl@cmddef{\codep@tmp@name}{kind}{newcommand}}%
+  \codep@sblwrite{%
+    \string\codep@sbl@cmddef{\codep@tmp@name}{arity}{\number#2}}%
+  \codep@sblwrite{%
+    \string\codep@sbl@cmddef{\codep@tmp@name}{src}%
     {\@currfilename:\the\inputlineno:1}}%
 }
 
-% \semtexNewDocumentCommand{\cmd}{argspec}{body}
-\NewDocumentCommand{\semtexNewDocumentCommand}{m m m}{%
-  \edef\semtex@tmp@name{\expandafter\@gobble\string#1}%
+% \codepNewDocumentCommand{\cmd}{argspec}{body}
+\NewDocumentCommand{\codepNewDocumentCommand}{m m m}{%
+  \edef\codep@tmp@name{\expandafter\@gobble\string#1}%
   % Prepend an "s" to the user's argspec.  User's #1..#N
   % inside the body become #2..#(N+1) after the shift; the
-  % \semtex@definewrapped helper handles the renumbering
+  % \codep@definewrapped helper handles the renumbering
   % via a \def indirection so the user body is written
   % against the natural numbering.
-  \expandafter\semtex@definewrapped
-    \expandafter{\semtex@tmp@name}{#1}{#2}{#3}%
+  \expandafter\codep@definewrapped
+    \expandafter{\codep@tmp@name}{#1}{#2}{#3}%
   % Global declaration records (argspec is the user's raw
   % spec, NOT including the injected star).
-  \semtex@sblwrite{%
-    \string\semtex@sbl@cmddef{\semtex@tmp@name}{kind}%
+  \codep@sblwrite{%
+    \string\codep@sbl@cmddef{\codep@tmp@name}{kind}%
     {NewDocumentCommand}}%
-  \semtex@sblwrite{%
-    \string\semtex@sbl@cmddef{\semtex@tmp@name}{argspec}{#2}}%
-  \semtex@sblwrite{%
-    \string\semtex@sbl@cmddef{\semtex@tmp@name}{src}%
+  \codep@sblwrite{%
+    \string\codep@sbl@cmddef{\codep@tmp@name}{argspec}{#2}}%
+  \codep@sblwrite{%
+    \string\codep@sbl@cmddef{\codep@tmp@name}{src}%
     {\@currfilename:\the\inputlineno:1}}%
 }
 
@@ -3856,89 +3856,89 @@ so on up to 9).
 %   #3 = user argspec (xparse string, possibly empty)
 %   #4 = user body  (referring to #1..#N per the user's
 %                    argspec, natural numbering)
-\newcommand*{\semtex@definewrapped}[4]{%
+\newcommand*{\codep@definewrapped}[4]{%
   % Store the user body in a helper csname so we can pass
   % the natural argument numbering through.  The helper
   % takes exactly as many arguments as the user's argspec
   % consumed positional slots.
   \expandafter\long\expandafter\def
-    \csname semtex@body@#1\endcsname{#4}%
+    \csname codep@body@#1\endcsname{#4}%
   % Define the wrapped command.  xparse argspec is
   %   s <user-spec>
   % so the star lives at ##1 and the user's slots start
   % at ##2.  We dispatch on the star and, in either branch,
-  % call \semtex@emit@def / \semtex@emit@use with the bare
+  % call \codep@emit@def / \codep@emit@use with the bare
   % name, then invoke the user-body helper with all of
   % ##2..##(1+N).  xparse's own \BODY forwarding would be
   % cleaner; the sketch below uses an explicit
-  % \semtex@forwardargs helper to make the renumbering
+  % \codep@forwardargs helper to make the renumbering
   % visible.
   \NewDocumentCommand{#2}{s #3}{%
     \IfBooleanTF{##1}%
-      {\semtex@emit@def{#1}}%
-      {\semtex@emit@use{#1}}%
+      {\codep@emit@def{#1}}%
+      {\codep@emit@use{#1}}%
     % Forward ##2..##(N+1) to the user body helper.  In
     % practice this is written with xparse's argument-
     % reflection primitives; see the body-helper pattern
     % used by xparse itself in ltcmd.dtx.
-    \csname semtex@body@#1\expandafter\endcsname
-      \semtex@forwardargs}%
+    \csname codep@body@#1\expandafter\endcsname
+      \codep@forwardargs}%
 }
 
-% \semtex@emit@def: fires on the STAR branch.
+% \codep@emit@def: fires on the STAR branch.
 %   Records the current atom as the defining site for the
 %   concept and emits both aux and .sbl records.  See §8a.9
 %   for the aux-record callbacks and the pass-2 concept map.
-\newcommand*{\semtex@emit@def}[1]{%
-  \ifx\semtex@currentatom\@empty
+\newcommand*{\codep@emit@def}[1]{%
+  \ifx\codep@currentatom\@empty
     % No atom context (inside footnote, caption, orphan):
     % silent no-op per §8a.9 error model.  The concept will
     % later warn as "missing def site" if \cmd is used.
   \else
-    % Duplicate detection: if semtex@concept@<name> is
+    % Duplicate detection: if codep@concept@<name> is
     % already defined, we have a second def-site in a
     % different atom.  Error (halts build) per §8a.9.
-    \@ifundefined{semtex@concept@#1}%
+    \@ifundefined{codep@concept@#1}%
       {\expandafter\gdef
-         \csname semtex@concept@#1\endcsname
-         {\semtex@currentatom}%
+         \csname codep@concept@#1\endcsname
+         {\codep@currentatom}%
        \if@filesw
          \immediate\write\@auxout{%
-           \string\semtex@concept{#1}{\semtex@currentatom}}%
+           \string\codep@concept{#1}{\codep@currentatom}}%
        \fi
-       \semtex@sblwrite@atom{%
-         \string\semtex@sbl@def{\semtex@currentatom}{#1}}%
+       \codep@sblwrite@atom{%
+         \string\codep@sbl@def{\codep@currentatom}{#1}}%
       }%
-      {\PackageError{semtex}%
+      {\PackageError{codependent}%
         {\string\\#1* defined at atoms
-         \csname semtex@concept@#1\endcsname\space and
-         \semtex@currentatom}%
+         \csname codep@concept@#1\endcsname\space and
+         \codep@currentatom}%
         {Exactly one definition site is permitted per
          concept.  Use \string\\#1\space (without star)
          at the non-definitional site.}%
       }%
   \fi}
 
-% \semtex@emit@use: fires on the non-star branch.
+% \codep@emit@use: fires on the non-star branch.
 %   Records a use of the concept under the current atom,
 %   to be resolved to the def atom in pass 2 via §8a.9's
 %   concept map.
-\newcommand*{\semtex@emit@use}[1]{%
-  \ifx\semtex@currentatom\@empty\else
+\newcommand*{\codep@emit@use}[1]{%
+  \ifx\codep@currentatom\@empty\else
     \if@filesw
       \immediate\write\@auxout{%
-        \string\semtex@conceptref{\semtex@currentatom}{#1}}%
+        \string\codep@conceptref{\codep@currentatom}{#1}}%
     \fi
-    \semtex@sblwrite@atom{%
-      \string\semtex@sbl@use{\semtex@currentatom}{#1}}%
+    \codep@sblwrite@atom{%
+      \string\codep@sbl@use{\codep@currentatom}{#1}}%
   \fi}
 ```
 
 The two public macros share the star-dispatch wrapper
-(`\semtex@definewrapped`) and the two emit helpers
-(`\semtex@emit@def`, `\semtex@emit@use`).  For
-`\semtexnewcommand`, the arity is compiled to a repeated
-`m` argspec first; for `\semtexNewDocumentCommand`, the
+(`\codep@definewrapped`) and the two emit helpers
+(`\codep@emit@def`, `\codep@emit@use`).  For
+`\codepnewcommand`, the arity is compiled to a repeated
+`m` argspec first; for `\codepNewDocumentCommand`, the
 user's argspec is passed through verbatim.  In both
 cases a star is prepended so every wrapped command
 answers to both `\cmd` (use) and `\cmd*` (def site).
@@ -3958,7 +3958,7 @@ body helper).  The key invariants are:
    the body and is called with the forwarded arguments
    in natural order.
 
-The `\semtex@forwardargs` token used in the sketch is a
+The `\codep@forwardargs` token used in the sketch is a
 placeholder for xparse's actual forwarding mechanism
 (`\expandafter`-chain over the numbered arguments).
 Implementers familiar with xparse internals can inline
@@ -3968,7 +3968,7 @@ the star is consumed at `##1` and the user's args follow.
 
 The `\@gobble\string` trick converts `\Hom` to the bare
 string `Hom` exactly once at definition time; the
-captured `\semtex@tmp@name` is then used in all three
+captured `\codep@tmp@name` is then used in all three
 record emissions and in the use-recording prelude.
 
 The `\@currfilename` and `\inputlineno` are LaTeX kernel
@@ -3979,8 +3979,8 @@ information; a future revision might wrap the macro at a
 later point in the lexer to capture columns, but this
 matches the precision LaTeX itself uses for warnings.
 
-The `\semtex@sblwrite` calls (without `@atom`) bypass the
-currentatom guard because `\semtex@sbl@cmddef` records
+The `\codep@sblwrite` calls (without `@atom`) bypass the
+currentatom guard because `\codep@sbl@cmddef` records
 are global, not atom-scoped.  See the "Guard pattern"
 subsection above.
 
@@ -3990,8 +3990,8 @@ subsection above.
 from their `\new*` siblings only in error-handling
 behaviour (silently no-op if already defined; redefine
 without error).  The semantic-tracking machinery is the
-same in all four cases.  Adding `\semtexProvideCommand`
-and `\semtexDeclareDocumentCommand` is a ~20-line
+same in all four cases.  Adding `\codepProvideCommand`
+and `\codepDeclareDocumentCommand` is a ~20-line
 addition to the implementation and a parallel pair of
 table rows in this section; it has been deferred to a
 follow-up commit because real use cases haven't appeared
@@ -4009,11 +4009,11 @@ they fired".  Defer until needed.
 
 `.aux` and `.sbl` are siblings:
 
-- `.aux` is LaTeX's standard sidecar.  `semtex.sty` reads
+- `.aux` is LaTeX's standard sidecar.  `codependent.sty` reads
   it (for Section 8a's back-ref graph) and writes to it
-  (via `\semtex@atomref` and the kernel's label
+  (via `\codep@atomref` and the kernel's label
   machinery).  Read-write from the `.sty` side.
-- `.sbl` is semtex's sidecar.  `semtex.sty` writes it only.
+- `.sbl` is codependent's sidecar.  `codependent.sty` writes it only.
   Read by the CLI (Layer 2), not by the `.sty`.
   Write-only from the `.sty` side.
 
@@ -4021,8 +4021,8 @@ they fired".  Defer until needed.
 `.aux`, with one deliberate exception: **labels**.  The
 `.aux` has `\newlabel{key}{{num}...}` records that map
 labels to display numbers, and the `.sty`'s own
-`\semtex@lblnum@<key>` csname already captures this.  The
-`.sbl` ALSO emits `\semtex@sbl@label{num}{key}` because it
+`\codep@lblnum@<key>` csname already captures this.  The
+`.sbl` ALSO emits `\codep@sbl@label{num}{key}` because it
 lets the CLI answer "what labels does atom 1.2.4 own?"
 directly from the sidecar, without joining `.aux`
 `\newlabel` entries against atom boundaries.  The
@@ -4061,7 +4061,7 @@ reproduced in `.sbl`.
   are not a subset of `main.sbl`'s numbering.
 
 **CLI contract (per REVIEW_E #11 and the CLI scope
-document).**  `semtex-cli analyse main.tex` reads
+document).**  `codependent-cli analyse main.tex` reads
 `main.sbl` and nothing else.  It does not discover or
 merge `chapters/ch1.sbl` or any other subfile `.sbl`.
 If the user wants semantic analysis, they must run
@@ -4071,41 +4071,41 @@ compile's local backrefs still work (via the per-subfile
 `.aux` rerun) but no semantic analysis happens.
 
 **Recommendation.**  Treat subfile standalone
-compiles as drafting-only.  Run `semtex-cli` only
+compiles as drafting-only.  Run `codependent-cli` only
 against the master.  This matches the normal LaTeX
 workflow where `\ref{thm:A}` across subfiles is only
 guaranteed to resolve in the master build.
 
-No change is required in `semtex.sty` or
-`semtex-cli` to support this; it is purely a user
+No change is required in `codependent.sty` or
+`codependent-cli` to support this; it is purely a user
 documentation point.
 
 ## Package options
 
 ```latex
-\usepackage{semtex}                       % all defaults
-\usepackage[depth=1]{semtex}              % section.atom (default)
-\usepackage[depth=2]{semtex}              % section.subsection.atom
-\usepackage[equations=separate]{semtex}   % independent eq numbering (default)
-\usepackage[equations=shared]{semtex}     % single counter
-\usepackage[backrefs=inline]{semtex}      % "Used in" after each atom (default)
-\usepackage[backrefs=appendix]{semtex}    % dependency index at end
-\usepackage[backrefs=none]{semtex}        % numbering only
-\usepackage[proofs=numbered]{semtex}      % proofs get atom numbers (default)
-\usepackage[proofs=unnumbered]{semtex}    % proofs unnumbered
-\usepackage[conceptwarnings=on]{semtex}   % warn on missing \Hom* def site (default)
-\usepackage[conceptwarnings=off]{semtex}  % silent (real-world smoke test mode)
+\usepackage{codependent}                       % all defaults
+\usepackage[depth=1]{codependent}              % section.atom (default)
+\usepackage[depth=2]{codependent}              % section.subsection.atom
+\usepackage[equations=separate]{codependent}   % independent eq numbering (default)
+\usepackage[equations=shared]{codependent}     % single counter
+\usepackage[backrefs=inline]{codependent}      % "Used in" after each atom (default)
+\usepackage[backrefs=appendix]{codependent}    % dependency index at end
+\usepackage[backrefs=none]{codependent}        % numbering only
+\usepackage[proofs=numbered]{codependent}      % proofs get atom numbers (default)
+\usepackage[proofs=unnumbered]{codependent}    % proofs unnumbered
+\usepackage[conceptwarnings=on]{codependent}   % warn on missing \Hom* def site (default)
+\usepackage[conceptwarnings=off]{codependent}  % silent (real-world smoke test mode)
 ```
 
 The `conceptwarnings` option controls whether §8a.9's
-"missing def site" diagnostic for `\semtexnewcommand`-defined
+"missing def site" diagnostic for `\codepnewcommand`-defined
 concepts fires as a `\PackageWarning` (default: `on`) or as
 a quieter `\PackageInfo` (`off`).  The default is the correct
 choice for hand-authored monographs where each tracked
 command should have exactly one `\Hom*` marker.  The `off`
 mode exists for batch / smoke-test workflows where
-`\semtexnewcommand` is generated mechanically (e.g., by
-`tools/semtex-sty/testfiles/real-world/wrap.py` rewriting
+`\codepnewcommand` is generated mechanically (e.g., by
+`tools/codependent/testfiles/real-world/wrap.py` rewriting
 arxiv papers' `\newcommand`s) and the absence of star markers
 is expected, not a defect.  The diagnostic is still emitted —
 it just lands in `.log` at info level instead of warning
@@ -4143,12 +4143,12 @@ can be added later without changing the package.
 ## File layout
 
 ```
-tools/semtex-sty/
+tools/codependent/
   CONVENTIONS.md          coding conventions
   DESIGN.md               this file
   CREDITS.md              GPLv3 provenance table (dpmac port)
-  semtex.sty              the package (GPLv3)
-  semtex.ltxml            LaTeXML binding for HTML output (Section 8b, GPLv3)
+  codependent.sty              the package (GPLv3)
+  codependent.ltxml            LaTeXML binding for HTML output (Section 8b, GPLv3)
   build.lua               l3build configuration
   testfiles/
     test-basic.lvt        basic numbering test
@@ -4199,29 +4199,29 @@ tools/semtex-sty/
 - **`\newtcolorbox` auto-registration (REVIEW_E #13).**
   Parallel to `\newlist` wrapping in Section 8a.6.k,
   wrap `\newtcolorbox` (and `\newtcolorbox[...]{name}{...}`
-  with-options form) to auto-call `\semtex@suppressenv`
+  with-options form) to auto-call `\codep@suppressenv`
   on the created environment.  Requires inspection of
   tcolorbox's `\newtcolorbox` signature (complex; may
   take an `xparse`-style optional-argument probe).
 
 - **Verbatim-environment auto-suppression (REVIEW_E #14).**
   listings, minted, fancyvrb users currently have to
-  manually `\semtexsuppress{lstlisting}` etc.  A future
+  manually `\codepsuppress{lstlisting}` etc.  A future
   convenience would auto-suppress common verbatim
   environment names when the respective package is
   loaded.  Out of scope for v0.1; documented in
   "Recommended preamble snippets" above.
 
-- **`\semtex@recordmanualref{label}` helper.**  For
+- **`\codep@recordmanualref{label}` helper.**  For
   authors who use `\hyperref[label]{text}` and want
-  semtex to still track the edge, provide an explicit
+  codependent to still track the edge, provide an explicit
   opt-in helper command.  Currently
   `\hyperref[label]{text}` is deliberately uncovered
   (REVIEW_E #16); this helper lets the author opt back
   in on a per-site basis.
 
 - **biblatex ordering rule** — add
-  `\DeclareHookRule{begindocument/before}{semtex/backref/install}{after}{biblatex}`
+  `\DeclareHookRule{begindocument/before}{codependent/backref/install}{after}{biblatex}`
   conditionally if a biblatex interaction bug surfaces
   (REVIEW_E #8).  Currently unnecessary; kept on the
   radar for forward-compat.
@@ -4244,9 +4244,9 @@ adjacency list, and the self-ref dedup logic.  LaTeX-
 specific adaptations (the `.aux` rerun as persistence layer,
 the `\@setref` patch, the `\AddToHook` wiring) are new.
 
-The whole of `semtex.sty` is therefore distributed under
+The whole of `codependent.sty` is therefore distributed under
 **GNU GPL version 3** as a derivative work.  See
-`tools/semtex-sty/CREDITS.md` for the provenance table,
+`tools/codependent/CREDITS.md` for the provenance table,
 bucket-by-bucket attribution, and the intent to reach out
 to Pavlov regarding a possible LPPL dual-license courtesy.
 

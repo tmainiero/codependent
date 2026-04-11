@@ -8,8 +8,8 @@
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{definition}[theorem]{Definition}
 
-\usepackage{semtex}
-\semtextrack{definition,theorem}
+\usepackage{codependent}
+\codeptrack{definition,theorem}
 
 \begin{document}
 \START

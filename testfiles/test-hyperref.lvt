@@ -1,8 +1,8 @@
 % test-hyperref.lvt
-% Verifies: hyperref + semtex coexist without conflict.
-% hyperref is loaded BEFORE semtex per the standard load-order rule
+% Verifies: hyperref + codependent coexist without conflict.
+% hyperref is loaded BEFORE codependent per the standard load-order rule
 % (hyperref rewrites many internals and must precede packages that
-% hook into \label/\ref).  semtex detects hyperref via
+% hook into \label/\ref).  codependent detects hyperref via
 % \@ifpackageloaded and enables link-wrapped back-ref numbers.
 
 \documentclass{article}
@@ -11,10 +11,10 @@
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{definition}[theorem]{Definition}
 
-% Load hyperref first, then semtex.
+% Load hyperref first, then codependent.
 \usepackage[hidelinks]{hyperref}
-\usepackage{semtex}
-\semtextrack{definition,theorem}
+\usepackage{codependent}
+\codeptrack{definition,theorem}
 
 \begin{document}
 \START

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-semtex.sty test runner.
+codependent.sty test runner.
 
 Runs every .lvt fixture under unit/ and integration/ through pdflatex
 (plus the optional real-world/wrappers/), parses the TEST-* metadata
 header in each fixture, applies assertions, and produces a summary.
 
-Designed to run BEFORE semtex.sty's implementation phase: assertions
+Designed to run BEFORE codependent.sty's implementation phase: assertions
 target observable artifacts (.aux, .sbl, .log, exit code, PDF content)
 rather than golden .tlg files. l3build can later replace this runner
 once the implementation lands and we can lock in golden output.
@@ -43,17 +43,17 @@ from pathlib import Path
 # Project layout
 # ----------------------------------------------------------------------
 
-# Path of THIS script: tools/semtex-sty/testfiles/run-tests.py
+# Path of THIS script: tools/codependent/testfiles/run-tests.py
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent  # tools/semtex-sty/
+PROJECT_ROOT = SCRIPT_DIR.parent  # tools/codependent/
 UNIT_DIR = SCRIPT_DIR / "unit"
 INTEGRATION_DIR = SCRIPT_DIR / "integration"
 REAL_WORLD_DIR = SCRIPT_DIR / "real-world" / "wrappers"
 
 # Where the .sty file lives. The runner copies it into the temp work dir
 # so each test sees a clean kpse search path.
-STY_FILE = PROJECT_ROOT / "semtex.sty"
-LTXML_FILE = PROJECT_ROOT / "semtex.ltxml"  # may not exist yet
+STY_FILE = PROJECT_ROOT / "codependent.sty"
+LTXML_FILE = PROJECT_ROOT / "codependent.ltxml"  # may not exist yet
 
 
 # ----------------------------------------------------------------------
@@ -355,12 +355,12 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
     if not STY_FILE.exists():
         result.skipped = True
         result.skip_reason = (
-            f"semtex.sty not found at {STY_FILE} (implementation not landed yet)"
+            f"codependent.sty not found at {STY_FILE} (implementation not landed yet)"
         )
         return result
 
     # Each fixture runs in its own temp dir so .aux/.sbl files don't collide.
-    with tempfile.TemporaryDirectory(prefix=f"semtex-test-{fix.name}-") as tmp:
+    with tempfile.TemporaryDirectory(prefix=f"codep-test-{fix.name}-") as tmp:
         tmp_path = Path(tmp)
         # Copy the fixture and the .sty into the temp dir.
         local_lvt = tmp_path / f"{fix.name}.tex"  # rename to .tex for engine
@@ -370,9 +370,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         # these via regression-test.tex; our standalone runner does not.
         content = local_lvt.read_text(encoding="utf-8")
         local_lvt.write_text(INJECT_L3BUILD_NOOPS + content, encoding="utf-8")
-        shutil.copy(STY_FILE, tmp_path / "semtex.sty")
+        shutil.copy(STY_FILE, tmp_path / "codependent.sty")
         if LTXML_FILE.exists():
-            shutil.copy(LTXML_FILE, tmp_path / "semtex.ltxml")
+            shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
 
         # Run the engine `rerun` times to populate .aux + .sbl.
         run_log = []
@@ -464,9 +464,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
             if s in aux_text:
                 result.failures.append(f"aux contains forbidden string: {s}")
 
-        # 7. atoms_min: count \semtex@sbl@atom records.
+        # 7. atoms_min: count \codep@sbl@atom records.
         if fix.atoms_min > 0:
-            atom_count = sbl_text.count("\\semtex@sbl@atom{")
+            atom_count = sbl_text.count("\\codep@sbl@atom{")
             if atom_count < fix.atoms_min:
                 result.failures.append(
                     f"atom count: expected >= {fix.atoms_min}, got {atom_count}"
@@ -654,7 +654,7 @@ def summarize(results: list[TestResult], engine: str, verbose: bool) -> int:
 
     print()
     print("=" * 72)
-    print(f"semtex.sty test runner — engine: {engine}")
+    print(f"codependent.sty test runner — engine: {engine}")
     print("=" * 72)
 
     # By-category breakdown.
@@ -692,7 +692,7 @@ def summarize(results: list[TestResult], engine: str, verbose: bool) -> int:
                 print(textwrap.indent(r.log_excerpt, "      "))
         print("-" * 72)
 
-    # Skipped tests (typically: semtex.sty not yet implemented).
+    # Skipped tests (typically: codependent.sty not yet implemented).
     if skipped > 0:
         print()
         print(f"SKIPPED ({skipped}):")
@@ -731,7 +731,7 @@ def summarize(results: list[TestResult], engine: str, verbose: bool) -> int:
 def main():
     parser = argparse.ArgumentParser(
         prog="run-tests.py",
-        description="semtex.sty test runner",
+        description="codependent.sty test runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -754,7 +754,7 @@ def main():
 
     # System TeX notice.
     sys.stderr.write(
-        f"semtex.sty test runner — using system TeX: {engine_bin}\n"
+        f"codependent.sty test runner — using system TeX: {engine_bin}\n"
         f"NOTE: per user direction 2026-04-09, the project's Nix flake does\n"
         f"      not yet include all required packages. System-wide texlive-full\n"
         f"      is in use as a one-time exception. Future runs should go\n"

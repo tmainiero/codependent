@@ -9,23 +9,23 @@
 %%              monograph); DESIGN.md §8a.0–§9a (integration surface)
 %% TEST-SECTION: DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom
-%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Funct}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{Funct}{arity}{2}
-%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{catname}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \semtex@sbl@cmddef{catname}{arity}{1}
-%% TEST-SBL-CONTAINS: \semtex@sbl@use
-%% TEST-SBL-CONTAINS: \semtex@sbl@def
-%% TEST-SBL-CONTAINS: \semtex@sbl@label
-%% TEST-SBL-CONTAINS: \semtex@sbl@tag
-%% TEST-AUX-CONTAINS: \semtex@atomref
-%% TEST-AUX-CONTAINS: \semtex@concept{Funct}
-%% TEST-AUX-CONTAINS: \semtex@concept{catname}
-%% TEST-AUX-CONTAINS: \semtex@conceptref
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom
+%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Funct}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Funct}{arity}{2}
+%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{catname}{kind}{newcommand}
+%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{catname}{arity}{1}
+%% TEST-SBL-CONTAINS: \codep@sbl@use
+%% TEST-SBL-CONTAINS: \codep@sbl@def
+%% TEST-SBL-CONTAINS: \codep@sbl@label
+%% TEST-SBL-CONTAINS: \codep@sbl@tag
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-AUX-CONTAINS: \codep@concept{Funct}
+%% TEST-AUX-CONTAINS: \codep@concept{catname}
+%% TEST-AUX-CONTAINS: \codep@conceptref
 %% TEST-ATOMS-MIN: 15
-%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,semtex
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-RERUN: 3
 %%
 %% This fixture inlines the theorem declarations from sty-theorems-ta.sty
@@ -34,7 +34,7 @@
 %% copy of the \makeTheoremEnv / \makeDefinitionEnv pattern plus all 10
 %% environment instantiations with their custom endmark symbols.
 %%
-%% The content exercises the full semtex feature surface:
+%% The content exercises the full codependent feature surface:
 %%   - All 10 theorem env types (theorem through question)
 %%   - Custom endmarks via thmtools qed= key
 %%   - Counter sharing via sibling= (sequential 1.1–1.10)
@@ -43,8 +43,8 @@
 %%   - hyperref (\autoref, hypertexnames=false)
 %%   - tikz-cd commutative diagram inside a theorem env
 %%   - Display math (equation, align) inside theorems — no margin numbers
-%%   - \semtexnewcommand concept tracking (def-site / use-site)
-%%   - \semtextag semantic sidecar records
+%%   - \codepnewcommand concept tracking (def-site / use-site)
+%%   - \codeptag semantic sidecar records
 %%   - Cross-section backrefs (section 3 → section 1)
 
 \documentclass{article}
@@ -147,9 +147,9 @@
 \usepackage{tikz}
 \usetikzlibrary{cd}
 
-%% ---------- semtex ----------
-\usepackage{semtex}
-\semtextrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
+%% ---------- codependent ----------
+\usepackage{codependent}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
 
 %% ---------- hyperref + cleveref ----------
 \usepackage[hypertexnames=false]{hyperref}
@@ -160,10 +160,10 @@
 %% Two macros to exercise def-site / use-site tracking.
 
 % \Funct{F}{C} — arity 2, functor notation
-\semtexnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
+\codepnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
 
 % \catname{C} — arity 1, category name formatter
-\semtexnewcommand{\catname}[1]{\mathsf{#1}}
+\codepnewcommand{\catname}[1]{\mathsf{#1}}
 
 %% ---------- Equation numbering by section ----------
 \numberwithin{equation}{section}
@@ -210,7 +210,7 @@ Let $\catname{C}$ be a category with morphisms $\Funct{F}{C}$.
   A $\catname{V}$-enriched category $\catname{C}$ consists of a
   set of objects $\mathrm{Ob}(\catname{C})$ and, for each pair
   $(A,B)$, an object $\catname{V}(A,B)$ in $\catname{V}$.
-  \semtextag{uid}{cat:enriched-category}%
+  \codeptag{uid}{cat:enriched-category}%
 \end{definition}
 
 \begin{notation}\label{not:hom}

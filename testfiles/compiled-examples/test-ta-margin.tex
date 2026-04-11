@@ -1,0 +1,119 @@
+\def\START{}\def\END{}
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+\usepackage{graphicx}
+
+%% Load the real theorem style from the monograph
+\usepackage{sty-theorems-ta}
+
+%% codependent with depth=1 (default, matches numberwithin=section)
+\usepackage[backref-style=margin]{codependent}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
+
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+
+\title{Codependent + sty-theorems-ta stress test}
+\author{Test}
+\date{}
+
+\begin{document}
+\START
+\maketitle
+
+\section{Counter sharing under load}
+
+Some introductory paragraph to check paragraph numbering.
+
+\begin{definition}\label{def:widget}
+A \emph{widget} is a thing that does stuff.
+\end{definition}
+
+\begin{theorem}\label{thm:nontrivial}
+Every widget (see \cref{def:widget}) is nontrivial.
+\end{theorem}
+
+\begin{proof}
+By \cref{def:widget}, obvious.
+\end{proof}
+
+\begin{corollary}\label{cor:trivial}
+By \cref{thm:nontrivial}, no widget is trivial.
+\end{corollary}
+
+\begin{remark}\label{rem:note}
+This follows from \cref{thm:nontrivial} and \cref{cor:trivial}.
+\end{remark}
+
+\begin{proposition}\label{prop:compose}
+Widgets compose. This extends \cref{thm:nontrivial}.
+\end{proposition}
+
+\begin{lemma}\label{lem:technical}
+A technical lemma used in the proof of \cref{prop:compose}.
+\end{lemma}
+
+\begin{notation}\label{not:W}
+We write $W$ for the category of widgets (\cref{def:widget}).
+\end{notation}
+
+\begin{terminology}\label{term:idempotent}
+A widget (\cref{def:widget}) that composes with itself
+(\cref{prop:compose}) is called \emph{idempotent}.
+\end{terminology}
+
+\begin{example}\label{ex:empty}
+The empty set is not a widget (\cref{def:widget}).
+\end{example}
+
+\begin{question}\label{q:gadget}
+Is every widget (\cref{def:widget}) a gadget?
+See \cref{thm:nontrivial,cor:trivial,prop:compose}.
+\end{question}
+
+A closing paragraph referencing \cref{lem:technical} and \cref{rem:note}.
+All ten envs above should be numbered 1.1 through 1.10 sequentially.
+
+\section{Display math suppression}
+
+A paragraph before display math.
+
+\begin{theorem}\label{thm:idempotent}
+For all widgets $w$ (\cref{def:widget}), we have
+\begin{equation}\label{eq:widget}
+  w \circ w = w.
+\end{equation}
+In particular, $w$ is idempotent (\cref{term:idempotent}).
+\end{theorem}
+
+\begin{proof}
+By \cref{lem:technical}, consider the aligned computation:
+\begin{align}
+  w \circ w &= w \circ (w \circ w) \\
+            &= w.
+\end{align}
+\end{proof}
+
+A paragraph after the proof. The equation and align should NOT get
+margin atom numbers.
+
+\section{Cross-section backrefs}
+
+\begin{theorem}\label{thm:sec3}
+This uses \cref{def:widget} and \cref{thm:nontrivial} from section 1.
+Those atoms should show ``Used in 3.1.''
+\end{theorem}
+
+\begin{definition}\label{def:gadget}
+A \emph{gadget} extends a widget (\cref{def:widget}).
+Answers \cref{q:gadget} partially.
+\end{definition}
+
+\begin{corollary}\label{cor:sec3}
+Combines \cref{thm:sec3}, \cref{def:gadget}, and \cref{prop:compose}.
+\end{corollary}
+
+\END
+\end{document}

@@ -7,12 +7,12 @@
 %%              Interaction with restatable
 %% TEST-SECTION: DESIGN.md §8a.5.a, §8a.9
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@def{2.1}{Hom} = 1
-%% TEST-AUX-CONTAINS: \semtex@concept{Hom}{2.1}
-%% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@def{2.1}{Hom} = 1
+%% TEST-AUX-CONTAINS: \codep@concept{Hom}{2.1}
+%% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% The intro section 1 uses restatable* (starred = non-primary)
@@ -33,10 +33,10 @@
 \usepackage{cleveref}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \begin{document}
 \START

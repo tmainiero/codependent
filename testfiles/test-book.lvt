@@ -11,8 +11,8 @@
 \newtheorem{definition}[theorem]{Definition}
 
 % depth=1 in a book class: chapter.atom
-\usepackage[depth=1]{semtex}
-\semtextrack{definition,theorem}
+\usepackage[depth=1]{codependent}
+\codeptrack{definition,theorem}
 
 \begin{document}
 \START

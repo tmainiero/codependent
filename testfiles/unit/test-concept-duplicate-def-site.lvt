@@ -6,14 +6,14 @@
 %% TEST-SOURCE: DESIGN.md §8a.9 Error handling (duplicate def site)
 %% TEST-SECTION: DESIGN.md §8a.9
 %% TEST-EXIT: 1
-%% TEST-LOG-CONTAINS: Package semtex Error.*defined at atoms
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-CONTAINS: Package codependent Error.*defined at atoms
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 1
 %%
 %% The author accidentally marks two different atoms as the def
 %% site for the same concept. Exactly one def site per concept is
 %% permitted. The .sty detects the duplicate via
-%% \@ifundefined{semtex@concept@Hom}: the first \Hom* defines the
+%% \@ifundefined{codep@concept@Hom}: the first \Hom* defines the
 %% csname, the second \Hom* sees it already defined and triggers
 %% \PackageError, which halts pdflatex with exit code 1.
 %%
@@ -31,10 +31,10 @@
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{definition}[theorem]{Definition}
-\usepackage{semtex}
-\semtextrack{theorem,definition}
+\usepackage{codependent}
+\codeptrack{theorem,definition}
 
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \begin{document}
 \START

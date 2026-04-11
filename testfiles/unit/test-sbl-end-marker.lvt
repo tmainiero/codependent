@@ -1,14 +1,14 @@
 %% TEST-NAME: test-sbl-end-marker
 %% TEST-WHAT: Verify the last record of the .sbl sidecar is the sentinel
-%%            \semtex@sbl@end{OK}, written from \AtEndDocument.
+%%            \codep@sbl@end{OK}, written from \AtEndDocument.
 %% TEST-SOURCE: REVIEW_C #7, DESIGN.md §9a "Close timing"
 %% TEST-SECTION: DESIGN.md §9a Close timing
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-LAST-RECORD: \semtex@sbl@end{OK}
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-LAST-RECORD: \codep@sbl@end{OK}
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% REVIEW_C finding #7. The .sbl sentinel is the CLI's
@@ -24,8 +24,8 @@
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START

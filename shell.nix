@@ -1,4 +1,4 @@
-# Development shell for semtex.sty testing.
+# Development shell for codependent.sty testing.
 # Usage: nix-shell   (or `nix develop` once flake.nix lands)
 #
 # Provides PDF analysis tools needed by TEST-PDF-STEXT / TEST-PDF-OBJECTS

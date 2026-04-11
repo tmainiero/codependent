@@ -11,28 +11,28 @@
 %%              Interaction with restatable (appendix pattern)
 %% TEST-SECTION: DESIGN.md §8a.5.a, §8a.9
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
-%% TEST-LOG-NOT: Package semtex Warning
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-COUNT: \semtex@sbl@def{1.1}{Hom} = 1
-%% TEST-SBL-COUNT: \semtex@sbl@def{2.1}{Hom} = 0
-%% TEST-AUX-CONTAINS: \semtex@concept{Hom}{1.1}
-%% TEST-AUX-NOT-CONTAINS: \semtex@concept{Hom}{2.1}
-%% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,semtex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-COUNT: \codep@sbl@def{1.1}{Hom} = 1
+%% TEST-SBL-COUNT: \codep@sbl@def{2.1}{Hom} = 0
+%% TEST-AUX-CONTAINS: \codep@concept{Hom}{1.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@concept{Hom}{2.1}
+%% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Section 1 (main) declares the restatable theorem. First firing,
-%% alias intact, normal hook body: \semtex@currentatom = 1.1
+%% alias intact, normal hook body: \codep@currentatom = 1.1
 %% (theorem atom in section 1). \Hom* inside the body registers
 %% 1.1 as the def site.
 %%
 %% Section 2 (appendix) calls \restate{thm:main}. Second firing,
-%% alias broken, restate branch: \semtex@pushcurrentatom saves the
+%% alias broken, restate branch: \codep@pushcurrentatom saves the
 %% enclosing appendix paragraph's currentatom and sets it to
 %% \@empty. \Hom* inside the restated body sees empty currentatom
 %% and silently no-ops (the duplicate-def-site error is NOT
 %% triggered because emit@def short-circuits on empty currentatom
-%% BEFORE the duplicate check). \semtex@popcurrentatom restores
+%% BEFORE the duplicate check). \codep@popcurrentatom restores
 %% the appendix paragraph's currentatom at end-of-environment.
 %%
 %% If the duplicate check fired first (before the empty guard),
@@ -51,10 +51,10 @@
 \usepackage{cleveref}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
-\semtexnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
 
 \begin{document}
 \START

@@ -4,19 +4,19 @@
 %% TEST-SOURCE: DESIGN.md §Proof adjacency
 %% TEST-SECTION: DESIGN.md §8a
 %% TEST-EXIT: 0
-%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Proof not adjacent
-%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.1*}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.2}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.2*}
-%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.3}{theorem}
-%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.3*}
-%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.1*}
-%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.2*}
-%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.3*}
-%% TEST-PACKAGES: amsthm,semtex
+%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.1*}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.2}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.2*}
+%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.3}{theorem}
+%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.3*}
+%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.1*}
+%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.2*}
+%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.3*}
+%% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Three theorem+proof pairs in sequence.  Each proof must inherit
@@ -25,8 +25,8 @@
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage{semtex}
-\semtextrack{theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
 
 \begin{document}
 \START
