@@ -48,6 +48,7 @@
 \def\semtex@const@margin{margin}
 \def\semtex@const@right{right}
 \newcommand*{\semtex@backreffont}{\scriptsize\sffamily}
+\newcommand*{\semtex@backrefcolor}{}
 \newcommand*{\semtex@backrefprefix}{}
 \newcommand*{\semtex@backreflabel}{Used in}
 \newcommand*{\semtex@marginfont}{\scriptsize}
@@ -97,6 +98,7 @@
   backref-align/right/.code = {\renewcommand*{\semtex@backrefalign}{right}},%
   backref-align/.default = right,%
   backref-font/.store in = \semtex@backreffont,%
+  backref-color/.store in = \semtex@backrefcolor,%
   backref-prefix/.store in = \semtex@backrefprefix,%
   backref-label/.store in = \semtex@backreflabel,%
   margin-font/.store in = \semtex@marginfont,%
@@ -1300,7 +1302,13 @@
 %   call this, so overriding it changes ALL rendering.
 %   Reads font/prefix/label from \semtexsetup configuration.
 \newcommand*{\semtex@formatusedin}[1]{%
-  {\normalfont\semtex@backreffont\semtex@backrefprefix\semtex@backreflabel\space#1.}}
+  {\normalfont\semtex@backreffont
+   \semtex@applycolor{\semtex@backrefprefix\semtex@backreflabel\space#1.}}}
+% \semtex@applycolor{text}
+%   Wrap text in \textcolor if backref-color is set.
+%   Requires xcolor or color package loaded by user.
+\newcommand*{\semtex@applycolor}[1]{%
+  \ifx\semtex@backrefcolor\@empty#1\else\textcolor{\semtex@backrefcolor}{#1}\fi}
 
 % \semtex@truncatereflist{reflist}
 %   If reflist has more than \semtex@backrefmarginmax comma-separated
@@ -1321,9 +1329,18 @@
       \smash{%
         \rlap{%
           \kern0.5em
-          {\semtex@backreffont\semtex@backrefprefix
-           \semtex@backreflabel\space
-           \semtex@truncatereflist{#1}.}%
+          \vtop{%
+            \hsize\marginparwidth
+            \leftskip\z@
+            \rightskip\z@ plus 1fil\relax
+            \parfillskip\z@
+            \parindent\z@
+            \everypar{}%
+            \leavevmode
+            \semtex@backreffont\semtex@backrefprefix
+            \semtex@backreflabel\space
+            \semtex@truncatereflist{#1}.%
+          }%
         }%
       }%
     }%
@@ -1349,7 +1366,7 @@
   \else\ifx\semtex@backrefstyle\semtex@const@inline
     % Inline style: same line as content, flows with text.
     % Flush happens from cmd/end#1/before (hmode, before endmark).
-    \unskip\quad\semtex@formatusedin{#1}%
+    \unskip\enspace\semtex@formatusedin{#1}%
   \else
     % Margin style: emit in right margin.
     \semtex@rendermargin{#1}%
@@ -1392,9 +1409,18 @@
         \smash{%
           \rlap{%
             \kern0.5em
-            {\semtex@backreffont\semtex@backrefprefix
-             \semtex@backreflabel\space
-             \semtex@truncatereflist{#1}.}%
+            \vtop{%
+              \hsize\marginparwidth
+              \leftskip\z@
+              \rightskip\z@ plus 1fil\relax
+              \parfillskip\z@
+              \parindent\z@
+              \everypar{}%
+              \leavevmode
+              \semtex@backreffont\semtex@backrefprefix
+              \semtex@backreflabel\space
+              \semtex@truncatereflist{#1}.%
+            }%
           }%
         }%
       }%
