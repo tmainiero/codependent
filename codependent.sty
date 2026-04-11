@@ -421,118 +421,146 @@
 %   Note: the env name is captured via the hook argument (#1)
 %   rather than \@currenvir, because under restatable the
 %   current environment is "restatable", not the theorem type.
-\newcommand*{\codep@hooktheorem}[1]{%
-  \AddToHook{cmd/#1/before}{%
-    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
-      % Original occurrence: alias intact, normal hook body.
-      \global\advance\codep@trackedlevel by 1\relax
-      \advance\codep@nestlevel by 1\relax
-      \ifnum\codep@trackedlevel>1\relax
-        % Nested tracked env: suppress atom creation.
-        \PackageWarning{codependent}{Nested tracked environment '#1'
-          inside another tracked environment. The inner
-          environment will not be assigned its own atom number}%
-      \else
-        \booltrue{codep@intheorem}%
-        % Sentinel only — the actual atom number is read at write
-        % time via \theatom (see §8a.5.0).
-        \def\codep@currentatom{1}%
-      \fi
+%
+%   The hook bodies are factored into named helpers below;
+%   \codep@hooktheorem is a thin orchestrator that wires them
+%   into the four hook points.
+
+% \codep@hooktheorem@begin{envname}
+%   Begin-hook body: restate dispatch, trackedlevel,
+%   nestlevel, intheorem, currentatom sentinel.
+\def\codep@hooktheorem@begin#1{%
+  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
+    % Original occurrence: alias intact, normal hook body.
+    \global\advance\codep@trackedlevel by 1\relax
+    \advance\codep@nestlevel by 1\relax
+    \ifnum\codep@trackedlevel>1\relax
+      % Nested tracked env: suppress atom creation.
+      \PackageWarning{codependent}{Nested tracked environment '#1'
+        inside another tracked environment. The inner
+        environment will not be assigned its own atom number}%
     \else
-      % Restate occurrence: \c@<basecounter> re-let to dummy
-      % counter by thm-restate.sty.  Suppress the hook body to avoid
-      %   (a) reading the wrong \theatom,
-      %   (b) writing a duplicate \codep@sbl@atom record,
-      %   (c) queuing back-refs against a stale atom number.
-      % Bump nestlevel so paragraph numbering is suppressed
-      % inside the restated body (matching normal theorem
-      % semantics), and save/clear currentatom so semantic
-      % commands inside the restated body no-op.
-      \advance\codep@nestlevel by 1\relax
-      \codep@pushcurrentatom
+      \booltrue{codep@intheorem}%
+      % Sentinel only — the actual atom number is read at write
+      % time via \theatom (see §8a.5.0).
+      \def\codep@currentatom{1}%
     \fi
-  }%
-  % Save \theatom after \refstepcounter fires for the outermost env.
-  % cmd/#1/after fires AFTER amsthm's \refstepcounter (unlike
-  % cmd/#1/before which fires BEFORE it), so \theatom is correct
-  % here.  For nested tracked envs this is a no-op; only
-  % trackedlevel=1 saves.  The restate guard is not needed here
-  % because trackedlevel is only incremented on the original path.
-  \AddToHook{cmd/#1/after}{%
-    \ifnum\codep@trackedlevel=1\relax
-      \xdef\codep@outeratom{\theatom}%
-      % Write atom→anchor mapping for hyperlinks (no-op without hyperref).
-      \codep@writeanchormap{\theatom}%
-    \fi
-  }%
-  \AddToHook{cmd/end#1/before}{%
-    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
-      % Original occurrence: normal end body.
-      \ifnum\codep@trackedlevel>1\relax
-        % Nested end: skip SBL/backref, just decrement.
-        \global\advance\codep@trackedlevel by -1\relax
-        \advance\codep@nestlevel by -1\relax
-      \else
-        % Outermost end: write SBL records and flush backrefs.
-        % Use \codep@outeratom (captured after the outermost
-        % env's \refstepcounter) instead of \theatom, because
-        % nested tracked envs may have advanced the counter.
-        \codep@sblwrite@atom{%
-          \string\codep@sbl@atom{\codep@outeratom}{#1}}%
-        \codep@sblwrite@atom{%
-          \string\codep@sbl@meta{\codep@outeratom}{env}{#1}}%
-        \codep@sblwrite@atom{%
-          \string\codep@sbl@meta{\codep@outeratom}{src}%
-            {\jobname.tex:\the\inputlineno:1}}%
-        \global\advance\codep@atomcount by 1\relax
-        \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
-          {\codep@outeratom}{#1}}%
-        \codep@queuebackref{\codep@outeratom}%
-        % Inline style: flush NOW (still in hmode, inside the env
-        % body, before amsthm's \popQED / endmark mechanism runs).
-        % Block/margin styles flush later in \AfterEndEnvironment.
-        \ifx\codep@backrefstyle\codep@const@inline
-          \codep@flushbackref
-        \fi
-        % §8a.5 atom-end clear of the in-atom sentinel.
-        \let\codep@currentatom\@empty
-        \global\advance\codep@trackedlevel by -1\relax
-        \advance\codep@nestlevel by -1\relax
-        \ifnum\codep@nestlevel=0\relax
-          \boolfalse{codep@intheorem}%
-        \fi
-        % Set adjacency flag for proof inheritance.
-        % A proof immediately following this theorem (before any
-        % intervening paragraph) inherits this atom number with
-        % a star suffix instead of getting its own number.
-        \global\edef\codep@lasttheorematom{\codep@outeratom}%
-      \fi
-    \else
-      % Restate end: restore currentatom from the stack, then
-      % decrement nestlevel (LIFO order per §8a.5.a).
-      \codep@popcurrentatom
+  \else
+    % Restate occurrence: \c@<basecounter> re-let to dummy
+    % counter by thm-restate.sty.  Suppress the hook body to avoid
+    %   (a) reading the wrong \theatom,
+    %   (b) writing a duplicate \codep@sbl@atom record,
+    %   (c) queuing back-refs against a stale atom number.
+    % Bump nestlevel so paragraph numbering is suppressed
+    % inside the restated body (matching normal theorem
+    % semantics), and save/clear currentatom so semantic
+    % commands inside the restated body no-op.
+    \advance\codep@nestlevel by 1\relax
+    \codep@pushcurrentatom
+  \fi
+}
+
+% \codep@hooktheorem@after{envname}
+%   After-hook body: save outeratom and write anchormap.
+%   cmd/#1/after fires AFTER amsthm's \refstepcounter (unlike
+%   cmd/#1/before which fires BEFORE it), so \theatom is correct
+%   here.  For nested tracked envs this is a no-op; only
+%   trackedlevel=1 saves.  The restate guard is not needed here
+%   because trackedlevel is only incremented on the original path.
+\def\codep@hooktheorem@after#1{%
+  \ifnum\codep@trackedlevel=1\relax
+    \xdef\codep@outeratom{\theatom}%
+    % Write atom->anchor mapping for hyperlinks (no-op without hyperref).
+    \codep@writeanchormap{\theatom}%
+  \fi
+}
+
+% \codep@hooktheorem@end@outer{envname}
+%   Outermost-end logic: SBL writes, backref queue, inline flush,
+%   currentatom clear, adjacency flag.
+%   Uses \codep@outeratom (captured after the outermost env's
+%   \refstepcounter) instead of \theatom, because nested tracked
+%   envs may have advanced the counter.
+\def\codep@hooktheorem@end@outer#1{%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@atom{\codep@outeratom}{#1}}%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@meta{\codep@outeratom}{env}{#1}}%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@meta{\codep@outeratom}{src}%
+      {\jobname.tex:\the\inputlineno:1}}%
+  \global\advance\codep@atomcount by 1\relax
+  \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
+    {\codep@outeratom}{#1}}%
+  \codep@queuebackref{\codep@outeratom}%
+  % Inline style: flush NOW (still in hmode, inside the env
+  % body, before amsthm's \popQED / endmark mechanism runs).
+  % Block/margin styles flush later in \AfterEndEnvironment.
+  \ifx\codep@backrefstyle\codep@const@inline
+    \codep@flushbackref
+  \fi
+  % §8a.5 atom-end clear of the in-atom sentinel.
+  \let\codep@currentatom\@empty
+  \global\advance\codep@trackedlevel by -1\relax
+  \advance\codep@nestlevel by -1\relax
+  \ifnum\codep@nestlevel=0\relax
+    \boolfalse{codep@intheorem}%
+  \fi
+  % Set adjacency flag for proof inheritance.
+  % A proof immediately following this theorem (before any
+  % intervening paragraph) inherits this atom number with
+  % a star suffix instead of getting its own number.
+  \global\edef\codep@lasttheorematom{\codep@outeratom}%
+}
+
+% \codep@hooktheorem@end{envname}
+%   End-hook body: restate dispatch to nested vs outer.
+\def\codep@hooktheorem@end#1{%
+  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
+    % Original occurrence: normal end body.
+    \ifnum\codep@trackedlevel>1\relax
+      % Nested end: skip SBL/backref, just decrement.
+      \global\advance\codep@trackedlevel by -1\relax
       \advance\codep@nestlevel by -1\relax
+    \else
+      % Outermost end: delegate to \codep@hooktheorem@end@outer.
+      \codep@hooktheorem@end@outer{#1}%
     \fi
-  }%
-  % Flush backrefs: timing depends on backref-style.
-  % - inline: flushed EARLY in cmd/end#1/before (inside the env
-  %   body, in hmode, before amsthm's \popQED/endmark mechanism)
-  %   so "Used in" flows on the same line as content.
-  % - block/margin: flush AFTER the env fully closes
-  %   (\AfterEndEnvironment, vmode) so "Used in" renders after
-  %   endmarks and QED symbols.
-  % For restatable re-fires (which call \theorem/\endtheorem
-  % directly, bypassing \begin/\end), neither hook fires —
-  % correct, since the restate guard already skipped backref
-  % queueing in the cmd/end hook above.
-  % Inline style: already flushed in cmd/end#1/before (above),
-  % so \AtEndEnvironment does nothing for inline.
-  % (Block/margin flush in \AfterEndEnvironment below.)
-  \AfterEndEnvironment{#1}{%
-    \ifx\codep@backrefstyle\codep@const@inline\else
-      \codep@flushbackref
-    \fi
-  }%
+  \else
+    % Restate end: restore currentatom from the stack, then
+    % decrement nestlevel (LIFO order per §8a.5.a).
+    \codep@popcurrentatom
+    \advance\codep@nestlevel by -1\relax
+  \fi
+}
+
+% \codep@hooktheorem@afterend{envname}
+%   After-end-environment body: block/margin backref flush.
+%   Timing depends on backref-style:
+%   - inline: flushed EARLY in cmd/end#1/before (inside the env
+%     body, in hmode, before amsthm's \popQED/endmark mechanism)
+%     so "Used in" flows on the same line as content.
+%   - block/margin: flush AFTER the env fully closes
+%     (\AfterEndEnvironment, vmode) so "Used in" renders after
+%     endmarks and QED symbols.
+%   For restatable re-fires (which call \theorem/\endtheorem
+%   directly, bypassing \begin/\end), neither hook fires —
+%   correct, since the restate guard already skipped backref
+%   queueing in the cmd/end hook above.
+%   Inline style: already flushed in cmd/end#1/before (above),
+%   so this is a no-op for inline.
+\def\codep@hooktheorem@afterend#1{%
+  \ifx\codep@backrefstyle\codep@const@inline\else
+    \codep@flushbackref
+  \fi
+}
+
+% Thin orchestrator: wire the named helpers into the four hook points.
+\newcommand*{\codep@hooktheorem}[1]{%
+  \AddToHook{cmd/#1/before}{\codep@hooktheorem@begin{#1}}%
+  \AddToHook{cmd/#1/after}{\codep@hooktheorem@after{#1}}%
+  \AddToHook{cmd/end#1/before}{\codep@hooktheorem@end{#1}}%
+  \AfterEndEnvironment{#1}{\codep@hooktheorem@afterend{#1}}%
 }
 
 % \codep@hookproof
