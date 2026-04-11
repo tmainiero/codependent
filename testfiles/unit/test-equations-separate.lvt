@@ -1,9 +1,8 @@
 %% TEST-NAME: test-equations-separate
-%% TEST-WHAT: Verify the default equations=separate mode keeps the
-%%            equation counter independent of the atom counter; \eqref
-%%            works; a paragraph-then-equation-then-paragraph sequence
-%%            produces two atoms, not three.
-%% TEST-SOURCE: DESIGN.md §Equation numbering, REVIEW_E #6 context
+%% TEST-WHAT: Verify the equation counter stays independent of the atom
+%%            counter; \eqref works; a paragraph-then-equation-then-paragraph
+%%            sequence produces two atoms, not three.
+%% TEST-SOURCE: DESIGN.md §Equation numbering
 %% TEST-SECTION: DESIGN.md §Equation numbering
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
@@ -16,8 +15,7 @@
 %% TEST-PACKAGES: amsmath,amsthm,semtex
 %% TEST-RERUN: 2
 %%
-%% Pins default equations=separate behaviour. Under this mode
-%% the equation counter advances independently (eq:first gets
+%% The equation counter advances independently (eq:first gets
 %% equation number 1, the standard amsmath behaviour) and the
 %% atom counter does not step on \begin{equation}. Display math
 %% environments are suppressed so they do not produce atom
@@ -29,7 +27,7 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
-\usepackage[equations=separate]{semtex}
+\usepackage{semtex}
 \semtextrack{theorem}
 
 \begin{document}

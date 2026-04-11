@@ -610,7 +610,7 @@ def summarize(results: list[TestResult], engine: str, verbose: bool) -> int:
             f"behaviour (TEST-PINS-KNOWN-BROKEN: yes). They are reported as "
             f"FAILED in the summary but do NOT contribute to the runner's "
             f"exit code. They flag intentional hazards documented in the "
-            f"design (e.g. equations=shared mode), and will need to be "
+            f"design, and will need to be "
             f"rewritten when the underlying issue is fixed."
         )
 

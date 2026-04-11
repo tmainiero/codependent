@@ -18,10 +18,6 @@
 % Depth: how many sectioning levels in the atom display number.
 \newcommand*{\semtex@depth}{1}
 
-% Equations: separate (default) or shared counter.
-\newbool{semtex@eqshared}
-\boolfalse{semtex@eqshared}
-
 % Back-references: inline (default), appendix, or none.
 \newcommand*{\semtex@backrefmode}{inline}
 \newbool{semtex@backrefs}
@@ -63,10 +59,6 @@
   /semtex/.cd,%
   depth/.store in = \semtex@depth,%
   depth/.default = 1,%
-  equations/.is choice,%
-  equations/separate/.code = {\boolfalse{semtex@eqshared}},%
-  equations/shared/.code = {\booltrue{semtex@eqshared}},%
-  equations/.default = separate,%
   backrefs/.is choice,%
   backrefs/inline/.code = {%
     \booltrue{semtex@backrefs}%
@@ -1816,10 +1808,6 @@
     \fi
   }%
   \semtex@hookproof
-  % Equation sharing.
-  \ifbool{semtex@eqshared}{%
-    \expandafter\let\csname c@equation\endcsname\c@atom
-  }{}%
   % Install suppression and paragraph hooks.
   \semtex@installsuppress
   \semtex@suppresssectioning
