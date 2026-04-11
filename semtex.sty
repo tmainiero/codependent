@@ -428,6 +428,8 @@
   \AddToHook{cmd/#1/after}{%
     \ifnum\semtex@trackedlevel=1\relax
       \xdef\semtex@outeratom{\theatom}%
+      % Write atom→anchor mapping for hyperlinks (no-op without hyperref).
+      \semtex@writeanchormap{\theatom}%
     \fi
   }%
   \AddToHook{cmd/end#1/before}{%
@@ -522,6 +524,7 @@
           \ifx\semtex@lasttheorematom\@empty
             % No preceding theorem: fallback to own atom number.
             \refstepcounter{atom}%
+            \semtex@writeanchormap{\theatom}%
             \advance\semtex@nestlevel by 1\relax
             \edef\semtex@currentatom{\theatom}%
             \semtex@sblwrite@atom{%
@@ -750,6 +753,7 @@
           \ifnum\semtex@nestlevel>0\relax\else
             \ifbool{semtex@paragraphs}{%
               \refstepcounter{atom}%
+              \semtex@writeanchormap{\theatom}%
               \edef\semtex@currentatom{\theatom}%
               \semtex@sblwrite@atom{%
                 \string\semtex@sbl@atom
@@ -794,6 +798,16 @@
 % (or a user script injects a record), LaTeX's aux read does not
 % error.  A \providecommand no-op suits.
 \providecommand*{\semtex@atomref}[2]{}
+
+% Pass-1 safety: \semtex@anchormap records atom→hyperref anchor
+% mappings.  No-op until hyperref is detected at \AtBeginDocument.
+\providecommand*{\semtex@anchormap}[2]{}
+
+% \semtex@writeanchormap{atomnum}
+%   Write an atom→anchor aux record.  No-op by default; activated
+%   at \AtBeginDocument when hyperref is loaded, so the write only
+%   happens when \@currentHref is meaningful.
+\newcommand*{\semtex@writeanchormap}[1]{}
 
 % Pass-1 safety for concept-tracking aux records (§9a User API).
 % Active definitions installed at begindocument/before
@@ -2125,9 +2139,30 @@
     \PackageInfo{semtex}{hyperref detected, enabling links}%
     \renewcommand*{\semtex@brhyper}[1]{%
       \expandafter\ifx\csname semtex@anchor@#1\endcsname\relax
-        #1%
+        \semtex@brhyper@star{#1}%
       \else
         \hyperlink{\csname semtex@anchor@#1\endcsname}{#1}%
+      \fi}%
+    \def\semtex@brhyper@star#1{\semtex@stripstar#1*\@nil{#1}}%
+    \def\semtex@stripstar#1*#2\@nil#3{%
+      \def\semtex@tmp{#2}%
+      \ifx\semtex@tmp\@empty
+        #3%
+      \else
+        \expandafter\ifx\csname semtex@anchor@#1\endcsname\relax
+          #3%
+        \else
+          \hyperlink{\csname semtex@anchor@#1\endcsname}{#3}%
+        \fi
+      \fi}%
+    % Activate atom→anchor aux record reading and writing.
+    \def\semtex@anchormap@active#1#2{%
+      \expandafter\gdef\csname semtex@anchor@#1\endcsname{#2}}%
+    \let\semtex@anchormap\semtex@anchormap@active
+    \renewcommand*{\semtex@writeanchormap}[1]{%
+      \if@filesw
+        \protected@write\@auxout{}{%
+          \string\semtex@anchormap{#1}{\@currentHref}}%
       \fi}%
   }{}%
 }

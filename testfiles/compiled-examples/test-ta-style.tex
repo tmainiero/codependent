@@ -1,0 +1,340 @@
+\def\START{}\def\END{}
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{cd}
+\usepackage{enumitem}
+
+%% Load the real theorem style from the monograph
+\usepackage{sty-theorems-ta}  % loads amsthm, thmtools, xparse, fontawesome, xcolor
+\usepackage{thm-restate}
+
+%% semtex with inline backrefs in gray (user's preferred style)
+\usepackage[backref-style=inline,backref-color=gray]{semtex}
+\semtextrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
+
+%% Multi-file compatibility check: load subfiles and standalone.
+%% These must not conflict with semtex's hooks.
+\usepackage{subfiles}
+\usepackage{standalone}
+
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+
+%% cleveref names for custom envs that thmtools doesn't auto-register
+\crefname{notation}{Notation}{Notations}
+\crefname{terminology}{Terminology}{Terminologies}
+\crefname{question}{Question}{Questions}
+
+%% ---------- Concept-tracked macros ----------
+\semtexnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
+\semtexnewcommand{\catname}[1]{\mathsf{#1}}
+\semtexnewcommand{\Tr}[0]{\operatorname{Tr}}
+
+%% ---------- Equation numbering by section ----------
+\numberwithin{equation}{section}
+
+\title{Semtex + sty-theorems-ta stress test}
+\author{Test}
+\date{}
+
+\begin{document}
+\START
+\maketitle
+
+%% ====================================================================
+%%  Section 1: Counter sharing under load
+%% ====================================================================
+\section{Counter sharing under load}
+\label{sec:counters}
+
+Let $\catname{C}$ be a monoidal category with morphisms $\Funct{F}{C}$.
+
+\begin{definition}\label{def:enrichment}
+A $\catname{V}$-enriched category $\catname{C}$ consists of a set of
+objects $\mathrm{Ob}(\catname{C})$ and, for each pair $(A,B)$, a hom-object
+$\catname{V}(A,B)$ in $\catname{V}$.
+\semtextag{uid}{cat:enriched-category}%
+\end{definition}
+
+\begin{theorem}\label{thm:main}
+Let $A$ and $B$ be objects in $\catname*{C}$.  The functor
+$\Funct*{G}{D}$ is fully faithful.
+\end{theorem}
+
+\begin{proof}
+By \cref{def:enrichment}, obvious.
+\end{proof}
+
+\begin{corollary}\label{cor:equiv}
+If $F \dashv G$ is an adjoint equivalence, then
+$\catname{C} \simeq \catname{D}$.
+\end{corollary}
+
+\begin{remark}\label{rem:day}
+Day convolution endows the functor category
+$[\catname{C}^{\mathrm{op}}, \catname{Vect}_k]$ with a monoidal structure.
+This follows from \cref{thm:main} and \cref{cor:equiv}.
+\end{remark}
+
+\begin{proposition}\label{prop:compose}
+Monoidal functors compose.  This extends \cref{thm:main}.
+\end{proposition}
+
+\begin{lemma}\label{lem:technical}
+A technical lemma used in the proof of \cref{prop:compose}.
+\end{lemma}
+
+\begin{notation}\label{not:hom}
+We write $[A,B]$ for the internal hom in $\catname{V}$
+(\cref{def:enrichment}).
+\end{notation}
+
+\begin{terminology}\label{term:monoidal}
+A \emph{monoidal category} is a category $\catname{C}$ equipped
+with a bifunctor $\otimes$ and a unit object $I$.
+\end{terminology}
+
+\begin{example}\label{ex:vect}
+The category $\catname{Vect}_k$ of finite-dimensional vector spaces
+over a field $k$ is monoidal under $\otimes_k$.
+See \cref{term:monoidal}.
+\end{example}
+
+\begin{question}\label{q:coherence}
+Is every monoidal category (\cref{term:monoidal}) monoidally
+equivalent to a strict one?
+See \cref{thm:main,cor:equiv,prop:compose}.
+\end{question}
+
+A closing paragraph referencing \cref{lem:technical} and \cref{rem:day}.
+All ten environments above should be numbered 1.1 through 1.10 sequentially.
+
+
+%% ====================================================================
+%%  Section 2: Display math suppression
+%% ====================================================================
+\section{Display math suppression}
+\label{sec:display}
+
+A paragraph before display math.
+
+\begin{theorem}\label{thm:idempotent}
+For all endomorphisms $f$ in $\catname{C}$ (\cref{def:enrichment}), we have
+\begin{equation}\label{eq:idem}
+  f \circ f = f.
+\end{equation}
+In particular, $f$ is idempotent (\cref{term:monoidal}).
+\end{theorem}
+
+\begin{proof}
+By \cref{lem:technical}, consider the aligned computation:
+\begin{align}
+  f \circ f &= f \circ (f \circ f) \\
+            &= f.
+\end{align}
+\end{proof}
+
+A paragraph after the proof.  The equation and align environments
+should NOT get margin atom numbers.
+
+
+%% ====================================================================
+%%  Section 3: Cross-section backrefs
+%% ====================================================================
+\section{Cross-section backrefs}
+\label{sec:backrefs}
+
+\begin{theorem}\label{thm:sec3}
+This uses \cref{def:enrichment} and \cref{thm:main} from section~1.
+Those atoms should show ``Used in 3.1.''
+\end{theorem}
+
+\begin{definition}\label{def:gadget}
+A \emph{gadget} extends an enriched category (\cref{def:enrichment}).
+Answers \cref{q:coherence} partially.
+\end{definition}
+
+\begin{corollary}\label{cor:sec3}
+Combines \cref{thm:sec3}, \cref{def:gadget}, and \cref{prop:compose}.
+\end{corollary}
+
+
+%% ====================================================================
+%%  Section 4: Advanced features
+%% ====================================================================
+\section{Advanced features}
+\label{sec:advanced}
+
+%% --- 4.1: Restatable theorem (tests the restatable guard) ---
+\begin{restatable}{theorem}{CoherenceThm}\label{thm:coherence}
+Every monoidal category (\cref{term:monoidal}) is monoidally
+equivalent to a strict monoidal category.  Moreover, the
+equivalence is compatible with the enrichment of
+\cref{def:enrichment}.
+\end{restatable}
+
+\begin{proof}
+Follows from Mac Lane's coherence theorem and \cref{lem:technical}.
+\end{proof}
+
+%% --- 4.2: tikz-cd diagram inside a theorem ---
+\begin{proposition}\label{prop:square}
+The following square of monoidal functors commutes up to
+natural isomorphism:
+\begin{equation}\label{eq:square}
+  \begin{tikzcd}
+    \catname{C}
+      \arrow[r, "F"]
+      \arrow[d, "S"']
+    & \catname{D}
+      \arrow[d, "T"]
+    \\
+    \catname{C}_{\mathrm{str}}
+      \arrow[r, "F_{\mathrm{str}}"']
+    & \catname{D}_{\mathrm{str}}
+  \end{tikzcd}
+\end{equation}
+\end{proposition}
+
+%% --- 4.3: Concept-tracked macros (def-sites and use-sites) ---
+\begin{definition}\label{def:trace}
+The \emph{categorical trace} $\Tr*$ of an endomorphism
+$f \in \catname{C}(A,A)$ is the composite
+\[
+  \Tr(f) = \varepsilon \circ (f \otimes \mathrm{id}) \circ \eta.
+\]
+\semtextag{uid}{cat:trace}%
+\end{definition}
+
+\begin{lemma}\label{lem:trace-cyclic}
+The trace $\Tr$ satisfies the cyclic property: for all
+$f\colon A \to B$ and $g\colon B \to A$ in $\catname{C}$,
+\begin{equation}\label{eq:cyclic}
+  \Tr(g \circ f) = \Tr(f \circ g).
+\end{equation}
+\end{lemma}
+
+%% --- 4.4: Separated proof with \semtexproofof ---
+%%
+%% The proof of prop:square is given here, in a different section
+%% from the statement.  This tests the \semtexproofof mechanism.
+\begin{proof}[\semtexproofof{prop:square}]
+We construct the natural isomorphism componentwise.  For each
+object $X$ in $\catname{C}$, the strictification functor
+$\Funct{S}{C}$ sends $X$ to $[X]$, and the square commutes
+by the universal property of the tensor product
+(\cref{def:enrichment}).
+\end{proof}
+
+%% --- 4.5: Multiple cross-references in one atom ---
+\begin{theorem}\label{thm:omnibus}
+By combining
+\cref{def:enrichment,thm:main,cor:equiv,prop:compose,lem:technical,term:monoidal},
+we obtain a complete description of the enriched monoidal structure.
+This extends the coherence result of \cref{thm:coherence}.
+\end{theorem}
+
+%% --- 4.6: Adjacent proof with cross-references (tests starred backrefs) ---
+\begin{proof}
+Apply \cref{def:enrichment} and \cref{thm:main} to the diagram
+of \cref{prop:square}; the result follows from \cref{lem:trace-cyclic}
+and $\Tr \circ \Tr = \Tr$.
+\end{proof}
+
+
+%% ====================================================================
+%%  Section 5: Edge cases
+%% ====================================================================
+\section{Edge cases}
+\label{sec:edge}
+
+%% --- 5.1: Long multi-paragraph theorem ---
+\begin{theorem}\label{thm:long}
+Let $\catname{C}$ be a monoidal category with duals
+(\cref{thm:coherence}).  The following
+conditions are equivalent.
+
+\begin{enumerate}[label=(\roman*)]
+  \item Every object $A$ in $\catname{C}$ is dualisable: there exists
+    $A^*$ and morphisms $\eta\colon I \to A \otimes A^*$ and
+    $\varepsilon\colon A^* \otimes A \to I$ satisfying the zigzag
+    identities.
+  \item The functor $\Funct{D}{C}$ sending $A$ to $A^*$ is a
+    contravariant equivalence.
+  \item The trace $\Tr(f)$ is defined for every endomorphism $f$
+    and satisfies the cyclic property (\cref{lem:trace-cyclic}).
+\end{enumerate}
+
+Moreover, when these conditions hold, the category $\catname{C}$ is
+rigid in the sense of Deligne--Milne.  The proof proceeds by verifying
+each implication separately.
+
+The implication (i)$\Rightarrow$(ii) is standard: the evaluation and
+coevaluation maps furnish the unit and counit of the adjunction
+$A \otimes (-) \dashv A^* \otimes (-)$, and the triangle identities
+are precisely the zigzag identities.
+
+For (ii)$\Rightarrow$(iii), note that the duality functor $D$ is
+exact when $\catname{C}$ is abelian, and the trace of $f$ can be
+computed as $\Tr(f) = \varepsilon \circ (f \otimes \mathrm{id}) \circ \eta$
+by the definition (\cref{def:trace}).
+\end{theorem}
+
+%% --- 5.2: Theorem ending with display math (no trailing text) ---
+\begin{proposition}\label{prop:endmath}
+The pentagon identity for the associator $\alpha$
+(cf.\ \cref{thm:coherence}) reads
+\begin{equation}\label{eq:pentagon}
+  (\alpha_{A,B,C} \otimes \mathrm{id}_D)
+  \circ \alpha_{A,B \otimes C,D}
+  \circ (\mathrm{id}_A \otimes \alpha_{B,C,D})
+  = \alpha_{A \otimes B,C,D} \circ \alpha_{A,B,C \otimes D}.
+\end{equation}
+\end{proposition}
+
+%% --- 5.3: Theorem ending with an itemize list ---
+\begin{lemma}\label{lem:endlist}
+The following are examples of rigid monoidal categories:
+\begin{itemize}
+  \item $\catname{Vect}_k$ — finite-dimensional vector spaces (\cref{ex:vect}).
+  \item $\catname{Rep}(G)$ — representations of a finite group $G$.
+  \item $\catname{Hilb}_{\mathrm{fd}}$ — finite-dimensional Hilbert spaces.
+\end{itemize}
+\end{lemma}
+
+%% --- 5.4: Nested tracked environment (triggers warning) ---
+\begin{definition}\label{def:nested}
+A \emph{fusion category} is a rigid semisimple monoidal category
+with finitely many simple objects.
+\begin{example}\label{ex:nested}
+The category $\catname{Rep}(G)$ for a finite group $G$ is fusion.
+\end{example}
+\end{definition}
+
+%% --- 5.5: Empty section (no content — tests no spurious atoms) ---
+\section{Placeholder}
+\label{sec:empty}
+
+%% --- 5.6: Restated theorem (must not produce duplicate SBL atom) ---
+\section{Restated results}
+\label{sec:restate}
+
+We collect restated results for the reader's convenience.
+
+\CoherenceThm*
+
+The restatement above must not produce a duplicate sbl atom record.
+
+A final paragraph referencing multiple labels via cleveref:
+\Cref{thm:main,prop:compose,lem:technical} establish the core
+categorical framework, while
+\cref{cor:equiv,def:enrichment,q:coherence} provide the
+foundational vocabulary.  See also \autoref{not:hom} and
+\cref{thm:long,prop:endmath,lem:endlist}.
+
+\END
+\end{document}
