@@ -1,0 +1,42 @@
+%% TEST-NAME: test-proofs-warnings-off
+%% TEST-WHAT: proof-warnings=off suppresses the "Proof not adjacent"
+%%            warning for non-adjacent proofs.
+%% TEST-SOURCE: DESIGN.md §Options, proof-warnings
+%% TEST-SECTION: DESIGN.md §Options
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: Package semtex Warning
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.3}{proof}
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% With proof-warnings=off, a non-adjacent proof still gets its own
+%% atom number but no warning is emitted in the log.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[proof-warnings=off]{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}
+  A theorem.
+\end{theorem}
+
+% Atom 1.2 -- paragraph (clears adjacency)
+Some intervening text that breaks adjacency.
+
+% Atom 1.3 -- proof (standalone, no warning)
+\begin{proof}
+  This non-adjacent proof should NOT trigger any warning.
+\end{proof}
+
+\END
+\end{document}

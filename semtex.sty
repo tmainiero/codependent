@@ -1840,6 +1840,40 @@
     {\theatom}{#1}{#2}}%
 }
 
+% \semtexproofof{label}
+%   Associate a separated proof with its theorem.  Must be called
+%   inside a \begin{proof}...\end{proof} environment.  Looks up
+%   the label's atom number and sets the current atom to the
+%   starred version (e.g., 2.1*), enabling correct backref
+%   attribution.
+%
+%   Edge case: if the proof was non-adjacent, \semtex@hookproof
+%   already called \refstepcounter{atom} and wrote SBL records for
+%   a standalone atom.  Then \semtexproofof overrides
+%   \semtex@currentatom.  This means:
+%   - The counter was already incremented (gap exists, acceptable)
+%   - The SBL has both a standalone \semtex@sbl@atom{N}{proof}
+%     AND a \semtex@sbl@proof{M*} -- the CLI can handle this
+%     (the proofof record takes precedence)
+%   - The backref source switches to starred mid-proof -- any
+%     \ref calls BEFORE \semtexproofof use the standalone number,
+%     after it use the starred number
+\newcommand*{\semtexproofof}[1]{%
+  \ifbool{semtex@proofsnumbered}{%
+    \expandafter\ifx\csname semtex@lblnum@#1\endcsname\relax
+      \PackageWarning{semtex}{\string\semtexproofof: unknown label '#1'.
+        The label may not exist or may not have been processed yet}%
+    \else
+      \edef\semtex@currentatom{\csname semtex@lblnum@#1\endcsname*}%
+      % Update source atom for starred backref emission.
+      \edef\semtex@sourceatom{\semtex@currentatom}%
+      % Write SBL sub-record.
+      \semtex@sblwrite@atom{%
+        \string\semtex@sbl@proof{\semtex@currentatom}}%
+    \fi
+  }{}%
+}
+
 % \semtexnewcommand{\cmd}[arity]{body}
 %   Define a command with semtex concept tracking.  Mirrors
 %   \newcommand exactly: \cmd with backslash, optional [arity]

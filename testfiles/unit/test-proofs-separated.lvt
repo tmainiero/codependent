@@ -1,0 +1,57 @@
+%% TEST-NAME: test-proofs-separated
+%% TEST-WHAT: \semtexproofof associates a separated proof with its theorem;
+%%            the proof gets the theorem's starred atom number.
+%% TEST-SOURCE: DESIGN.md §Proof environments, \semtexproofof command
+%% TEST-SECTION: DESIGN.md §8a
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.1*}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{2.1}{theorem}
+%% TEST-SBL-CONTAINS: \semtex@sbl@proof{2.1*}
+%% TEST-AUX-CONTAINS: \semtex@atomref{2.1*}{thm:main}
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Tests two scenarios:
+%% 1. Theorem in section 1, proof in section 2 with \semtexproofof{thm:main}
+%% 2. The SBL contains a \semtex@sbl@proof record for the starred atom
+%% 3. Cross-references from inside the separated proof use starred numbers
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Statements}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  Main theorem statement.
+\end{theorem}
+
+% Adjacent proof: inherits 1.1*
+\begin{proof}
+  Adjacent proof of main theorem.
+\end{proof}
+
+\section{Deferred proofs}
+
+% Atom 2.1 -- theorem (target for backref)
+\begin{theorem}\label{thm:target}
+  A target theorem.
+\end{theorem}
+
+% Non-adjacent proof with \semtexproofof
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+  \semtexproofof{thm:main}
+  We reference \ref{thm:target} from inside this separated proof.
+\end{proof}
+
+\END
+\end{document}

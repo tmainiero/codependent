@@ -1,0 +1,48 @@
+%% TEST-NAME: test-proofs-paragraph-breaks-adjacency
+%% TEST-WHAT: A paragraph between theorem and proof breaks adjacency;
+%%            the proof gets its own standalone atom number.
+%% TEST-SOURCE: DESIGN.md §Proof adjacency
+%% TEST-SECTION: DESIGN.md §8a
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-CONTAINS: Proof not adjacent to a tracked
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.3}{proof}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@proof{1.1*}
+%% TEST-ATOMS-MIN: 3
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% The paragraph of text between theorem and proof clears
+%% \semtex@lasttheorematom, so the proof falls through to the
+%% non-adjacent path and gets its own atom number with a warning.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  Main theorem statement.
+\end{theorem}
+
+% Atom 1.2 -- paragraph (clears adjacency)
+A paragraph of text that intervenes between the theorem
+and its proof, breaking adjacency detection.
+
+% Atom 1.3 -- proof (standalone, NOT inherited)
+\begin{proof}
+  This proof is separated by a paragraph. It should get
+  its own atom number, not inherit from the theorem.
+\end{proof}
+
+\END
+\end{document}
