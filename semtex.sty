@@ -40,8 +40,12 @@
 % Rendering configuration (backref style, alignment, fonts).
 \newcommand*{\semtex@backrefstyle}{block}
 \newcommand*{\semtex@backrefalign}{right}
+% Margin truncation: max refs shown in margin mode before "...".
+\newcommand*{\semtex@backrefmarginmax}{5}
 % String constants for \ifx comparisons in rendering macros.
 \def\semtex@const@block{block}
+\def\semtex@const@inline{inline}
+\def\semtex@const@margin{margin}
 \def\semtex@const@right{right}
 \newcommand*{\semtex@backreffont}{\scriptsize\sffamily}
 \newcommand*{\semtex@backrefprefix}{}
@@ -85,7 +89,9 @@
   backref-style/.is choice,%
   backref-style/block/.code = {\renewcommand*{\semtex@backrefstyle}{block}},%
   backref-style/inline/.code = {\renewcommand*{\semtex@backrefstyle}{inline}},%
+  backref-style/margin/.code = {\renewcommand*{\semtex@backrefstyle}{margin}},%
   backref-style/.default = block,%
+  backref-margin-max/.store in = \semtex@backrefmarginmax,%
   backref-align/.is choice,%
   backref-align/left/.code = {\renewcommand*{\semtex@backrefalign}{left}},%
   backref-align/right/.code = {\renewcommand*{\semtex@backrefalign}{right}},%
@@ -423,8 +429,12 @@
         \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
           {\semtex@outeratom}{#1}}%
         \semtex@queuebackref{\semtex@outeratom}%
-        % Backref flush is deferred to env/#1/after so that
-        % "Used in" renders AFTER endmarks (QED symbols, etc.).
+        % Inline style: flush NOW (still in hmode, inside the env
+        % body, before amsthm's \popQED / endmark mechanism runs).
+        % Block/margin styles flush later in \AfterEndEnvironment.
+        \ifx\semtex@backrefstyle\semtex@const@inline
+          \semtex@flushbackref
+        \fi
         % §8a.5 atom-end clear of the in-atom sentinel.
         \let\semtex@currentatom\@empty
         \global\advance\semtex@trackedlevel by -1\relax
@@ -440,16 +450,24 @@
       \advance\semtex@nestlevel by -1\relax
     \fi
   }%
-  % Flush backrefs AFTER the environment fully closes, so the
-  % "Used in X, Y." line appears after endmarks and QED symbols.
-  % Uses \AfterEndEnvironment (etoolbox) which fires after the
-  % env's \end{} code completes, including endmarks.  For
-  % restatable re-fires (which call \theorem/\endtheorem
-  % directly, bypassing \begin/\end), this hook does not fire —
+  % Flush backrefs: timing depends on backref-style.
+  % - inline: flushed EARLY in cmd/end#1/before (inside the env
+  %   body, in hmode, before amsthm's \popQED/endmark mechanism)
+  %   so "Used in" flows on the same line as content.
+  % - block/margin: flush AFTER the env fully closes
+  %   (\AfterEndEnvironment, vmode) so "Used in" renders after
+  %   endmarks and QED symbols.
+  % For restatable re-fires (which call \theorem/\endtheorem
+  % directly, bypassing \begin/\end), neither hook fires —
   % correct, since the restate guard already skipped backref
   % queueing in the cmd/end hook above.
+  % Inline style: already flushed in cmd/end#1/before (above),
+  % so \AtEndEnvironment does nothing for inline.
+  % (Block/margin flush in \AfterEndEnvironment below.)
   \AfterEndEnvironment{#1}{%
-    \semtex@flushbackref
+    \ifx\semtex@backrefstyle\semtex@const@inline\else
+      \semtex@flushbackref
+    \fi
   }%
 }
 
@@ -489,16 +507,21 @@
     }%
     \AtEndEnvironment{proof}{%
       \ifbool{semtex@proofsnumbered}{%
-        % Backref flush deferred to \AfterEndEnvironment so
-        % "Used in" renders after the QED symbol.
         % §8a.5 atom-end clear of the in-atom sentinel.
         \let\semtex@currentatom\@empty
+        % Inline style: flush before env closes (hmode, before QED).
+        \ifx\semtex@backrefstyle\semtex@const@inline
+          \semtex@flushbackref
+        \fi
       }{}%
       \advance\semtex@nestlevel by -1\relax
     }%
     \AfterEndEnvironment{proof}{%
       \ifbool{semtex@proofsnumbered}{%
-        \semtex@flushbackref
+        % Block/margin style: flush after env closes (vmode, after QED).
+        \ifx\semtex@backrefstyle\semtex@const@inline\else
+          \semtex@flushbackref
+        \fi
       }{}%
     }%
   }%
@@ -1279,6 +1302,35 @@
 \newcommand*{\semtex@formatusedin}[1]{%
   {\normalfont\semtex@backreffont\semtex@backrefprefix\semtex@backreflabel\space#1.}}
 
+% \semtex@truncatereflist{reflist}
+%   If reflist has more than \semtex@backrefmarginmax comma-separated
+%   entries, truncate and append "...".  Currently a pass-through
+%   stub; proper comma-counting can be added later without changing
+%   the rendering contract.
+\newcommand*{\semtex@truncatereflist}[1]{#1}
+
+% \semtex@rendermargin{reflist}
+%   Render "Used in X, Y." in the right margin (past \linewidth).
+%   Uses \rlap so it does not conflict with atom numbers in the left margin.
+%   Used for margin backref-style on theorem atoms (non-paragraph).
+\newcommand*{\semtex@rendermargin}[1]{%
+  \nobreak
+  \vbox{%
+    \hbox to \linewidth{%
+      \hfil
+      \smash{%
+        \rlap{%
+          \kern0.5em
+          {\semtex@backreffont\semtex@backrefprefix
+           \semtex@backreflabel\space
+           \semtex@truncatereflist{#1}.}%
+        }%
+      }%
+    }%
+    \vskip\smallskipamount
+  }%
+}
+
 % \semtex@renderinline{reflist}
 %   Render "Used in X, Y." at the end of the current atom.
 %   Used for theorem/definition/lemma atoms (non-paragraph).
@@ -1294,10 +1346,14 @@
       \semtex@formatusedin{#1}\hfill\null
     \fi
     \par\addvspace{\medskipamount}%
-  \else
+  \else\ifx\semtex@backrefstyle\semtex@const@inline
     % Inline style: same line as content, flows with text.
+    % Flush happens from cmd/end#1/before (hmode, before endmark).
     \unskip\quad\semtex@formatusedin{#1}%
-  \fi
+  \else
+    % Margin style: emit in right margin.
+    \semtex@rendermargin{#1}%
+  \fi\fi
 }
 
 % \semtex@renderdeferred{reflist}
@@ -1319,15 +1375,32 @@
       }%
       \vskip\medskipamount
     }%
-  \else
-    % Inline style: compact, no extra vertical space
+  \else\ifx\semtex@backrefstyle\semtex@const@inline
+    % Inline style for paragraphs: falls back to block-like rendering
+    % (no clean way to inline at paragraph end).  Compact spacing.
     \vbox{%
       \hbox to \linewidth{%
         \hfil\semtex@formatusedin{#1}%
       }%
       \vskip\smallskipamount
     }%
-  \fi
+  \else
+    % Margin style: emit in the right margin (past \linewidth).
+    \vbox{%
+      \hbox to \linewidth{%
+        \hfil
+        \smash{%
+          \rlap{%
+            \kern0.5em
+            {\semtex@backreffont\semtex@backrefprefix
+             \semtex@backreflabel\space
+             \semtex@truncatereflist{#1}.}%
+          }%
+        }%
+      }%
+      \vskip\smallskipamount
+    }%
+  \fi\fi
 }
 
 % Deferred backref: data saved at para/end, emitted at the
