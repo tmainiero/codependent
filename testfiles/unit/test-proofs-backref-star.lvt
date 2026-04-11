@@ -1,0 +1,45 @@
+%% TEST-NAME: test-proofs-backref-star
+%% TEST-WHAT: Cross-references from inside adjacent proofs produce starred
+%%            atom numbers in aux records (e.g. semtex@atomref{1.1*}{...}).
+%% TEST-SOURCE: DESIGN.md §Proof adjacency, §Back-reference graph
+%% TEST-SECTION: DESIGN.md §8a
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.1*}
+%% TEST-AUX-CONTAINS: \semtex@atomref{1.1*}{thm:target}
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Verifies the starred source atom flows through the backref
+%% pipeline: \semtex@writeatomref uses \semtex@sourceatom (set
+%% by the adjacent proof path) to emit "1.1*" as the source.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Star backrefs}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:source}
+  Source theorem.
+\end{theorem}
+
+% Adjacent proof: inherits 1.1*
+\begin{proof}
+  We use \ref{thm:target} in this proof.
+\end{proof}
+
+% Atom 1.2 -- theorem
+\begin{theorem}\label{thm:target}
+  Target theorem referenced from within the proof above.
+\end{theorem}
+
+\END
+\end{document}

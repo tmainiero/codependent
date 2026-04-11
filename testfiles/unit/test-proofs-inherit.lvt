@@ -1,0 +1,67 @@
+%% TEST-NAME: test-proofs-inherit
+%% TEST-WHAT: Adjacent proofs inherit theorem atom number with star suffix;
+%%            non-adjacent proofs get independent atom numbers.
+%% TEST-SOURCE: DESIGN.md Proof adjacency, Pavlov-style numbering
+%% TEST-SECTION: DESIGN.md §Proof environments
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
+%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.1*}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.2}{theorem}
+%% TEST-SBL-CONTAINS: \semtex@sbl@proof{1.2*}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.4}{proof}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.1*}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.2*}
+%% TEST-LOG-CONTAINS: Proof not adjacent to a tracked
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% Tests three scenarios:
+%% 1. Theorem + adjacent proof -> proof inherits theorem's number (1.1*)
+%% 2. Theorem + adjacent proof -> same inheritance (1.2*)
+%% 3. Paragraph between theorem and proof -> proof gets own number (1.4)
+%%    with a "not adjacent" warning.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Adjacent proofs}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:first}
+  First theorem statement.
+\end{theorem}
+
+% Adjacent proof: inherits 1.1*
+\begin{proof}
+  Proof of first theorem.
+\end{proof}
+
+% Atom 1.2 -- theorem
+\begin{theorem}\label{thm:second}
+  Second theorem statement.
+\end{theorem}
+
+% Adjacent proof: inherits 1.2*
+\begin{proof}
+  Proof of second theorem.
+\end{proof}
+
+% Atom 1.3 -- paragraph (clears adjacency flag)
+A paragraph of text between theorem and proof.
+
+% Atom 1.4 -- non-adjacent proof (own number, triggers warning)
+\begin{proof}
+  This proof is not adjacent to any theorem.
+\end{proof}
+
+\END
+\end{document}

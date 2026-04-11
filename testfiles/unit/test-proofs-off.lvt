@@ -1,0 +1,41 @@
+%% TEST-NAME: test-proofs-off
+%% TEST-WHAT: proofs=off disables all proof tracking; no atom numbers,
+%%            no SBL records, no adjacency detection.
+%% TEST-SOURCE: DESIGN.md §Proof environments
+%% TEST-SECTION: DESIGN.md §Options
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: semtex.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Proof not adjacent
+%% TEST-SBL-CONTAINS: \semtex@sbl@end{OK}
+%% TEST-SBL-CONTAINS: \semtex@sbl@atom{1.1}{theorem}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@atom{1.2}{proof}
+%% TEST-SBL-NOT-CONTAINS: \semtex@sbl@proof
+%% TEST-PACKAGES: amsthm,semtex
+%% TEST-RERUN: 2
+%%
+%% With proofs=off, proof environments only suppress paragraph
+%% numbering; they do not get atom numbers or SBL records.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[proofs=off]{semtex}
+\semtextrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}
+  A theorem.
+\end{theorem}
+
+% No atom -- proofs=off
+\begin{proof}
+  Proof content (no atom number).
+\end{proof}
+
+\END
+\end{document}

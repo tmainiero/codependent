@@ -29,9 +29,14 @@
 \newbool{semtex@appendix}
 \boolfalse{semtex@appendix}
 
-% Proofs: numbered (default) or unnumbered.
+% Proofs: on (default) or off.
 \newbool{semtex@proofsnumbered}
 \booltrue{semtex@proofsnumbered}
+
+% Proof warnings: on (default) or off.
+% Controls the "proof not adjacent to tracked environment" warning.
+\newbool{semtex@proofwarnings}
+\booltrue{semtex@proofwarnings}
 
 % Concept warnings: on (default) or off.
 \newbool{semtex@conceptwarnings}
@@ -80,9 +85,13 @@
   },%
   backrefs/.default = inline,%
   proofs/.is choice,%
-  proofs/numbered/.code = {\booltrue{semtex@proofsnumbered}},%
-  proofs/unnumbered/.code = {\boolfalse{semtex@proofsnumbered}},%
-  proofs/.default = numbered,%
+  proofs/on/.code = {\booltrue{semtex@proofsnumbered}},%
+  proofs/off/.code = {\boolfalse{semtex@proofsnumbered}},%
+  proofs/.default = on,%
+  proof-warnings/.is choice,%
+  proof-warnings/on/.code = {\booltrue{semtex@proofwarnings}},%
+  proof-warnings/off/.code = {\boolfalse{semtex@proofwarnings}},%
+  proof-warnings/.default = on,%
   conceptwarnings/.is choice,%
   conceptwarnings/on/.code = {\booltrue{semtex@conceptwarnings}},%
   conceptwarnings/off/.code = {\boolfalse{semtex@conceptwarnings}},%
@@ -146,6 +155,18 @@
 
 % Current atom display number (set when atom is created).
 \newcommand*{\semtex@currentatom}{}
+
+% Last theorem atom number for proof adjacency detection.
+% Set at theorem end, cleared at next top-level para/begin.
+% When non-empty, a standalone proof inherits this number
+% with a star suffix instead of getting its own atom number.
+\newcommand*{\semtex@lasttheorematom}{}
+
+% Override source atom for \semtex@writeatomref.  When non-empty,
+% \semtex@writeatomref uses this instead of \theatom as the source
+% atom number in aux records.  Used by adjacent proofs to emit
+% starred atom numbers (e.g. "2.1*") in backref records.
+\newcommand*{\semtex@sourceatom}{}
 
 % Saved atom number for the outermost tracked env.  When nesting
 % occurs, \theatom at end-time reflects the LAST \refstepcounter
@@ -444,6 +465,11 @@
         \ifnum\semtex@nestlevel=0\relax
           \boolfalse{semtex@intheorem}%
         \fi
+        % Set adjacency flag for proof inheritance.
+        % A proof immediately following this theorem (before any
+        % intervening paragraph) inherits this atom number with
+        % a star suffix instead of getting its own number.
+        \global\edef\semtex@lasttheorematom{\semtex@outeratom}%
       \fi
     \else
       % Restate end: restore currentatom from the stack, then
@@ -475,8 +501,14 @@
 
 % \semtex@hookproof
 %   Install hooks for the proof environment.
-%   Standalone proofs defer margin emission to para/begin so the
-%   number appears on the "Proof." line, not on a separate line.
+%   When proofs=on (default), adjacent proofs inherit the
+%   preceding theorem's atom number with a star suffix (e.g.
+%   "2.1*").  Non-adjacent proofs (no preceding theorem, or
+%   an intervening paragraph) fall back to their own atom
+%   number with a warning (if proof-warnings=on).
+%   Standalone proofs defer margin emission to para/begin so
+%   the number appears on the "Proof." line, not on a
+%   separate line.
 \newcommand*{\semtex@hookproof}{%
   \@ifundefined{proof}{}{%
     \AtBeginEnvironment{proof}{%
@@ -485,25 +517,48 @@
           % Inside a tracked env: just suppress.
           \advance\semtex@nestlevel by 1\relax
         \else
-          % Standalone proof: advance counter and defer margin
-          % emission to para/begin so it lands on the same line
-          % as the proof heading.
-          \refstepcounter{atom}%
-          \advance\semtex@nestlevel by 1\relax
-          \edef\semtex@currentatom{\theatom}%
-          \semtex@sblwrite@atom{%
-            \string\semtex@sbl@atom{\theatom}{proof}}%
-          \semtex@sblwrite@atom{%
-            \string\semtex@sbl@meta{\theatom}{src}%
-              {\jobname.tex:\the\inputlineno:1}}%
-          \global\advance\semtex@atomcount by 1\relax
-          \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
-            {\theatom}{proof}}%
-          \global\booltrue{semtex@proofpending}%
-          \semtex@queuebackref{\theatom}%
+          % Standalone proof: check adjacency.
+          \ifx\semtex@lasttheorematom\@empty
+            % No preceding theorem: fallback to own atom number.
+            \refstepcounter{atom}%
+            \advance\semtex@nestlevel by 1\relax
+            \edef\semtex@currentatom{\theatom}%
+            \semtex@sblwrite@atom{%
+              \string\semtex@sbl@atom{\theatom}{proof}}%
+            \semtex@sblwrite@atom{%
+              \string\semtex@sbl@meta{\theatom}{src}%
+                {\jobname.tex:\the\inputlineno:1}}%
+            \global\advance\semtex@atomcount by 1\relax
+            \expandafter\xdef\csname semtex@atom@\the\semtex@atomcount\endcsname{%
+              {\theatom}{proof}}%
+            \global\booltrue{semtex@proofpending}%
+            \semtex@queuebackref{\theatom}%
+            \ifbool{semtex@proofwarnings}{%
+              \PackageWarning{semtex}{Proof not adjacent to a tracked
+                environment; assigned independent atom number \theatom}%
+            }{}%
+          \else
+            % Adjacent to theorem: inherit atom number with star.
+            \advance\semtex@nestlevel by 1\relax
+            \edef\semtex@currentatom{\semtex@lasttheorematom*}%
+            % Override source atom for \semtex@writeatomref so
+            % that \ref inside this proof writes "2.1*" (starred)
+            % instead of "2.1" (bare \theatom).
+            \edef\semtex@sourceatom{\semtex@lasttheorematom*}%
+            \global\let\semtex@lasttheorematom\@empty
+            % SBL sub-record for the inherited proof.
+            \semtex@sblwrite@atom{%
+              \string\semtex@sbl@proof{\semtex@currentatom}}%
+            % No \refstepcounter -- inheriting the theorem's number.
+            % No margin number -- proof shares theorem's visual
+            % identity; the proof heading ("Proof.") is sufficient.
+            % No atomcount append -- proof is not a separate atom.
+            % No proofpending -- no deferred margin emission needed.
+            \semtex@queuebackref{\semtex@currentatom}%
+          \fi
         \fi
       }{%
-        % Unnumbered: just suppress paragraph numbering.
+        % proofs=off: just suppress paragraph numbering.
         \advance\semtex@nestlevel by 1\relax
       }%
     }%
@@ -511,6 +566,8 @@
       \ifbool{semtex@proofsnumbered}{%
         % §8a.5 atom-end clear of the in-atom sentinel.
         \let\semtex@currentatom\@empty
+        % Clear source atom override (adjacent proof path).
+        \let\semtex@sourceatom\@empty
         % Inline style: flush before env closes (hmode, before QED).
         \ifx\semtex@backrefstyle\semtex@const@inline
           \semtex@flushbackref
@@ -672,6 +729,12 @@
         }%
         \global\let\semtex@deferredbr\@empty
       \fi
+      % Clear proof adjacency flag on any top-level paragraph.
+      % A paragraph between a theorem and a proof means the
+      % proof is not adjacent and must get its own atom number.
+      \ifnum\semtex@nestlevel=0\relax
+        \global\let\semtex@lasttheorematom\@empty
+      \fi
       % Sectioning heading paragraph: skip entirely.
       \ifbool{semtex@sectioning}{%
         \global\boolfalse{semtex@sectioning}%
@@ -750,18 +813,24 @@
 %   Shared aux-write helper called by all patch sites.  Guards
 %   on \semtex@currentatom (in-atom sentinel: empty = not inside
 %   a tracked atom, so no write) and on \if@filesw so --draftmode
-%   / -no-aux compiles work.  The src field is read from \theatom
-%   at write time per DESIGN.md §8a.5.0: at hook entry \theatom
-%   is pre-\refstepcounter (wrong number); at \ref time the
-%   refstepcounter has fired and \theatom is the correct enclosing
-%   atom number.  The \semtex@currentatom check is the in-atom
-%   sentinel only; its value is not written.
+%   / -no-aux compiles work.  The src field is normally read from
+%   \theatom at write time per DESIGN.md §8a.5.0.  However, when
+%   \semtex@sourceatom is non-empty (adjacent proofs), it overrides
+%   \theatom to emit starred atom numbers (e.g. "2.1*").
 \def\semtex@writeatomref#1{%
   \ifx\semtex@currentatom\@empty\else
     \if@filesw
+      % Determine source atom: use \semtex@sourceatom override
+      % (set by adjacent proofs for starred numbers) or fall
+      % back to \theatom (normal path).
+      \ifx\semtex@sourceatom\@empty
+        \edef\semtex@tmp@srcatom{\theatom}%
+      \else
+        \edef\semtex@tmp@srcatom{\semtex@sourceatom}%
+      \fi
       \protected@write\@auxout{}{%
         \string\semtex@atomref
-          {\theatom}{#1}%
+          {\semtex@tmp@srcatom}{#1}%
       }%
     \fi
   \fi

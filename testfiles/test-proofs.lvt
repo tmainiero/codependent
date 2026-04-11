@@ -1,8 +1,8 @@
 % test-proofs.lvt
 % Verifies: proof environments (amsthm's non-\newtheorem environment)
-% receive atom numbers in proofs=numbered mode (the default).
-% The "Proof." heading from amsthm is preserved; the atom number
-% appears as a superscript margin number.
+% with Pavlov-style adjacency detection.  Adjacent proofs inherit the
+% preceding theorem's atom number with a star suffix; non-adjacent
+% proofs get their own atom number.
 
 \documentclass{article}
 \usepackage{amsthm}
@@ -10,7 +10,7 @@
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
 
-% Default: proofs=numbered
+% Default: proofs=on
 \usepackage{semtex}
 \semtextrack{theorem,lemma}
 
@@ -24,17 +24,17 @@
   The empty set is a subset of every set.
 \end{lemma}
 
-% Atom 1.2 -- proof of lemma (gets its own atom number)
+% Adjacent proof: inherits 1.1* (no own atom number)
 \begin{proof}
   Vacuously true: the condition is satisfied for all $x \in \emptyset$.
 \end{proof}
 
-% Atom 1.3 -- theorem
+% Atom 1.2 -- theorem
 \begin{theorem}\label{thm:union}
   The union of two sets is a set.
 \end{theorem}
 
-% Atom 1.4 -- proof of theorem
+% Adjacent proof: inherits 1.2* (no own atom number)
 \begin{proof}
   By the axiom of union in ZFC.
 \end{proof}
