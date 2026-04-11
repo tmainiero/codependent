@@ -1429,7 +1429,36 @@
   \else\ifx\semtex@backrefstyle\semtex@const@inline
     % Inline style: same line as content, flows with text.
     % Flush happens from cmd/end#1/before (hmode, before endmark).
-    \unskip\enspace\semtex@formatusedin{#1}%
+    % After display math the hlist is empty (\lastnodetype=-1);
+    % after text/inline-math it holds character/math nodes.
+    % Add the 0.5em gap only when there is preceding content,
+    % so "Used in" sits flush-left when it falls on its own line.
+    %
+    % The cmd/end#1/before hook evaluates conditionals during
+    % hook expansion, NOT at typesetting time.  Mode tests
+    % (\ifvmode, \lastnodetype) return wrong values during hook
+    % expansion.  We defer the spacing conditional to typesetting
+    % time via \toks@: TeX inserts the tokens unexpanded, and the
+    % \ifvmode / \lastnodetype checks fire when TeX processes them
+    % in the env body.
+    \def\semtex@inline@arg{#1}%
+    \toks@{%
+      \ifvmode
+        \noindent
+      \else
+        \ifnum\lastnodetype<\z@
+          % Hmode but the horizontal list is empty (typical after
+          % display math).  A \parindent-width indent box may or
+          % may not be present; neutralise it by ending the
+          % current paragraph and starting fresh with \noindent.
+          \par\nobreak\noindent
+        \else
+          \unskip\hspace{0.5em}%
+        \fi
+      \fi
+      \expandafter\semtex@formatusedin\expandafter{\semtex@inline@arg}%
+    }%
+    \the\toks@
   \else
     % Margin style: emit in right margin.
     \semtex@rendermargin{#1}%
