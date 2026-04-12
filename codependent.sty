@@ -199,11 +199,6 @@
 \newbool{codep@sectioning}
 \boolfalse{codep@sectioning}
 
-% Flag: true when a standalone proof's margin number is pending.
-% Set by the proof hook, cleared after one para/begin emission.
-\newbool{codep@proofpending}
-\boolfalse{codep@proofpending}
-
 % Restate guard: counter-indexed LIFO stack for save/clear/restore
 % of \codep@currentatom across restated theorem occurrences
 % (§8a.5.a).  Depth 0 = no active restate; each push increments.
@@ -667,7 +662,6 @@
   % No margin number -- proof shares theorem's visual
   % identity; the proof heading ("Proof.") is sufficient.
   % No atomcount append -- proof is not a separate atom.
-  % No proofpending -- no deferred margin emission needed.
   \codep@queuebackref{\codep@currentatom}%
 }
 
@@ -1049,8 +1043,7 @@
 %   Guard chain (outermost -> innermost):
 %   1. codep@tracked: hook is active at all
 %   2. codep@sectioning: one-shot skip for heading paragraphs
-%   3. codep@proofpending: deferred proof margin on first proof line
-%   4. codep@nestlevel > 0: inside a suppressed env/command
+%   3. codep@nestlevel > 0: inside a suppressed env/command
 %   Deferred backref emission and proof-adjacency reset are
 %   unconditional under codep@tracked (delegated to helpers).
 \newcommand*{\codep@installparahook}{%
@@ -1067,17 +1060,10 @@
       \ifbool{codep@sectioning}{%
         \global\boolfalse{codep@sectioning}%
       }{%
-        % Proof pending: emit deferred margin number on the
-        % proof's first line (the "Proof." heading).
-        \ifbool{codep@proofpending}{%
-          \global\boolfalse{codep@proofpending}%
-          \codep@emitmargin{\codep@currentatom}%
-        }{%
-          % Normal paragraph (not suppressed).
-          \ifnum\codep@nestlevel>0\relax\else
-            \codep@parahook@paragraph
-          \fi
-        }%
+        % Normal paragraph (not suppressed).
+        \ifnum\codep@nestlevel>0\relax\else
+          \codep@parahook@paragraph
+        \fi
       }%
     }{}%
   }%
