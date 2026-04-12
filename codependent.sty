@@ -284,6 +284,20 @@
 % and flush once the .cdp stream opens at begindocument/before.
 \def\codep@cdp@deferred{}
 
+%% --- Rendering hook points (no-op defaults) ---
+%% These are redefined to their live implementations after all
+%% rendering code is loaded (see "Rendering hook activation" below).
+%% When tracking runs without a rendering layer, these are inert.
+\def\codep@render@queuebackref#1{}%
+\def\codep@render@thm@preparebackref#1{}%
+\def\codep@render@thm@afterend#1{}%
+\def\codep@render@proof@end{}%
+\def\codep@render@proof@afterend{}%
+\def\codep@render@para@emit#1#2{}%
+\def\codep@render@para@emitdeferred{}%
+\def\codep@render@paraend@snapshot{}%
+\def\codep@render@enddocument@flush{}%
+
 %% ===================================================================
 %% Section 5: Core numbering machinery
 %% ===================================================================
@@ -548,14 +562,9 @@
 % \codep@hooktheorem@preparebackref{envname}
 %   Queue backrefs, apply orphan prevention, flush inline style.
 %   Block/margin styles flush later in \AfterEndEnvironment.
+%   Delegates to the rendering hook point.
 \def\codep@hooktheorem@preparebackref#1{%
-  \codep@queuebackref{\codep@outeratom}%
-  \codep@preventorphan
-  % Inline style: flush NOW (still in hmode, inside the env
-  % body, before amsthm's \popQED / endmark mechanism runs).
-  \ifx\codep@backrefstyle\codep@const@inline
-    \codep@flushbackref
-  \fi
+  \codep@render@thm@preparebackref{#1}%
 }%
 
 % \codep@hooktheorem@end@outer{envname}
@@ -617,9 +626,7 @@
 %   \codep@hooktheorem@preparebackref) ensures \endtrivlist
 %   cannot introduce a page break before the "Used in" line.
 \def\codep@hooktheorem@afterend#1{%
-  \ifx\codep@backrefstyle\codep@const@inline\else
-    \codep@flushbackref
-  \fi
+  \codep@render@thm@afterend{#1}%
 }
 
 % Thin orchestrator: wire the named helpers into the four hook points.
@@ -692,7 +699,7 @@
     \string\codep@cdp@meta{\theatom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
   \codep@registeratom{proof:\theatom}{proof}%
-  \codep@queuebackref{proof:\theatom}%
+  \codep@render@queuebackref{proof:\theatom}%
   \ifbool{codep@proofwarnings}{%
     \PackageWarning{codependent}{Proof not adjacent to a tracked
       environment; assigned independent atom number \theatom}%
@@ -745,13 +752,13 @@
   % No margin number -- proof shares theorem's visual
   % identity; the proof heading ("Proof.") is sufficient.
   % No atomcount append -- proof is not a separate atom.
-  \codep@queuebackref{\codep@currentatom}%
+  \codep@render@queuebackref{\codep@currentatom}%
 }
 
 % \codep@hookproof@end
-%   End cleanup: clear currentatom, sourceatom, inline flush,
+%   End cleanup: clear currentatom, sourceatom, rendering,
 %   decrement nestlevel.
-%   Anti-orphan: delegates to \codep@preventorphan.
+%   Rendering (inline flush / orphan prevention) delegated to hook.
 \newcommand*{\codep@hookproof@end}{%
   \ifbool{codep@proofsnumbered}{%
     % §8a.5 atom-end clear of the in-atom sentinel.
@@ -759,24 +766,17 @@
     \let\codep@currenttype\@empty
     % Clear source atom override (adjacent proof path).
     \let\codep@sourceatom\@empty
-    % Inline style: flush before env closes (hmode, before QED).
-    \ifx\codep@backrefstyle\codep@const@inline
-      \codep@flushbackref
-    \else
-      \codep@preventorphan
-    \fi
+    % Rendering: inline flush or orphan prevention.
+    \codep@render@proof@end
   }{}%
   \advance\codep@nestlevel by -1\relax
 }
 
 % \codep@hookproof@afterend
 %   Block/margin style: flush after env closes (vmode, after QED).
+%   Delegates to the rendering hook point.
 \newcommand*{\codep@hookproof@afterend}{%
-  \ifbool{codep@proofsnumbered}{%
-    \ifx\codep@backrefstyle\codep@const@inline\else
-      \codep@flushbackref
-    \fi
-  }{}%
+  \codep@render@proof@afterend
 }
 
 %% ===================================================================
@@ -1173,8 +1173,7 @@
       \string\codep@cdp@meta{\theatom}{src}%
         {\jobname.tex:\the\inputlineno:1}}%
     \codep@registeratom{paragraph:\theatom}{paragraph}%
-    \codep@emitmargin{\theatom}%
-    \codep@queuebackref{paragraph:\theatom}%
+    \codep@render@para@emit{\codep@currentatom}{\theatom}%
   }{}%
 }%
 
@@ -1189,7 +1188,7 @@
 \newcommand*{\codep@installparahook}{%
   \AddToHook{para/begin}{%
     \ifbool{codep@tracked}{%
-      \codep@parahook@emitdeferred
+      \codep@render@para@emitdeferred
       % Clear proof adjacency flag on any top-level paragraph.
       % A paragraph between a theorem and a proof means the
       % proof is not adjacent and must get its own atom number.
@@ -2137,7 +2136,7 @@
     \ifbool{codep@tracked}{%
       \ifbool{codep@intheorem}{}{%
         \ifbool{codep@backrefs}{%
-          \ifbool{codep@appendix}{}{\codep@parendhook@snapshot}%
+          \ifbool{codep@appendix}{}{\codep@render@paraend@snapshot}%
         }{}%
         \let\codep@currentatom\@empty
         \let\codep@currenttype\@empty
@@ -2438,10 +2437,7 @@
 % Without this, a backref on the final paragraph is lost because
 % there is no subsequent para/begin to emit it.
 \AtEndDocument{%
-  \ifx\codep@deferredbr\@empty\else
-    \codep@renderbackref@para{\codep@deferredbr}%
-    \global\let\codep@deferredbr\@empty
-  \fi
+  \codep@render@enddocument@flush
 }
 
 %% ===================================================================
@@ -2800,5 +2796,87 @@
       \fi}%
   }{}%
 }
+
+%% ===================================================================
+%% Rendering hook activation
+%% ===================================================================
+%% Redefine the no-op hook points to wire them to the live
+%% rendering implementations.  If the rendering layer were in a
+%% separate file, this block would live at the top of that file.
+
+% \codep@render@queuebackref{atomkey}
+%   Queue back-references for the given atom key.
+\def\codep@render@queuebackref#1{%
+  \codep@queuebackref{#1}%
+}%
+
+% \codep@render@thm@preparebackref{envname}
+%   Queue backrefs for the outermost atom, apply orphan prevention,
+%   and flush inline style immediately (block/margin defer).
+\def\codep@render@thm@preparebackref#1{%
+  \codep@queuebackref{\codep@outeratom}%
+  \codep@preventorphan
+  \ifx\codep@backrefstyle\codep@const@inline
+    \codep@flushbackref
+  \fi
+}%
+
+% \codep@render@thm@afterend{envname}
+%   Block/margin style: flush after the theorem env fully closes.
+%   Inline style: already flushed in preparebackref, so no-op.
+\def\codep@render@thm@afterend#1{%
+  \ifx\codep@backrefstyle\codep@const@inline\else
+    \codep@flushbackref
+  \fi
+}%
+
+% \codep@render@proof@end
+%   Inline style: flush before proof env closes (hmode, before QED).
+%   Block/margin: apply orphan prevention.
+\def\codep@render@proof@end{%
+  \ifx\codep@backrefstyle\codep@const@inline
+    \codep@flushbackref
+  \else
+    \codep@preventorphan
+  \fi
+}%
+
+% \codep@render@proof@afterend
+%   Block/margin style: flush after proof env closes (vmode, after QED).
+\def\codep@render@proof@afterend{%
+  \ifbool{codep@proofsnumbered}{%
+    \ifx\codep@backrefstyle\codep@const@inline\else
+      \codep@flushbackref
+    \fi
+  }{}%
+}%
+
+% \codep@render@para@emit{prefixedkey}{displaynum}
+%   Emit margin label and queue backref for a paragraph atom.
+\def\codep@render@para@emit#1#2{%
+  \codep@emitmargin{#2}%
+  \codep@queuebackref{#1}%
+}%
+
+% \codep@render@para@emitdeferred
+%   Emit the deferred backref from the previous paragraph, if any.
+\def\codep@render@para@emitdeferred{%
+  \codep@parahook@emitdeferred
+}%
+
+% \codep@render@paraend@snapshot
+%   Snapshot pending backref data for deferred emission.
+\def\codep@render@paraend@snapshot{%
+  \codep@parendhook@snapshot
+}%
+
+% \codep@render@enddocument@flush
+%   Flush any deferred backref from the final paragraph.
+\def\codep@render@enddocument@flush{%
+  \ifx\codep@deferredbr\@empty\else
+    \codep@renderbackref@para{\codep@deferredbr}%
+    \global\let\codep@deferredbr\@empty
+  \fi
+}%
 
 \endinput
