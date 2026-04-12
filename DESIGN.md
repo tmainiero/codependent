@@ -504,11 +504,37 @@ It is hooked separately via `\AtBeginEnvironment{proof}`.
 
 Proofs get their own atom number for backref tracking but do
 NOT render margin numbers.  Only paragraphs get margin numbers.
-The "Proof." heading from `amsthm` stays as-is.  Adjacent proofs
-inherit the parent theorem's number with a `*` suffix (e.g.,
-`2.4*`) for backref attribution.  Non-adjacent proofs (separated
-by paragraphs) get a standalone atom number; `\codepproofof{label}`
-re-attributes them to their theorem.
+The "Proof." heading from `amsthm` stays as-is.
+
+#### Proof attribution
+
+Three-level attribution model.  The `.sty` is conservative:
+no false attribution.  The CLI resolves ambiguous cases.
+
+**Adjacent proofs** (nothing intervened between theorem and proof):
+auto-attributed to the preceding theorem.  Display: `proof:2.1`
+renders as `2.1*`.
+
+**Non-adjacent proofs with explicit attribution:**
+
+| Command | Purpose | `.cdp` record |
+|---------|---------|---------------|
+| `\codepproofof{label}` | Proof is for this theorem | `\codep@cdp@proof{proof:2.1}` |
+| `\codepproofof*{label}` | Same + anchor hyperlink at proof location | Same + `\codep@anchormap` |
+| `\codepproofin{citation}` | Proof is in an external source | `\codep@cdp@proofext{citation}` (TODO) |
+| `\codepnoproof{label}` | Theorem intentionally has no proof here | `\codep@cdp@noproof{label}` (TODO) |
+
+**Unattributed proofs** (non-adjacent, no `\codepproofof`):
+standalone atom with no parent.  The CLI flags these for user
+review and can suggest candidates (nearest preceding theorem,
+label references in proof body) or auto-resolve unambiguous
+cases.
+
+**Adjacency rule:** only auto-attributes to the immediately
+preceding tracked environment when nothing (no paragraph, no
+other tracked environment) intervened.  A proof after a remark
+is NOT auto-attributed to an earlier theorem — it becomes
+unattributed, and the CLI flags it.
 
 ### Labels
 
@@ -523,44 +549,71 @@ The `.sty` writes structured data to the `.aux` file so that
 the codependent CLI can compute back-references.  This follows the
 standard LaTeX pattern used by `hyperref`, `cleveref`, etc.
 
+### Atom identity: type-prefixed keys
+
+Every atom has a **type-prefixed key** as its internal identity.
+The prefix is the environment name (for tracked environments)
+or a fixed string for other atom types:
+
+```
+Theorem:2.1     — from \begin{theorem}
+Definition:1.2  — from \begin{definition}
+Lemma:1.4       — from \begin{lemma}
+MyCustomEnv:3.1 — from any user-tracked environment
+equation:2.1    — from equation tracking
+proof:2.1       — from proof attribution
+paragraph:2.1   — from paragraph numbering
+```
+
+The prefix carries full semantic information.  Display rules
+are derived from the prefix:
+
+| Prefix | Display | Example |
+|--------|---------|---------|
+| Any tracked env | bare number | `2.1` |
+| `paragraph` | bare number | `2.1` |
+| `equation` | parenthesized | `(2.1)` |
+| `proof` | starred | `2.1*` |
+
+This namespacing prevents collisions (equation 2.1 vs
+paragraph 2.1 are distinct keys) and gives the CLI full
+type information without a mapping table.
+
 ### Atom registration
 
 When each atom is created (in the `para/begin` hook or at
 theorem environment entry), the `.sty` writes:
 
 ```tex
-\codep@atom{1.2.3}{paragraph}
-\codep@atom{1.2.4}{Definition}
+\codep@atomref{paragraph:1.2.3}{...}
+\codep@atomref{Definition:1.2.4}{...}
 ```
 
-Format: `\codep@atom{display-number}{type}`.  The type is
-the display name for theorem environments (e.g., "Definition",
-"Theorem") or "paragraph" for plain paragraphs.  This is a
-display name, not a programmatic identifier.
-
-No label is included — the CLI associates labels to atoms by
-matching `\newlabel{...}{{1.2.4}{...}}` entries to atom
-numbers.
+The type prefix is the environment name passed to
+`\codeptrack`, or `paragraph`/`equation`/`proof` for
+non-theorem atoms.  Custom environments tracked via
+`\codeptrack{myenv}` automatically get `myenv:` as their
+prefix.
 
 ### Reference tracking
 
-The `.sty` patches `\@setref` — the internal kernel command
-that ALL reference commands (`\ref`, `\eqref`, `\autoref`,
-`\cref`) eventually call.  One patch point, works regardless
-of what redefines the user-facing commands (hyperref, cleveref,
-etc.).
+The `.sty` patches three reference interception sites
+(`\@setref`, `\cref@getlabel`, hyperref's `\HyRef@autosetref`
++ `\HyRef@@StarSetRef`) to capture when one atom references
+another.
 
-When `\@setref` fires inside a tracked atom, the `.sty`
+When a reference fires inside a tracked atom, the `.sty`
 writes:
 
 ```tex
-\codep@atomref{1.2.5}{def:category}
-\codep@atomref{1.2.5}{eq:composition}
+\codep@atomref{Theorem:1.2.5}{def:category}
+\codep@atomref{equation:2.1}{eq:composition}
 ```
 
-Format: `\codep@atomref{current-atom-number}{target-label}`.
+Format: `\codep@atomref{type-prefixed-source}{target-label}`.
 Only written when `\codep@currentatom` is non-empty (i.e.,
-inside a tracked atom context).
+inside a tracked atom context).  The source is the full
+type-prefixed key; the target is the LaTeX label.
 
 ### Safety
 
