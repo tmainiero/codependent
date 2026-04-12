@@ -342,14 +342,18 @@
 
 % Article-class depth configuration.
 \newcommand*{\codep@configuredepth@article}{%
-  \ifnum\codep@depth=1\relax
+  \ifcase\codep@depth\relax
+    % 0: invalid
+    \PackageError{codependent}{Invalid depth '\codep@depth'}{%
+      The depth option must be 1, 2, or 3.}%
+  \or % 1
     \@addtoreset{atom}{section}%
     \renewcommand*{\theatom}{\thesection.\arabic{atom}}%
-  \else\ifnum\codep@depth=2\relax
+  \or % 2
     \@addtoreset{atom}{subsection}%
     \renewcommand*{\theatom}{%
       \thesection.\arabic{subsection}.\arabic{atom}}%
-  \else\ifnum\codep@depth=3\relax
+  \or % 3
     \@addtoreset{atom}{subsubsection}%
     \renewcommand*{\theatom}{%
       \thesection.\arabic{subsection}.%
@@ -357,19 +361,23 @@
   \else
     \PackageError{codependent}{Invalid depth '\codep@depth'}{%
       The depth option must be 1, 2, or 3.}%
-  \fi\fi\fi
+  \fi
 }
 
 % Book/report-class depth configuration.
 \newcommand*{\codep@configuredepth@book}{%
-  \ifnum\codep@depth=1\relax
+  \ifcase\codep@depth\relax
+    % 0: invalid
+    \PackageError{codependent}{Invalid depth '\codep@depth'}{%
+      The depth option must be 1, 2, or 3.}%
+  \or % 1
     \@addtoreset{atom}{chapter}%
     \renewcommand*{\theatom}{\thechapter.\arabic{atom}}%
-  \else\ifnum\codep@depth=2\relax
+  \or % 2
     \@addtoreset{atom}{section}%
     \renewcommand*{\theatom}{%
       \thechapter.\arabic{section}.\arabic{atom}}%
-  \else\ifnum\codep@depth=3\relax
+  \or % 3
     \@addtoreset{atom}{subsection}%
     \renewcommand*{\theatom}{%
       \thechapter.\arabic{section}.%
@@ -377,7 +385,7 @@
   \else
     \PackageError{codependent}{Invalid depth '\codep@depth'}{%
       The depth option must be 1, 2, or 3.}%
-  \fi\fi\fi
+  \fi
 }
 
 % \codep@registeratom{num}{kind}
@@ -393,6 +401,24 @@
 %% ===================================================================
 %% Section 6: Theorem environment hooks
 %% ===================================================================
+
+% \codep@preventorphan
+%   Prevent page breaks between an atom body and its "Used in"
+%   line for block/margin styles.  Sets \@endparpenalty to \@M
+%   (10000 = \nobreak) when the pending backref register is
+%   non-empty.  The assignment is LOCAL to the current group,
+%   so it is automatically restored after \endgroup.
+%   No-op when the backref style is inline (inline flushes
+%   in hmode, before the env closes).
+\def\codep@preventorphan{%
+  \ifx\codep@backrefstyle\codep@const@inline\else
+    \expandafter\def\expandafter\codep@tmp\expandafter{%
+      \the\codep@pendingbr}%
+    \ifx\codep@tmp\@empty\else
+      \@endparpenalty\@M
+    \fi
+  \fi
+}%
 
 % \codep@hooktheorem{envname}
 %   Install begin/end hooks for a tracked theorem environment.
@@ -480,13 +506,12 @@
   \fi
 }
 
-% \codep@hooktheorem@end@outer{envname}
-%   Outermost-end logic: SBL writes, backref queue, inline flush,
-%   currentatom clear, adjacency flag.
+% \codep@hooktheorem@record{envname}
+%   Sidecar writes + atom-array registration.
 %   Uses \codep@outeratom (captured after the outermost env's
 %   \refstepcounter) instead of \theatom, because nested tracked
 %   envs may have advanced the counter.
-\def\codep@hooktheorem@end@outer#1{%
+\def\codep@hooktheorem@record#1{%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@atom{\codep@outeratom}{#1}}%
   \codep@cdpwrite@atom{%
@@ -495,27 +520,27 @@
     \string\codep@cdp@meta{\codep@outeratom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
   \codep@registeratom{\codep@outeratom}{#1}%
+}%
+
+% \codep@hooktheorem@preparebackref{envname}
+%   Queue backrefs, apply orphan prevention, flush inline style.
+%   Block/margin styles flush later in \AfterEndEnvironment.
+\def\codep@hooktheorem@preparebackref#1{%
   \codep@queuebackref{\codep@outeratom}%
-  % Anti-orphan: for block/margin styles, prevent page breaks
-  % between the theorem body and the "Used in" line.
-  % \@endparpenalty controls the penalty that \endtrivlist's
-  % \@endparenv inserts; the default is -51 (encourage break).
-  % Override to 10000 (\nobreak) so TeX cannot split the page
-  % at this point.  This assignment is LOCAL to the env group,
-  % so it is automatically restored after \endgroup.
-  \ifx\codep@backrefstyle\codep@const@inline\else
-    \expandafter\def\expandafter\codep@tmp\expandafter{%
-      \the\codep@pendingbr}%
-    \ifx\codep@tmp\@empty\else
-      \@endparpenalty\@M
-    \fi
-  \fi
+  \codep@preventorphan
   % Inline style: flush NOW (still in hmode, inside the env
   % body, before amsthm's \popQED / endmark mechanism runs).
-  % Block/margin styles flush later in \AfterEndEnvironment.
   \ifx\codep@backrefstyle\codep@const@inline
     \codep@flushbackref
   \fi
+}%
+
+% \codep@hooktheorem@end@outer{envname}
+%   Outermost-end logic: record, backref, atom-state cleanup,
+%   adjacency flag.  Delegates heavy lifting to helpers.
+\def\codep@hooktheorem@end@outer#1{%
+  \codep@hooktheorem@record{#1}%
+  \codep@hooktheorem@preparebackref{#1}%
   % §8a.5 atom-end clear of the in-atom sentinel.
   \let\codep@currentatom\@empty
   \global\advance\codep@trackedlevel by -1\relax
@@ -524,9 +549,6 @@
     \boolfalse{codep@intheorem}%
   \fi
   % Set adjacency flag for proof inheritance.
-  % A proof immediately following this theorem (before any
-  % intervening paragraph) inherits this atom number with
-  % a star suffix instead of getting its own number.
   \global\edef\codep@lasttheorematom{\codep@outeratom}%
 }
 
@@ -566,9 +588,9 @@
 %   queueing in the cmd/end hook above.
 %   Inline style: already flushed in cmd/end#1/before (above),
 %   so this is a no-op for inline.
-%   Anti-orphan: \@endparpenalty is set to \@M in
-%   \codep@hooktheorem@end@outer so \endtrivlist cannot
-%   introduce a page break before the "Used in" line.
+%   Anti-orphan: \codep@preventorphan (called in
+%   \codep@hooktheorem@preparebackref) ensures \endtrivlist
+%   cannot introduce a page break before the "Used in" line.
 \def\codep@hooktheorem@afterend#1{%
   \ifx\codep@backrefstyle\codep@const@inline\else
     \codep@flushbackref
@@ -674,7 +696,7 @@
 % \codep@hookproof@end
 %   End cleanup: clear currentatom, sourceatom, inline flush,
 %   decrement nestlevel.
-%   Anti-orphan: same \@endparpenalty override as theorem end.
+%   Anti-orphan: delegates to \codep@preventorphan.
 \newcommand*{\codep@hookproof@end}{%
   \ifbool{codep@proofsnumbered}{%
     % §8a.5 atom-end clear of the in-atom sentinel.
@@ -685,12 +707,7 @@
     \ifx\codep@backrefstyle\codep@const@inline
       \codep@flushbackref
     \else
-      % Block/margin: prevent orphan "Used in" across page break.
-      \expandafter\def\expandafter\codep@tmp\expandafter{%
-        \the\codep@pendingbr}%
-      \ifx\codep@tmp\@empty\else
-        \@endparpenalty\@M
-      \fi
+      \codep@preventorphan
     \fi
   }{}%
   \advance\codep@nestlevel by -1\relax
@@ -739,17 +756,16 @@
 % \codep@eqshouldtrack
 %   Set \codep@eqatom to a non-empty sentinel if equation tracking
 %   should proceed, empty if suppressed by the current mode.
+%   Early-return structure: off → false; outer+intheorem → false;
+%   otherwise → true.
 \newcommand*{\codep@eqshouldtrack}{%
   \def\codep@eqatom{}%
-  \ifx\codep@equationmode\codep@const@off\else
-    \ifx\codep@equationmode\codep@const@outer
-      \ifbool{codep@intheorem}{}{%
-        \def\codep@eqatom{pending}%  sentinel, will be replaced
-      }%
-    \else
-      \def\codep@eqatom{pending}%
-    \fi
-  \fi
+  \ifx\codep@equationmode\codep@const@off
+  \else\ifx\codep@equationmode\codep@const@outer
+    \ifbool{codep@intheorem}{}{\def\codep@eqatom{pending}}%
+  \else
+    \def\codep@eqatom{pending}%
+  \fi\fi
 }
 
 % \codep@trackeqenv{envname}
@@ -1912,6 +1928,19 @@
 % stay in horizontal mode; \codep@renderbackref needs \par).
 \gdef\codep@deferredbr{}
 
+% \codep@parendhook@snapshot
+%   Snapshot pending backref data into \codep@deferredbr.
+%   Clears the pendingbr register.  Called from the para/end
+%   hook when inline backrefs are active and not in appendix mode.
+\def\codep@parendhook@snapshot{%
+  \expandafter\def\expandafter\codep@tmp\expandafter{%
+    \the\codep@pendingbr}%
+  \codep@pendingbr={}%
+  \ifx\codep@tmp\@empty\else
+    \global\let\codep@deferredbr\codep@tmp
+  \fi
+}%
+
 % \codep@installparendhook
 %   Install the para/end hook for flushing back-refs.
 %   Per §8a.5, clears \codep@currentatom after the flush so
@@ -1926,16 +1955,8 @@
   \AddToHook{para/end}{%
     \ifbool{codep@tracked}{%
       \ifbool{codep@intheorem}{}{%
-        % Snapshot pending backref data for deferred emission.
         \ifbool{codep@backrefs}{%
-          \ifbool{codep@appendix}{}{%
-            \expandafter\def\expandafter\codep@tmp\expandafter{%
-              \the\codep@pendingbr}%
-            \codep@pendingbr={}%
-            \ifx\codep@tmp\@empty\else
-              \global\let\codep@deferredbr\codep@tmp
-            \fi
-          }%
+          \ifbool{codep@appendix}{}{\codep@parendhook@snapshot}%
         }{}%
         \let\codep@currentatom\@empty
       }%
