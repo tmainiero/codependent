@@ -32,6 +32,14 @@
 %% TEST-PDF-CONTAINS: Used in
 %% TEST-PDF-LINKS: 8
 %% TEST-PDF-OBJECTS: /Subtype /Link
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-LINK-DEST: definition\.4
+%% TEST-PDF-LINK-DEST: definition\.6
+%% TEST-PDF-LINK-DEST: lemma\.8
+%% TEST-PDF-LINK-DEST: theorem\.10
+%% TEST-PDF-LINK-DEST: equation\.17
+%% TEST-PDF-DEST-EXISTS: definition\.4
+%% TEST-PDF-DEST-EXISTS: lemma\.8
 %% TEST-RERUN: 3
 %%
 %% Full-stack integration fixture. All codependent options are on:

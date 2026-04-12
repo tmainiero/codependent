@@ -781,6 +781,120 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                                         f"pdf objects matched forbidden pattern: {pat!r}"
                                     )
 
+                # 12. Object-level PDF link verification (qpdf --json=2).
+                has_qpdf_checks = (
+                    fix.pdf_link_dest or fix.pdf_link_dest_not
+                    or fix.pdf_link_count >= 0
+                    or fix.pdf_dest_exists or fix.pdf_dest_not_exists
+                    or fix.pdf_link_rect or fix.pdf_no_orphan_links
+                )
+                if has_qpdf_checks:
+                    if PDF_QPDF_TOOL is None:
+                        sys.stderr.write(
+                            f"  WARN: skipping PDF object-level link checks "
+                            f"for {fix.name} (no qpdf on PATH)\n"
+                        )
+                    else:
+                        link_data = _extract_pdf_link_objects(pdf_file)
+                        if link_data is None:
+                            result.failures.append(
+                                "pdf link object extraction failed "
+                                f"(tool: {PDF_QPDF_TOOL})"
+                            )
+                        else:
+                            # TEST-PDF-LINK-DEST: regex on link dest names
+                            for pat in fix.pdf_link_dest:
+                                if not any(re.search(pat, lnk.dest) for lnk in link_data.links):
+                                    result.failures.append(
+                                        f"pdf link dest missing pattern: {pat!r}"
+                                    )
+
+                            # TEST-PDF-LINK-DEST-NOT: dest must NOT match
+                            for pat in fix.pdf_link_dest_not:
+                                for lnk in link_data.links:
+                                    if re.search(pat, lnk.dest):
+                                        result.failures.append(
+                                            f"pdf link dest matched forbidden "
+                                            f"pattern: {pat!r} (on {lnk.dest!r})"
+                                        )
+                                        break
+
+                            # TEST-PDF-LINK-COUNT: exact count
+                            if fix.pdf_link_count >= 0:
+                                actual = len(link_data.links)
+                                if actual != fix.pdf_link_count:
+                                    result.failures.append(
+                                        f"pdf link count: expected "
+                                        f"{fix.pdf_link_count}, got {actual}"
+                                    )
+
+                            # TEST-PDF-DEST-EXISTS: regex on named dests
+                            for pat in fix.pdf_dest_exists:
+                                if not any(re.search(pat, d) for d in link_data.destinations):
+                                    result.failures.append(
+                                        f"pdf named dest missing pattern: {pat!r}"
+                                    )
+
+                            # TEST-PDF-DEST-NOT-EXISTS: named dest must NOT match
+                            for pat in fix.pdf_dest_not_exists:
+                                for d in link_data.destinations:
+                                    if re.search(pat, d):
+                                        result.failures.append(
+                                            f"pdf named dest matched forbidden "
+                                            f"pattern: {pat!r} (on {d!r})"
+                                        )
+                                        break
+
+                            # TEST-PDF-LINK-RECT: "<dest> <x1> <y1> <x2> <y2> <tol>"
+                            for spec in fix.pdf_link_rect:
+                                parts = spec.split()
+                                if len(parts) != 6:
+                                    result.failures.append(
+                                        f"malformed TEST-PDF-LINK-RECT: {spec}"
+                                    )
+                                    continue
+                                dest_pat = parts[0]
+                                try:
+                                    ex = [float(x) for x in parts[1:5]]
+                                    tol = float(parts[5])
+                                except ValueError:
+                                    result.failures.append(
+                                        f"malformed TEST-PDF-LINK-RECT coords: {spec}"
+                                    )
+                                    continue
+                                matched = False
+                                for lnk in link_data.links:
+                                    if not re.search(dest_pat, lnk.dest):
+                                        continue
+                                    if len(lnk.rect) == 4:
+                                        diffs = [abs(lnk.rect[i] - ex[i]) for i in range(4)]
+                                        if all(d <= tol for d in diffs):
+                                            matched = True
+                                            break
+                                if not matched:
+                                    result.failures.append(
+                                        f"pdf link rect: no link matching "
+                                        f"dest={dest_pat!r} with rect "
+                                        f"~{ex} (tol={tol})"
+                                    )
+
+                            # TEST-PDF-NO-ORPHAN-LINKS: every link dest
+                            # must resolve to a named destination.
+                            if fix.pdf_no_orphan_links:
+                                orphans = []
+                                for lnk in link_data.links:
+                                    if not lnk.dest:
+                                        continue  # no named dest (page ref)
+                                    if lnk.dest not in link_data.destinations:
+                                        orphans.append(lnk.dest)
+                                if orphans:
+                                    unique = sorted(set(orphans))
+                                    result.failures.append(
+                                        f"pdf orphan links ({len(orphans)}): "
+                                        f"dests not in Names tree: "
+                                        f"{', '.join(unique[:10])}"
+                                    )
+
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name
             persistent.parent.mkdir(parents=True, exist_ok=True)
@@ -962,6 +1076,13 @@ def main():
         sys.stderr.write(
             "WARN: no mutool found. TEST-PDF-STEXT / TEST-PDF-OBJECTS "
             "checks will be skipped. Install: nix-shell -p mupdf qpdf\n"
+        )
+    if PDF_QPDF_TOOL:
+        sys.stderr.write(f"PDF object links:    {PDF_QPDF_TOOL}\n")
+    else:
+        sys.stderr.write(
+            "WARN: no qpdf found. TEST-PDF-LINK-DEST / TEST-PDF-DEST-EXISTS / "
+            "TEST-PDF-NO-ORPHAN-LINKS checks will be skipped.\n"
         )
     sys.stderr.write("\n")
 
