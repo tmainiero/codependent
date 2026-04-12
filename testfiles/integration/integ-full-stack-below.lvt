@@ -27,8 +27,12 @@
 %% TEST-AUX-CONTAINS: \codep@conceptref
 %% Track 1: standalone equation used in cor:artin must appear as eq-sourced atomref
 %% TEST-AUX-CONTAINS: \codep@atomref{equation:2.
+%% Track 2: standalone align range must appear as eq-sourced atomref
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:2.2--2.3}
 %% Outer-mode guard: equation inside theorem must NOT produce eq-sourced atomref
 %% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1.
+%% Outer-mode guard: align inside theorem must NOT produce eq-sourced atomref range
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:2.4--2.5}
 %% TEST-ATOMS-MIN: 12
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-PDF-CONTAINS: Used in
@@ -42,8 +46,8 @@
 %% TEST-PDF-BACKREF-TARGETS: definition\.4 = lemma\.8, theorem\.10
 %% Definition 1.2 (def:pid) is used in Lemma 1.3, Proposition 1.6, etc.
 %% TEST-PDF-BACKREF-TARGETS: definition\.6 = lemma\.8, proposition\.13
-%% Lemma 1.3 is used in Theorem 2.4, etc.
-%% TEST-PDF-BACKREF-TARGETS: lemma\.8 = theorem\.10, atom\.23
+%% Lemma 1.3 is used in Theorem 2.5 (thm:noether, now shifted), etc.
+%% TEST-PDF-BACKREF-TARGETS: lemma\.8 = theorem\.10, atom\.27
 %% TEST-PDF-LINK-DEST: definition\.4
 %% TEST-PDF-LINK-DEST: definition\.6
 %% TEST-PDF-LINK-DEST: lemma\.8
@@ -52,7 +56,8 @@
 %% TEST-PDF-DEST-EXISTS: definition\.4
 %% TEST-PDF-DEST-EXISTS: lemma\.8
 %% Starred \codepproofof* must create an anchor for the proof atom
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.4}
+%% (thm:noether is now 2.5 after the standalone align paragraph shifted the counter)
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.5}
 %% TEST-RERUN: 3
 %%
 %% Full-stack integration fixture. All codependent options are on,
@@ -201,10 +206,27 @@ The rank-nullity identity takes the following form
   coherent.
 \end{corollary}
 
+%% --- Track 2: standalone align outside theorem ---
+%% \cref inside the align body makes the equation range the source atom.
+The tensor-hom adjunction satisfies:
+\begin{align}
+  M \otimes_{\Ring{R}} (N \oplus P)
+    &\cong (M \otimes_{\Ring{R}} N) \oplus (M \otimes_{\Ring{R}} P)
+    \qquad \text{(\cref{lem:pid-noetherian})} \label{eq:tensor-dist} \\
+  \mathrm{Hom}_{\Ring{R}}(M \otimes_{\Ring{R}} N, P)
+    &\cong \mathrm{Hom}_{\Ring{R}}(M, \mathrm{Hom}_{\Ring{R}}(N, P))
+    \qquad \text{(\cref{cor:artin})} \label{eq:hom-tensor}
+\end{align}
+
 \begin{theorem}\label{thm:noether}
   For a Noetherian ring $\Ring{R}$, every submodule of a finitely
   generated $\Ring{R}$-module is itself finitely generated.
   This applies \cref{lem:pid-noetherian}.
+  The ascending filtration of a submodule $N \subseteq M$ satisfies:
+  \begin{align}
+    N_k &= N \cap M_k \label{eq:filtration} \\
+    N_k / N_{k-1} &\hookrightarrow M_k / M_{k-1} \label{eq:graded-inj}
+  \end{align}
 \end{theorem}
 
 %% --- Non-adjacent proof using \codepproofof ---
@@ -240,6 +262,8 @@ We draw consequences from \cref{sec:rings,sec:modules}.
   Combining \cref{thm:hilbert-basis,thm:noether,lem:pid-noetherian},
   every finitely generated module over a PID (\cref{def:pid}) decomposes
   as a direct sum of cyclic modules.
+  The decomposition respects the tensor-hom identities
+  \cref{eq:tensor-dist,eq:hom-tensor}.
 \end{theorem}
 
 \begin{proof}
