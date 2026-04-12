@@ -626,7 +626,6 @@
   \global\advance\codep@atomcount by 1\relax
   \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
     {\theatom}{proof}}%
-  \global\booltrue{codep@proofpending}%
   \codep@queuebackref{\theatom}%
   \ifbool{codep@proofwarnings}{%
     \PackageWarning{codependent}{Proof not adjacent to a tracked
