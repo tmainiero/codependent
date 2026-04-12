@@ -383,6 +383,95 @@ renamed to `8a.6.m` for sequential ordering after the new
 
 **Design phase closed.**
 
+### v1.1-impl — Implementation phase (2026-04-10 to 2026-04-11)
+
+Full implementation of DESIGN.md Sections 8a/8b/9a. Test suite grew
+from 36 red fixtures to 68/68 green. Major implementation milestones:
+
+- Atom numbering, theorem/proof/paragraph hooks, backref graph
+- Three rendering styles: block, inline, margin
+- Equation tracking: two-track design (single-number + range),
+  three modes (all/outer/off)
+- Concept tracking: `\codepnewcommand`, `\codepNewDocumentCommand`
+- Hyperref integration: auto-anchors, starred hyperlink fallback
+- Package renamed semtex → codependent (94d4b52)
+
+Four bugs fixed: concept backref contamination, double atomref
+writes, anchor collision, anchormap timing.
+
+### v1.1-infra — Testing infrastructure + refactoring (2026-04-11)
+
+Major infrastructure overhaul in a single session:
+
+**Nix flake** (`064d719`). devShell with mupdf/qpdf/python3.
+`nix flake check` runs the test suite. TeX Live stays system-wide.
+
+**Integration test matrix** (`b4e9c4a`). Seven new integration tests:
+integ-full-stack, integ-no-paragraphs, integ-no-hyperref,
+integ-no-cleveref, integ-ntheorem, integ-equations-all,
+integ-equations-off. Suite: 75/75.
+
+**l3build framework** (`482f98c`). Standard LaTeX3 test framework
+alongside the custom Python runner. 84/84 l3build, 75/75 custom.
+Uses `tokens=` injection for runner compatibility, `regression-test.cfg`
+for `\END` fix, `texmf.cnf` symlink for NixOS.
+
+**PDF object-level testing** (`8c86485`). New test directives using
+`qpdf --json=2`: TEST-PDF-LINK-DEST, TEST-PDF-LINK-DEST-NOT,
+TEST-PDF-LINK-COUNT, TEST-PDF-DEST-EXISTS, TEST-PDF-DEST-NOT-EXISTS,
+TEST-PDF-NO-ORPHAN-LINKS, TEST-PDF-LINK-RECT. Object-level
+verification of hyperlink annotations, destinations, and coordinates.
+
+**Refactoring** (5 commits). Split monolithic macros into named helpers:
+`\codep@hooktheorem` (112→5 helpers), `\codep@hookproof` (76→6 helpers),
+`\codep@dedupwrite` (4 duplicate sites eliminated),
+`\codep@processbr`/`\codep@appendbr` unified (~30 duplicate lines),
+`\codep@installparahook` flattened (5-deep→3-deep nesting).
+All zero expansion overhead, 75/75 pass throughout.
+
+**Sidecar rename** (`f56f4a2`). File extension `.sbl` → `.cdp`.
+Test directives `TEST-SBL-*` → `TEST-CDP-*`. Internal macro names
+`\codep@sbl@*` kept (rename to `\codep@cdp@*` tracked as open item).
+
+### v1.1-bugs — Bug fixes and feature additions (2026-04-11)
+
+**Proof margin number fix** (`60c7fa6`). Removed `\global\booltrue{codep@proofpending}`
+from `\codep@proof@standalone`. Proofs do NOT get margin numbers —
+only paragraphs do. Design doc updated to match (was stale, incorrectly
+claimed Pavlov-style proof numbering).
+
+**`\codepproofof*` starred variant** (`2c80613`). Unstarred form:
+"Used in 2.4*" links fall back to the theorem (default). Starred form:
+writes an anchormap entry so the link goes to the proof location.
+Use for proofs far from their theorem.
+
+**Rendering bugs discovered** (visual PDF inspection):
+1. Orphaned "Used in" across page break — investigation in progress
+2. Inconsistent vertical spacing — varies by theorem style's `\topsep`
+3. Phantom paragraph 2.6 — standalone proof creates atom then
+   `\codepproofof` switches identity; phantom atom persists in graph
+
+**Design decisions made (pending implementation):**
+- Rename `backref-style=block` → `below` (user-facing option)
+- Default `backref-style` → `inline` (currently `block`/`below`)
+- Rename `\codep@renderinline` → `\codep@renderbackref`
+- Rename `\codep@renderdeferred` → `\codep@renderbackref@para`
+- Split integ-full-stack into integ-full-stack-block + integ-full-stack-inline
+- Internal macro rename `\codep@sbl@*` → `\codep@cdp@*`
+
+### Failed approaches (v1.1 session additions)
+
+12. **`\nobreak` inside `\codep@renderinline` for orphan prevention**
+    (v1.1-bugs). The `\nobreak` and `\penalty9999` landed in horizontal
+    mode (after `\leavevmode`), so they couldn't prevent vertical page
+    breaks. The breakpoint is the theorem's post-spacing glue from
+    `\endtrivlist`, which is in the vertical list before `\leavevmode`.
+
+13. **`\nobreak` in `\codep@hooktheorem@afterend` before `\codep@flushbackref`**
+    (v1.1-bugs). The `\nobreak` landed AFTER the theorem's post-spacing
+    glue. TeX can break at glue that precedes a penalty. Sequence:
+    `\addvspace{\topsep}` (breakpoint) → `\penalty10000` (too late).
+
 ## Open issues, deferred decisions, known limitations
 
 These are things that have been *consciously* deferred or
@@ -407,9 +496,8 @@ accepted as live limitations:
   `\DeclareDocumentCommand` mirrors in v1.** The two-macro
   pair (`\codepNewCommand` + `\codepNewDocumentCommand`)
   covers the common case. Add when real use cases appear.
-- **`codependent.sty` itself is NOT yet modified.** All work in
-  this session was design-only. Implementation of Sections
-  8a / 8b / 9a is the next phase.
+- **`codependent.sty` implementation is complete** (v1.1, ~2400 lines,
+  75/75 tests). Refactoring and bug fixes ongoing.
 - **arxiv-fuzz validation** is the planned release-gate test
   before main-merge. See
   `~/.claude/projects/-home-cornholio-Documents-research-ai-mwablab/memory/project_codependent_arxiv_fuzz.md`
