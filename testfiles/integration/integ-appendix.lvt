@@ -1,0 +1,175 @@
+%% TEST-NAME: integ-appendix
+%% TEST-WHAT: Integration test for backrefs=appendix mode.
+%%            Verifies that inline/below "Used in" lines are suppressed,
+%%            that \codepappendix produces a "Dependency Index" section,
+%%            and that index entries appear for atoms with backrefs.
+%% TEST-SOURCE: DESIGN.md §8a.6.g; CONVENTIONS.md
+%% TEST-SECTION: DESIGN.md §8a.6.g (appendix mode)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% No inline/below "Used in" lines should appear in theorem bodies
+%% TEST-PDF-NOT: Used in
+%% The appendix dependency index must appear in the PDF
+%% TEST-PDF-CONTAINS: Dependency Index
+%% Section grouping headers must appear
+%% TEST-PDF-CONTAINS: Groups and subgroups
+%% TEST-PDF-CONTAINS: Normal subgroups and homomorphisms
+%% Key atom entries must appear (Definition 1.1, Theorem 1.3, etc.)
+%% TEST-PDF-CONTAINS: definition
+%% TEST-PDF-CONTAINS: theorem
+%% TEST-PDF-CONTAINS: lemma
+%% TEST-ATOMS-MIN: 6
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%%
+%% Integration fixture for appendix mode.
+%%
+%% Mathematical content: basic group theory (groups, subgroups,
+%% normal subgroups, homomorphisms).  Two sections, each with
+%% definitions and theorems that reference each other.
+%% At document end, \codepappendix emits the dependency index.
+
+\documentclass{article}
+
+%% ---------- Standard math stack ----------
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+
+%% ---------- Theorem infrastructure ----------
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\slshape,
+]{thmstyle}
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\normalfont,
+]{defstyle}
+
+\declaretheorem[name=Theorem,   style=thmstyle, numberwithin=section]{theorem}
+\declaretheorem[name=Lemma,     style=thmstyle, sibling=theorem]{lemma}
+\declaretheorem[name=Definition,style=defstyle, sibling=theorem]{definition}
+
+%% ---------- codependent (appendix mode) ----------
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codeptrack{theorem,lemma,definition}
+
+%% ---------- hyperref + cleveref ----------
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=gray}
+\usepackage{cleveref}
+
+\begin{document}
+\START
+
+%% ====================================================================
+%%  Section 1: Groups and subgroups
+%% ====================================================================
+\section{Groups and subgroups}%
+\label{sec:groups}
+
+\begin{definition}\label{def:group}
+  A \emph{group} is a set $G$ equipped with a binary operation
+  $\cdot \colon G \times G \to G$ satisfying associativity,
+  identity, and inverse axioms.
+\end{definition}
+
+\begin{definition}\label{def:subgroup}
+  A subset $H \subseteq G$ is a \emph{subgroup} of a
+  group~$G$ (\cref{def:group}) if $H$ is itself a group
+  under the restriction of $G$'s operation to $H$.
+  We write $H \le G$.
+\end{definition}
+
+\begin{lemma}\label{lem:subgroup-test}
+  A non-empty subset $H$ of a group $G$ (\cref{def:group}) is a
+  subgroup (\cref{def:subgroup}) if and only if for all $a, b \in H$,
+  $a b^{-1} \in H$.
+\end{lemma}
+
+\begin{proof}
+  The forward direction is immediate.  For the converse,
+  $H \ne \emptyset$ gives some $h \in H$; then $e = hh^{-1} \in H$
+  by hypothesis, and $a^{-1} = ea^{-1} \in H$ for each $a \in H$.
+  Closure under the product then follows from $ab = a(b^{-1})^{-1}$.
+\end{proof}
+
+\begin{theorem}\label{thm:lagrange}
+  If $H \le G$ (\cref{def:subgroup}) and $G$ is finite, then
+  $|H|$ divides $|G|$.  In particular, $[G : H] = |G|/|H|$.
+\end{theorem}
+
+\begin{proof}
+  The left cosets $gH$ partition $G$ into sets of equal size $|H|$,
+  using \cref{def:subgroup,lem:subgroup-test}.
+\end{proof}
+
+%% ====================================================================
+%%  Section 2: Normal subgroups and homomorphisms
+%% ====================================================================
+\section{Normal subgroups and homomorphisms}%
+\label{sec:normal}
+
+\begin{definition}\label{def:normal}
+  A subgroup $N \le G$ (\cref{def:subgroup}) is \emph{normal},
+  written $N \trianglelefteq G$, if $gNg^{-1} = N$ for all $g \in G$.
+\end{definition}
+
+\begin{theorem}\label{thm:quotient}
+  If $N \trianglelefteq G$ (\cref{def:normal}), the set of cosets
+  $G/N = \{gN : g \in G\}$ forms a group (\cref{def:group}) under
+  the operation $(gN)(hN) = (gh)N$.
+\end{theorem}
+
+\begin{proof}
+  Well-definedness of coset multiplication follows from normality
+  (\cref{def:normal}).  Associativity inherits from $G$; the identity
+  is $eN = N$; and inverses are $g^{-1}N$.
+\end{proof}
+
+\begin{lemma}\label{lem:kernel-normal}
+  Let $\varphi \colon G \to G'$ be a group homomorphism.  Then
+  $\ker\varphi \trianglelefteq G$ (\cref{def:normal}).
+  Moreover, by \cref{thm:lagrange},
+  $|\operatorname{im}\varphi| = [G : \ker\varphi]$.
+\end{lemma}
+
+\begin{proof}
+  For $n \in \ker\varphi$ and $g \in G$,
+  $\varphi(gng^{-1}) = \varphi(g)\varphi(n)\varphi(g)^{-1} = e'$.
+  So $gng^{-1} \in \ker\varphi$, proving normality.
+  The index formula follows from \cref{thm:lagrange}.
+\end{proof}
+
+\begin{theorem}\label{thm:first-iso}
+  (First Isomorphism Theorem)
+  If $\varphi \colon G \to G'$ is a homomorphism, then
+  $G / \ker\varphi \cong \operatorname{im}\varphi$.
+  This uses \cref{def:normal,thm:quotient,lem:kernel-normal}.
+\end{theorem}
+
+\begin{proof}
+  Define $\bar\varphi \colon G/\ker\varphi \to \operatorname{im}\varphi$
+  by $\bar\varphi(g\ker\varphi) = \varphi(g)$.
+  Well-definedness is by \cref{lem:kernel-normal}, surjectivity by
+  construction, and injectivity because $\bar\varphi(g\ker\varphi) = e'$
+  implies $g \in \ker\varphi$.
+\end{proof}
+
+%% ====================================================================
+%%  Dependency Index (appendix mode output)
+%% ====================================================================
+\codepappendix
+
+\END
+\end{document}

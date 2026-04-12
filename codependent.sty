@@ -262,6 +262,13 @@
 % O(1) append via csname array; O(N) walk in \codepappendix.
 \newcount\codep@atomcount
 
+% Current section number and title for appendix section grouping.
+% Updated by the \addcontentsline hook when a toc/section entry
+% is written.  Stored per-atom at registration time so that
+% \codepappendix can emit section headers.
+\newcommand*{\codep@cursecnum}{}%
+\newcommand*{\codep@cursectitle}{}%
+
 % Sidecar (.cdp) stream state (§9a).
 \newbool{codep@cdpopen}
 \boolfalse{codep@cdpopen}
@@ -396,6 +403,10 @@
   \global\advance\codep@atomcount by 1\relax
   \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
     {#1}{#2}}%
+  % Store current section number for appendix grouping.
+  \expandafter\xdef%
+    \csname codep@atom@sec@\the\codep@atomcount\endcsname{%
+    \codep@cursecnum}%
 }%
 
 %% ===================================================================
@@ -994,6 +1005,53 @@
   \AddToHook{cmd/subparagraph/before}[codependent/sectioning]{%
     \global\booltrue{codep@sectioning}}%
 }
+
+% \codep@capturesectitle
+%   Intercept \addcontentsline to capture section titles for
+%   appendix-mode section grouping.  When a {toc}{section}
+%   entry is written, extract the title (stripping \numberline)
+%   and store it in \codep@cursecnum / \codep@cursectitle.
+%   Only active in appendix mode.
+\newcommand*{\codep@capturesectitle}{%
+  \ifbool{codep@appendix}{%
+    \let\codep@orig@addcontentsline\addcontentsline
+    \renewcommand{\addcontentsline}[3]{%
+      \codep@orig@addcontentsline{##1}{##2}{##3}%
+      \codep@checktocsection{##1}{##2}{##3}%
+    }%
+  }{}%
+}%
+% \codep@checktocsection{file}{type}{entry}
+%   If file=toc and type=section, extract the section number
+%   and title from the entry.  Uses \thesection for the number
+%   (guaranteed correct since \refstepcounter has already run)
+%   and strips \numberline from the entry via controlled \edef
+%   to recover the bare title text.
+\def\codep@checktocsection#1#2#3{%
+  \def\codep@tmp@a{#1}\def\codep@tmp@b{toc}%
+  \ifx\codep@tmp@a\codep@tmp@b
+    \def\codep@tmp@a{#2}\def\codep@tmp@b{section}%
+    \ifx\codep@tmp@a\codep@tmp@b
+      \codep@extractsectitle{#3}%
+    \fi
+  \fi
+}%
+% \codep@extractsectitle{entry}
+%   Extract the bare title from a TOC entry by redefining
+%   \numberline to absorb its argument and \edef-expanding
+%   the entry with \protect neutralised.
+\def\codep@extractsectitle#1{%
+  \begingroup
+    \let\protect\@empty
+    \def\numberline##1{}%
+    \edef\codep@tmp{#1}%
+    \global\let\codep@tmp@result\codep@tmp
+  \endgroup
+  \xdef\codep@cursecnum{\thesection}%
+  \global\let\codep@cursectitle\codep@tmp@result
+  \global\expandafter\let%
+    \csname codep@sectitle@\thesection\endcsname\codep@tmp@result
+}%
 
 % Auto-suppress enumitem \newlist environments.
 %   When enumitem is loaded, wraps \newlist so that every
@@ -2324,6 +2382,10 @@
   % Install suppression and paragraph hooks.
   \codep@installsuppress
   \codep@suppresssectioning
+  % Defer section title capture to begindocument/end so that
+  % hyperref's \addcontentsline redefinition has already run.
+  \AddToHook{begindocument/end}[codependent/sectitle]{%
+    \codep@capturesectitle}%
   \codep@suppresscommands
   \codep@installparahook
   \codep@installparendhook
@@ -2479,17 +2541,40 @@
 %   Typeset the dependency index (appendix mode only).
 %   Walks the atom array (populated at each atom site) and
 %   emits an entry for every atom that has at least one
-%   back-reference.
+%   back-reference.  Emits section headers (via
+%   \codep@appendixsection) when the section number changes
+%   between consecutive atoms, using titles captured from
+%   \addcontentsline during the document body.
 \newcommand*{\codepappendix}{%
   \ifbool{codep@appendix}{%
     \section*{Dependency Index}%
     \begingroup
       \small
+      \def\codep@appendix@lastsec{}%
       \count@=\z@
       \loop
         \ifnum\count@<\codep@atomcount
         \advance\count@ by 1\relax
-        \expandafter\expandafter\expandafter\codep@appendix@emit
+        % Check for section change and emit header if needed.
+        \edef\codep@appendix@thissec{%
+          \csname codep@atom@sec@\the\count@\endcsname}%
+        \ifx\codep@appendix@thissec\codep@appendix@lastsec
+        \else
+          \ifx\codep@appendix@thissec\@empty\else
+            \edef\codep@appendix@thistitle{%
+              \csname codep@sectitle@%
+                \codep@appendix@thissec\endcsname}%
+            \ifx\codep@appendix@thistitle\relax\else
+              \codep@appendixsection%
+                {\codep@appendix@thissec}%
+                {\codep@appendix@thistitle}%
+            \fi
+          \fi
+          \let\codep@appendix@lastsec
+            \codep@appendix@thissec
+        \fi
+        \expandafter\expandafter\expandafter
+          \codep@appendix@emit
           \csname codep@atom@\the\count@\endcsname
       \repeat
     \endgroup
