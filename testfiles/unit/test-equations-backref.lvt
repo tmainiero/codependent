@@ -11,9 +11,9 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{definition} = 1
-%% TEST-AUX-CONTAINS: \codep@atomref{(1)}{thm:main}
-%% TEST-AUX-CONTAINS: \codep@anchormap{(1)}
-%% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:main}
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1}{thm:main}
+%% TEST-AUX-CONTAINS: \codep@anchormap{equation:1}
+%% TEST-AUX-CONTAINS: \codep@atomref{definition:1.2}{thm:main}
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2

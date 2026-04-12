@@ -26,9 +26,9 @@
 %% TEST-AUX-CONTAINS: \codep@concept{Ideal}
 %% TEST-AUX-CONTAINS: \codep@conceptref
 %% Track 1: standalone equation used in cor:artin must appear as eq-sourced atomref
-%% TEST-AUX-CONTAINS: \codep@atomref{(2.
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:2.
 %% Outer-mode guard: equation inside theorem must NOT produce eq-sourced atomref
-%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(1.
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1.
 %% TEST-ATOMS-MIN: 12
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-PDF-CONTAINS: Used in
@@ -43,7 +43,7 @@
 %% TEST-PDF-DEST-EXISTS: definition\.4
 %% TEST-PDF-DEST-EXISTS: lemma\.8
 %% Starred \codepproofof* must create an anchor for the proof atom
-%% TEST-AUX-CONTAINS: \codep@anchormap{2.4*}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.4}
 %% TEST-RERUN: 3
 %%
 %% Full-stack integration fixture. All codependent options are on,

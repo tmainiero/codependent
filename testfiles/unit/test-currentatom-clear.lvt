@@ -9,7 +9,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.1.2}{thm:A}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1.2}{thm:A}
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
 %%

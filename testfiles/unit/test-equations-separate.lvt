@@ -10,7 +10,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
-%% TEST-AUX-CONTAINS: \codep@atomref{1.2}{eq:first}
+%% TEST-AUX-CONTAINS: \codep@atomref{paragraph:1.2}{eq:first}
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsmath,amsthm,codependent
 %% TEST-RERUN: 2

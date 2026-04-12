@@ -30,7 +30,7 @@
 %%
 %% equations=off: NO equation-sourced atomrefs (source keys like "(N.M)").
 %% Parenthesised source atoms would be \codep@atomref{(N.  —  must not appear.
-%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:
 %%
 %% Theorem-sourced backrefs must still appear.
 %% E.g. thm:ivt references def:continuous, producing a theorem-atom source.

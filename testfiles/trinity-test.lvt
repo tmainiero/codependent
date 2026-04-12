@@ -34,12 +34,12 @@
 %% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.10}{thm:main}
 %%
 %% Equation backref tracking (Track 1): standalone equation with \cref
-%% TEST-AUX-CONTAINS: \codep@atomref{(2.5)}{cor:equiv}
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:2.5}{cor:equiv}
 %% Equation backref tracking (Track 2): align range with \cref on arrows
-%% TEST-AUX-CONTAINS: \codep@atomref{(2.6--2.7)}{def:enrichment}
-%% TEST-AUX-CONTAINS: \codep@atomref{(2.6--2.7)}{thm:main}
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:2.6--2.7}{def:enrichment}
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:2.6--2.7}{thm:main}
 %% Outer-mode guard: equation inside theorem must NOT produce eq-sourced atomref
-%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(2.8)
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:2.8}
 %% TEST-ATOMS-MIN: 15
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-RERUN: 3

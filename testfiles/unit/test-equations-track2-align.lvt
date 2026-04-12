@@ -10,11 +10,11 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{definition} = 1
-%% TEST-AUX-CONTAINS: \codep@atomref{(1--2)}{thm:alpha}
-%% TEST-AUX-CONTAINS: \codep@atomref{(1--2)}{def:beta}
-%% TEST-AUX-CONTAINS: \codep@anchormap{(1--2)}
-%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(1)}{thm:alpha}
-%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(2)}{def:beta}
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1--2}{thm:alpha}
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1--2}{def:beta}
+%% TEST-AUX-CONTAINS: \codep@anchormap{equation:1--2}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1}{thm:alpha}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:2}{def:beta}
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2

@@ -22,7 +22,7 @@
 %% TEST-AUX-CONTAINS: \codep@concept{Mod}
 %% TEST-AUX-CONTAINS: \codep@conceptref
 %% Equation tracking (Track 1) must still work outside theorems
-%% TEST-AUX-CONTAINS: \codep@atomref{(2.
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:2.
 %% TEST-ATOMS-MIN: 8
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-PDF-CONTAINS: Used in
