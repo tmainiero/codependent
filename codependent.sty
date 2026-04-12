@@ -980,27 +980,59 @@
   \codep@suppresscmd{\maketitle}%
 }
 
+% \codep@parahook@emitdeferred
+%   Emit the deferred backref from the previous paragraph, if any.
+%   Uses \vadjust pre to inject the "Used in X." line above the
+%   current paragraph's first line (end of previous output box)
+%   without a horizontal-mode change.  Clears the register after
+%   emission.  Called from \codep@installparahook.
+\def\codep@parahook@emitdeferred{%
+  \ifx\codep@deferredbr\@empty\else
+    \vadjust pre{%
+      \codep@renderdeferred{\codep@deferredbr}%
+    }%
+    \global\let\codep@deferredbr\@empty
+  \fi
+}%
+
+% \codep@parahook@paragraph
+%   Paragraph numbering body for a normal (non-suppressed) paragraph.
+%   Increments the atom counter, writes anchormap and SBL records,
+%   updates the atom queue, emits the margin label, and queues the
+%   backref.  Only runs when codep@paragraphs is true.
+%   Called from \codep@installparahook.
+\def\codep@parahook@paragraph{%
+  \ifbool{codep@paragraphs}{%
+    \refstepcounter{atom}%
+    \codep@writeanchormap{\theatom}%
+    \edef\codep@currentatom{\theatom}%
+    \codep@sblwrite@atom{%
+      \string\codep@sbl@atom
+        {\theatom}{paragraph}}%
+    \codep@sblwrite@atom{%
+      \string\codep@sbl@meta{\theatom}{src}%
+        {\jobname.tex:\the\inputlineno:1}}%
+    \global\advance\codep@atomcount by 1\relax
+    \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
+      {\theatom}{paragraph}}%
+    \codep@emitmargin{\codep@currentatom}%
+    \codep@queuebackref{\theatom}%
+  }{}%
+}%
+
 % \codep@installparahook
 %   Install the para/begin hook for paragraph numbering.
-%   Checks three suppression conditions:
-%   - codep@sectioning: one-shot flag for heading paragraphs
-%   - codep@proofpending: deferred proof margin emission
-%   - codep@nestlevel > 0: inside a suppressed env/command
-%   Also emits any deferred backref from the previous
-%   paragraph (saved by para/end to avoid mode-change error).
+%   Guard chain (outermost -> innermost):
+%   1. codep@tracked: hook is active at all
+%   2. codep@sectioning: one-shot skip for heading paragraphs
+%   3. codep@proofpending: deferred proof margin on first proof line
+%   4. codep@nestlevel > 0: inside a suppressed env/command
+%   Deferred backref emission and proof-adjacency reset are
+%   unconditional under codep@tracked (delegated to helpers).
 \newcommand*{\codep@installparahook}{%
   \AddToHook{para/begin}{%
     \ifbool{codep@tracked}{%
-      % Emit deferred backref from previous paragraph.
-      % Uses \vadjust{pre} to inject the "Used in X." line
-      % above the current line (i.e. at the end of the
-      % previous paragraph's output) without a mode change.
-      \ifx\codep@deferredbr\@empty\else
-        \vadjust pre{%
-          \codep@renderdeferred{\codep@deferredbr}%
-        }%
-        \global\let\codep@deferredbr\@empty
-      \fi
+      \codep@parahook@emitdeferred
       % Clear proof adjacency flag on any top-level paragraph.
       % A paragraph between a theorem and a proof means the
       % proof is not adjacent and must get its own atom number.
@@ -1019,22 +1051,7 @@
         }{%
           % Normal paragraph (not suppressed).
           \ifnum\codep@nestlevel>0\relax\else
-            \ifbool{codep@paragraphs}{%
-              \refstepcounter{atom}%
-              \codep@writeanchormap{\theatom}%
-              \edef\codep@currentatom{\theatom}%
-              \codep@sblwrite@atom{%
-                \string\codep@sbl@atom
-                  {\theatom}{paragraph}}%
-              \codep@sblwrite@atom{%
-                \string\codep@sbl@meta{\theatom}{src}%
-                  {\jobname.tex:\the\inputlineno:1}}%
-              \global\advance\codep@atomcount by 1\relax
-              \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
-                {\theatom}{paragraph}}%
-              \codep@emitmargin{\codep@currentatom}%
-              \codep@queuebackref{\theatom}%
-            }{}%
+            \codep@parahook@paragraph
           \fi
         }%
       }%
@@ -1293,6 +1310,46 @@
 %% macro \codep@br@<num>.  Per REVIEW_C finding #2 second half,
 %% this turns O(degree^2) into O(degree).
 
+% \codep@appendbr@core
+%   Shared body for \codep@processbr and \codep@appendbr.
+%   Precondition: \codep@tmp@tgt and \codep@tmp@src are already
+%   \edef'd to the resolved display numbers.
+%   Performs: self-ref guard, consecutive-dedup, lazy count
+%   init, linked-list node store.
+\def\codep@appendbr@core{%
+  % Self-ref guard (REVIEW_C finding #10).
+  \ifx\codep@tmp@src\codep@tmp@tgt\else
+    % Dedup against previous append for this target.
+    \edef\codep@tmp@last{%
+      \csname codep@brlast@\codep@tmp@tgt\endcsname}%
+    \ifx\codep@tmp@last\codep@tmp@src
+      % Consecutive duplicate: skip.
+    \else
+      \global\expandafter\let
+        \csname codep@brlast@\codep@tmp@tgt\endcsname
+        \codep@tmp@src
+      % Append a new linked-list node.
+      \expandafter\ifx
+          \csname codep@brcount@\codep@tmp@tgt\endcsname\relax
+        \global\expandafter\def
+          \csname codep@brcount@\codep@tmp@tgt\endcsname{0}%
+      \fi
+      \edef\codep@tmp@k{%
+        \csname codep@brcount@\codep@tmp@tgt\endcsname}%
+      \count@=\codep@tmp@k\relax
+      \advance\count@ by 1\relax
+      \expandafter\xdef
+        \csname codep@brcount@\codep@tmp@tgt\endcsname
+        {\the\count@}%
+      \expandafter\xdef
+        \csname
+          codep@brnode@\codep@tmp@tgt @\the\count@%
+        \endcsname
+        {\codep@tmp@src}%
+    \fi
+  \fi
+}%
+
 % \codep@processbr{tgt}{src}
 %   #1 = target label key (display number via lblnum map)
 %   #2 = source atom display number
@@ -1302,37 +1359,7 @@
   \else
     \edef\codep@tmp@tgt{\csname codep@lblnum@#1\endcsname}%
     \edef\codep@tmp@src{#2}%
-    % Self-ref guard (REVIEW_C finding #10).
-    \ifx\codep@tmp@src\codep@tmp@tgt\else
-      % Dedup against previous append for this target.
-      \edef\codep@tmp@last{%
-        \csname codep@brlast@\codep@tmp@tgt\endcsname}%
-      \ifx\codep@tmp@last\codep@tmp@src
-        % Consecutive duplicate: skip.
-      \else
-        \global\expandafter\let
-          \csname codep@brlast@\codep@tmp@tgt\endcsname
-          \codep@tmp@src
-        % Append a new linked-list node.
-        \expandafter\ifx
-            \csname codep@brcount@\codep@tmp@tgt\endcsname\relax
-          \global\expandafter\def
-            \csname codep@brcount@\codep@tmp@tgt\endcsname{0}%
-        \fi
-        \edef\codep@tmp@k{%
-          \csname codep@brcount@\codep@tmp@tgt\endcsname}%
-        \count@=\codep@tmp@k\relax
-        \advance\count@ by 1\relax
-        \expandafter\xdef
-          \csname codep@brcount@\codep@tmp@tgt\endcsname
-          {\the\count@}%
-        \expandafter\xdef
-          \csname
-            codep@brnode@\codep@tmp@tgt @\the\count@%
-          \endcsname
-          {#2}%
-      \fi
-    \fi
+    \codep@appendbr@core
   \fi
 }
 
@@ -1344,39 +1371,7 @@
 \def\codep@appendbr#1#2{%
   \edef\codep@tmp@tgt{#1}%
   \edef\codep@tmp@src{#2}%
-  % Self-ref guard.
-  \ifx\codep@tmp@src\codep@tmp@tgt\else
-    % Dedup against previous append for this target.
-    \edef\codep@tmp@last{%
-      \csname codep@brlast@\codep@tmp@tgt\endcsname}%
-    \ifx\codep@tmp@last\codep@tmp@src
-      % Consecutive duplicate: skip.
-    \else
-      \global\expandafter\let
-        \csname codep@brlast@\codep@tmp@tgt\endcsname
-        \codep@tmp@src
-      \expandafter\ifx
-          \csname codep@brcount@\codep@tmp@tgt%
-          \endcsname\relax
-        \global\expandafter\def
-          \csname codep@brcount@\codep@tmp@tgt%
-          \endcsname{0}%
-      \fi
-      \edef\codep@tmp@k{%
-        \csname codep@brcount@\codep@tmp@tgt%
-        \endcsname}%
-      \count@=\codep@tmp@k\relax
-      \advance\count@ by 1\relax
-      \expandafter\xdef
-        \csname codep@brcount@\codep@tmp@tgt%
-        \endcsname{\the\count@}%
-      \expandafter\xdef
-        \csname
-          codep@brnode@\codep@tmp@tgt @\the\count@%
-        \endcsname
-        {#2}%
-    \fi
-  \fi
+  \codep@appendbr@core
 }
 
 % \codep@collapsebr{targetnum}
