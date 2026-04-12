@@ -383,6 +383,221 @@ renamed to `8a.6.m` for sequential ordering after the new
 
 **Design phase closed.**
 
+### v1.1-dev — Implementation + rendering + bug fixes (2026-04-10 to 2026-04-11)
+
+This section covers the commits between the design phase close and the
+formal v1.1-impl/infra/bugs milestone entries above. The package was still
+named `semtex` through most of this window; the rename to `codependent` /
+`codep` prefix landed at `94d4b52`.
+
+#### Atom numbering bugs
+
+**Counter aliasing for thmtools `sibling=` environments** (`c6fb7b4`,
+`1229274`). thmtools' `sibling=` key aliases `\c@proposition` (etc.) to
+`\c@theorem` via `\let` at declaration time. When `\semtextrack` replaced
+`\c@theorem` with `\c@atom`, sibling counters still pointed to the old
+register, producing duplicate atom numbers (Proposition N shows the same
+N as Theorem N). Two-part fix: re-`\let` every tracked env's counter
+register to `\c@atom` in the `\@for` loop, and separately update `\the<env>`
+to `\theatom` so the display format is also correct.
+
+**Nested tracked environments** (`9414d2c`, `178f9bd`). A theorem-inside-
+theorem fired the begin hook twice, producing a spurious inner atom record
+in the `.sbl`/`.cdp` sidecar and a duplicate backref entry. Fix:
+`\semtex@trackedlevel` counter; inner envs emit a `\PackageWarning` and skip
+all SBL/backref writes. Counter gap from amsthm's `\refstepcounter` is
+accepted by design.
+
+**Spurious atoms for display math and `\maketitle`** (`8d8c86b`). The
+paragraph begin hook fired for `equation`, `align`, `gather`, `multline`,
+`flalign` (and starred variants) and also for `\maketitle`, producing atom
+numbers on content that should be invisible to the tracking system. Fixed by
+suppressing the hook for those environments.
+
+**O(N²) atomlist** (`178f9bd`). The atomlist accumulator used `\xdef`
+append, which copies the full list on every atom — 253 seconds for 15k
+atoms. Replaced by a count-indexed csname array: O(1) per append, O(N)
+walk in `\semtexappendix`.
+
+**Base counter auto-detection** (`178f9bd`). All hardcoded `\c@theorem`
+references replaced with `\semtex@basecounter`, auto-detected from the
+first env in `\semtextrack`'s list.
+
+#### Rendering: shape and font
+
+**`\AfterEndEnvironment` for flush timing** (`c6fb7b4`). Moved
+`\semtex@flushbackref` from `cmd/end<env>/before` to
+`\AfterEndEnvironment` for both theorem envs and proofs, so "Used in X."
+renders AFTER endmarks (QED symbols, custom theorem endmarks) rather than
+before them.
+
+**Font and size evolution** (`5241154`, `c26406a`). Initial inline renderer
+let bold leak from theorem headings into the "Used in" line. Added
+`\normalfont` before `\sffamily`. Size progression: `\small` →
+`\footnotesize` → `\scriptsize` over three commits; `\scriptsize` won
+because it makes the annotation clearly subordinate to the mathematical
+content.
+
+**Unified rendering paths** (`ce9bcc8`). Previously the theorem/env path
+and the paragraph deferred path had separate formatting logic with
+hardcoded fonts that couldn't be overridden. Refactored into:
+`\semtex@formatusedin{reflist}` (shared text formatter, single override
+point), `\semtex@renderinline{reflist}` (theorem/env), and
+`\semtex@renderdeferred{reflist}` (paragraph vadjust-pre). Overriding
+`\semtex@formatusedin` now changes all "Used in" output everywhere.
+Added `\addvspace{\medskipamount}` after both paths to push the
+annotation away from the next atom.
+
+**Inline spacing refinement** (`a118112`). Mode detection at hook-
+expansion time evaluates `\ifvmode` too early (hook fires before TeX is
+in the right mode). Fix: defer detection to typesetting time via `\toks@`.
+Three branches: vmode → `\noindent`; empty hmode after display math →
+`\par\nobreak\noindent`; content already on line → `\unskip\hspace{0.5em}`.
+
+#### Rendering: three styles (block, inline, margin)
+
+**Initial block style** was the only style at the start of this window.
+
+**Inline and margin styles** (`064220f`). Inline: flushes from
+`cmd/end#1/before` (hmode, before endmark) so the "Used in" text flows on
+the same line as the last content. Margin: renders in the right margin via
+`\rlap`. Both styles needed follow-up fixes (see failure register below).
+
+**`backref-color` option** (`6450bb7`). New `\semtexsetup` key; empty
+value inherits surrounding colour. Inline gap tightened from `\quad` to
+`\enspace`.
+
+**`\semtexsetup` key-value API** (`25e3263`). Public configuration keys:
+`backref-style` (block|inline), `backref-align` (left|right),
+`backref-font`, `backref-prefix`, `backref-label`, `margin-font`. Block
+mode complete; inline mode plumbed but needed further work (see failure
+register).
+
+#### Hyperref integration
+
+**Clickable "Used in" links** (`2aff6da`). Reuses hyperref's existing
+anchors from `\refstepcounter` (stored in `\newlabel` 4th field) rather
+than creating separate `\hypertarget` anchors. Builds a reverse map (atom
+number → anchor name) during aux read. Filters thm-restate `@data` keys to
+avoid expansion errors. Labeled atoms get clickable links; unlabeled atoms
+degrade gracefully to plain text.
+
+**Auto-anchors for all atoms** (`b80a339`). Every atom (theorem, proof,
+paragraph) now writes a `\semtex@anchormap` aux record mapping its display
+number to its hyperref anchor name. Makes all "Used in" backrefs clickable
+without requiring a `\label` on every theorem. `\newlabel`-based extraction
+remains as a supplement.
+
+**Starred hyperlink fallback** (`b80a339`). Starred backref numbers such as
+"2.1*" fall back to the base theorem's anchor when the exact proof anchor is
+not found, keeping proof backrefs clickable.
+
+**Anchormap activation timing bug** (`e67d5b5`). The anchormap was activated
+in `\AtBeginDocument`, which fires AFTER the aux file is read. Equation-range
+anchors (e.g., `(4.4--4.5)`) written in the previous run therefore were not
+loaded. Fixed by moving activation to `begindocument/before`. Also removed a
+redundant duplicate definition in the `\AtBeginDocument` block.
+
+#### Proof numbering
+
+**Pavlov-style proof-inherits-theorem numbering** (`dd247c7`). Adjacent
+proofs inherit their theorem's atom number with a `*` suffix (e.g., "2.1*").
+Backrefs from inside proofs show "Used in 2.1*". Non-adjacent proofs fall
+back to their own atom number with an optional warning. New SBL record
+`\semtex@sbl@proof{N*}`. New `\semtex@sourceatom` mechanism for starred
+backref emission. Options: `proofs=on|off`, `proof-warnings=on|off`.
+
+**`\semtexproofof` for separated proofs** (`b974a62`). Explicitly associates
+a proof appearing far from its theorem with that theorem, enabling starred
+backrefs. Five tests added: separated proof, nested lemma, multiple adjacent
+pairs, paragraph-breaks-adjacency, warnings-off.
+
+#### `equations=shared` removal
+
+The `equations=shared` option allowed multiple align lines to share one
+atom number. Counter aliasing (`\c@equation → \c@atom`) caused interaction
+bugs with display math suppression, producing "No counter 'v' defined"
+errors (`8636a07`). The design note in `56e09ac` concluded that
+equation-atom merging belongs in the CLI layer (which has full graph
+visibility) rather than in the .sty. `equations=shared` was removed
+(`56e09ac`); the code is trivially restorable from git history.
+
+#### Equation backref tracking (two-track design)
+
+**`equations=all|outer|off` modes** (`779efe4`). Two-track design for
+tracking display math:
+
+- Track 1 (single-number envs: `equation`): direct `\theequation` recording.
+- Track 2 (multi-line envs: `align`, `gather`, `multline`, `flalign`): range
+  `N--M` computed at environment boundaries.
+
+Public commands: `\codeptrackeq`, `\codeptrackalign`. Default mode: `outer`.
+Integration test has anti-contamination and equation assertions.
+
+**`\ifmeasuring@` guard** (`779efe4`). amsmath runs a measuring pass through
+display math to compute layout; atom-recording hooks fired during this pass,
+producing phantom duplicate backref writes. Fixed with `\ifmeasuring@` guard.
+
+#### Concept tracking and user API
+
+**`\semtexNewCommand` → `\semtexnewcommand`** (`320f615`). Casing aligned with
+`\newcommand` (lowercase). `\semtexNewDocumentCommand` kept as-is (mirrors
+xparse's `\NewDocumentCommand`). Old name preserved as deprecated alias via
+`\let`.
+
+#### Backref deduplication
+
+**Per-(source, target) dedup** (`779efe4`). Multiple patch sites firing for
+the same `\cref` call (e.g., `\@setref` + `\cref@getlabel` both firing) were
+writing double backref records. Fixed with per-(source,target) dedup guard.
+
+**Concept→backref contamination removed** (`779efe4`). The concept-tracking
+layer was injecting concept edges into the "Used in" lists, polluting rendered
+output with concept links that belong only in the `.aux`/`.sbl` for the CLI.
+Removed the injection; concepts stay in their own record type.
+
+#### Minor adversarial review fixes (`4cd7986`)
+
+Six items from an internal review pass:
+- Flush last paragraph's deferred backref at `\AtEndDocument`
+- Give `\semtex@ifdatakey` its own boolean (`\ifsemtex@isdata`)
+- Guard against double `\semtextrack` call with `\PackageError`
+- Remove dead code (`\semtex@build@argspec`)
+- Define `\ifx` comparison constants once at load time
+- Error when `\semtextrack` is called before `\newtheorem`
+
+#### Infrastructure
+
+**PDF content validation** (`5725aaa`). New test runner directives:
+`TEST-PDF-CONTAINS`, `TEST-PDF-NOT`, `TEST-PDF-LINKS`. Uses
+`mutool`/`pdftotext`/`qpdf` via subprocess; no Python library dependencies.
+Skips gracefully when tools are not on PATH.
+
+**PDF structural assertions** (`da41090`). Further directives: `TEST-PDF-STEXT`,
+`TEST-PDF-STEXT-NOT`, `TEST-PDF-OBJECTS`, `TEST-PDF-OBJECTS-NOT`. Uses
+`mutool stext` for text positions/fonts and `mutool show` with grep for link
+annotations and destinations. `shell.nix` added providing `mupdf` + `qpdf`.
+
+**Enriched trinity integration fixture** (`1a51109`). Exercises all 10 theorem
+env types (with endmarks), restatable, tikz-cd diagrams, display math
+suppression, concept tracking, cross-section backrefs, hyperref, and cleveref
+in one fixture.
+
+**`.gitignore` for build artifacts** (`b300e9d`). Aux/log/pdf/sbl files and
+the stale `compiled-examples/semtex.sty` copy that caused repeated debugging
+waste.
+
+**Package rename: `semtex` → `codependent` / `codep` prefix** (`94d4b52`).
+87 files, 2759 substitutions. All 60 tests pass. User-facing package name is
+`codependent` (`\usepackage{codependent}`); internal macro prefix is
+`\codep@`; CLI binary name is `codep`.
+
+#### Failed approaches in this window (added to register below as items 12–16)
+
+See the failure register section for: `\nobreak` orphan prevention (items 12,
+13), `\vtop` margin rendering (item 14), `equations=shared` counter aliasing
+(item 15), and inline mode hook timing via `\ifvmode` (item 16).
+
 ### v1.1-impl — Implementation phase (2026-04-10 to 2026-04-11)
 
 Full implementation of DESIGN.md Sections 8a/8b/9a. Test suite grew
@@ -459,7 +674,7 @@ Use for proofs far from their theorem.
 - Split integ-full-stack into integ-full-stack-block + integ-full-stack-inline
 - Internal macro rename `\codep@sbl@*` → `\codep@cdp@*`
 
-### Failed approaches (v1.1 session additions)
+### Failed approaches (v1.1-dev + v1.1-bugs session additions)
 
 12. **`\nobreak` inside `\codep@renderinline` for orphan prevention**
     (v1.1-bugs). The `\nobreak` and `\penalty9999` landed in horizontal
@@ -471,6 +686,28 @@ Use for proofs far from their theorem.
     (v1.1-bugs). The `\nobreak` landed AFTER the theorem's post-spacing
     glue. TeX can break at glue that precedes a penalty. Sequence:
     `\addvspace{\topsep}` (breakpoint) → `\penalty10000` (too late).
+
+14. **`\vtop` for margin rendering** (`31cc9ca`, v1.1-dev). `\vtop` is
+    incompatible with LaTeX 2022+ paragraph hooks — it opens a vbox that
+    the hook infrastructure doesn't expect, causing infinite recursion when
+    the margin content triggered a paragraph hook. Replaced by a simple
+    font group inside `\rlap` with truncation for long reflists.
+
+15. **`equations=shared` counter aliasing** (`56e09ac`, v1.1-dev). Aliasing
+    `\c@equation` to `\c@atom` to merge equation numbers with atom numbers
+    caused interaction bugs with the display-math suppression code, producing
+    "No counter 'v' defined" errors in `align` environments. The approach
+    was abandoned; equation-atom merging requires full graph visibility and
+    belongs in the CLI layer, not the .sty.
+
+16. **`\ifvmode` for inline mode detection at hook expansion time**
+    (`a118112`, v1.1-dev). The `cmd/end<env>/before` hook expands before
+    TeX has committed to the mode the "Used in" text will land in. Testing
+    `\ifvmode` at hook-fire time gave the wrong branch for display-math
+    environments (which leave TeX in vertical mode but write the "Used in"
+    into horizontal output). Fix: defer the test to typesetting time via
+    `\toks@` so the three-branch dispatch (vmode / post-display hmode /
+    mid-line hmode) evaluates at the correct moment.
 
 ## Open issues, deferred decisions, known limitations
 
