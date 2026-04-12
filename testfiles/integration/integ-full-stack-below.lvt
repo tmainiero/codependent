@@ -33,8 +33,17 @@
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-PDF-CONTAINS: Used in
 %% TEST-PDF-LINKS: 8
-%% TEST-PDF-OBJECTS: /Subtype /Link
+%% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% Backref hyperlink correctness: every "Used in" entry must be a hyperlink
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% Verify specific atoms have backrefs linking to the correct targets
+%% Definition 1.1 (def:noetherian) is used in Lemma 1.3, Theorem 1.4, etc.
+%% TEST-PDF-BACKREF-TARGETS: definition\.4 = lemma\.8, theorem\.10
+%% Definition 1.2 (def:pid) is used in Lemma 1.3, Proposition 1.6, etc.
+%% TEST-PDF-BACKREF-TARGETS: definition\.6 = lemma\.8, proposition\.13
+%% Lemma 1.3 is used in Theorem 2.4, etc.
+%% TEST-PDF-BACKREF-TARGETS: lemma\.8 = theorem\.10, atom\.23
 %% TEST-PDF-LINK-DEST: definition\.4
 %% TEST-PDF-LINK-DEST: definition\.6
 %% TEST-PDF-LINK-DEST: lemma\.8

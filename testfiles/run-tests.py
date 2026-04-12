@@ -95,6 +95,9 @@ METADATA_KEYS = {
     "TEST-PDF-DEST-NOT-EXISTS": "pdf_dest_not_exists",  # may repeat; named dest must NOT exist
     "TEST-PDF-LINK-RECT": "pdf_link_rect",  # may repeat; "<dest> <x1> <y1> <x2> <y2> <tol>"
     "TEST-PDF-NO-ORPHAN-LINKS": "pdf_no_orphan_links",  # boolean; every link dest must resolve
+    # Backref hyperlink verification (require both mutool and qpdf)
+    "TEST-PDF-ALL-BACKREFS-LINKED": "pdf_all_backrefs_linked",  # boolean; every Used-in entry must be a hyperlink
+    "TEST-PDF-BACKREF-TARGETS": "pdf_backref_targets",  # may repeat; "<atom-dest> = <dest1>, <dest2>, ..."
 }
 
 REPEATING_KEYS = {
@@ -107,6 +110,7 @@ REPEATING_KEYS = {
     "pdf_link_dest", "pdf_link_dest_not",
     "pdf_dest_exists", "pdf_dest_not_exists",
     "pdf_link_rect",
+    "pdf_backref_targets",
 }
 
 # No-op definitions for l3build regression-test markers.  l3build provides
@@ -162,6 +166,9 @@ class Fixture:
     pdf_dest_not_exists: list = dataclasses.field(default_factory=list)
     pdf_link_rect: list = dataclasses.field(default_factory=list)
     pdf_no_orphan_links: bool = False
+    # Backref hyperlink verification
+    pdf_all_backrefs_linked: bool = False
+    pdf_backref_targets: list = dataclasses.field(default_factory=list)
 
 
 def parse_fixture(path: Path) -> Fixture:
@@ -215,6 +222,8 @@ def parse_fixture(path: Path) -> Fixture:
                 fix.pins_known_broken = value.lower() in ("yes", "true", "1")
             elif attr == "pdf_no_orphan_links":
                 fix.pdf_no_orphan_links = value.lower() in ("yes", "true", "1")
+            elif attr == "pdf_all_backrefs_linked":
+                fix.pdf_all_backrefs_linked = value.lower() in ("yes", "true", "1")
             elif attr in REPEATING_KEYS:
                 getattr(fix, attr).append(value)
             else:
@@ -332,14 +341,20 @@ def _count_pdf_links(pdf_path: Path) -> int | None:
     try:
         if tool_name == "mutool":
             # `mutool show <file> grep` outputs every PDF object in text
-            # form.  We count lines containing "/Subtype /Link".
+            # form.  We count lines containing "/Subtype/Link" (mutool
+            # omits spaces between name tokens in its compact output).
             proc = subprocess.run(
                 [PDF_LINK_TOOL, "show", str(pdf_path), "grep"],
                 capture_output=True, text=True, timeout=30,
             )
             if proc.returncode != 0:
                 return None
-            return proc.stdout.count("/Subtype /Link")
+            # Handle both "/Subtype/Link" (mutool compact) and
+            # "/Subtype /Link" (older mutool or other tools).
+            count = proc.stdout.count("/Subtype/Link")
+            if count == 0:
+                count = proc.stdout.count("/Subtype /Link")
+            return count
         else:  # qpdf
             proc = subprocess.run(
                 [PDF_LINK_TOOL, str(pdf_path), "--show-pages",
@@ -505,6 +520,128 @@ def _extract_pdf_link_objects(pdf_path: Path) -> PdfLinkObjects | None:
         destinations.update(dest_names)
 
     return PdfLinkObjects(links=links, destinations=destinations)
+
+
+# ----------------------------------------------------------------------
+# Backref hyperlink verification helpers
+# ----------------------------------------------------------------------
+
+
+@dataclasses.dataclass
+class _BackrefLine:
+    """A single 'Used in ...' line extracted from stext, with position info."""
+    text: str         # full line text e.g. "Used in 1.4, 1.5, 1.5*, 2.1."
+    entries: list     # individual backref entries e.g. ["1.4", "1.5", "1.5*", "2.1"]
+    bbox: list        # [x1_stext, y1_stext, x2_stext, y2_stext] (top-down coords)
+    page_height: float
+
+
+def _parse_backref_lines_from_stext(stext_xml: str) -> list[_BackrefLine]:
+    """Parse all 'Used in ...' lines from stext XML output.
+
+    Returns a list of _BackrefLine with text, entry list, and bbox.
+    The stext coordinate system has y=0 at top; we store both the raw
+    bbox and the page height so callers can convert to PDF coords (y=0
+    at bottom).  Handles multi-page documents by tracking per-page heights.
+    """
+    results = []
+
+    # Build a list of (page_start_offset, page_height) for each page.
+    page_re = re.compile(r'<page[^>]+height="([^"]+)"')
+    page_positions = []  # (char_offset, height)
+    for pm in page_re.finditer(stext_xml):
+        try:
+            h = float(pm.group(1))
+        except ValueError:
+            h = 792.0
+        page_positions.append((pm.start(), h))
+    if not page_positions:
+        page_positions.append((0, 792.0))
+
+    def _page_height_at(offset: int) -> float:
+        """Return the page height for a match at the given char offset."""
+        height = page_positions[0][1]
+        for pos, h in page_positions:
+            if pos > offset:
+                break
+            height = h
+        return height
+
+    # Find all <line> elements containing "Used in"
+    line_re = re.compile(
+        r'<line\s+bbox="([^"]+)"[^>]*text="(Used in[^"]*)"'
+    )
+    for m in line_re.finditer(stext_xml):
+        bbox_str = m.group(1)
+        text = m.group(2)
+        try:
+            bbox = [float(x) for x in bbox_str.split()]
+        except ValueError:
+            continue
+        if len(bbox) != 4:
+            continue
+
+        page_height = _page_height_at(m.start())
+
+        # Parse individual backref entries from the text.
+        # Format: "Used in 1.4, 1.5, 1.5*, 2.1, 2.3, 2.4*, 3.4."
+        # or "Used in (2.1), 3.2*."
+        after_prefix = text[len("Used in "):]  # strip "Used in "
+        # Remove trailing period
+        if after_prefix.endswith("."):
+            after_prefix = after_prefix[:-1]
+        # Split on ", " to get individual entries
+        entries = [e.strip() for e in after_prefix.split(",") if e.strip()]
+
+        results.append(_BackrefLine(
+            text=text,
+            entries=entries,
+            bbox=bbox,
+            page_height=page_height,
+        ))
+    return results
+
+
+def _links_overlapping_line(
+    link_data: "PdfLinkObjects",
+    backref_line: _BackrefLine,
+) -> list["PdfLinkInfo"]:
+    """Find link annotations whose Rect overlaps a backref line's bbox.
+
+    Converts stext coords (top-down) to PDF coords (bottom-up) for
+    comparison with link Rects.  Uses the link's vertical midpoint to
+    avoid false positives from adjacent lines that barely overlap.
+    """
+    # Convert stext bbox to PDF coords: PDF_y = page_height - stext_y
+    # stext bbox: [x1, y_top, x2, y_bottom] (y increases downward)
+    # PDF rect: [x1, y_bottom, x2, y_top] (y increases upward)
+    sx1, sy1, sx2, sy2 = backref_line.bbox
+    ph = backref_line.page_height
+    # PDF coordinates for the line region
+    pdf_x1 = sx1
+    pdf_x2 = sx2
+    pdf_y_bottom = ph - sy2  # bottom of text in PDF coords
+    pdf_y_top = ph - sy1     # top of text in PDF coords
+
+    # Allow some tolerance (2 points for edges)
+    tol = 2.0
+    overlapping = []
+    for lnk in link_data.links:
+        if len(lnk.rect) != 4:
+            continue
+        lx1, ly1, lx2, ly2 = lnk.rect
+        # Check horizontal overlap: link must start within line's x range
+        if lx2 < pdf_x1 - tol or lx1 > pdf_x2 + tol:
+            continue
+        # Check vertical: link's midpoint must be within line's y range.
+        # This avoids false positives from adjacent-line links that
+        # partially overlap due to font ascender/descender differences.
+        link_y_mid = (ly1 + ly2) / 2.0
+        if link_y_mid < pdf_y_bottom - tol or link_y_mid > pdf_y_top + tol:
+            continue
+        overlapping.append(lnk)
+    return overlapping
+
 
 
 # ----------------------------------------------------------------------
@@ -678,7 +815,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                           or fix.pdf_link_dest or fix.pdf_link_dest_not
                           or fix.pdf_link_count >= 0
                           or fix.pdf_dest_exists or fix.pdf_dest_not_exists
-                          or fix.pdf_link_rect or fix.pdf_no_orphan_links)
+                          or fix.pdf_link_rect or fix.pdf_no_orphan_links
+                          or fix.pdf_all_backrefs_linked
+                          or fix.pdf_backref_targets)
         if has_pdf_checks:
             pdf_file = tmp_path / f"{fix.name}.pdf"
             if not pdf_file.exists():
@@ -894,6 +1033,127 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                                         f"dests not in Names tree: "
                                         f"{', '.join(unique[:10])}"
                                     )
+
+                # 13. Backref hyperlink verification (TEST-PDF-ALL-BACKREFS-LINKED,
+                #     TEST-PDF-BACKREF-TARGETS). Requires both mutool (stext) and
+                #     qpdf (link annotations).
+                has_backref_checks = (
+                    fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
+                )
+                if has_backref_checks:
+                    if PDF_STEXT_TOOL is None or PDF_QPDF_TOOL is None:
+                        missing = []
+                        if PDF_STEXT_TOOL is None:
+                            missing.append("mutool")
+                        if PDF_QPDF_TOOL is None:
+                            missing.append("qpdf")
+                        sys.stderr.write(
+                            f"  WARN: skipping backref link checks for "
+                            f"{fix.name} (missing: {', '.join(missing)})\n"
+                        )
+                    else:
+                        # Extract stext for "Used in" line positions.
+                        stext_xml = _extract_pdf_stext(pdf_file)
+                        if stext_xml is None:
+                            result.failures.append(
+                                "backref check: stext extraction failed"
+                            )
+                        else:
+                            backref_lines = _parse_backref_lines_from_stext(
+                                stext_xml
+                            )
+                            # Extract link objects for backref checks.
+                            br_link_data = _extract_pdf_link_objects(pdf_file)
+                            if br_link_data is None:
+                                result.failures.append(
+                                    "backref check: qpdf extraction failed"
+                                )
+                            else:
+                                # TEST-PDF-ALL-BACKREFS-LINKED
+                                if fix.pdf_all_backrefs_linked:
+                                    if not backref_lines:
+                                        result.failures.append(
+                                            "all-backrefs-linked: no 'Used in'"
+                                            " lines found in PDF"
+                                        )
+                                    for bline in backref_lines:
+                                        overlapping = _links_overlapping_line(
+                                            br_link_data, bline
+                                        )
+                                        n_entries = len(bline.entries)
+                                        n_links = len(overlapping)
+                                        if n_links < n_entries:
+                                            result.failures.append(
+                                                f"all-backrefs-linked: "
+                                                f"'{bline.text}' has "
+                                                f"{n_entries} entries but "
+                                                f"only {n_links} covering "
+                                                f"link(s)"
+                                            )
+
+                                # TEST-PDF-BACKREF-TARGETS
+                                for spec in fix.pdf_backref_targets:
+                                    # Format: "<atom-dest-pattern> = <d1>, <d2>"
+                                    if "=" not in spec:
+                                        result.failures.append(
+                                            f"malformed TEST-PDF-BACKREF-"
+                                            f"TARGETS: {spec}"
+                                        )
+                                        continue
+                                    atom_pat, targets_str = spec.split("=", 1)
+                                    atom_pat = atom_pat.strip()
+                                    expected_dests = [
+                                        d.strip()
+                                        for d in targets_str.split(",")
+                                        if d.strip()
+                                    ]
+                                    # Find the "Used in" line whose overlapping
+                                    # links include destinations matching ALL of
+                                    # expected_dests.  This identifies the correct
+                                    # line without needing the atom's y-position.
+                                    matched_line = None
+                                    for bline in backref_lines:
+                                        overlapping = _links_overlapping_line(
+                                            br_link_data, bline
+                                        )
+                                        link_dests = [
+                                            lnk.dest for lnk in overlapping
+                                        ]
+                                        # Check if all expected dest patterns
+                                        # match some link in this line.
+                                        all_match = True
+                                        for dp in expected_dests:
+                                            if not any(
+                                                re.search(dp, ld)
+                                                for ld in link_dests
+                                            ):
+                                                all_match = False
+                                                break
+                                        if all_match:
+                                            matched_line = bline
+                                            break
+
+                                    if matched_line is None:
+                                        # Try to give a helpful error: show
+                                        # which lines exist and their link dests
+                                        summaries = []
+                                        for bline in backref_lines[:5]:
+                                            ov = _links_overlapping_line(
+                                                br_link_data, bline
+                                            )
+                                            dests = [l.dest for l in ov]
+                                            summaries.append(
+                                                f"'{bline.text}' -> "
+                                                f"{dests[:4]}"
+                                            )
+                                        result.failures.append(
+                                            f"backref-targets: no 'Used in' "
+                                            f"line found with links matching "
+                                            f"all of {expected_dests} "
+                                            f"(atom pattern: {atom_pat!r}). "
+                                            f"Lines found: "
+                                            f"{'; '.join(summaries)}"
+                                        )
 
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name

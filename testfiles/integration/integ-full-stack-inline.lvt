@@ -33,8 +33,10 @@
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-PDF-CONTAINS: Used in
 %% TEST-PDF-LINKS: 8
-%% TEST-PDF-OBJECTS: /Subtype /Link
+%% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% Backref hyperlink correctness: every "Used in" entry must be a hyperlink
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
 %% TEST-PDF-LINK-DEST: definition\.4
 %% TEST-PDF-LINK-DEST: definition\.6
 %% TEST-PDF-LINK-DEST: lemma\.8
