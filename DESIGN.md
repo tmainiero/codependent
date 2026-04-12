@@ -502,14 +502,13 @@ numbers.
 `proof` (from `amsthm`) is not a `\newtheorem` environment.
 It is hooked separately via `\AtBeginEnvironment{proof}`.
 
-By default, proofs get their own atom number (Pavlov style).
-The number renders as a superscript margin number (like
-paragraphs); the "Proof." heading from `amsthm` stays as-is.
-
-```latex
-\usepackage[proofs=numbered]{codependent}    % default
-\usepackage[proofs=unnumbered]{codependent}  % skip numbering
-```
+Proofs get their own atom number for backref tracking but do
+NOT render margin numbers.  Only paragraphs get margin numbers.
+The "Proof." heading from `amsthm` stays as-is.  Adjacent proofs
+inherit the parent theorem's number with a `*` suffix (e.g.,
+`2.4*`) for backref attribution.  Non-adjacent proofs (separated
+by paragraphs) get a standalone atom number; `\codepproofof{label}`
+re-attributes them to their theorem.
 
 ### Labels
 
