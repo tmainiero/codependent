@@ -380,6 +380,16 @@
   \fi\fi\fi
 }
 
+% \codep@registeratom{num}{kind}
+%   Append one entry to the count-indexed atom array.
+%   num  -- the atom number token (e.g. \codep@outeratom or \theatom)
+%   kind -- the atom type string (e.g. {#1}, proof, paragraph)
+\def\codep@registeratom#1#2{%
+  \global\advance\codep@atomcount by 1\relax
+  \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
+    {#1}{#2}}%
+}%
+
 %% ===================================================================
 %% Section 6: Theorem environment hooks
 %% ===================================================================
@@ -484,9 +494,7 @@
   \codep@cdpwrite@atom{%
     \string\codep@cdp@meta{\codep@outeratom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
-  \global\advance\codep@atomcount by 1\relax
-  \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
-    {\codep@outeratom}{#1}}%
+  \codep@registeratom{\codep@outeratom}{#1}%
   \codep@queuebackref{\codep@outeratom}%
   % Anti-orphan: for block/margin styles, prevent page breaks
   % between the theorem body and the "Used in" line.
@@ -635,9 +643,7 @@
   \codep@cdpwrite@atom{%
     \string\codep@cdp@meta{\theatom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
-  \global\advance\codep@atomcount by 1\relax
-  \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
-    {\theatom}{proof}}%
+  \codep@registeratom{\theatom}{proof}%
   \codep@queuebackref{\theatom}%
   \ifbool{codep@proofwarnings}{%
     \PackageWarning{codependent}{Proof not adjacent to a tracked
@@ -832,9 +838,68 @@
   \fi
 }
 
+% \codep@flusheqrange@numbered
+%   Numbered-line path: counter advanced, so compute the
+%   equation range, write the anchormap entry, and flush
+%   all pending refs with dedup.
+\def\codep@flusheqrange@numbered{%
+  % Compute formatted start: saved+1 in a group.
+  \begingroup
+    \c@equation=\codep@eq@startcount\relax
+    \advance\c@equation by 1\relax
+    \xdef\codep@tmp@eqstart{\theequation}%
+  \endgroup
+  \edef\codep@tmp@eqend{\theequation}%
+  % Build the display key.
+  \ifx\codep@tmp@eqstart\codep@tmp@eqend
+    % Single numbered line: (N)
+    \edef\codep@eqatom{(\codep@tmp@eqstart)}%
+  \else
+    % Range: (N--M)  (ASCII hyphens internally)
+    \edef\codep@eqatom{(\codep@tmp@eqstart--\codep@tmp@eqend)}%
+  \fi
+  % Write anchormap entry using dedicated block anchor.
+  \@ifpackageloaded{hyperref}{%
+    \expandafter\xdef
+      \csname codep@anchor@\codep@eqatom\endcsname
+      {\codep@eq@anchor}%
+    \if@filesw
+      \protected@write\@auxout{}{%
+        \string\codep@anchormap{\codep@eqatom}{\codep@eq@anchor}}%
+    \fi
+  }{}%
+  % Flush all pending refs (with dedup).
+  \if@filesw
+    \def\codep@eqpending@entry##1{%
+      \codep@dedupwrite{\codep@eqatom}{##1}%
+    }%
+    \the\codep@eqpending
+  \fi
+}
+
+% \codep@flusheqrange@fallback
+%   All-notag path: counter didn't advance, so fall through
+%   to the containing atom (if any) for pending refs.
+\def\codep@flusheqrange@fallback{%
+  \ifx\codep@currentatom\@empty\else
+    \if@filesw
+      \ifx\codep@sourceatom\@empty
+        \edef\codep@tmp@srcatom{\theatom}%
+      \else
+        \edef\codep@tmp@srcatom{\codep@sourceatom}%
+      \fi
+      \def\codep@eqpending@entry##1{%
+        \codep@dedupwrite{\codep@tmp@srcatom}{##1}%
+      }%
+      \the\codep@eqpending
+    \fi
+  \fi
+}
+
 % \codep@flusheqrange
 %   Compute the equation range and flush all pending refs.
-%   Called at \end{align} (Track 2).
+%   Called at \end{align} (Track 2).  Dispatches to
+%   \codep@flusheqrange@numbered or @fallback.
 \def\codep@flusheqrange{%
   % Check equation mode.
   \codep@eqshouldtrack
@@ -845,54 +910,9 @@
   \else
     % Check if counter advanced (at least one numbered line).
     \ifnum\c@equation>\codep@eq@startcount\relax
-      % Compute formatted start: saved+1 in a group.
-      \begingroup
-        \c@equation=\codep@eq@startcount\relax
-        \advance\c@equation by 1\relax
-        \xdef\codep@tmp@eqstart{\theequation}%
-      \endgroup
-      \edef\codep@tmp@eqend{\theequation}%
-      % Build the display key.
-      \ifx\codep@tmp@eqstart\codep@tmp@eqend
-        % Single numbered line: (N)
-        \edef\codep@eqatom{(\codep@tmp@eqstart)}%
-      \else
-        % Range: (N--M)  (ASCII hyphens internally)
-        \edef\codep@eqatom{(\codep@tmp@eqstart--\codep@tmp@eqend)}%
-      \fi
-      % Write anchormap entry using dedicated block anchor.
-      \@ifpackageloaded{hyperref}{%
-        \expandafter\xdef
-          \csname codep@anchor@\codep@eqatom\endcsname
-          {\codep@eq@anchor}%
-        \if@filesw
-          \protected@write\@auxout{}{%
-            \string\codep@anchormap{\codep@eqatom}{\codep@eq@anchor}}%
-        \fi
-      }{}%
-      % Flush all pending refs (with dedup).
-      \if@filesw
-        \def\codep@eqpending@entry##1{%
-          \codep@dedupwrite{\codep@eqatom}{##1}%
-        }%
-        \the\codep@eqpending
-      \fi
+      \codep@flusheqrange@numbered
     \else
-      % Counter didn't advance: all \notag. Fall through to
-      % containing atom (if any).
-      \ifx\codep@currentatom\@empty\else
-        \if@filesw
-          \ifx\codep@sourceatom\@empty
-            \edef\codep@tmp@srcatom{\theatom}%
-          \else
-            \edef\codep@tmp@srcatom{\codep@sourceatom}%
-          \fi
-          \def\codep@eqpending@entry##1{%
-            \codep@dedupwrite{\codep@tmp@srcatom}{##1}%
-          }%
-          \the\codep@eqpending
-        \fi
-      \fi
+      \codep@flusheqrange@fallback
     \fi
     \global\codep@eqpending={}%
     \global\codep@eqpendingcount=0\relax
@@ -1030,9 +1050,7 @@
     \codep@cdpwrite@atom{%
       \string\codep@cdp@meta{\theatom}{src}%
         {\jobname.tex:\the\inputlineno:1}}%
-    \global\advance\codep@atomcount by 1\relax
-    \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
-      {\theatom}{paragraph}}%
+    \codep@registeratom{\theatom}{paragraph}%
     \codep@emitmargin{\codep@currentatom}%
     \codep@queuebackref{\theatom}%
   }{}%
@@ -1173,38 +1191,50 @@
     {\ifmeasuring@\else\codep@writeatomref@body{#1}\fi}%
 }
 
+% \codep@writeatomref@tracktwo{target}
+%   Track 2 (align/gather multiline) path: defer the ref
+%   to the pending list for later flush by \codep@flusheqrange.
+\def\codep@writeatomref@tracktwo#1{%
+  \codep@eqshouldtrack
+  \ifx\codep@eqatom\@empty
+    % Mode suppressed; fall through to containing atom.
+    \ifx\codep@currentatom\@empty\else
+      \codep@writeatomref@do{#1}%
+    \fi
+  \else
+    \global\codep@eqpending=\expandafter{%
+      \the\codep@eqpending\codep@eqpending@entry{#1}}%
+    \global\advance\codep@eqpendingcount by 1\relax
+  \fi
+}
+
+% \codep@writeatomref@trackone{target}
+%   Track 1 (single equation) path: record the ref directly
+%   with the parenthesized equation number.
+\def\codep@writeatomref@trackone#1{%
+  \codep@eqshouldtrack
+  \ifx\codep@eqatom\@empty
+    % Mode suppressed; fall through to containing atom.
+    \ifx\codep@currentatom\@empty\else
+      \codep@writeatomref@do{#1}%
+    \fi
+  \else
+    % Record with parenthesized equation number.
+    \edef\codep@eqatom{(\theequation)}%
+    \codep@writeanchormap{\codep@eqatom}%
+    \if@filesw
+      \codep@dedupwrite{\codep@eqatom}{#1}%
+    \fi
+  \fi
+}
+
 \def\codep@writeatomref@body#1{%
   % Equation environment handling.
   \ifbool{codep@inequation}{%
     \ifbool{codep@eqmultiline}{%
-      % Track 2: defer to pending list.
-      \codep@eqshouldtrack
-      \ifx\codep@eqatom\@empty
-        % Mode suppressed; fall through to containing atom.
-        \ifx\codep@currentatom\@empty\else
-          \codep@writeatomref@do{#1}%
-        \fi
-      \else
-        \global\codep@eqpending=\expandafter{%
-          \the\codep@eqpending\codep@eqpending@entry{#1}}%
-        \global\advance\codep@eqpendingcount by 1\relax
-      \fi
+      \codep@writeatomref@tracktwo{#1}%
     }{%
-      % Track 1: direct recording with (\theequation).
-      \codep@eqshouldtrack
-      \ifx\codep@eqatom\@empty
-        % Mode suppressed; fall through to containing atom.
-        \ifx\codep@currentatom\@empty\else
-          \codep@writeatomref@do{#1}%
-        \fi
-      \else
-        % Record with parenthesized equation number.
-        \edef\codep@eqatom{(\theequation)}%
-        \codep@writeanchormap{\codep@eqatom}%
-        \if@filesw
-          \codep@dedupwrite{\codep@eqatom}{#1}%
-        \fi
-      \fi
+      \codep@writeatomref@trackone{#1}%
     }%
   }{%
     % Normal (non-equation) path.
@@ -1730,10 +1760,15 @@
   {\normalfont\codep@backreffont
    \codep@applycolor{\codep@backrefprefix\codep@backreflabel\space#1.}}}
 % \codep@applycolor{text}
-%   Wrap text in \textcolor if backref-color is set.
-%   Requires xcolor or color package loaded by user.
+%   Wrap text in \textcolor if backref-color is set and a
+%   color package (xcolor or color) is loaded.  Falls back
+%   to plain text if \textcolor is unavailable.
 \newcommand*{\codep@applycolor}[1]{%
-  \ifx\codep@backrefcolor\@empty#1\else\textcolor{\codep@backrefcolor}{#1}\fi}
+  \ifx\codep@backrefcolor\@empty
+    #1%
+  \else
+    \@ifundefined{textcolor}{#1}{\textcolor{\codep@backrefcolor}{#1}}%
+  \fi}
 
 % \codep@truncatereflist{reflist}
 %   If reflist has more than \codep@backrefmarginmax comma-separated
@@ -1742,25 +1777,36 @@
 %   the rendering contract.
 \newcommand*{\codep@truncatereflist}[1]{#1}
 
+% \codep@emitmarginbackref{content}
+%   Shared right-margin emission kernel used by \codep@rendermargin
+%   and the margin branch of \codep@renderbackref@para.
+%   Wraps content in \vbox{\hbox to \linewidth{\hfil\smash{\rlap{...}}}}
+%   so it projects past \linewidth without disturbing vertical spacing.
+\def\codep@emitmarginbackref#1{%
+  \vbox{%
+    \hbox to \linewidth{%
+      \hfil
+      \smash{%
+        \rlap{%
+          #1%
+        }%
+      }%
+    }%
+    \vskip\smallskipamount
+  }%
+}%
+
 % \codep@rendermargin{reflist}
 %   Render "Used in X, Y." in the right margin (past \linewidth).
 %   Uses \rlap so it does not conflict with atom numbers in the left margin.
 %   Used for margin backref-style on theorem atoms (non-paragraph).
 \newcommand*{\codep@rendermargin}[1]{%
   \nobreak
-  \vbox{%
-    \hbox to \linewidth{%
-      \hfil
-      \smash{%
-        \rlap{%
-          \kern0.5em
-          {\codep@backreffont\codep@backrefprefix
-           \codep@backreflabel\space
-           \codep@truncatereflist{#1}.}%
-        }%
-      }%
-    }%
-    \vskip\smallskipamount
+  \codep@emitmarginbackref{%
+    \kern0.5em
+    {\codep@backreffont\codep@backrefprefix
+     \codep@backreflabel\space
+     \codep@truncatereflist{#1}.}%
   }%
 }
 
@@ -1852,19 +1898,11 @@
     % here triggers the para/begin hook recursively (LaTeX 2022+
     % para hooks bypass \everypar).  Long reflists are handled
     % by \codep@truncatereflist instead of line-wrapping.
-    \vbox{%
-      \hbox to \linewidth{%
-        \hfil
-        \smash{%
-          \rlap{%
-            \kern0.5em
-            {\codep@backreffont\codep@backrefprefix
-             \codep@backreflabel\space
-             \codep@truncatereflist{#1}.}%
-          }%
-        }%
-      }%
-      \vskip\smallskipamount
+    \codep@emitmarginbackref{%
+      \kern0.5em
+      {\codep@backreffont\codep@backrefprefix
+       \codep@backreflabel\space
+       \codep@truncatereflist{#1}.}%
     }%
   \fi\fi
 }
@@ -2113,6 +2151,67 @@
   \codep@conceptnames
 }
 
+%% --- Section 9a.10: Shared wrapper-pipeline helper ---
+
+% \codep@definetrackedcmd{name}{cmd}{kind}{key2}{val2}
+%   Common pipeline shared by \codepnewcommand and
+%   \codepNewDocumentCommand.  The declaration step (step 1) is
+%   handled by the caller before invoking this helper.
+%   name -- bare command name string (e.g. "Hom")
+%   cmd  -- the command token (e.g. \Hom), already declared by caller
+%   kind -- kind string for the .cdp cmddef record
+%   key2 -- second .cdp attribute key (arity / argspec)
+%   val2 -- second .cdp attribute value (pre-expanded by caller)
+%
+%   Steps performed:
+%   2. Save original body to codep@body@<name>.
+%   3. Define star/nostar dispatch helpers codep@star@<name> and
+%      codep@nostar@<name> via \edef.
+%   4. Redefine \cmd as a \protected\edef \@ifstar dispatcher.
+%   5. Emit three deferred .cdp cmddef records: kind, key2/val2, src.
+\def\codep@definetrackedcmd#1#2#3#4#5{%
+  % 2. Save the original definition.
+  \expandafter\let
+    \csname codep@body@#1\endcsname#2%
+  % 3. Define star/nostar dispatch targets.
+  \expandafter\edef
+    \csname codep@star@#1\endcsname{%
+      \noexpand\codep@emit@def{#1}%
+      \expandafter\noexpand
+        \csname codep@body@#1\endcsname}%
+  \expandafter\edef
+    \csname codep@nostar@#1\endcsname{%
+      \noexpand\codep@emit@use{#1}%
+      \expandafter\noexpand
+        \csname codep@body@#1\endcsname}%
+  % 4. Redefine the command with star dispatch via \@ifstar.
+  %    \protected\edef makes the wrapper robust so it survives
+  %    expansion in moving arguments (\section titles, captions,
+  %    .aux writes) without premature \@ifstar expansion.
+  \protected\edef#2{%
+    \noexpand\@ifstar
+      \expandafter\noexpand
+        \csname codep@star@#1\endcsname
+      \expandafter\noexpand
+        \csname codep@nostar@#1\endcsname}%
+  % 5. Emit global declaration records (deferred: the .cdp
+  %    stream may not be open yet during the preamble).
+  %    Records are pre-expanded via \edef so transient values
+  %    (#1, \inputlineno) are captured eagerly.
+  \edef\codep@tmp@rec{%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{#1}%
+      {kind}{#3}}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{#1}%
+      {#4}{#5}}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{#1}%
+      {src}{\jobname.tex:\the\inputlineno:1}}%
+  }%
+  \codep@tmp@rec
+}
+
 \AtEndDocument{%
   \codep@conceptwarnscan
 }
@@ -2295,48 +2394,9 @@
   % 1. Define the command via \newcommand (handles all #-
   %    numbering naturally).
   \newcommand#1[#2]{#3}%
-  % 2. Save the original definition.
-  \expandafter\let
-    \csname codep@body@\codep@tmp@name\endcsname#1%
-  % 3. Define star/nostar dispatch targets first (the \edef
-  %    expands \csname...\endcsname at def-time, capturing the
-  %    resolved control sequences).
-  \expandafter\edef
-    \csname codep@star@\codep@tmp@name\endcsname{%
-      \noexpand\codep@emit@def{\codep@tmp@name}%
-      \expandafter\noexpand
-        \csname codep@body@\codep@tmp@name\endcsname}%
-  \expandafter\edef
-    \csname codep@nostar@\codep@tmp@name\endcsname{%
-      \noexpand\codep@emit@use{\codep@tmp@name}%
-      \expandafter\noexpand
-        \csname codep@body@\codep@tmp@name\endcsname}%
-  % 4. Redefine the command with star dispatch via \@ifstar.
-  %    \protected\edef makes the wrapper robust so it survives
-  %    expansion in moving arguments (\section titles, captions,
-  %    .aux writes) without premature \@ifstar expansion.
-  \protected\edef#1{%
-    \noexpand\@ifstar
-      \expandafter\noexpand
-        \csname codep@star@\codep@tmp@name\endcsname
-      \expandafter\noexpand
-        \csname codep@nostar@\codep@tmp@name\endcsname}%
-  % 5. Emit global declaration records (deferred: the .cdp
-  %    stream may not be open yet during the preamble).
-  %    Records are pre-expanded via \edef so transient values
-  %    (\codep@tmp@name, \inputlineno) are captured eagerly.
-  \edef\codep@tmp@rec{%
-    \noexpand\codep@cdpwrite@deferred{%
-      \string\codep@cdp@cmddef{\codep@tmp@name}%
-      {kind}{newcommand}}%
-    \noexpand\codep@cdpwrite@deferred{%
-      \string\codep@cdp@cmddef{\codep@tmp@name}%
-      {arity}{\number#2}}%
-    \noexpand\codep@cdpwrite@deferred{%
-      \string\codep@cdp@cmddef{\codep@tmp@name}%
-      {src}{\jobname.tex:\the\inputlineno:1}}%
-  }%
-  \codep@tmp@rec
+  % 2-5. Shared pipeline: save body, build wrappers, emit .cdp.
+  \codep@definetrackedcmd{\codep@tmp@name}{#1}%
+    {newcommand}{arity}{\number#2}%
 }
 % Deprecated alias — old documents using \codepNewCommand still work.
 \let\codepNewCommand\codepnewcommand
@@ -2368,40 +2428,9 @@
   % 1. Define the command via \NewDocumentCommand (handles
   %    all xparse arg types and #-numbering naturally).
   \NewDocumentCommand{#1}{#2}{#3}%
-  % 2. Save the original xparse definition.
-  \expandafter\let
-    \csname codep@body@\codep@tmp@name\endcsname#1%
-  % 3. Define star/nostar dispatch targets.
-  \expandafter\edef
-    \csname codep@star@\codep@tmp@name\endcsname{%
-      \noexpand\codep@emit@def{\codep@tmp@name}%
-      \expandafter\noexpand
-        \csname codep@body@\codep@tmp@name\endcsname}%
-  \expandafter\edef
-    \csname codep@nostar@\codep@tmp@name\endcsname{%
-      \noexpand\codep@emit@use{\codep@tmp@name}%
-      \expandafter\noexpand
-        \csname codep@body@\codep@tmp@name\endcsname}%
-  % 4. Redefine with star dispatch (\protected = robust).
-  \protected\edef#1{%
-    \noexpand\@ifstar
-      \expandafter\noexpand
-        \csname codep@star@\codep@tmp@name\endcsname
-      \expandafter\noexpand
-        \csname codep@nostar@\codep@tmp@name\endcsname}%
-  % 5. Emit global declaration records (deferred, pre-expanded).
-  \edef\codep@tmp@rec{%
-    \noexpand\codep@cdpwrite@deferred{%
-      \string\codep@cdp@cmddef{\codep@tmp@name}%
-      {kind}{NewDocumentCommand}}%
-    \noexpand\codep@cdpwrite@deferred{%
-      \string\codep@cdp@cmddef{\codep@tmp@name}%
-      {argspec}{#2}}%
-    \noexpand\codep@cdpwrite@deferred{%
-      \string\codep@cdp@cmddef{\codep@tmp@name}%
-      {src}{\jobname.tex:\the\inputlineno:1}}%
-  }%
-  \codep@tmp@rec
+  % 2-5. Shared pipeline: save body, build wrappers, emit .cdp.
+  \codep@definetrackedcmd{\codep@tmp@name}{#1}%
+    {NewDocumentCommand}{argspec}{#2}%
 }
 
 % \codeptrackeq{envname}
