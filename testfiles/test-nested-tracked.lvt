@@ -1,1 +1,55 @@
-unit/test-nested-tracked.lvt
+%% TEST-NAME: test-nested-tracked
+%% TEST-WHAT: A tracked env nested inside another tracked env must NOT
+%%            produce its own atom record.  Only the outermost tracked
+%%            env gets an SBL atom entry; the inner env is suppressed
+%%            with a warning.  A counter gap is expected and acceptable.
+%% TEST-SOURCE: BLOCKER #2 (nested tracked envs produce spurious atoms)
+%% TEST-SECTION: DESIGN.md §Theorem environment numbering
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-CONTAINS: Nested tracked environment
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{corollary}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.4}{paragraph} = 1
+%% TEST-ATOMS-MIN: 3
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% Regression test for BLOCKER #2: when a tracked environment (corollary)
+%% is nested inside another tracked environment (theorem), the inner
+%% env must not create its own atom record or consume an atom number in
+%% the SBL.  The counter gap (1.2 -> 1.4, skipping 1.3) is expected
+%% because amsthm's \refstepcounter fires for the inner env regardless.
+%%
+%% NOTE: uses "theorem" as the base counter because the current code
+%% hardcodes \c@theorem in the restatable guard (bug #1, tracked
+%% separately).  Once that bug is fixed this test should also work
+%% with non-theorem base counters.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\usepackage{codependent}
+\codeptrack{theorem,corollary}
+
+\begin{document}
+\START
+
+\section{Nesting}
+
+First paragraph. Atom 1.1.
+
+\begin{theorem}
+  Outer theorem. Atom 1.2.
+  \begin{corollary}
+    Inner corollary — nested, should NOT be its own atom.
+  \end{corollary}
+\end{theorem}
+
+Second paragraph. Atom 1.4 (1.3 consumed by inner counter step).
+
+\END
+\end{document}

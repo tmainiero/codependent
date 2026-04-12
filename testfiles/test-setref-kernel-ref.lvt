@@ -1,1 +1,41 @@
-unit/test-setref-kernel-ref.lvt
+%% TEST-NAME: test-setref-kernel-ref
+%% TEST-WHAT: Verify plain \ref{thm:A} produces a \codep@atomref edge
+%%            via the kernel \@setref patch site.
+%% TEST-SOURCE: DESIGN.md §8a.0 patch site 1 (kernel \@setref)
+%% TEST-SECTION: DESIGN.md §8a.0 Reference interception
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:A}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% Baseline regression for the kernel \@setref patch site. Plain
+%% \ref goes through latex.ltx's \@setref, which is the simplest
+%% of the three reference interception points. If this test fails
+%% the whole back-reference graph is dead; check the \let
+%% \codep@orig@setref\@setref wrap in Section 8a.0.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Kernel ref test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}
+  By \ref{thm:A} the conclusion follows.
+\end{theorem}
+
+\END
+\end{document}

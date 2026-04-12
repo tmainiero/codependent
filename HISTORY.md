@@ -646,7 +646,7 @@ All zero expansion overhead, 75/75 pass throughout.
 
 **Sidecar rename** (`f56f4a2`). File extension `.sbl` → `.cdp`.
 Test directives `TEST-SBL-*` → `TEST-CDP-*`. Internal macro names
-`\codep@sbl@*` kept (rename to `\codep@cdp@*` tracked as open item).
+`\codep@sbl@*` kept initially (renamed to `\codep@cdp@*` in v1.1-renames).
 
 ### v1.1-bugs — Bug fixes and feature additions (2026-04-11)
 
@@ -666,17 +666,17 @@ Use for proofs far from their theorem.
 3. Phantom paragraph 2.6 — standalone proof creates atom then
    `\codepproofof` switches identity; phantom atom persists in graph
 
-**Design decisions made (pending implementation):**
-- Rename `backref-style=block` → `below` (user-facing option)
-- Default `backref-style` → `inline` (currently `block`/`below`)
-- Rename `\codep@renderinline` → `\codep@renderbackref`
-- Rename `\codep@renderdeferred` → `\codep@renderbackref@para`
-- Split integ-full-stack into integ-full-stack-block + integ-full-stack-inline
+**Design decisions implemented:**
+- Renamed `backref-style=block` → `below` (user-facing option)
+- Changed default `backref-style` → `inline`
+- Renamed `\codep@renderinline` → `\codep@renderbackref`
+- Renamed `\codep@renderdeferred` → `\codep@renderbackref@para`
+- Split integ-full-stack into integ-full-stack (inline) + integ-full-stack-below
 - Internal macro rename `\codep@sbl@*` → `\codep@cdp@*`
 
 ### Failed approaches (v1.1-dev + v1.1-bugs session additions)
 
-12. **`\nobreak` inside `\codep@renderinline` for orphan prevention**
+12. **`\nobreak` inside `\codep@renderbackref` for orphan prevention**
     (v1.1-bugs). The `\nobreak` and `\penalty9999` landed in horizontal
     mode (after `\leavevmode`), so they couldn't prevent vertical page
     breaks. The breakpoint is the theorem's post-spacing glue from

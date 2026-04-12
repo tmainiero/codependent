@@ -1,1 +1,45 @@
-unit/test-section-koma.lvt
+%% TEST-NAME: test-section-koma
+%% TEST-WHAT: Verify a \section{Foo} heading in a KOMA-Script scrbook
+%%            document is NOT numbered as an atom (the heading paragraph
+%%            should be suppressed; only content paragraphs that follow
+%%            get atom numbers).
+%% TEST-SOURCE: REVIEW_E #5 (BLOCKER), REVIEW_F R1 (refuted, KOMA OK)
+%% TEST-SECTION: DESIGN.md §8a.6.i Sectioning hooks
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-PACKAGES: scrbook,amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% The original v0.1 design wrapped \@startsection. KOMA-Script
+%% replaces \@startsection with \scr@startsection at scrbook.cls
+%% line 3506+, so the wrapper was a no-op under KOMA. The fix
+%% in §8a.6.i uses LaTeX 2021+ generic command hooks
+%% (cmd/section/before, cmd/chapter/before, etc.) which fire
+%% BEFORE any user-level \section redefinition and catch KOMA's
+%% replacement.
+%%
+%% Without the fix: the "Section content" paragraph below would
+%% have a margin atom number on the heading line itself.
+
+\documentclass{scrbook}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\chapter{Test chapter}
+
+\section{Test section}
+
+Section content paragraph. Only this paragraph should receive
+an atom number; the section heading "Test section" itself must
+NOT be numbered.
+
+\END
+\end{document}

@@ -13,13 +13,13 @@
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: \\cref@getlabel|\\cref |\\Cref
 %% TEST-LOG-NOT: Package codependent Warning(?!.*Nested tracked environment)
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-CONTAINS: \codep@sbl@atom
-%% TEST-CDP-CONTAINS: \codep@sbl@label
-%% TEST-CDP-CONTAINS: \codep@sbl@def
-%% TEST-CDP-CONTAINS: \codep@sbl@use
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Met}{kind}{newcommand}
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Met}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-CDP-CONTAINS: \codep@cdp@def
+%% TEST-CDP-CONTAINS: \codep@cdp@use
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Met}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Met}{arity}{2}
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-AUX-CONTAINS: \codep@concept{Met}
 %% TEST-ATOMS-MIN: 4

@@ -1,1 +1,50 @@
-unit/test-newdoccommand-tracking.lvt
+%% TEST-NAME: test-newdoccommand-tracking
+%% TEST-WHAT: Verify \codepNewDocumentCommand{\Cite}{s o m}{...} emits
+%%            the expected \codep@cdp@cmddef records (kind=NewDocumentCommand,
+%%            argspec, src) and that the defined \Cite command works with
+%%            xparse-style argument variants (star, optional, mandatory).
+%% TEST-SOURCE: DESIGN.md §9a User API: \codepNewDocumentCommand
+%% TEST-SECTION: DESIGN.md §9a User API
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Cite}{kind}{NewDocumentCommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Cite}{argspec}{s o m}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Cite}{src}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% Parallel test to test-newcommand-tracking but for the
+%% \codepNewDocumentCommand variant. The schema differs in
+%% one record: instead of `arity` (integer), the cmddef
+%% records carry `argspec` (xparse spec string verbatim).
+%%
+%% The defined command must support all xparse argument
+%% types from the spec ("s o m" = star, optional, mandatory)
+%% via \IfBooleanTF and \IfValueTF inside the body. Each
+%% invocation inside an atom must emit \codep@cdp@use.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\codepNewDocumentCommand{\Cite}{s o m}{%
+  \IfBooleanTF{#1}%
+    {[\textbf{#3}\IfValueT{#2}{, #2}]}%
+    {[#3\IfValueT{#2}{, #2}]}%
+}
+
+\begin{document}
+\START
+
+\section{Test}
+
+A paragraph with \Cite{Lurie2009},
+\Cite[p. 12]{Lurie2009}, and
+\Cite*{Lurie2009}.  Each invocation should emit
+sbl use records to the sidecar.
+
+\END
+\end{document}

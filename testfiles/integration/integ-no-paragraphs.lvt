@@ -7,16 +7,16 @@
 %% TEST-SECTION: DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-CONTAINS: \codep@sbl@version{1}
-%% TEST-CDP-CONTAINS: \codep@sbl@atom
-%% TEST-CDP-CONTAINS: \codep@sbl@def
-%% TEST-CDP-CONTAINS: \codep@sbl@use
-%% TEST-CDP-CONTAINS: \codep@sbl@label
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Mod}{kind}{newcommand}
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Mod}{arity}{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-CDP-CONTAINS: \codep@cdp@def
+%% TEST-CDP-CONTAINS: \codep@cdp@use
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Mod}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Mod}{arity}{1}
 %% No paragraph-type atoms should appear in the sidecar
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{}{para}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{}{para}
 %% Theorem and equation backrefs must still be generated
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-AUX-CONTAINS: \codep@concept{Mod}
@@ -33,12 +33,12 @@
 %%
 %% Key invariants under test:
 %%   1. paragraphs=off suppresses bare-paragraph atom creation
-%%      (no \codep@sbl@atom{...}{para} in .cdp)
+%%      (no \codep@cdp@atom{...}{para} in .cdp)
 %%   2. Theorem environments still get atom numbers and backrefs
 %%   3. Equation tracking (Track 1) still functions even though
 %%      bare-paragraph atoms are absent
 %%   4. \codepnewcommand concept tracking still records def/use sites
-%%      (starred form at definition site emits \codep@sbl@def)
+%%      (starred form at definition site emits \codep@cdp@def)
 %%   5. Cross-section backrefs still work (§3 → §1, §3 → §2)
 %%
 %% Mathematical content: linear algebra (modules, maps, spectral theory).

@@ -612,7 +612,7 @@ back-ref data exists, the `.sty` appends
 
 rendered in `\small\sffamily`.  Each number is a hyperlink
 when `hyperref` is loaded.  The rendering is performed by
-`\codep@renderinline` (currently present in `codependent.sty`
+`\codep@renderbackref` (currently present in `codependent.sty`
 Section 8).  The only change required by the port is the
 *source* of the pending list: instead of being populated
 from `.sbr`-file data, it is populated from the csname
@@ -691,7 +691,7 @@ LaTeX rerun cycle:
    target nodes (see Section 8a.6 for the edit to
    `\codep@queuebackref` that triggers this collapse); the
    `\codep@flushbackref` hook then reads that csname and
-   the existing `\codep@renderinline` prints "Used in X, Y."
+   the existing `\codep@renderbackref` prints "Used in X, Y."
 
 The persistence layer is LaTeX's `.aux`; no `.sbr` file is
 involved.  Graph inversion runs once per pdflatex pass, in
@@ -748,7 +748,7 @@ Pass 2 (inversion + render):
     -> reads \csname codep@br@N \endcsname into
        \codep@pendingbr
   para/end (or \AtEndEnvironment)
-    -> \codep@flushbackref -> \codep@renderinline
+    -> \codep@flushbackref -> \codep@renderbackref
        -> typesets "Used in X, Y."
     -> \let\codep@currentatom\@empty
 ```
@@ -1489,7 +1489,7 @@ in place:
 #### Cross-cutting consequences
 
 Every site that emits a `.cdp` record (Section 9a's
-`\codep@sblwrite@atom` helper) also guards on
+`\codep@cdpwrite@atom` helper) also guards on
 `\codep@currentatom`.  Implementing the clear at
 atom-end is therefore a prerequisite for both back-ref
 correctness (Section 8a) and `.cdp` correctness
@@ -1540,7 +1540,7 @@ The four bugs documented in REVIEW_E Section R:
   detects this state and skips the entire hook body on the
   restate branch, so no spurious atom number gets associated
   with the restated theorem and no duplicate
-  `\codep@sbl@atom` record is emitted.  (Note: this is a
+  `\codep@cdp@atom` record is emitted.  (Note: this is a
   separate concern from §8a.5.0's hook-timing fix; the two
   interact but address different defects.)
 - **R-2.** amsthm's `\refstepcounter{theorem}` advances
@@ -1549,7 +1549,7 @@ The four bugs documented in REVIEW_E Section R:
   still calls `\edef\codep@currentatom{\theatom}` which
   confirms the R-1 wrong-number attribution.
 - **R-3.** The `.cdp` writer emits a duplicate
-  `\codep@sbl@atom{<previous-real-atom>}{theorem}` with
+  `\codep@cdp@atom{<previous-real-atom>}{theorem}` with
   a conflicting type — the CLI cannot disambiguate.
 - **R-4.** `\label` inside the restated body is gobbled
   by `thm-restate`'s `\thmt@gobble@label`, and when
@@ -1582,7 +1582,7 @@ overhead:
     %% Restate occurrence (\c@theorem re-let to dummy):
     %% suppress the whole hook body to avoid
     %%   (a) reading the wrong \theatom,
-    %%   (b) writing a duplicate \codep@sbl@atom record,
+    %%   (b) writing a duplicate \codep@cdp@atom record,
     %%   (c) queuing back-refs against a stale atom number.
     %% Still bump \codep@nestlevel so inner paragraph
     %% numbering is suppressed inside the restated body
@@ -1668,7 +1668,7 @@ stack and clear to `\@empty`.  On restate end, pop from
 the stack.  The enclosing paragraph's currentatom is
 restored verbatim, so nothing outside the restated body
 is perturbed.  Inside the restated body, every atom-scoped
-emission helper (`\codep@sblwrite@atom`, the
+emission helper (`\codep@cdpwrite@atom`, the
 `\Hom`/`\Hom*` dispatcher, the `\label` wrap, the
 `\codeptag` macro) guards on
 `\ifx\codep@currentatom\@empty` and silently drops — the
@@ -1747,11 +1747,11 @@ uses of `\Hom` in the intro correctly forward-resolve (at
 pass 2 via the concept -> atom map) to the main-body
 declaration atom.
 
-**Effect on `\codep@sblwrite@atom` generally.**  Any
-`.cdp` record routed through `\codep@sblwrite@atom` —
+**Effect on `\codep@cdpwrite@atom` generally.**  Any
+`.cdp` record routed through `\codep@cdpwrite@atom` —
 not just the concept machinery — is dropped inside a
-restated body.  `\codep@sbl@label`, `\codep@sbl@use`,
-`\codep@sbl@tag`, and a hypothetical future atom-scoped
+restated body.  `\codep@cdp@label`, `\codep@cdp@use`,
+`\codep@cdp@tag`, and a hypothetical future atom-scoped
 record all become no-ops on the restate branch.  This is
 the intended semantics: the restate is a visual
 rerender, not a semantic re-declaration.
@@ -1778,7 +1778,7 @@ A recap follows.  % stray paragraph to advance atom ctr
 
 Assertions the fixture must verify:
 
-- `\codep@sbl@atom{<N>}{theorem}` for `thm:A` appears
+- `\codep@cdp@atom{<N>}{theorem}` for `thm:A` appears
   **exactly once** in the `.cdp` (the original
   occurrence), never twice.
 - The display number printed for `thm:A` on the first
@@ -1855,7 +1855,7 @@ implementer may simplify to a single unconditional
 
 Unchanged body.  The macro still reads `\codep@pendingbr`
 into a temp via `\the`, tests empty, and calls
-`\codep@renderinline`.  The token register is populated
+`\codep@renderbackref`.  The token register is populated
 from the collapsed display csname in 8a.6.a above, so the
 flush mechanism does not need to change.
 
@@ -2303,12 +2303,12 @@ variants of the command for the price of one
 declaration:
 
 - `\Hom{A}{B}` — normal use.  Typesets the body, emits
-  a `\codep@sbl@use` record and a `\codep@conceptref`
+  a `\codep@cdp@use` record and a `\codep@conceptref`
   aux record under the current atom.
 - `\Hom*{A}{B}` — defining-site marker.  Typesets the
   body IDENTICALLY to the unstarred form; the star is
   purely metadata saying "this atom is the defining
-  site for concept `Hom`".  Emits a `\codep@sbl@def`
+  site for concept `Hom`".  Emits a `\codep@cdp@def`
   record and a `\codep@concept` aux record.
 
 Exactly ONE `\Hom*` call per defined concept is
@@ -2355,9 +2355,9 @@ Each sidecar serves a different consumer:
   `.aux` concept records exist solely for hyperlink
   resolution.
 - **`.cdp`** (read by the semantic CLI, Layer 2).  One
-  new record type (`\codep@sbl@def`) gives the CLI
+  new record type (`\codep@cdp@def`) gives the CLI
   source-location-grounded concept def sites; the
-  existing `\codep@sbl@use` record is reused for
+  existing `\codep@cdp@use` record is reused for
   non-star concept uses.  The CLI can build a richer
   concept graph with source locations, JSON exports,
   dot renderings, and whatever else Layer 2 wants to
@@ -2499,28 +2499,28 @@ display path.
 One new record type, plus reuse of an existing one.
 
 ```
-\codep@sbl@def{<atom>}{Hom}     % NEW: emitted by \Hom*
-\codep@sbl@use{<atom>}{Hom}     % EXISTING: emitted by \Hom
+\codep@cdp@def{<atom>}{Hom}     % NEW: emitted by \Hom*
+\codep@cdp@use{<atom>}{Hom}     % EXISTING: emitted by \Hom
 ```
 
-`\codep@sbl@def` is a new record added to the §9a
+`\codep@cdp@def` is a new record added to the §9a
 schema table.  It is atom-scoped (routed through
-`\codep@sblwrite@atom`).  It has the same shape as
-`\codep@sbl@use` (two arguments: atom number, concept
+`\codep@cdpwrite@atom`).  It has the same shape as
+`\codep@cdp@use` (two arguments: atom number, concept
 name) but different semantics — `def` is the unique
 def site, `use` is any (non-star) use.
 
-The existing `\codep@sbl@use` record is **reused
+The existing `\codep@cdp@use` record is **reused
 verbatim** for non-star `\Hom` uses.  No schema change
 to `@use` itself; the CLI already parses it and builds
 per-command use lists.  What the CLI now additionally
-consumes is the `\codep@sbl@def` record, which lets
+consumes is the `\codep@cdp@def` record, which lets
 it mark the def-site atom specifically.  For any
 concept `C`, the CLI computes:
 
-- `def_site(C)` = the unique `\codep@sbl@def{_}{C}`
+- `def_site(C)` = the unique `\codep@cdp@def{_}{C}`
   record's atom number (or warning/error per below).
-- `use_sites(C)` = all `\codep@sbl@use{_}{C}` records'
+- `use_sites(C)` = all `\codep@cdp@use{_}{C}` records'
   atom numbers.
 
 This gives a per-concept def/use split without any new
@@ -2533,11 +2533,11 @@ parsing machinery beyond the one-line addition of the
    definition environment.  At emit time,
    `\codep@emit@def` writes
    `\codep@concept{Hom}{<def-atom>}` to the current
-   `.aux` file and `\codep@sbl@def{<def-atom>}{Hom}`
+   `.aux` file and `\codep@cdp@def{<def-atom>}{Hom}`
    to the `.cdp`.  User's `\Hom` uses (intro and
    later) each fire `\codep@emit@use`, which writes
    `\codep@conceptref{<use-atom>}{Hom}` to aux and
-   `\codep@sbl@use{<use-atom>}{Hom}` to sbl.  Pass 1
+   `\codep@cdp@use{<use-atom>}{Hom}` to sbl.  Pass 1
    finishes with aux containing all these records.
 2. **Pass 2 preamble.** `codependent.sty` is loaded.  The
    `\providecommand*{\codep@concept}[2]{}` defaults
@@ -3076,7 +3076,7 @@ possible LPPL dual-license courtesy.
 
 ### Problem
 
-LaTeXML renders `\codep@renderinline`'s
+LaTeXML renders `\codep@renderbackref`'s
 `\rightline{\small\sffamily Used in X, Y.}` as
 presentational HTML with no semantic class — typically a
 generic `<ltx:text>` wrapper that loses the "this is a
@@ -3103,7 +3103,7 @@ emit presentational markup.
 Ship a **LaTeXML binding file** `codependent.ltxml` alongside
 `codependent.sty` in the CTAN package.  The binding is written
 in Perl against the LaTeXML `Package` API and overrides
-exactly two rendering macros — `\codep@renderinline` and
+exactly two rendering macros — `\codep@renderbackref` and
 `\codep@emitmargin` — to emit semantic HTML spans with
 stable class names.  Users of pdflatex, lualatex, or
 xelatex see no change; only the LaTeXML processing
@@ -3155,10 +3155,10 @@ use LaTeXML::Package;
 
 # ---- "Used in X, Y." block ---------------------------------
 
-DefMacro('\codep@renderinline{}',
-  '\lxML@codep@renderinline{#1}');
+DefMacro('\codep@renderbackref{}',
+  '\lxML@codep@renderbackref{#1}');
 
-DefConstructor('\lxML@codep@renderinline{}',
+DefConstructor('\lxML@codep@renderbackref{}',
     "<ltx:text class='codependent-usedby'>"
   . "<ltx:text class='codependent-usedby-label'>Used in </ltx:text>"
   . "<ltx:text class='codependent-usedby-list'>#1</ltx:text>"
@@ -3206,7 +3206,7 @@ via the CSS selector `.codependent-usedby-list > ltx:ref`.
 finding #12).**  An explicit per-anchor class is
 implementable via a scoped `\hyperlink` override in
 `codependent.ltxml`.  The override is gated on a state flag
-that `\lxML@codep@renderinline` raises on entry and
+that `\lxML@codep@renderbackref` raises on entry and
 clears on exit, so it is active only inside a "Used in"
 list and harmless to other `\hyperlink` uses elsewhere in
 the document:
@@ -3224,9 +3224,9 @@ DefPrimitive('\codep@usedby@begin', sub {
 DefPrimitive('\codep@usedby@end', sub {
   AssignValue('codep@usedby@active' => 0, 'global'); });
 
-# Wrap the renderinline DefConstructor so the begin/end
+# Wrap the renderbackref DefConstructor so the begin/end
 # fire around the list.
-DefConstructor('\lxML@codep@renderinline {}',
+DefConstructor('\lxML@codep@renderbackref {}',
   "<ltx:text class='codependent-usedby'>"
   . "<ltx:text class='codependent-usedby-label'>Used in </ltx:text>"
   . "<ltx:text class='codependent-usedby-list'>"
@@ -3356,7 +3356,7 @@ semantic tools.
 `.cdp` does **not** duplicate anything LaTeX already writes
 to `.aux`.  Labels are the one borderline case: the `.aux`
 has `\newlabel{key}{{num}...}` entries already, but the
-`.cdp` ALSO emits `\codep@sbl@label{num}{key}` records so
+`.cdp` ALSO emits `\codep@cdp@label{num}{key}` records so
 that the CLI can read atom-scoped cross-references without
 parsing `.aux` at all.  This redundancy is deliberate and
 documented.
@@ -3389,7 +3389,7 @@ not appear in backref lists.
 
 ### Record format
 
-Line-oriented.  One call to a `\codep@sbl@*` control
+Line-oriented.  One call to a `\codep@cdp@*` control
 sequence per line.  Keys are pure ASCII; values are UTF-8.
 Per **REVIEW_C finding #6**, the format is **flattened**:
 no comma-separated key-value blobs.  Each metadata pair is
@@ -3397,46 +3397,46 @@ a dedicated record with a fixed number of brace-delimited
 arguments.  The CLI parses N `{}`-groups and stops.
 
 ```
-\codep@sbl@version{1}
-\codep@sbl@source{main.tex}
-\codep@sbl@atom{1.2.3}{paragraph}
-\codep@sbl@meta{1.2.3}{src}{main.tex:42:1}
-\codep@sbl@atom{1.2.4}{Definition}
-\codep@sbl@meta{1.2.4}{src}{main.tex:48:1}
-\codep@sbl@meta{1.2.4}{env}{definition}
-\codep@sbl@label{1.2.4}{def:category}
-\codep@sbl@label{1.2.4}{def:cat-alias}
-\codep@sbl@tag{1.2.4}{uid}{cat:category}
-\codep@sbl@tag{1.2.4}{introduces}{Hom}
-\codep@sbl@tag{1.2.4}{introduces}{id}
-\codep@sbl@tag{1.2.4}{type}{Cat}
-\codep@sbl@use{1.2.5}{Hom}
-\codep@sbl@use{1.2.5}{circ}
-\codep@sbl@cmddef{Hom}{kind}{newcommand}
-\codep@sbl@cmddef{Hom}{arity}{2}
-\codep@sbl@cmddef{Hom}{src}{main.tex:15:1}
-\codep@sbl@cmddef{Cite}{kind}{NewDocumentCommand}
-\codep@sbl@cmddef{Cite}{argspec}{s o m}
-\codep@sbl@cmddef{Cite}{src}{main.tex:18:1}
-\codep@sbl@end{OK}
+\codep@cdp@version{1}
+\codep@cdp@source{main.tex}
+\codep@cdp@atom{1.2.3}{paragraph}
+\codep@cdp@meta{1.2.3}{src}{main.tex:42:1}
+\codep@cdp@atom{1.2.4}{Definition}
+\codep@cdp@meta{1.2.4}{src}{main.tex:48:1}
+\codep@cdp@meta{1.2.4}{env}{definition}
+\codep@cdp@label{1.2.4}{def:category}
+\codep@cdp@label{1.2.4}{def:cat-alias}
+\codep@cdp@tag{1.2.4}{uid}{cat:category}
+\codep@cdp@tag{1.2.4}{introduces}{Hom}
+\codep@cdp@tag{1.2.4}{introduces}{id}
+\codep@cdp@tag{1.2.4}{type}{Cat}
+\codep@cdp@use{1.2.5}{Hom}
+\codep@cdp@use{1.2.5}{circ}
+\codep@cdp@cmddef{Hom}{kind}{newcommand}
+\codep@cdp@cmddef{Hom}{arity}{2}
+\codep@cdp@cmddef{Hom}{src}{main.tex:15:1}
+\codep@cdp@cmddef{Cite}{kind}{NewDocumentCommand}
+\codep@cdp@cmddef{Cite}{argspec}{s o m}
+\codep@cdp@cmddef{Cite}{src}{main.tex:18:1}
+\codep@cdp@end{OK}
 ```
 
 **Record types.**
 
 | Macro | Arity | Meaning |
 |---|---|---|
-| `\codep@sbl@version{v}` | 1 | File format version. Current: `1`. |
-| `\codep@sbl@source{file}` | 1 | Master source file name. |
-| `\codep@sbl@atom{num}{type}` | 2 | Atom begins. `type` is `paragraph`, `Definition`, `Theorem`, `proof`, etc. |
-| `\codep@sbl@meta{num}{k}{v}` | 3 | Per-atom metadata pair. Keys: `src` (file:line:col), `env`, `depth`. Extensible. |
-| `\codep@sbl@label{num}{key}` | 2 | Each `\label{key}` inside atom `num`. |
-| `\codep@sbl@tag{num}{kind}{value}` | 3 | User `\codeptag{kind}{value}` record. Free-form. |
-| `\codep@sbl@use{num}{cmd}` | 2 | Invocation of a `\codepnewcommand`/`\codepNewDocumentCommand`-wrapped command inside atom `num`. |
-| `\codep@sbl@cmddef{cmd}{k}{v}` | 3 | Command-definition metadata (one record per property). Keys: `kind` (always present, value `newcommand` or `NewDocumentCommand`), `arity` (integer, only when `kind=newcommand`), `argspec` (xparse string, only when `kind=NewDocumentCommand`), `src` (always present). NOT per-atom; global. |
-| `\codep@sbl@end{OK}` | 1 | Sentinel at `\AtEndDocument`. |
+| `\codep@cdp@version{v}` | 1 | File format version. Current: `1`. |
+| `\codep@cdp@source{file}` | 1 | Master source file name. |
+| `\codep@cdp@atom{num}{type}` | 2 | Atom begins. `type` is `paragraph`, `Definition`, `Theorem`, `proof`, etc. |
+| `\codep@cdp@meta{num}{k}{v}` | 3 | Per-atom metadata pair. Keys: `src` (file:line:col), `env`, `depth`. Extensible. |
+| `\codep@cdp@label{num}{key}` | 2 | Each `\label{key}` inside atom `num`. |
+| `\codep@cdp@tag{num}{kind}{value}` | 3 | User `\codeptag{kind}{value}` record. Free-form. |
+| `\codep@cdp@use{num}{cmd}` | 2 | Invocation of a `\codepnewcommand`/`\codepNewDocumentCommand`-wrapped command inside atom `num`. |
+| `\codep@cdp@cmddef{cmd}{k}{v}` | 3 | Command-definition metadata (one record per property). Keys: `kind` (always present, value `newcommand` or `NewDocumentCommand`), `arity` (integer, only when `kind=newcommand`), `argspec` (xparse string, only when `kind=NewDocumentCommand`), `src` (always present). NOT per-atom; global. |
+| `\codep@cdp@end{OK}` | 1 | Sentinel at `\AtEndDocument`. |
 
 **End marker** (per REVIEW_C finding #7).  The **last line**
-of a complete `.cdp` file is `\codep@sbl@end{OK}`,
+of a complete `.cdp` file is `\codep@cdp@end{OK}`,
 written from the `\AtEndDocument` hook.  Presence of this
 line is the CLI's test for "complete file"; absence means
 pdflatex was killed or crashed mid-run and the CLI must
@@ -3460,7 +3460,7 @@ fire in registration order, and there is no guarantee
 that `codependent.sty`'s hook runs before a user hook that
 emits an atom.  If the stream is opened at
 `\AtBeginDocument`, the first atom emitted from any
-earlier-registered user hook sees `\codep@sblwrite` as a
+earlier-registered user hook sees `\codep@cdpwrite` as a
 no-op and is silently dropped from the sidecar.
 
 At `\AtEndPreamble`, the preamble has finished but no
@@ -3470,13 +3470,13 @@ precedes every atom write.
 ```tex
 \AddToHook{begindocument/before}[codependent/sbl/open]{%
   \if@filesw
-    \newwrite\codep@sblout
-    \immediate\openout\codep@sblout=\jobname.cdp\relax
-    \global\booltrue{codep@sblopen}%
-    \immediate\write\codep@sblout{%
-      \string\codep@sbl@version{1}}%
-    \immediate\write\codep@sblout{%
-      \string\codep@sbl@source{\jobname.tex}}%
+    \newwrite\codep@cdpout
+    \immediate\openout\codep@cdpout=\jobname.cdp\relax
+    \global\booltrue{codep@cdpopen}%
+    \immediate\write\codep@cdpout{%
+      \string\codep@cdp@version{1}}%
+    \immediate\write\codep@cdpout{%
+      \string\codep@cdp@source{\jobname.tex}}%
   \fi
 }
 % The explicit ordering rule is declared once, centrally, in
@@ -3522,16 +3522,16 @@ biblatex releases; document for forward-compat.
 
 ### Close timing
 
-At `\AtEndDocument`: write the `\codep@sbl@end{OK}`
+At `\AtEndDocument`: write the `\codep@cdp@end{OK}`
 sentinel, then `\closeout` the stream.
 
 ```tex
 \AtEndDocument{%
-  \ifbool{codep@sblopen}{%
-    \immediate\write\codep@sblout{%
-      \string\codep@sbl@end{OK}}%
-    \immediate\closeout\codep@sblout
-    \global\boolfalse{codep@sblopen}%
+  \ifbool{codep@cdpopen}{%
+    \immediate\write\codep@cdpout{%
+      \string\codep@cdp@end{OK}}%
+    \immediate\closeout\codep@cdpout
+    \global\boolfalse{codep@cdpopen}%
   }{}%
 }
 ```
@@ -3544,7 +3544,7 @@ rejects the file on the next analysis run.
 
 At each hook site in `codependent.sty`, the following records
 are written.  All calls go through the guarded helper
-`\codep@sblwrite@atom` (see "Guard pattern" below), which
+`\codep@cdpwrite@atom` (see "Guard pattern" below), which
 checks `\codep@currentatom` before emitting atom-scoped
 records.
 
@@ -3552,22 +3552,22 @@ records.
 > pass `\theatom` (not the cached `\codep@currentatom`
 > sentinel) when the record's payload includes the atom
 > display number, e.g.
-> `\codep@sbl@atom{\theatom}{paragraph}`.  The
-> `\codep@sblwrite@atom` guard still uses
+> `\codep@cdp@atom{\theatom}{paragraph}`.  The
+> `\codep@cdpwrite@atom` guard still uses
 > `\ifx\codep@currentatom\@empty` to gate emission on "in
 > tracked atom" — only the *value* of the atom number is
 > read fresh from `\theatom` at emit time.
 
 | Hook site (in `codependent.sty`) | Records emitted |
 |---|---|
-| `\codep@hooktheorem`, `\AtBeginEnvironment{<env>}` after setting `\codep@currentatom` | `\codep@sbl@atom{num}{<env>}` + `\codep@sbl@meta{num}{env}{<env>}` + `\codep@sbl@meta{num}{src}{<file:line:col>}` |
-| `\codep@hookproof`, `\AtBeginEnvironment{proof}` standalone branch | `\codep@sbl@atom{num}{proof}` + `\codep@sbl@meta{num}{src}{...}` |
-| `\codep@installparahook`, normal paragraph branch after `\refstepcounter` | `\codep@sbl@atom{num}{paragraph}` + `\codep@sbl@meta{num}{src}{...}` |
-| `\label` wrap (new site; cleveref-aware, see "Label wrap: cleveref optional argument" below) | `\codep@sbl@label{num}{key}` — one per `\label` call inside a current atom |
-| `\codeptag{kind}{value}` | `\codep@sbl@tag{num}{kind}{value}` |
-| `\codepnewcommand{\cmd}[n]{...}` (definition time) | `\codep@sbl@cmddef{cmd}{kind}{newcommand}` + `\codep@sbl@cmddef{cmd}{arity}{n}` + `\codep@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
-| `\codepNewDocumentCommand{\cmd}{spec}{...}` (definition time) | `\codep@sbl@cmddef{cmd}{kind}{NewDocumentCommand}` + `\codep@sbl@cmddef{cmd}{argspec}{spec}` + `\codep@sbl@cmddef{cmd}{src}{...}` — NOT atom-scoped |
-| Wrapped command (either kind), every invocation inside an atom | `\codep@sbl@use{num}{cmd}` |
+| `\codep@hooktheorem`, `\AtBeginEnvironment{<env>}` after setting `\codep@currentatom` | `\codep@cdp@atom{num}{<env>}` + `\codep@cdp@meta{num}{env}{<env>}` + `\codep@cdp@meta{num}{src}{<file:line:col>}` |
+| `\codep@hookproof`, `\AtBeginEnvironment{proof}` standalone branch | `\codep@cdp@atom{num}{proof}` + `\codep@cdp@meta{num}{src}{...}` |
+| `\codep@installparahook`, normal paragraph branch after `\refstepcounter` | `\codep@cdp@atom{num}{paragraph}` + `\codep@cdp@meta{num}{src}{...}` |
+| `\label` wrap (new site; cleveref-aware, see "Label wrap: cleveref optional argument" below) | `\codep@cdp@label{num}{key}` — one per `\label` call inside a current atom |
+| `\codeptag{kind}{value}` | `\codep@cdp@tag{num}{kind}{value}` |
+| `\codepnewcommand{\cmd}[n]{...}` (definition time) | `\codep@cdp@cmddef{cmd}{kind}{newcommand}` + `\codep@cdp@cmddef{cmd}{arity}{n}` + `\codep@cdp@cmddef{cmd}{src}{...}` — NOT atom-scoped (global record) |
+| `\codepNewDocumentCommand{\cmd}{spec}{...}` (definition time) | `\codep@cdp@cmddef{cmd}{kind}{NewDocumentCommand}` + `\codep@cdp@cmddef{cmd}{argspec}{spec}` + `\codep@cdp@cmddef{cmd}{src}{...}` — NOT atom-scoped |
+| Wrapped command (either kind), every invocation inside an atom | `\codep@cdp@use{num}{cmd}` |
 
 The `src` metadata is built from LaTeX's
 `\currfilename`, `\the\inputlineno`, and a column counter
@@ -3582,7 +3582,7 @@ writer; the `:0` suffix means "unknown column").
 > `\thmt@gobble@label` to accept one too when cleveref
 > is loaded.  A naive `\pretocmd{\label}{...}` swallows
 > the optional argument and either errors or emits a
-> corrupted `\codep@sbl@label{num}{[type]key}` record.
+> corrupted `\codep@cdp@label{num}{[type]key}` record.
 
 The label wrap must detect the optional argument.  The
 pattern uses `\@ifnextchar[` plus two helper macros,
@@ -3602,30 +3602,30 @@ present), not at package-load time:
     %% cleveref path: \label[type]{key}, where [type] is optional.
     \def\label{%
       \@ifnextchar[%]
-        \codep@sbl@label@withopt
-        \codep@sbl@label@noopt
+        \codep@cdp@label@withopt
+        \codep@cdp@label@noopt
     }%
   }{%
     %% No cleveref: \label{key} only.
     \def\label##1{%
-      \codep@sblwrite@atom{%
-        \string\codep@sbl@label
+      \codep@cdpwrite@atom{%
+        \string\codep@cdp@label
           {\codep@currentatom}{##1}}%
       \codep@orig@label{##1}%
     }%
   }%
 }
 
-\def\codep@sbl@label@withopt[#1]#2{%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@label
+\def\codep@cdp@label@withopt[#1]#2{%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@label
       {\codep@currentatom}{#2}}%
   \codep@orig@label[#1]{#2}%
 }
 
-\def\codep@sbl@label@noopt#1{%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@label
+\def\codep@cdp@label@noopt#1{%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@label
       {\codep@currentatom}{#1}}%
   \codep@orig@label{#1}%
 }
@@ -3651,7 +3651,7 @@ captured target — which is our dispatcher.  Our
 dispatcher's `\@ifnextchar[` then sees no bracket
 (cleveref already stripped it) and falls through to the
 no-optional-arg branch, emitting
-`\codep@sbl@label{num}{key}` with the correct mandatory
+`\codep@cdp@label{num}{key}` with the correct mandatory
 key and forwarding to the kernel `\label` via
 `\codep@orig@label`.
 
@@ -3700,7 +3700,7 @@ we install at `begindocument/before` and thm-restate
 dispatches its alias inside the restate branch at
 typeset time).  Under the `\restate`, `\label` is
 `\thmt@gobble@label`, not our wrapped version — so
-we do NOT emit a duplicate `\codep@sbl@label` record
+we do NOT emit a duplicate `\codep@cdp@label` record
 on the restate.  This is the correct behaviour
 (REVIEW_E Section R marks R-4 as "not actually a bug"
 for precisely this reason: the restate occurrence is
@@ -3728,7 +3728,7 @@ Later, \cref{thm:A} is referenced.
 
 Assertions:
 
-- `.cdp` contains `\codep@sbl@label{<N>}{thm:A}`
+- `.cdp` contains `\codep@cdp@label{<N>}{thm:A}`
   (KEY only, no brackets, no `[theorem]` prefix).
 - `.aux` contains both the kernel `\newlabel{thm:A}{...}`
   and cleveref's `\newlabel{thm:A@cref}{...}`.
@@ -3738,34 +3738,34 @@ Assertions:
 ### Guard pattern
 
 All emission points route through one of two helpers.
-Atom-scoped records (everything except `\codep@sbl@cmddef`)
-use `\codep@sblwrite@atom`, which drops the write if
+Atom-scoped records (everything except `\codep@cdp@cmddef`)
+use `\codep@cdpwrite@atom`, which drops the write if
 `\codep@currentatom` is empty:
 
 ```tex
-\newcommand*{\codep@sblwrite}[1]{%
-  \ifbool{codep@sblopen}{%
-    \immediate\write\codep@sblout{#1}%
+\newcommand*{\codep@cdpwrite}[1]{%
+  \ifbool{codep@cdpopen}{%
+    \immediate\write\codep@cdpout{#1}%
   }{%
     % Should be impossible once the file is opened at
     % begindocument/before.  Log once for debugging.
-    \codep@sblwrite@warnonce
+    \codep@cdpwrite@warnonce
   }%
 }
 
-\newcommand*{\codep@sblwrite@atom}[1]{%
+\newcommand*{\codep@cdpwrite@atom}[1]{%
   \ifx\codep@currentatom\@empty
     % Orphan: not inside an atom context.  Drop per
     % REVIEW_C finding #4.
   \else
-    \codep@sblwrite{#1}%
+    \codep@cdpwrite{#1}%
   \fi
 }
 ```
 
-Global records (`\codep@sbl@cmddef`) bypass the
-atom guard and go through `\codep@sblwrite` directly.
-The `\codep@sblwrite@warnonce` branch exists to catch
+Global records (`\codep@cdp@cmddef`) bypass the
+atom guard and go through `\codep@cdpwrite` directly.
+The `\codep@cdpwrite@warnonce` branch exists to catch
 the debugging nightmare REVIEW_C finding #5 calls out;
 under normal operation it should never fire because the
 stream is opened at `\AtEndPreamble`.
@@ -3776,14 +3776,14 @@ One new public command is added to the `.sty`'s user API:
 
 ```tex
 \newcommand*{\codeptag}[2]{%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@tag
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@tag
     {\codep@currentatom}{#1}{#2}}%
 }
 ```
 
 Usage: `\codeptag{uid}{cat:category}` inside a definition
-emits one `\codep@sbl@tag` record with the current atom's
+emits one `\codep@cdp@tag` record with the current atom's
 display number.  **It has no visible typesetting effect.**
 It is a pure sidecar channel for semantic metadata that
 does not belong in `.aux`.  Authors who do not use the
@@ -3887,18 +3887,18 @@ For `\codepnewcommand`, two global (not atom-scoped)
 `.cdp` records:
 
 ```tex
-\codep@sbl@cmddef{Hom}{kind}{newcommand}
-\codep@sbl@cmddef{Hom}{arity}{2}
-\codep@sbl@cmddef{Hom}{src}{main.tex:15:1}
+\codep@cdp@cmddef{Hom}{kind}{newcommand}
+\codep@cdp@cmddef{Hom}{arity}{2}
+\codep@cdp@cmddef{Hom}{src}{main.tex:15:1}
 ```
 
 For `\codepNewDocumentCommand`, the parallel set with
 `argspec` instead of `arity`:
 
 ```tex
-\codep@sbl@cmddef{Cat}{kind}{NewDocumentCommand}
-\codep@sbl@cmddef{Cat}{argspec}{O{}}
-\codep@sbl@cmddef{Cat}{src}{main.tex:18:1}
+\codep@cdp@cmddef{Cat}{kind}{NewDocumentCommand}
+\codep@cdp@cmddef{Cat}{argspec}{O{}}
+\codep@cdp@cmddef{Cat}{src}{main.tex:18:1}
 ```
 
 The `kind` record always comes first; the CLI's parser
@@ -3911,13 +3911,13 @@ Identical for both kinds.  The defined command is wrapped
 so every invocation inside an atom emits
 
 ```tex
-\codep@sbl@use{<current-atom>}{Hom}
+\codep@cdp@use{<current-atom>}{Hom}
 ```
 
-via `\codep@sblwrite@atom`.  The wrapper guards on
+via `\codep@cdpwrite@atom`.  The wrapper guards on
 `\ifx\codep@currentatom\@empty`: invocations OUTSIDE
 any atom (section heading, caption, untracked
-environment) emit **no** `\codep@sbl@use` record.
+environment) emit **no** `\codep@cdp@use` record.
 Rationale: such invocations cannot be attributed to any
 atom and the CLI has no useful inference to make from
 the orphaned record; the alternative of emitting a
@@ -3956,9 +3956,9 @@ Package options below.
 The wrapped command is defined via `\NewDocumentCommand`
 with an `s` (star) specifier prepended to the user's
 argspec.  At call time, `\IfBooleanTF` dispatches: the
-star branch emits a `\codep@sbl@def` record (and the
+star branch emits a `\codep@cdp@def` record (and the
 `\codep@concept` aux callback via §8a.9), the non-star
-branch emits a `\codep@sbl@use` record (and the
+branch emits a `\codep@cdp@use` record (and the
 `\codep@conceptref` aux callback).  Both branches
 typeset the same body.  Because the star occupies `#1`
 inside the wrapper, the user's own arguments are shifted
@@ -4010,12 +4010,12 @@ so on up to 9).
     \expandafter{\codep@tmp@name}{#1}%
     {\codep@build@argspec{#2}}{#3}%
   % 2. Emit the global declaration records (unchanged).
-  \codep@sblwrite{%
-    \string\codep@sbl@cmddef{\codep@tmp@name}{kind}{newcommand}}%
-  \codep@sblwrite{%
-    \string\codep@sbl@cmddef{\codep@tmp@name}{arity}{\number#2}}%
-  \codep@sblwrite{%
-    \string\codep@sbl@cmddef{\codep@tmp@name}{src}%
+  \codep@cdpwrite{%
+    \string\codep@cdp@cmddef{\codep@tmp@name}{kind}{newcommand}}%
+  \codep@cdpwrite{%
+    \string\codep@cdp@cmddef{\codep@tmp@name}{arity}{\number#2}}%
+  \codep@cdpwrite{%
+    \string\codep@cdp@cmddef{\codep@tmp@name}{src}%
     {\@currfilename:\the\inputlineno:1}}%
 }
 
@@ -4031,13 +4031,13 @@ so on up to 9).
     \expandafter{\codep@tmp@name}{#1}{#2}{#3}%
   % Global declaration records (argspec is the user's raw
   % spec, NOT including the injected star).
-  \codep@sblwrite{%
-    \string\codep@sbl@cmddef{\codep@tmp@name}{kind}%
+  \codep@cdpwrite{%
+    \string\codep@cdp@cmddef{\codep@tmp@name}{kind}%
     {NewDocumentCommand}}%
-  \codep@sblwrite{%
-    \string\codep@sbl@cmddef{\codep@tmp@name}{argspec}{#2}}%
-  \codep@sblwrite{%
-    \string\codep@sbl@cmddef{\codep@tmp@name}{src}%
+  \codep@cdpwrite{%
+    \string\codep@cdp@cmddef{\codep@tmp@name}{argspec}{#2}}%
+  \codep@cdpwrite{%
+    \string\codep@cdp@cmddef{\codep@tmp@name}{src}%
     {\@currfilename:\the\inputlineno:1}}%
 }
 
@@ -4097,8 +4097,8 @@ so on up to 9).
          \immediate\write\@auxout{%
            \string\codep@concept{#1}{\codep@currentatom}}%
        \fi
-       \codep@sblwrite@atom{%
-         \string\codep@sbl@def{\codep@currentatom}{#1}}%
+       \codep@cdpwrite@atom{%
+         \string\codep@cdp@def{\codep@currentatom}{#1}}%
       }%
       {\PackageError{codependent}%
         {\string\\#1* defined at atoms
@@ -4120,8 +4120,8 @@ so on up to 9).
       \immediate\write\@auxout{%
         \string\codep@conceptref{\codep@currentatom}{#1}}%
     \fi
-    \codep@sblwrite@atom{%
-      \string\codep@sbl@use{\codep@currentatom}{#1}}%
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@use{\codep@currentatom}{#1}}%
   \fi}
 ```
 
@@ -4170,8 +4170,8 @@ information; a future revision might wrap the macro at a
 later point in the lexer to capture columns, but this
 matches the precision LaTeX itself uses for warnings.
 
-The `\codep@sblwrite` calls (without `@atom`) bypass the
-currentatom guard because `\codep@sbl@cmddef` records
+The `\codep@cdpwrite` calls (without `@atom`) bypass the
+currentatom guard because `\codep@cdp@cmddef` records
 are global, not atom-scoped.  See the "Guard pattern"
 subsection above.
 
@@ -4213,7 +4213,7 @@ they fired".  Defer until needed.
 `.aux` has `\newlabel{key}{{num}...}` records that map
 labels to display numbers, and the `.sty`'s own
 `\codep@lblnum@<key>` csname already captures this.  The
-`.cdp` ALSO emits `\codep@sbl@label{num}{key}` because it
+`.cdp` ALSO emits `\codep@cdp@label{num}{key}` because it
 lets the CLI answer "what labels does atom 1.2.4 own?"
 directly from the sidecar, without joining `.aux`
 `\newlabel` entries against atom boundaries.  The

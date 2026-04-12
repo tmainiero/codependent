@@ -1,1 +1,114 @@
-integration/integ-ntheorem.lvt
+%% TEST-NAME: integ-ntheorem
+%% TEST-WHAT: Verify codependent works with ntheorem as the theorem backend
+%%            instead of amsthm.  ntheorem and amsthm are mutually exclusive;
+%%            this fixture loads ntheorem only.  Tests that \codeptrack wires
+%%            up correctly when theorem envs are defined via ntheorem's
+%%            \newtheorem, that "Used in" backrefs appear in the .aux, and
+%%            that no codependent errors are emitted.
+%%
+%%            Compatibility note: codependent's hook mechanism uses LaTeX
+%%            2021+ generic cmd/before hooks (\AddToHook{cmd/#1/before}),
+%%            which fire on \begin{<env>} regardless of which package defined
+%%            the environment.  The restatable guard
+%%            (\ifx\csname c@<base>\endcsname\c@atom) is not triggered without
+%%            thm-restate; it always passes, so ntheorem is compatible with
+%%            the core tracking path.  The proof adjacency code path is also
+%%            unaffected: ntheorem defines a proof environment internally.
+%%
+%% TEST-SOURCE: codependent.sty Section 6 (\codep@hooktheorem), DESIGN.md §8a
+%% TEST-SECTION: DESIGN.md §8a (integration)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Error
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,codependent
+%% TEST-RERUN: 2
+
+\documentclass{article}
+
+\usepackage{amsmath}
+
+%% ntheorem — mutually exclusive with amsthm; do NOT load both.
+%% The [amsmath] option lets ntheorem cooperate with amsmath display math.
+\usepackage[amsmath,hyperref]{ntheorem}
+
+\usepackage[hypertexnames=false]{hyperref}
+
+%% Theorem declarations using ntheorem's \newtheorem.
+%% ntheorem accepts the same \newtheorem syntax as amsthm for basic usage.
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+
+\usepackage{codependent}
+\codeptrack{theorem,lemma,definition}
+
+\numberwithin{equation}{section}
+
+\begin{document}
+\START
+
+%% =====================================================================
+%%  Section 1: Definitions and basic statements
+%% =====================================================================
+\section{Metric spaces}%
+\label{sec:metric}
+
+\begin{definition}\label{def:metric}
+  A \emph{metric space} is a pair $(X, d)$ where $X$ is a set and
+  $d \colon X \times X \to [0, \infty)$ satisfies:
+  \begin{enumerate}
+    \item $d(x, y) = 0 \iff x = y$,
+    \item $d(x, y) = d(y, x)$ for all $x, y \in X$,
+    \item $d(x, z) \le d(x, y) + d(y, z)$ for all $x, y, z \in X$.
+  \end{enumerate}
+\end{definition}
+
+\begin{theorem}\label{thm:closure}
+  Let $(X, d)$ be a metric space (\ref{def:metric}).
+  A subset $A \subseteq X$ is closed if and only if every convergent
+  sequence in $A$ has its limit in $A$.
+\end{theorem}
+
+\begin{lemma}\label{lem:open-balls}
+  In any metric space $(X, d)$, the collection of open balls
+  $B(x, r) = \{ y \in X : d(x, y) < r \}$ forms a basis for a topology.
+  This relies on Definition~\ref{def:metric}.
+\end{lemma}
+
+%% =====================================================================
+%%  Section 2: Applications with cross-section backrefs
+%% =====================================================================
+\section{Completeness}%
+\label{sec:complete}
+
+A sequence $(x_n)$ in a metric space $(X,d)$ from \ref{def:metric}
+is \emph{Cauchy} if for every $\varepsilon > 0$ there exists $N$ such that
+$d(x_m, x_n) < \varepsilon$ for all $m, n > N$.
+
+\begin{definition}\label{def:complete}
+  A metric space $(X, d)$ (see \ref{def:metric}) is \emph{complete}
+  if every Cauchy sequence converges.
+\end{definition}
+
+\begin{theorem}\label{thm:banach}
+  Let $f \colon X \to X$ be a contraction on a complete metric space
+  (\ref{def:complete}).  That is, suppose there exists $k \in [0,1)$
+  such that
+  \begin{equation}\label{eq:contraction}
+    d(f(x), f(y)) \le k \cdot d(x, y) \quad \text{for all } x,y \in X.
+  \end{equation}
+  Then $f$ has a unique fixed point.
+\end{theorem}
+
+A paragraph referencing back to the earlier material:
+the Banach fixed-point theorem (\ref{thm:banach}) together with the basis
+of open balls (\ref{lem:open-balls}) underpins the local existence theory
+of ordinary differential equations.
+
+\END
+\end{document}

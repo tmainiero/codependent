@@ -8,11 +8,11 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-CONTAINS: Nested tracked environment
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-COUNT: \codep@sbl@atom{1.1}{paragraph} = 1
-%% TEST-CDP-COUNT: \codep@sbl@atom{1.2}{theorem} = 1
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{1.3}{corollary}
-%% TEST-CDP-COUNT: \codep@sbl@atom{1.4}{paragraph} = 1
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{corollary}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.4}{paragraph} = 1
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2

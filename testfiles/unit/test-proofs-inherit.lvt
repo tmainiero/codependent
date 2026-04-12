@@ -5,14 +5,14 @@
 %% TEST-SECTION: DESIGN.md §Proof environments
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@sbl@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.2}{theorem}
-%% TEST-CDP-CONTAINS: \codep@sbl@proof{1.2*}
-%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.4}{proof}
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{1.1*}
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{1.2*}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.4}{proof}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.1*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2*}
 %% TEST-LOG-CONTAINS: Proof not adjacent to a tracked
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsthm,codependent

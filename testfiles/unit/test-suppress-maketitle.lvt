@@ -6,12 +6,12 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-COUNT: \codep@sbl@atom{1.1}{paragraph} = 1
-%% TEST-CDP-COUNT: \codep@sbl@atom{1.2}{paragraph} = 1
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{0
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{0
 %% TEST-ATOMS-MIN: 2
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{1.3
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

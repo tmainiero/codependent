@@ -1,1 +1,52 @@
-unit/test-suppress-trivlist.lvt
+%% TEST-NAME: test-suppress-trivlist
+%% TEST-WHAT: Verify paragraphs inside trivlist-based environments
+%%            (center, flushleft, verbatim) are NOT numbered as atoms.
+%% TEST-SOURCE: REVIEW_E #7 (MAJOR), REVIEW_F J4 (verified)
+%% TEST-SECTION: DESIGN.md §8a.6 trivlist suppression, §Paragraph numbering
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% REVIEW_E finding #7, REVIEW_F judgement call J4 verified.
+%% The trivlist machinery in latex.ltx underlies center,
+%% flushleft, flushright, verbatim, and the amsthm theorem
+%% environments. Paragraphs inside these must be suppressed;
+%% otherwise a centered block between two tracked paragraphs
+%% would get a spurious atom number. Only the two real body
+%% paragraphs (outside the trivlist envs) should be atoms.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Trivlist suppression}
+
+First body paragraph. Atom 1.1.
+
+\begin{center}
+  Centered text must NOT be an atom.
+\end{center}
+
+\begin{flushleft}
+  Flushleft text must NOT be an atom.
+\end{flushleft}
+
+\begin{verbatim}
+Verbatim content must NOT be an atom.
+\end{verbatim}
+
+Second body paragraph. Atom 1.2.
+
+\END
+\end{document}

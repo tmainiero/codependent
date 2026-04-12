@@ -1,1 +1,50 @@
-unit/test-equations-track1.lvt
+%% TEST-NAME: test-equations-track1
+%% TEST-WHAT: Track 1: equation env with \ref records parenthesized
+%%            equation number as backref source.  The equation counter
+%%            steps at \begin{equation}, so \theequation is correct at
+%%            \ref time.  Anchormap entry is also written for hyperlinks.
+%% TEST-SOURCE: DESIGN.md §Equations as backref sources (Track 1)
+%% TEST-SECTION: codependent.sty \codep@trackeqenv
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{(1)}{thm:main}
+%% TEST-AUX-CONTAINS: \codep@anchormap{(1)}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.1}{thm:main}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% A theorem (atom 1.1) is followed by a standalone numbered equation
+%% that references the theorem.  The equation number (1) is captured
+%% as the backref source with parentheses: (1).  The anchormap must
+%% have an entry for (1) so the hyperlink works.
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  The main theorem statement.
+\end{theorem}
+
+% Standalone equation: Track 1.
+% Source should be "(1)" (parenthesized equation number 1).
+\begin{equation}\label{eq:use}
+  f(x) = g(x) \quad\text{by Theorem~\ref{thm:main}}.
+\end{equation}
+
+\END
+\end{document}

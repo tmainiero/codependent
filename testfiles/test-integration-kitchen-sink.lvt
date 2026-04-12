@@ -1,1 +1,166 @@
-integration/test-integration-kitchen-sink.lvt
+%% TEST-NAME: test-integration-kitchen-sink
+%% TEST-WHAT: Exercise every codependent.sty feature in a single document that
+%%            loads the full common package stack (amsthm, amsmath,
+%%            mathtools, hyperref, cleveref, thmtools, enumitem, tcolorbox,
+%%            tikz, tikz-cd). Single-document smoke test that
+%%            integration paths compose without conflict.
+%% TEST-SOURCE: DESIGN.md §8a.0, §8a.5, §8a.5.a, §8a.6, §9a, §9a User API;
+%%              REVIEW_E all BLOCKERs and MAJORs composed
+%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning(?!.*Nested tracked environment)
+%% TEST-LOG-CONTAINS: Nested tracked environment
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Hom}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Hom}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@tag
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-CDP-CONTAINS: \codep@cdp@use
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-ATOMS-MIN: 10
+%% TEST-PACKAGES: amsmath,mathtools,amsthm,thmtools,hyperref,cleveref,enumitem,tcolorbox,tikz,tikz-cd,codependent
+%% TEST-RERUN: 2
+%%
+%% The "does the whole thing compose?" smoke test. Unit
+%% fixtures pin individual features; this one verifies that
+%% loading every common package together, wiring codependent on
+%% top of the full stack, and exercising every public API
+%% in a single document produces a valid .cdp, a non-empty
+%% backref graph, and no surprise interaction failures.
+%%
+%% Covers:
+%%   - plain paragraphs (atom numbering)
+%%   - theorem / proposition / lemma envs (tracked)
+%%   - amsthm proof env
+%%   - nested theorem inside a theorem
+%%   - \ref / \cref / \autoref / \eqref (all four ref patch sites)
+%%   - one \restatable + \restate (REVIEW_E #1 BLOCKER)
+%%   - one tikz-cd diagram (inline suppression)
+%%   - one tcolorbox (env suppression)
+%%   - one enumitem list (trivlist suppression)
+%%   - \codepnewcommand{\Hom}[2]{...} with three invocations
+%%   - \codeptag{uid}{...} semantic-sidecar record
+%%
+%% Exclusions (by design):
+%%   - biblatex: bib machinery not on the hot path for numbering
+%%   - subfiles: multi-file is pinned by its own dedicated fixture
+%%   - ntheorem: amsthm is the primary supported theorem pkg
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{thmtools}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+
+\usepackage{codependent}
+\codeptrack{theorem,proposition,lemma,definition}
+
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepNewDocumentCommand{\Cite}{s o m}{%
+  \IfBooleanTF{#1}%
+    {[\textbf{#3}\IfValueT{#2}{, #2}]}%
+    {[#3\IfValueT{#2}{, #2}]}%
+}
+
+\begin{document}
+\START
+
+\section{Kitchen sink}
+
+A lead paragraph to kick the atom counter. This paragraph uses
+$\Hom{X}{Y}$, which should emit one sbl use record.
+
+\begin{definition}\label{def:cat}
+  A $\Hom*{X}{Y}$ functor defines the morphism sets of a
+  category.\codeptag{uid}{cat:category}
+\end{definition}
+
+A paragraph between two atoms. Mentions \cref{def:cat}.
+
+\begin{theorem}\label{thm:main}
+  Given \cref{def:cat}, every identity is idempotent.
+  This statement uses $\Hom{X}{X}$ a second time.
+\end{theorem}
+
+\begin{proof}
+  By inspection; see \autoref{def:cat}.
+\end{proof}
+
+\begin{proposition}\label[proposition]{prop:one}
+  A corollary of \ref{thm:main}, referencing
+  \eqref{eq:composition} below.
+\end{proposition}
+
+\begin{equation}\label{eq:composition}
+  (f \circ g) \circ h = f \circ (g \circ h).
+\end{equation}
+
+\begin{lemma}
+  A nested statement.
+  \begin{theorem}
+    A theorem nested inside a lemma; nestlevel handling
+    must keep both depths tracked without double-numbering.
+  \end{theorem}
+\end{lemma}
+
+\begin{restatable}{theorem}{thmRestated}\label{thm:restated}
+  A restatable theorem that uses $\Hom{Y}{Z}$.
+\end{restatable}
+
+Paragraph after the restatable. Uses \Cite*[p.~1]{Lurie2009}.
+
+\begin{center}
+  Centered prose must not be an atom.
+\end{center}
+
+\begin{tcolorbox}
+  Boxed prose must not be an atom.
+\end{tcolorbox}
+
+\begin{itemize}
+  \item First enumitem item; not an atom.
+  \item Second enumitem item; not an atom.
+\end{itemize}
+
+A paragraph with an inline category-theory diagram
+$\begin{tikzcd} A \arrow{r}{f} & B \arrow{r}{g} & C \end{tikzcd}$
+embedded mid-sentence.
+
+\begin{figure}[h]
+  \centering
+  \begin{tikzcd}
+    A \arrow{r}{f}\arrow{d}{h} & B \arrow{d}{k} \\
+    C \arrow{r}{g}             & D
+  \end{tikzcd}
+  \caption{A commutative square.}
+\end{figure}
+
+\section{Restate appendix}
+
+We restate \cref{thm:restated} here for reference:
+
+\thmRestated*
+
+This test must not emit a duplicate sbl atom record for the
+restated theorem, and must not attribute backrefs to the wrong
+prior atom.
+
+A final trailing paragraph mentioning \Cref{thm:main} and
+\cref{prop:one,def:cat} (cleveref multi-label form).
+
+\END
+\end{document}

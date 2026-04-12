@@ -3,8 +3,8 @@
 %%            definition produces the expected concept records:
 %%            \codep@concept{Hom}{<def-atom>} in .aux (once),
 %%            \codep@conceptref{<intro-atom>}{Hom} in .aux,
-%%            \codep@sbl@def{<def-atom>}{Hom} in .cdp (once),
-%%            \codep@sbl@use{<intro-atom>}{Hom} in .cdp.
+%%            \codep@cdp@def{<def-atom>}{Hom} in .cdp (once),
+%%            \codep@cdp@use{<intro-atom>}{Hom} in .cdp.
 %%            At pass 2, the def atom's "Used in" list includes
 %%            the intro atom (forward-reference resolves backward
 %%            via the concept map).
@@ -13,9 +13,9 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-COUNT: \codep@sbl@def{2.1}{Hom} = 1
-%% TEST-CDP-CONTAINS: \codep@sbl@use{1.1}{Hom}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@def{2.1}{Hom} = 1
+%% TEST-CDP-CONTAINS: \codep@cdp@use{1.1}{Hom}
 %% TEST-AUX-CONTAINS: \codep@concept{Hom}{2.1}
 %% TEST-AUX-CONTAINS: \codep@conceptref{1.1}{Hom}
 %% TEST-PACKAGES: amsthm,codependent

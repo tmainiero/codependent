@@ -220,8 +220,8 @@ This handles, in one pass:
   `\codepsuppress`, `\codepappendix`,
   `\codepNewCommand`, `\codepNewDocumentCommand`
 - Internal namespace: every `\codep@*` macro and
-  every `\codep@sbl@*` record (the `codependent` part
-  renames; the `sbl` part is independent — see below)
+  every `\codep@cdp@*` record (the `codependent` part
+  renames; the `cdp` part is independent — see below)
 - LaTeXML CSS class contract: `codependent-usedby`,
   `codependent-usedby-label`, `codependent-usedby-list`,
   `codependent-usedby-ref`, `codependent-usedby-trailer`,
@@ -242,11 +242,11 @@ the project name and **will survive a rename unchanged**:
   beamer, `.aux` for the kernel).  A future rename
   may keep `.cdp` or change it to a new acronym in a
   separate sed pass.
-- **`sbl` token inside `\codep@sbl@*` records.**  The
-  `sbl` substring is the sidecar acronym, not the
+- **`cdp` token inside `\codep@cdp@*` records.**  The
+  `cdp` substring is the sidecar acronym, not the
   project name.  After a `s/codep/foobar/g` rename
-  the records become `\foobar@sbl@*` — readable but
-  with `sbl` now standing for whatever the new
+  the records become `\foobar@cdp@*` — readable but
+  with `cdp` now standing for whatever the new
   project's acronym is, or staying as historical
   baggage.
 - **`.ltxml` extension.**  LaTeXML convention, not

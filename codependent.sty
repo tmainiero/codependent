@@ -47,12 +47,12 @@
 \newcommand*{\codep@equationmode}{outer}
 
 % Rendering configuration (backref style, alignment, fonts).
-\newcommand*{\codep@backrefstyle}{block}
+\newcommand*{\codep@backrefstyle}{inline}
 \newcommand*{\codep@backrefalign}{right}
 % Margin truncation: max refs shown in margin mode before "...".
 \newcommand*{\codep@backrefmarginmax}{5}
 % String constants for \ifx comparisons in rendering macros.
-\def\codep@const@block{block}
+\def\codep@const@below{below}
 \def\codep@const@inline{inline}
 \def\codep@const@margin{margin}
 \def\codep@const@right{right}
@@ -109,10 +109,10 @@
   equations/off/.code = {\def\codep@equationmode{off}},%
   equations/.default = outer,%
   backref-style/.is choice,%
-  backref-style/block/.code = {\renewcommand*{\codep@backrefstyle}{block}},%
+  backref-style/below/.code = {\renewcommand*{\codep@backrefstyle}{below}},%
   backref-style/inline/.code = {\renewcommand*{\codep@backrefstyle}{inline}},%
   backref-style/margin/.code = {\renewcommand*{\codep@backrefstyle}{margin}},%
-  backref-style/.default = block,%
+  backref-style/.default = inline,%
   backref-margin-max/.store in = \codep@backrefmarginmax,%
   backref-align/.is choice,%
   backref-align/left/.code = {\renewcommand*{\codep@backrefalign}{left}},%
@@ -268,12 +268,12 @@
 \newcount\codep@atomcount
 
 % Sidecar (.cdp) stream state (§9a).
-\newbool{codep@sblopen}
-\boolfalse{codep@sblopen}
+\newbool{codep@cdpopen}
+\boolfalse{codep@cdpopen}
 
 % Deferred sbl writes: preamble cmddef records accumulate here
 % and flush once the .cdp stream opens at begindocument/before.
-\def\codep@sbl@deferred{}
+\def\codep@cdp@deferred{}
 
 %% ===================================================================
 %% Section 5: Core numbering machinery
@@ -449,7 +449,7 @@
     % Restate occurrence: \c@<basecounter> re-let to dummy
     % counter by thm-restate.sty.  Suppress the hook body to avoid
     %   (a) reading the wrong \theatom,
-    %   (b) writing a duplicate \codep@sbl@atom record,
+    %   (b) writing a duplicate \codep@cdp@atom record,
     %   (c) queuing back-refs against a stale atom number.
     % Bump nestlevel so paragraph numbering is suppressed
     % inside the restated body (matching normal theorem
@@ -482,12 +482,12 @@
 %   \refstepcounter) instead of \theatom, because nested tracked
 %   envs may have advanced the counter.
 \def\codep@hooktheorem@end@outer#1{%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@atom{\codep@outeratom}{#1}}%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@meta{\codep@outeratom}{env}{#1}}%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@meta{\codep@outeratom}{src}%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@atom{\codep@outeratom}{#1}}%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@meta{\codep@outeratom}{env}{#1}}%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@meta{\codep@outeratom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
   \global\advance\codep@atomcount by 1\relax
   \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
@@ -635,10 +635,10 @@
   \codep@writeanchormap{\theatom}%
   \advance\codep@nestlevel by 1\relax
   \edef\codep@currentatom{\theatom}%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@atom{\theatom}{proof}}%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@meta{\theatom}{src}%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@atom{\theatom}{proof}}%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@meta{\theatom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
   \global\advance\codep@atomcount by 1\relax
   \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
@@ -661,8 +661,8 @@
   \edef\codep@sourceatom{\codep@lasttheorematom*}%
   \global\let\codep@lasttheorematom\@empty
   % SBL sub-record for the inherited proof.
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@proof{\codep@currentatom}}%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@proof{\codep@currentatom}}%
   % No \refstepcounter -- inheriting the theorem's number.
   % No margin number -- proof shares theorem's visual
   % identity; the proof heading ("Proof.") is sufficient.
@@ -1013,7 +1013,7 @@
 \def\codep@parahook@emitdeferred{%
   \ifx\codep@deferredbr\@empty\else
     \vadjust pre{%
-      \codep@renderdeferred{\codep@deferredbr}%
+      \codep@renderbackref@para{\codep@deferredbr}%
     }%
     \global\let\codep@deferredbr\@empty
   \fi
@@ -1030,11 +1030,11 @@
     \refstepcounter{atom}%
     \codep@writeanchormap{\theatom}%
     \edef\codep@currentatom{\theatom}%
-    \codep@sblwrite@atom{%
-      \string\codep@sbl@atom
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@atom
         {\theatom}{paragraph}}%
-    \codep@sblwrite@atom{%
-      \string\codep@sbl@meta{\theatom}{src}%
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@meta{\theatom}{src}%
         {\jobname.tex:\the\inputlineno:1}}%
     \global\advance\codep@atomcount by 1\relax
     \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
@@ -1633,7 +1633,7 @@
 %   removed (2026-04-11) because concept edges are NOT cross-
 %   references — they should not appear in "Used in" lists.
 %   The .aux records (\codep@concept, \codep@conceptref) and
-%   .cdp records (\codep@sbl@def, \codep@sbl@use) remain
+%   .cdp records (\codep@cdp@def, \codep@cdp@use) remain
 %   intact for the CLI layer.  The concept warning system
 %   (\codep@conceptwarnscan) also remains.  This function is
 %   now a silent no-op; it is kept so that stale .aux files
@@ -1718,9 +1718,9 @@
 % \codep@flushbackref
 %   Emit the pending back-reference and clear it.
 %   The pendingbr register is cleared BEFORE rendering so that
-%   the \par inside \codep@renderinline cannot re-enter
+%   the \par inside \codep@renderbackref cannot re-enter
 %   flushbackref with the same data (para/end → flushbackref
-%   → renderinline → \par → para/end → flushbackref loop).
+%   → renderbackref → \par → para/end → flushbackref loop).
 \newcommand*{\codep@flushbackref}{%
   \ifbool{codep@backrefs}{%
     \ifbool{codep@appendix}{}{%
@@ -1728,7 +1728,7 @@
         \the\codep@pendingbr}%
       \codep@pendingbr={}%
       \ifx\codep@tmp\@empty\else
-        \codep@renderinline{\codep@tmp}%
+        \codep@renderbackref{\codep@tmp}%
       \fi
     }%
   }{}%
@@ -1736,7 +1736,7 @@
 
 % \codep@formatusedin{reflist}
 %   Shared formatting helper for "Used in" lines.  Both the
-%   inline path (\codep@renderinline) and the deferred
+%   inline path (\codep@renderbackref) and the deferred
 %   paragraph path (\vadjust pre in \codep@installparahook)
 %   call this, so overriding it changes ALL rendering.
 %   Reads font/prefix/label from \codepsetup configuration.
@@ -1778,13 +1778,13 @@
   }%
 }
 
-% \codep@renderinline{reflist}
+% \codep@renderbackref{reflist}
 %   Render "Used in X, Y." at the end of the current atom.
 %   Used for theorem/definition/lemma atoms (non-paragraph).
 %   Respects backref-style and backref-align configuration.
-\newcommand*{\codep@renderinline}[1]{%
-  \ifx\codep@backrefstyle\codep@const@block
-    % Block style: separate line after the atom.
+\newcommand*{\codep@renderbackref}[1]{%
+  \ifx\codep@backrefstyle\codep@const@below
+    % Below style: separate line after the atom.
     \ifx\codep@backrefalign\codep@const@right
       \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
       \quad\codep@formatusedin{#1}%
@@ -1832,15 +1832,15 @@
   \fi\fi
 }
 
-% \codep@renderdeferred{reflist}
+% \codep@renderbackref@para{reflist}
 %   Render "Used in" inside a \vadjust pre context (vertical
 %   mode).  Used for paragraph atoms via the deferred-backref
 %   mechanism.  Calls \codep@formatusedin for the text.
 %   Respects backref-style and backref-align configuration.
-\newcommand*{\codep@renderdeferred}[1]{%
+\newcommand*{\codep@renderbackref@para}[1]{%
   \nobreak
-  \ifx\codep@backrefstyle\codep@const@block
-    % Block style
+  \ifx\codep@backrefstyle\codep@const@below
+    % Below style
     \vbox{%
       \hbox to \linewidth{%
         \ifx\codep@backrefalign\codep@const@right
@@ -1885,7 +1885,7 @@
 
 % Deferred backref: data saved at para/end, emitted at the
 % next para/begin.  Avoids mode-change error (para/end must
-% stay in horizontal mode; \renderinline needs \par).
+% stay in horizontal mode; \codep@renderbackref needs \par).
 \gdef\codep@deferredbr{}
 
 % \codep@installparendhook
@@ -1894,7 +1894,7 @@
 %   that any \ref firing between paragraphs is not attributed
 %   to the just-closed atom.
 %   Instead of calling \codep@flushbackref (which does \par
-%   via \renderinline), we snapshot the pending br data into
+%   via \codep@renderbackref), we snapshot the pending br data into
 %   \codep@deferredbr and clear the register.  The deferred
 %   data is emitted at the NEXT para/begin, before the new
 %   atom's margin number.
@@ -1925,25 +1925,25 @@
 %%
 %% Write-only sidecar file for Layer 2 (semantic CLI).  The .sty
 %% never reads .cdp — it is strictly one-way output.  Record format
-%% is line-oriented: one \codep@sbl@* control sequence per line
+%% is line-oriented: one \codep@cdp@* control sequence per line
 %% with fixed-arity brace-delimited arguments (no kv blobs).
 %%
 
-% \codep@sblwrite{text}
+% \codep@cdpwrite{text}
 %   Guarded write to the .cdp stream.  No-op when the stream
 %   is not open (e.g. \if@filesw is false).
-\newcommand*{\codep@sblwrite}[1]{%
-  \ifbool{codep@sblopen}{%
-    \immediate\write\codep@sblout{#1}%
+\newcommand*{\codep@cdpwrite}[1]{%
+  \ifbool{codep@cdpopen}{%
+    \immediate\write\codep@cdpout{#1}%
   }{}%
 }
 
-% \codep@sblwrite@atom{text}
+% \codep@cdpwrite@atom{text}
 %   Atom-scoped guard: drops the write when not inside a tracked
 %   atom (\codep@currentatom is empty).
-\newcommand*{\codep@sblwrite@atom}[1]{%
+\newcommand*{\codep@cdpwrite@atom}[1]{%
   \ifx\codep@currentatom\@empty\else
-    \codep@sblwrite{#1}%
+    \codep@cdpwrite{#1}%
   \fi
 }
 
@@ -1953,26 +1953,26 @@
 %% hooks are never silently dropped.
 \AddToHook{begindocument/before}[codependent/sbl/open]{%
   \if@filesw
-    \newwrite\codep@sblout
-    \immediate\openout\codep@sblout=\jobname.cdp\relax
-    \global\booltrue{codep@sblopen}%
-    \immediate\write\codep@sblout{%
-      \string\codep@sbl@version{1}}%
-    \immediate\write\codep@sblout{%
-      \string\codep@sbl@source{\jobname.tex}}%
+    \newwrite\codep@cdpout
+    \immediate\openout\codep@cdpout=\jobname.cdp\relax
+    \global\booltrue{codep@cdpopen}%
+    \immediate\write\codep@cdpout{%
+      \string\codep@cdp@version{1}}%
+    \immediate\write\codep@cdpout{%
+      \string\codep@cdp@source{\jobname.tex}}%
   \fi
 }
 
 %% --- Section 9a close hook (\AtEndDocument) ---
-%% Write the \codep@sbl@end{OK} sentinel and close the stream.
+%% Write the \codep@cdp@end{OK} sentinel and close the stream.
 %% Per REVIEW_C finding #7, the sentinel's presence is the CLI's
 %% test for "complete file".
 \AtEndDocument{%
-  \ifbool{codep@sblopen}{%
-    \immediate\write\codep@sblout{%
-      \string\codep@sbl@end{OK}}%
-    \immediate\closeout\codep@sblout
-    \global\boolfalse{codep@sblopen}%
+  \ifbool{codep@cdpopen}{%
+    \immediate\write\codep@cdpout{%
+      \string\codep@cdp@end{OK}}%
+    \immediate\closeout\codep@cdpout
+    \global\boolfalse{codep@cdpopen}%
   }{}%
 }
 
@@ -1986,28 +1986,28 @@
     %% cleveref path: \label[type]{key}, optional arg.
     \def\label{%
       \@ifnextchar[%]
-        \codep@sbl@label@withopt
-        \codep@sbl@label@noopt
+        \codep@cdp@label@withopt
+        \codep@cdp@label@noopt
     }%
   }{%
     %% No cleveref: \label{key} only.
     \def\label#1{%
-      \codep@sblwrite@atom{%
-        \string\codep@sbl@label
+      \codep@cdpwrite@atom{%
+        \string\codep@cdp@label
           {\theatom}{#1}}%
       \codep@orig@label{#1}%
     }%
   }%
 }
-\def\codep@sbl@label@withopt[#1]#2{%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@label
+\def\codep@cdp@label@withopt[#1]#2{%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@label
       {\theatom}{#2}}%
   \codep@orig@label[#1]{#2}%
 }
-\def\codep@sbl@label@noopt#1{%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@label
+\def\codep@cdp@label@noopt#1{%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@label
       {\theatom}{#1}}%
   \codep@orig@label{#1}%
 }
@@ -2017,29 +2017,29 @@
 %% The public API lives in Section 10; the emit helpers live here
 %% because they write to both .cdp and .aux.
 
-% \codep@sblwrite@deferred{text}
+% \codep@cdpwrite@deferred{text}
 %   Accumulate a deferred .cdp write for preamble-time emission.
 %   Records queued here are flushed once the .cdp stream opens.
-%   Used for \codep@sbl@cmddef records whose declarations occur
+%   Used for \codep@cdp@cmddef records whose declarations occur
 %   in the preamble before the stream is available.
 %   IMPORTANT: the argument must already be fully expanded (no
 %   transient macros like \codep@tmp@name) because \g@addto@macro
 %   does not expand its argument.  Callers use \edef to pre-build
 %   the record string.
-\newcommand*{\codep@sblwrite@deferred}[1]{%
-  \ifbool{codep@sblopen}{%
+\newcommand*{\codep@cdpwrite@deferred}[1]{%
+  \ifbool{codep@cdpopen}{%
     % Stream already open (late declaration): write immediately.
-    \codep@sblwrite{#1}%
+    \codep@cdpwrite{#1}%
   }{%
-    \g@addto@macro\codep@sbl@deferred{%
-      \codep@sblwrite{#1}}%
+    \g@addto@macro\codep@cdp@deferred{%
+      \codep@cdpwrite{#1}}%
   }%
 }
 
 % Flush deferred sbl writes after the stream opens.
 \AddToHook{begindocument/before}[codependent/sbl/cmddef]{%
-  \codep@sbl@deferred
-  \global\let\codep@sbl@deferred\@empty
+  \codep@cdp@deferred
+  \global\let\codep@cdp@deferred\@empty
 }
 % Must run AFTER the sbl open hook.
 \DeclareHookRule{begindocument/before}{codependent/sbl/cmddef}%
@@ -2064,8 +2064,8 @@
          \immediate\write\@auxout{%
            \string\codep@concept{#1}{\theatom}}%
        \fi
-       \codep@sblwrite@atom{%
-         \string\codep@sbl@def{\theatom}{#1}}%
+       \codep@cdpwrite@atom{%
+         \string\codep@cdp@def{\theatom}{#1}}%
       }%
       {\PackageError{codependent}%
         {\string\\#1* defined at atoms
@@ -2095,8 +2095,8 @@
       \immediate\write\@auxout{%
         \string\codep@conceptref{\theatom}{#1}}%
     \fi
-    \codep@sblwrite@atom{%
-      \string\codep@sbl@use{\theatom}{#1}}%
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@use{\theatom}{#1}}%
   \fi}
 
 %% --- Section 9a.9: Concept missing-def-site scan ---
@@ -2136,7 +2136,7 @@
 % there is no subsequent para/begin to emit it.
 \AtEndDocument{%
   \ifx\codep@deferredbr\@empty\else
-    \codep@renderdeferred{\codep@deferredbr}%
+    \codep@renderbackref@para{\codep@deferredbr}%
     \global\let\codep@deferredbr\@empty
   \fi
 }
@@ -2230,8 +2230,8 @@
 %   kind  -- tag category (e.g. uid, introduces, type)
 %   value -- tag payload (free-form UTF-8)
 \newcommand*{\codeptag}[2]{%
-  \codep@sblwrite@atom{%
-    \string\codep@sbl@tag
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@tag
     {\theatom}{#1}{#2}}%
 }
 
@@ -2254,8 +2254,8 @@
 %   a standalone atom.  Then \codepproofof overrides
 %   \codep@currentatom.  This means:
 %   - The counter was already incremented (gap exists, acceptable)
-%   - The SBL has both a standalone \codep@sbl@atom{N}{proof}
-%     AND a \codep@sbl@proof{M*} -- the CLI can handle this
+%   - The SBL has both a standalone \codep@cdp@atom{N}{proof}
+%     AND a \codep@cdp@proof{M*} -- the CLI can handle this
 %     (the proofof record takes precedence)
 %   - The backref source switches to starred mid-proof -- any
 %     \ref calls BEFORE \codepproofof use the standalone number,
@@ -2274,8 +2274,8 @@
       % Update source atom for starred backref emission.
       \edef\codep@sourceatom{\codep@currentatom}%
       % Write CDP sub-record.
-      \codep@sblwrite@atom{%
-        \string\codep@sbl@proof{\codep@currentatom}}%
+      \codep@cdpwrite@atom{%
+        \string\codep@cdp@proof{\codep@currentatom}}%
       % Starred form: anchor the link at the proof location.
       \def\codep@tmp{#2}%
       \ifx\codep@tmp\@empty\else
@@ -2291,9 +2291,9 @@
 %   (default 0), mandatory {body} using #1..#N.
 %
 %   At declaration time, emits three global .cdp records:
-%     \codep@sbl@cmddef{name}{kind}{newcommand}
-%     \codep@sbl@cmddef{name}{arity}{N}
-%     \codep@sbl@cmddef{name}{src}{file:line:1}
+%     \codep@cdp@cmddef{name}{kind}{newcommand}
+%     \codep@cdp@cmddef{name}{arity}{N}
+%     \codep@cdp@cmddef{name}{src}{file:line:1}
 %
 %   At invocation time, the wrapped command answers both
 %   \cmd (use site) and \cmd* (def site).  Both forms typeset
@@ -2340,14 +2340,14 @@
   %    Records are pre-expanded via \edef so transient values
   %    (\codep@tmp@name, \inputlineno) are captured eagerly.
   \edef\codep@tmp@rec{%
-    \noexpand\codep@sblwrite@deferred{%
-      \string\codep@sbl@cmddef{\codep@tmp@name}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{\codep@tmp@name}%
       {kind}{newcommand}}%
-    \noexpand\codep@sblwrite@deferred{%
-      \string\codep@sbl@cmddef{\codep@tmp@name}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{\codep@tmp@name}%
       {arity}{\number#2}}%
-    \noexpand\codep@sblwrite@deferred{%
-      \string\codep@sbl@cmddef{\codep@tmp@name}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{\codep@tmp@name}%
       {src}{\jobname.tex:\the\inputlineno:1}}%
   }%
   \codep@tmp@rec
@@ -2361,9 +2361,9 @@
 %   exactly: \cmd with backslash, {argspec} string, {body}.
 %
 %   At declaration time, emits three global .cdp records:
-%     \codep@sbl@cmddef{name}{kind}{NewDocumentCommand}
-%     \codep@sbl@cmddef{name}{argspec}{<user-spec>}
-%     \codep@sbl@cmddef{name}{src}{file:line:1}
+%     \codep@cdp@cmddef{name}{kind}{NewDocumentCommand}
+%     \codep@cdp@cmddef{name}{argspec}{<user-spec>}
+%     \codep@cdp@cmddef{name}{src}{file:line:1}
 %
 %   At invocation time, the wrapped command prepends a codependent
 %   star to the user's argspec.  \cmd* marks a def site; \cmd
@@ -2405,14 +2405,14 @@
         \csname codep@nostar@\codep@tmp@name\endcsname}%
   % 5. Emit global declaration records (deferred, pre-expanded).
   \edef\codep@tmp@rec{%
-    \noexpand\codep@sblwrite@deferred{%
-      \string\codep@sbl@cmddef{\codep@tmp@name}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{\codep@tmp@name}%
       {kind}{NewDocumentCommand}}%
-    \noexpand\codep@sblwrite@deferred{%
-      \string\codep@sbl@cmddef{\codep@tmp@name}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{\codep@tmp@name}%
       {argspec}{#2}}%
-    \noexpand\codep@sblwrite@deferred{%
-      \string\codep@sbl@cmddef{\codep@tmp@name}%
+    \noexpand\codep@cdpwrite@deferred{%
+      \string\codep@cdp@cmddef{\codep@tmp@name}%
       {src}{\jobname.tex:\the\inputlineno:1}}%
   }%
   \codep@tmp@rec

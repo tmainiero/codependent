@@ -1,1 +1,67 @@
-unit/test-proofs-multiple-adjacent.lvt
+%% TEST-NAME: test-proofs-multiple-adjacent
+%% TEST-WHAT: Multiple theorems with adjacent proofs in sequence; each
+%%            proof inherits the correct theorem's atom number.
+%% TEST-SOURCE: DESIGN.md §Proof adjacency
+%% TEST-SECTION: DESIGN.md §8a
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Proof not adjacent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.3*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.1*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3*}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% Three theorem+proof pairs in sequence.  Each proof must inherit
+%% only its immediately preceding theorem, not any earlier one.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Sequential results}
+
+% Atom 1.1 -- theorem A
+\begin{theorem}\label{thm:a}
+  First theorem.
+\end{theorem}
+
+% Adjacent proof A: inherits 1.1*
+\begin{proof}
+  Proof of first theorem.
+\end{proof}
+
+% Atom 1.2 -- theorem B
+\begin{theorem}\label{thm:b}
+  Second theorem.
+\end{theorem}
+
+% Adjacent proof B: inherits 1.2*
+\begin{proof}
+  Proof of second theorem.
+\end{proof}
+
+% Atom 1.3 -- theorem C
+\begin{theorem}\label{thm:c}
+  Third theorem.
+\end{theorem}
+
+% Adjacent proof C: inherits 1.3*
+\begin{proof}
+  Proof of third theorem.
+\end{proof}
+
+\END
+\end{document}

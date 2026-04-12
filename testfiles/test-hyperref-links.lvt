@@ -1,1 +1,47 @@
-unit/test-hyperref-links.lvt
+%% TEST-NAME: test-hyperref-links
+%% TEST-WHAT: When hyperref is loaded, "Used in" backrefs become
+%%            clickable \hyperlink commands and atoms get
+%%            \hypertarget anchors.  Without hyperref, plain text
+%%            fallback is used (no errors).
+%% TEST-SOURCE: DESIGN.md hyperref integration requirement
+%% TEST-SECTION: codependent.sty \codep@brhyper, \codep@mktarget
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% Verifies that hyperref + codependent coexist without errors and
+%% that atoms are recorded correctly.  The actual hyperlink
+%% rendering is verified visually; this test gates on no errors
+%% and correct SBL output.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}\label{thm:first}
+  First theorem. Expected atom 1.1.
+\end{theorem}
+
+Some text that references Theorem~\ref{thm:first}.
+
+\begin{theorem}\label{thm:second}
+  Second theorem referencing Theorem~\ref{thm:first}.
+  Expected atom 1.2.
+\end{theorem}
+
+\END
+\end{document}

@@ -1,1 +1,39 @@
-unit/test-sbl-end-marker.lvt
+%% TEST-NAME: test-sbl-end-marker
+%% TEST-WHAT: Verify the last record of the .cdp sidecar is the sentinel
+%%            \codep@cdp@end{OK}, written from \AtEndDocument.
+%% TEST-SOURCE: REVIEW_C #7, DESIGN.md §9a "Close timing"
+%% TEST-SECTION: DESIGN.md §9a Close timing
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-LAST-RECORD: \codep@cdp@end{OK}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% REVIEW_C finding #7. The .cdp sentinel is the CLI's
+%% indicator that the file is complete and valid. If pdflatex
+%% is killed with SIGKILL, hits \errmessage, or segfaults,
+%% \AtEndDocument does not fire and the sentinel is absent.
+%% The CLI treats absence as "stale / partial / corrupt" and
+%% refuses to analyse. This fixture verifies the sentinel
+%% lands as the FINAL record of the .cdp (no records may
+%% follow it), so the CLI can stream-parse and trust any
+%% data read up through the sentinel.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{End sentinel}
+
+A single paragraph. After \end{document} the .cdp must have
+exactly one end{OK} sentinel and no records after it.
+
+\END
+\end{document}

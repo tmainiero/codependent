@@ -1,1 +1,170 @@
-integration/integ-no-cleveref.lvt
+%% TEST-NAME: integ-no-cleveref
+%% TEST-WHAT: Correct patch-site selection when cleveref is absent.
+%%            Verifies that codependent patches \@setref and hyperref's
+%%            \HyRef@autosetref / \HyRef@@StarSetRef but does NOT attempt
+%%            to patch \cref@getlabel (which is undefined without cleveref).
+%%            Backrefs should work, be hyperlinked, and no cleveref-related
+%%            error or "Undefined control sequence" should appear.
+%%            Stack: amsmath + amsthm + hyperref + codependent (no cleveref).
+%% TEST-SOURCE: DESIGN.md §8a.7 patch-site selection;
+%%              codependent.sty \codep@installatomrefpatch (l.1142-1186)
+%% TEST-SECTION: DESIGN.md §8a (integration surface — no-cleveref path)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: \\cref@getlabel|\\cref |\\Cref
+%% TEST-LOG-NOT: Package codependent Warning(?!.*Nested tracked environment)
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-CDP-CONTAINS: \codep@cdp@def
+%% TEST-CDP-CONTAINS: \codep@cdp@use
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Met}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Met}{arity}{2}
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-AUX-CONTAINS: \codep@concept{Met}
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-PDF-LINKS: 2
+%% TEST-PDF-OBJECTS: /Subtype /Link
+%%
+%% Without cleveref the package must:
+%%   (1) skip the \cref@getlabel patch (it is simply absent)
+%%   (2) still install Patch 1 (\@setref) and Patch 3 (hyperref hooks)
+%%   (3) produce working hyperlinked "Used in" backref numbers
+%%   (4) emit link annotations (/Subtype /Link) in the PDF
+%%
+%% The content is two sections of real analysis:
+%%   - Section 1 defines metric spaces (def:metric) and states the
+%%     Cauchy sequence characterisation (def:cauchy) plus completeness
+%%     (def:complete).
+%%   - Section 2 states the Banach fixed-point theorem (thm:banach)
+%%     which references the Section 1 definitions via \ref and
+%%     \autoref (no \cref or \Cref, since cleveref is absent).
+%%
+%% The cross-section references trigger "Used in" annotations that
+%% should be hyperlinked (Patch 1 + Patch 3 active, Patch 2 absent).
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=black}
+
+\usepackage{codependent}
+\codeptrack{theorem,lemma,proposition,definition,example}
+
+%% Concept-tracked macro: \Met{X}{d} — display a metric space pair.
+%% Exercises def-site (\Met*) and use-site (\Met) tracking.
+\codepnewcommand{\Met}[2]{(#1,\,#2)}
+
+\numberwithin{equation}{section}
+
+\begin{document}
+\START
+
+%% =============================================================
+%%  Section 1: Metric spaces and completeness
+%% =============================================================
+\section{Metric spaces}%
+\label{sec:metric}
+
+\begin{definition}\label{def:metric}
+  A \emph{metric space} is a pair $\Met*{X}{d}$ where $X$ is a set and
+  $d\colon X \times X \to [0,\infty)$ satisfies, for all
+  $x, y, z \in X$:
+  \begin{enumerate}
+    \item[(M1)] $d(x,y) = 0 \iff x = y$,
+    \item[(M2)] $d(x,y) = d(y,x)$,
+    \item[(M3)] $d(x,z) \leq d(x,y) + d(y,z)$.
+  \end{enumerate}
+\end{definition}
+
+\begin{definition}\label{def:cauchy}
+  A sequence $(x_n)$ in a metric space $\Met{X}{d}$ (see \ref{def:metric})
+  is a \emph{Cauchy sequence} if for every $\varepsilon > 0$ there
+  exists $N \in \mathbb{N}$ such that
+  \begin{equation}\label{eq:cauchy-cond}
+    d(x_m, x_n) < \varepsilon \qquad \text{for all } m, n \geq N.
+  \end{equation}
+\end{definition}
+
+\begin{definition}\label{def:complete}
+  A metric space $\Met{X}{d}$ is \emph{complete} if every Cauchy
+  sequence (\autoref{def:cauchy}) converges to a limit in $X$.
+\end{definition}
+
+\begin{example}\label{ex:reals}
+  The real line $\mathbb{R}$ with the standard metric
+  $d(x,y) = |x-y|$ is a complete metric space in the sense of
+  \ref{def:complete}.  The rationals $\mathbb{Q}$ are \emph{not}
+  complete under the same metric.
+\end{example}
+
+%% =============================================================
+%%  Section 2: Banach fixed-point theorem
+%% =============================================================
+\section{Contractions and fixed points}%
+\label{sec:contraction}
+
+\begin{definition}\label{def:contraction}
+  Let $\Met{X}{d}$ be a metric space (see \autoref{def:metric}).
+  A map $T\colon X \to X$ is a \emph{contraction} if there exists
+  $q \in [0,1)$ such that
+  \begin{equation}\label{eq:contraction}
+    d(T(x), T(y)) \leq q\, d(x, y) \qquad \text{for all } x, y \in X.
+  \end{equation}
+\end{definition}
+
+\begin{lemma}\label{lem:contraction-cauchy}
+  If $\Met{X}{d}$ is a metric space (\ref{def:metric}) and
+  $T$ is a contraction (\ref{def:contraction}) with constant $q$,
+  then for any $x_0 \in X$ the orbit $(T^n x_0)_{n \geq 0}$ is a
+  Cauchy sequence in the sense of \ref{def:cauchy}.
+\end{lemma}
+
+\begin{proof}
+  By the contraction inequality \ref{eq:contraction} applied
+  inductively, $d(T^m x_0, T^n x_0) \leq
+  q^{\min(m,n)} \cdot d(x_0, T x_0)/(1-q)$, which satisfies the
+  Cauchy condition \autoref{eq:cauchy-cond} for $N$ large enough.
+\end{proof}
+
+\begin{theorem}\label{thm:banach}
+  Let $\Met{X}{d}$ be a \emph{complete} metric space (see
+  \ref{def:metric} and \autoref{def:complete}) and let
+  $T\colon X \to X$ be a contraction (\ref{def:contraction}).
+  Then $T$ has a unique fixed point $x^* \in X$, characterised by
+  $T(x^*) = x^*$.
+\end{theorem}
+
+\begin{proof}
+  Existence: pick any $x_0 \in X$.  By
+  \autoref{lem:contraction-cauchy} the orbit is Cauchy; by
+  completeness (\ref{def:complete}) it converges to some
+  $x^* \in X$.  Continuity of $T$ (from condition
+  \ref{eq:contraction}) then gives $T(x^*) = x^*$.
+  Uniqueness: if $x^*$ and $y^*$ are both fixed points then
+  $d(x^*, y^*) = d(T x^*, T y^*) \leq q\, d(x^*, y^*)$,
+  so $d(x^*, y^*) = 0$, hence $x^* = y^*$.
+\end{proof}
+
+\begin{proposition}\label{prop:picard}
+  The Picard--Lindelof existence theorem for ODEs follows from
+  \autoref{thm:banach} applied to the integral operator on the
+  complete metric space of continuous functions with the
+  supremum metric (see \ref{def:metric}, \ref{ex:reals}).
+\end{proposition}
+
+\END
+\end{document}

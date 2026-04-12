@@ -13,9 +13,9 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-COUNT: \codep@sbl@def{1.1}{Hom} = 1
-%% TEST-CDP-COUNT: \codep@sbl@def{2.1}{Hom} = 0
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@def{1.1}{Hom} = 1
+%% TEST-CDP-COUNT: \codep@cdp@def{2.1}{Hom} = 0
 %% TEST-AUX-CONTAINS: \codep@concept{Hom}{1.1}
 %% TEST-AUX-NOT-CONTAINS: \codep@concept{Hom}{2.1}
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent

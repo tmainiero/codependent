@@ -1,1 +1,42 @@
-unit/test-sbl-flat-records.lvt
+%% TEST-NAME: test-sbl-flat-records
+%% TEST-WHAT: Verify \codeptag{key}{value with spaces} produces a flat
+%%            3-argument \codep@cdp@tag record, NOT a kv blob embedded
+%%            in a single argument.
+%% TEST-SOURCE: REVIEW_C #6, DESIGN.md §9a "Record format" (flattened)
+%% TEST-SECTION: DESIGN.md §9a Record format
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@tag{1.1}{uid}{cat:category theory}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@tag{1.1}{uid=cat:category theory}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% REVIEW_C finding #6. The original v0.5 sketch proposed
+%% records like \codep@cdp@atom{1.1}{paragraph}{src=foo,env=bar}
+%% with a comma-separated kv blob in the third argument. That
+%% format is fragile: filenames can contain commas, values can
+%% contain equals signs, and naive parsers misparse. The
+%% landed design is flat: one metadata pair per record, fixed
+%% arity. This fixture pins the flat shape specifically for
+%% \codeptag{kind}{value}, where the value contains spaces.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Flat record}
+
+A paragraph with a semantic tag.\codeptag{uid}{cat:category theory}
+The \verb|\codeptag| above must produce exactly one
+three-argument sbl tag record in the sbl file, with atom
+number 1.1, key ``uid'', and value ``cat:category theory''.
+
+\END
+\end{document}

@@ -3,16 +3,16 @@
 %%            site anywhere in the document produces a
 %%            PackageWarning at \AtEndDocument, but does NOT halt
 %%            the build. The concept's backrefs are disabled; no
-%%            \codep@sbl@def record is emitted for Hom.
+%%            \codep@cdp@def record is emitted for Hom.
 %% TEST-SOURCE: DESIGN.md §8a.9 Error handling (missing def site)
 %% TEST-SECTION: DESIGN.md §8a.9
 %% TEST-EXIT: 0
 %% TEST-LOG-CONTAINS: Package codependent Warning.*no.*definition site
 %% TEST-LOG-NOT: Undefined control sequence
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@def{1.1}{Hom}
-%% TEST-CDP-NOT-CONTAINS: \codep@sbl@def{1.2}{Hom}
-%% TEST-CDP-CONTAINS: \codep@sbl@use{1.1}{Hom}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@def{1.1}{Hom}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@def{1.2}{Hom}
+%% TEST-CDP-CONTAINS: \codep@cdp@use{1.1}{Hom}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

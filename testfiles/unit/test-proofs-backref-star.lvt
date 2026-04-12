@@ -5,8 +5,8 @@
 %% TEST-SECTION: DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-CONTAINS: \codep@sbl@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-AUX-CONTAINS: \codep@atomref{1.1*}{thm:target}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2

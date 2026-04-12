@@ -6,7 +6,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:A}
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,amsthm,codependent

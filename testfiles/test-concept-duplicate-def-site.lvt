@@ -1,1 +1,56 @@
-unit/test-concept-duplicate-def-site.lvt
+%% TEST-NAME: test-concept-duplicate-def-site
+%% TEST-WHAT: Verify that two \Hom* calls in different atoms produce
+%%            a PackageError at the SECOND firing, halting the build
+%%            with a nonzero exit code. The error message names both
+%%            offending atom numbers so the author can locate them.
+%% TEST-SOURCE: DESIGN.md §8a.9 Error handling (duplicate def site)
+%% TEST-SECTION: DESIGN.md §8a.9
+%% TEST-EXIT: 1
+%% TEST-LOG-CONTAINS: Package codependent Error.*defined at atoms
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 1
+%%
+%% The author accidentally marks two different atoms as the def
+%% site for the same concept. Exactly one def site per concept is
+%% permitted. The .sty detects the duplicate via
+%% \@ifundefined{codep@concept@Hom}: the first \Hom* defines the
+%% csname, the second \Hom* sees it already defined and triggers
+%% \PackageError, which halts pdflatex with exit code 1.
+%%
+%% This fixture is INTENTIONALLY expected to fail compilation.
+%% TEST-EXIT: 1 tells the runner that a nonzero exit is the
+%% CORRECT behaviour. TEST-RERUN: 1 because a second pass would
+%% just hit the same error again; we only need one firing to
+%% verify the detection.
+%%
+%% Until §8a.9 is implemented, this fixture also "fails" (exit 0
+%% instead of 1) because the duplicate detection does not exist.
+%% Once implemented, the fixture turns green (exit 1 as expected).
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\usepackage{codependent}
+\codeptrack{theorem,definition}
+
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+
+\begin{document}
+\START
+
+\section{First attempt}
+
+\begin{definition}
+  The $\Hom*{X}{Y}$ set is defined here. First def site, atom 1.1.
+\end{definition}
+
+\section{Second attempt}
+
+\begin{definition}
+  The $\Hom*{A}{B}$ set is \emph{also} defined here. Second def
+  site, atom 2.1. This MUST trigger the duplicate-def-site error.
+\end{definition}
+
+\END
+\end{document}

@@ -10,16 +10,16 @@
 %% TEST-SECTION: DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-CONTAINS: \codep@sbl@atom
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Funct}{kind}{newcommand}
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Funct}{arity}{2}
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{catname}{kind}{newcommand}
-%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{catname}{arity}{1}
-%% TEST-CDP-CONTAINS: \codep@sbl@use
-%% TEST-CDP-CONTAINS: \codep@sbl@def
-%% TEST-CDP-CONTAINS: \codep@sbl@label
-%% TEST-CDP-CONTAINS: \codep@sbl@tag
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Funct}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Funct}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{catname}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{catname}{arity}{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@use
+%% TEST-CDP-CONTAINS: \codep@cdp@def
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-CDP-CONTAINS: \codep@cdp@tag
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-AUX-CONTAINS: \codep@concept{Funct}
 %% TEST-AUX-CONTAINS: \codep@concept{catname}

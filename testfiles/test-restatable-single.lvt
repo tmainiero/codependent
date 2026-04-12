@@ -1,1 +1,60 @@
-unit/test-restatable-single.lvt
+%% TEST-NAME: test-restatable-single
+%% TEST-WHAT: Verify \restatable{theorem}{thm:foo}{...} + \restate{thm:foo}
+%%            does NOT double-emit \codep@cdp@atom records and does NOT
+%%            misattribute backref edges to the wrong (previous) atom.
+%% TEST-SOURCE: REVIEW_E #1 (BLOCKER), REVIEW_E Section R deep-dive,
+%%              REVIEW_F J2 (verified)
+%% TEST-SECTION: DESIGN.md §8a.5.a Detecting restated theorem environments
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
+%% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% Without the §8a.5.a `\ifx\c@theorem\c@atom` guard, the \restate
+%% would re-fire \AtBeginEnvironment{theorem} in a scope where
+%% \c@theorem is aliased to \c@thmt@dummyctr. Our hook would read
+%% \theatom, get the WRONG atom number (the most recent real atom,
+%% which is the appendix paragraph), and emit a duplicate
+%% \codep@cdp@atom record claiming that paragraph is also a
+%% theorem. The fix: at the top of the theorem hook body, test
+%% \ifx\c@theorem\c@atom; if false (alias broken = restate context),
+%% skip the entire hook body.
+
+\documentclass{article}
+\usepackage{thmtools}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Main}
+
+\begin{restatable}{theorem}{thmA}\label{thm:A}
+  Statement of theorem A. The original occurrence here should
+  produce exactly one sbl atom record for this theorem.
+\end{restatable}
+
+A paragraph in the main body. This is atom 1.2 (paragraph).
+
+\section{Appendix}
+
+In the appendix we restate theorem A:
+
+\thmA*
+
+The restate above MUST NOT produce a second
+sbl atom record, and MUST NOT cause our hook to attribute
+the previous atom (the ``In the appendix'' paragraph) as
+a theorem.
+
+\END
+\end{document}

@@ -640,9 +640,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
             if s in aux_text:
                 result.failures.append(f"aux contains forbidden string: {s}")
 
-        # 7. atoms_min: count \codep@sbl@atom records.
+        # 7. atoms_min: count \codep@cdp@atom records.
         if fix.atoms_min > 0:
-            atom_count = sbl_text.count("\\codep@sbl@atom{")
+            atom_count = sbl_text.count("\\codep@cdp@atom{")
             if atom_count < fix.atoms_min:
                 result.failures.append(
                     f"atom count: expected >= {fix.atoms_min}, got {atom_count}"

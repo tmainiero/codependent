@@ -9,8 +9,8 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
-%% TEST-CDP-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
 %% TEST-AUX-NOT-CONTAINS: \codep@atomref{(1)}{thm:main}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{(1)}
 %% TEST-ATOMS-MIN: 1

@@ -1,1 +1,65 @@
-unit/test-concept-forward-ref.lvt
+%% TEST-NAME: test-concept-forward-ref
+%% TEST-WHAT: Verify \Hom in the intro paragraph + \Hom* in a later
+%%            definition produces the expected concept records:
+%%            \codep@concept{Hom}{<def-atom>} in .aux (once),
+%%            \codep@conceptref{<intro-atom>}{Hom} in .aux,
+%%            \codep@cdp@def{<def-atom>}{Hom} in .cdp (once),
+%%            \codep@cdp@use{<intro-atom>}{Hom} in .cdp.
+%%            At pass 2, the def atom's "Used in" list includes
+%%            the intro atom (forward-reference resolves backward
+%%            via the concept map).
+%% TEST-SOURCE: DESIGN.md §8a.9 Concept-aware forward references
+%% TEST-SECTION: DESIGN.md §8a.9
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@def{2.1}{Hom} = 1
+%% TEST-CDP-CONTAINS: \codep@cdp@use{1.1}{Hom}
+%% TEST-AUX-CONTAINS: \codep@concept{Hom}{2.1}
+%% TEST-AUX-CONTAINS: \codep@conceptref{1.1}{Hom}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% This is the baseline forward-reference test. The intro paragraph
+%% is atom 1.1 (first paragraph atom under "Introduction"). The
+%% definition environment in "Categories" is atom 1.2. The \Hom* in
+%% the definition body marks 1.2 as the def site for concept "Hom";
+%% the \Hom in the intro marks 1.1 as a use site. At pass 2, the
+%% .aux records flow through \codep@concept/\codep@conceptref,
+%% the concept map resolves Hom -> 1.2, and the edge (1.1 -> 1.2)
+%% feeds into \codep@recordbr just like any explicit \cref edge.
+%% The "Used in 1.1" line appears at atom 1.2.
+%%
+%% Until §8a.9 is implemented in codependent.sty, this fixture FAILS at
+%% the \codep@concept record assertion (the record is not written).
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\usepackage{codependent}
+\codeptrack{theorem,definition}
+
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+
+\begin{document}
+\START
+
+\section{Introduction}
+
+In this paper we study the $\Hom{X}{Y}$ functor of objects in a
+category. This will be made precise in the next section. The use
+of \verb|\Hom| in this paragraph is the forward reference that
+must resolve to the definition atom.
+
+\section{Categories}
+
+\begin{definition}
+  The $\Hom*{X}{Y}$ set is defined here. The star on \verb|\Hom*|
+  marks this definition atom as the def site for the concept
+  named \texttt{Hom}.
+\end{definition}
+
+\END
+\end{document}

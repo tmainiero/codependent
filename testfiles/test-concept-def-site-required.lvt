@@ -1,1 +1,56 @@
-unit/test-concept-def-site-required.lvt
+%% TEST-NAME: test-concept-def-site-required
+%% TEST-WHAT: Verify that using \Hom without any \Hom* definition
+%%            site anywhere in the document produces a
+%%            PackageWarning at \AtEndDocument, but does NOT halt
+%%            the build. The concept's backrefs are disabled; no
+%%            \codep@cdp@def record is emitted for Hom.
+%% TEST-SOURCE: DESIGN.md §8a.9 Error handling (missing def site)
+%% TEST-SECTION: DESIGN.md §8a.9
+%% TEST-EXIT: 0
+%% TEST-LOG-CONTAINS: Package codependent Warning.*no.*definition site
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@def{1.1}{Hom}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@def{1.2}{Hom}
+%% TEST-CDP-CONTAINS: \codep@cdp@use{1.1}{Hom}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% The user writes \Hom uses but never marks a definition site with
+%% \Hom*. The .sty must NOT fall back to "first occurrence wins"
+%% (explicitly rejected by the user as 90% wrong on real papers).
+%% Instead, at \AtEndDocument the concept-use set is scanned against
+%% the concept-def map, and any concept with >=1 uses and 0 defs
+%% triggers a PackageWarning. Build exits 0 (the document still
+%% compiles and renders; backrefs for Hom are simply absent).
+%%
+%% Until §8a.9 is implemented, this fixture FAILS the warning
+%% assertion (no warning is emitted because the end-document scan
+%% does not exist yet).
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{definition}{Definition}[section]
+\usepackage{codependent}
+\codeptrack{definition}
+
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+
+\begin{document}
+\START
+
+\section{Introduction}
+
+We use $\Hom{X}{Y}$ in this paragraph. This is atom 1.1 and it
+is a use of \verb|\Hom| without a star.
+
+More prose with another $\Hom{A}{B}$ reference. Still no star
+anywhere.
+
+\section{Body}
+
+More uses: $\Hom{P}{Q}$. The author forgot to mark the def site
+with \verb|\Hom*|. The .sty must warn, not fall back silently.
+
+\END
+\end{document}

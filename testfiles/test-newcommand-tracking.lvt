@@ -1,1 +1,44 @@
-unit/test-newcommand-tracking.lvt
+%% TEST-NAME: test-newcommand-tracking
+%% TEST-WHAT: Verify \codepnewcommand{\Hom}[2]{...} emits the expected
+%%            \codep@cdp@cmddef records (kind=newcommand, arity, src)
+%%            and that the defined \Hom command works in the body.
+%% TEST-SOURCE: DESIGN.md §9a User API: \codepnewcommand
+%% TEST-SECTION: DESIGN.md §9a User API
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Hom}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Hom}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Hom}{src}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% \codepnewcommand mirrors \newcommand exactly: takes a backslash-
+%% prefixed command, optional bracketed arity, mandatory braced body.
+%% At declaration time it must emit three .cdp records (kind, arity,
+%% src). At invocation time inside an atom, the wrapped command must
+%% emit a \codep@cdp@use record per call.
+%%
+%% This test verifies the declaration-side records. See
+%% test-cmd-uses.lvt for the invocation-side use records.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+\codepnewcommand{\id}{\mathrm{id}}
+
+\begin{document}
+\START
+
+\section{Test}
+
+A paragraph using $\Hom{X}{Y}$ and $\id$.  The wrapped commands
+must produce correct typeset output AND emit sbl use records
+to the sidecar (verified separately by test-cmd-uses).
+
+\END
+\end{document}

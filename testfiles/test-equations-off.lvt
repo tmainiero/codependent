@@ -1,1 +1,48 @@
-unit/test-equations-off.lvt
+%% TEST-NAME: test-equations-off
+%% TEST-WHAT: equations=off disables equation backref tracking;
+%%            \ref inside a standalone equation is silently dropped
+%%            (no active atom, no equation source).  \ref inside an
+%%            equation within a theorem falls through to the theorem
+%%            atom number.
+%% TEST-SOURCE: DESIGN.md §Options
+%% TEST-SECTION: codependent.sty equations option
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{(1)}{thm:main}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{(1)}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsmath,amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% With equations=off, numbered equations do not capture the
+%% equation number as backref source. Any \ref inside a standalone
+%% equation is silently dropped (no current atom context).
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[equations=off]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  The main theorem.
+\end{theorem}
+
+% Equation: with equations=off, no parenthesized source.
+% Standalone (not inside a theorem), so the ref is dropped entirely.
+\begin{equation}
+  f(x) = g(x) \quad\text{by Theorem~\ref{thm:main}}.
+\end{equation}
+
+\END
+\end{document}
