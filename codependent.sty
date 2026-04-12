@@ -573,82 +573,113 @@
 %   Standalone proofs defer margin emission to para/begin so
 %   the number appears on the "Proof." line, not on a
 %   separate line.
+%   Delegates to:
+%     \codep@hookproof@begin     — begin dispatch
+%     \codep@proof@standalone    — non-adjacent proof path
+%     \codep@proof@adjacent      — adjacent proof path
+%     \codep@hookproof@end       — end cleanup
+%     \codep@hookproof@afterend  — block/margin flush
 \newcommand*{\codep@hookproof}{%
   \@ifundefined{proof}{}{%
-    \AtBeginEnvironment{proof}{%
-      \ifbool{codep@proofsnumbered}{%
-        \ifnum\codep@nestlevel>0\relax
-          % Inside a tracked env: just suppress.
-          \advance\codep@nestlevel by 1\relax
-        \else
-          % Standalone proof: check adjacency.
-          \ifx\codep@lasttheorematom\@empty
-            % No preceding theorem: fallback to own atom number.
-            \refstepcounter{atom}%
-            \codep@writeanchormap{\theatom}%
-            \advance\codep@nestlevel by 1\relax
-            \edef\codep@currentatom{\theatom}%
-            \codep@sblwrite@atom{%
-              \string\codep@sbl@atom{\theatom}{proof}}%
-            \codep@sblwrite@atom{%
-              \string\codep@sbl@meta{\theatom}{src}%
-                {\jobname.tex:\the\inputlineno:1}}%
-            \global\advance\codep@atomcount by 1\relax
-            \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
-              {\theatom}{proof}}%
-            \global\booltrue{codep@proofpending}%
-            \codep@queuebackref{\theatom}%
-            \ifbool{codep@proofwarnings}{%
-              \PackageWarning{codependent}{Proof not adjacent to a tracked
-                environment; assigned independent atom number \theatom}%
-            }{}%
-          \else
-            % Adjacent to theorem: inherit atom number with star.
-            \advance\codep@nestlevel by 1\relax
-            \edef\codep@currentatom{\codep@lasttheorematom*}%
-            % Override source atom for \codep@writeatomref so
-            % that \ref inside this proof writes "2.1*" (starred)
-            % instead of "2.1" (bare \theatom).
-            \edef\codep@sourceatom{\codep@lasttheorematom*}%
-            \global\let\codep@lasttheorematom\@empty
-            % SBL sub-record for the inherited proof.
-            \codep@sblwrite@atom{%
-              \string\codep@sbl@proof{\codep@currentatom}}%
-            % No \refstepcounter -- inheriting the theorem's number.
-            % No margin number -- proof shares theorem's visual
-            % identity; the proof heading ("Proof.") is sufficient.
-            % No atomcount append -- proof is not a separate atom.
-            % No proofpending -- no deferred margin emission needed.
-            \codep@queuebackref{\codep@currentatom}%
-          \fi
-        \fi
-      }{%
-        % proofs=off: just suppress paragraph numbering.
-        \advance\codep@nestlevel by 1\relax
-      }%
-    }%
-    \AtEndEnvironment{proof}{%
-      \ifbool{codep@proofsnumbered}{%
-        % §8a.5 atom-end clear of the in-atom sentinel.
-        \let\codep@currentatom\@empty
-        % Clear source atom override (adjacent proof path).
-        \let\codep@sourceatom\@empty
-        % Inline style: flush before env closes (hmode, before QED).
-        \ifx\codep@backrefstyle\codep@const@inline
-          \codep@flushbackref
-        \fi
-      }{}%
-      \advance\codep@nestlevel by -1\relax
-    }%
-    \AfterEndEnvironment{proof}{%
-      \ifbool{codep@proofsnumbered}{%
-        % Block/margin style: flush after env closes (vmode, after QED).
-        \ifx\codep@backrefstyle\codep@const@inline\else
-          \codep@flushbackref
-        \fi
-      }{}%
-    }%
+    \AtBeginEnvironment{proof}{\codep@hookproof@begin}%
+    \AtEndEnvironment{proof}{\codep@hookproof@end}%
+    \AfterEndEnvironment{proof}{\codep@hookproof@afterend}%
   }%
+}
+
+% \codep@hookproof@begin
+%   Begin dispatch for proof environment.
+%   4-way branch: proofs off / inside tracked / standalone
+%   non-adjacent / standalone adjacent.
+\newcommand*{\codep@hookproof@begin}{%
+  \ifbool{codep@proofsnumbered}{%
+    \ifnum\codep@nestlevel>0\relax
+      % Inside a tracked env: just suppress.
+      \advance\codep@nestlevel by 1\relax
+    \else
+      % Standalone proof: check adjacency.
+      \ifx\codep@lasttheorematom\@empty
+        \codep@proof@standalone
+      \else
+        \codep@proof@adjacent
+      \fi
+    \fi
+  }{%
+    % proofs=off: just suppress paragraph numbering.
+    \advance\codep@nestlevel by 1\relax
+  }%
+}
+
+% \codep@proof@standalone
+%   Non-adjacent proof path: own atom, proofof label, warning.
+%   No preceding theorem — fallback to own atom number.
+\newcommand*{\codep@proof@standalone}{%
+  \refstepcounter{atom}%
+  \codep@writeanchormap{\theatom}%
+  \advance\codep@nestlevel by 1\relax
+  \edef\codep@currentatom{\theatom}%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@atom{\theatom}{proof}}%
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@meta{\theatom}{src}%
+      {\jobname.tex:\the\inputlineno:1}}%
+  \global\advance\codep@atomcount by 1\relax
+  \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
+    {\theatom}{proof}}%
+  \global\booltrue{codep@proofpending}%
+  \codep@queuebackref{\theatom}%
+  \ifbool{codep@proofwarnings}{%
+    \PackageWarning{codependent}{Proof not adjacent to a tracked
+      environment; assigned independent atom number \theatom}%
+  }{}%
+}
+
+% \codep@proof@adjacent
+%   Adjacent proof path: inherit lasttheorematom with star.
+\newcommand*{\codep@proof@adjacent}{%
+  \advance\codep@nestlevel by 1\relax
+  \edef\codep@currentatom{\codep@lasttheorematom*}%
+  % Override source atom for \codep@writeatomref so
+  % that \ref inside this proof writes "2.1*" (starred)
+  % instead of "2.1" (bare \theatom).
+  \edef\codep@sourceatom{\codep@lasttheorematom*}%
+  \global\let\codep@lasttheorematom\@empty
+  % SBL sub-record for the inherited proof.
+  \codep@sblwrite@atom{%
+    \string\codep@sbl@proof{\codep@currentatom}}%
+  % No \refstepcounter -- inheriting the theorem's number.
+  % No margin number -- proof shares theorem's visual
+  % identity; the proof heading ("Proof.") is sufficient.
+  % No atomcount append -- proof is not a separate atom.
+  % No proofpending -- no deferred margin emission needed.
+  \codep@queuebackref{\codep@currentatom}%
+}
+
+% \codep@hookproof@end
+%   End cleanup: clear currentatom, sourceatom, inline flush,
+%   decrement nestlevel.
+\newcommand*{\codep@hookproof@end}{%
+  \ifbool{codep@proofsnumbered}{%
+    % §8a.5 atom-end clear of the in-atom sentinel.
+    \let\codep@currentatom\@empty
+    % Clear source atom override (adjacent proof path).
+    \let\codep@sourceatom\@empty
+    % Inline style: flush before env closes (hmode, before QED).
+    \ifx\codep@backrefstyle\codep@const@inline
+      \codep@flushbackref
+    \fi
+  }{}%
+  \advance\codep@nestlevel by -1\relax
+}
+
+% \codep@hookproof@afterend
+%   Block/margin style: flush after env closes (vmode, after QED).
+\newcommand*{\codep@hookproof@afterend}{%
+  \ifbool{codep@proofsnumbered}{%
+    \ifx\codep@backrefstyle\codep@const@inline\else
+      \codep@flushbackref
+    \fi
+  }{}%
 }
 
 %% ===================================================================
