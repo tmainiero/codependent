@@ -660,11 +660,27 @@ claimed Pavlov-style proof numbering).
 writes an anchormap entry so the link goes to the proof location.
 Use for proofs far from their theorem.
 
-**Rendering bugs discovered** (visual PDF inspection):
-1. Orphaned "Used in" across page break — investigation in progress
-2. Inconsistent vertical spacing — varies by theorem style's `\topsep`
-3. Phantom paragraph 2.6 — standalone proof creates atom then
-   `\codepproofof` switches identity; phantom atom persists in graph
+**Rendering bugs discovered and fixed** (visual PDF inspection):
+1. Orphaned "Used in" across page break — FIXED (`0f71dcb`).
+   `\@endparpenalty` override in theorem/proof end hooks.
+2. Inconsistent vertical spacing — OPEN. Analysis in agent_memory.
+3. Phantom proof atom (2.6*) — FIXED (`f710230`). Lazy proof atom
+   creation: `\codep@proof@standalone` defers `\refstepcounter`
+   until `\codepproofof` has had a chance to intercept.
+4. Equation/paragraph namespace collision — FIXED (`3c5eeea`).
+   Type-prefixed backref keys: `theorem:2.1`, `equation:2.1`, etc.
+5. Broken proof hyperlinks after namespacing — FIXED (`3c5eeea`).
+   Adjacent proof anchor mapping persisted to .aux.
+
+**Tracking/rendering separation** (Phases 1-3):
+- Phase 1+2 (`4be270d`): 9 hook-point no-ops + call-site replacement
+- Phase 3 (`f573d61`): Rendering extracted to `codependent-render.sty`
+  (562 lines). `backrefs=none` gives pure tracking, zero rendering.
+
+**Test infrastructure**:
+- `TEST-PDF-ALL-BACKREFS-LINKED` (`7617cd1`): verifies every backref
+  entry is a hyperlink. Already caught a bug in integ-no-cleveref.
+- `TEST-PDF-BACKREF-TARGETS`: verifies links point to correct dests.
 
 **Design decisions implemented:**
 - Renamed `backref-style=block` → `below` (user-facing option)
