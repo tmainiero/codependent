@@ -266,6 +266,13 @@
 % Track 2 flag: distinguishes Track 1 vs Track 2 envs.
 \newbool{codep@eqmultiline}
 
+% Standalone-equation label type pending.
+% Set globally at \AtBeginEnvironment for standalone equations so
+% that deferred \label calls (amsmath fires them after environment end)
+% can still record the correct type.  Cleared in \codep@writelbltype
+% after use, and globally cleared at environment end as a safety net.
+\newcommand*{\codep@eq@lbltype@pending}{}
+
 % Accumulated appendix data (token register).
 % Still referenced by \codepappendix (Section 10); Wave 3 rewires
 % its population path per §8a.6.g.
@@ -831,16 +838,34 @@
 %   Track 1: single-number equation environments.
 %   \theequation is correct at \ref time (counter steps at \begin).
 %   Suppresses paragraph numbering and sets the equation flag.
+%   Sets \codep@currenttype to "equation" for standalone equations so
+%   that \label writes the correct type to .aux (not the enclosing
+%   paragraph type).  When inside a theorem/proof, the theorem's type
+%   remains authoritative and \codep@currenttype is left unchanged.
 \newcommand*{\codep@trackeqenv}[1]{%
   \AtBeginEnvironment{#1}{%
     \advance\codep@nestlevel by 1\relax
     \booltrue{codep@inequation}%
     \boolfalse{codep@eqmultiline}%
+    \ifbool{codep@intheorem}{}{%
+      \def\codep@currenttype{equation}%
+      % amsmath defers \label to after environment end; use a global
+      % register so \codep@writelbltype sees the type even then.
+      \global\def\codep@eq@lbltype@pending{equation}%
+    }%
   }%
   \AtEndEnvironment{#1}{%
     \advance\codep@nestlevel by -1\relax
     \boolfalse{codep@inequation}%
     \def\codep@eqatom{}%
+    \ifbool{codep@intheorem}{}{%
+      \let\codep@currenttype\@empty
+    }%
+  }%
+  \AfterEndEnvironment{#1}{%
+    % Safety net: clear the pending type after amsmath has had a
+    % chance to fire any deferred \label calls.
+    \global\let\codep@eq@lbltype@pending\@empty
   }%
 }
 
@@ -849,6 +874,10 @@
 %   \theequation is stale at \ref time (counter steps at \\).
 %   Saves the equation counter at \begin, defers \ref targets to a
 %   pending list, and computes the range at \end.
+%   Sets \codep@currenttype to "equation" for standalone equations so
+%   that \label writes the correct type to .aux (not the enclosing
+%   paragraph type).  When inside a theorem/proof, the theorem's type
+%   remains authoritative and \codep@currenttype is left unchanged.
 %
 %   Timing: the equation counter for the LAST numbered line is
 %   stepped during \end<env> (amsmath processes the final row
@@ -865,6 +894,12 @@
     \advance\codep@nestlevel by 1\relax
     \booltrue{codep@inequation}%
     \booltrue{codep@eqmultiline}%
+    \ifbool{codep@intheorem}{}{%
+      \def\codep@currenttype{equation}%
+      % amsmath defers \label to after environment end; use a global
+      % register so \codep@writelbltype sees the type even then.
+      \global\def\codep@eq@lbltype@pending{equation}%
+    }%
     % Save counter for range computation.
     \global\codep@eq@startcount=\c@equation\relax
     % Clear pending list.
@@ -885,6 +920,9 @@
     \boolfalse{codep@inequation}%
     \boolfalse{codep@eqmultiline}%
     \def\codep@eqatom{}%
+    \ifbool{codep@intheorem}{}{%
+      \let\codep@currenttype\@empty
+    }%
   }%
   \AfterEndEnvironment{#1}{%
     % Flush ONLY — all state cleanup already done above.
@@ -895,6 +933,8 @@
     \ifnum\codep@eqpendingcount>0\relax
       \codep@flusheqrange
     \fi
+    % Clear pending label type after amsmath has fired deferred \label.
+    \global\let\codep@eq@lbltype@pending\@empty
   }%
 }
 
@@ -1969,12 +2009,29 @@
 
 % \codep@writelbltype{label}
 %   Write the current atom type prefix to .aux for this label.
-%   Guards on \codep@currentatom (in-atom) and \if@filesw.
+%   Priority order:
+%   1. Standalone equation (\codep@eq@lbltype@pending non-empty):
+%      amsmath defers \label to after the environment group closes, so
+%      codep@inequation is already false and \codep@currentatom may
+%      hold the preceding paragraph atom.  The globally-saved pending
+%      type wins over any ambient paragraph context — equations own
+%      their own labels.  Clear the register after use.
+%   2. Inside a tracked theorem/proof atom (\codep@currentatom non-empty):
+%      write \codep@currenttype (set by the theorem hook).
+%   3. Otherwise: no-op (no owning atom).
 \def\codep@writelbltype#1{%
-  \ifx\codep@currentatom\@empty\else
-    \if@filesw
+  \if@filesw
+    \ifx\codep@eq@lbltype@pending\@empty
+      % Not a standalone equation label — use theorem/paragraph context.
+      \ifx\codep@currentatom\@empty\else
+        \protected@write\@auxout{}{%
+          \string\codep@lbltype{#1}{\codep@currenttype}}%
+      \fi
+    \else
+      % Standalone equation: pending type overrides ambient atom context.
       \protected@write\@auxout{}{%
-        \string\codep@lbltype{#1}{\codep@currenttype}}%
+        \string\codep@lbltype{#1}{\codep@eq@lbltype@pending}}%
+      \global\let\codep@eq@lbltype@pending\@empty
     \fi
   \fi
 }%
