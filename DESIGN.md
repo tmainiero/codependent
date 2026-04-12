@@ -532,25 +532,49 @@ cases.
 
 **Adjacency rule:** only auto-attributes when:
 1. Nothing intervened (no paragraph, no other tracked env)
-2. The preceding environment is in the `proof-targets` list
+2. The preceding environment is in `results`
 
-All `\newtheorem`-created environments (including those from
-amsthm and thmtools' `\declaretheorem`) are tracked
-automatically when `codependent` is loaded.  No explicit
-`\codeptrack` call is needed.
+### Environment tracking
 
-Proof eligibility is configured separately:
+All tracked environments fall into two categories:
+
+| Category | Default environments | Proof-eligible |
+|----------|---------------------|----------------|
+| `results` | theorem, lemma, proposition, corollary | Yes |
+| `nonresults` | definition, remark, example | No |
+
+Both categories are fully tracked (atom numbers, backrefs,
+`.cdp` sidecar records).  The distinction is purely about
+proof adjacency: only `results` environments can receive
+auto-attributed proofs.
+
+**Configuration via `\codepsetup`:**
 
 ```latex
 \usepackage{codependent}
-% proof-targets defaults to {theorem,lemma,proposition,corollary}
-% Add more if needed:
-\codepsetup{proof-targets+={conjecture,claim}}
+% Defaults apply: results={theorem,lemma,proposition,corollary}
+%                 nonresults={definition,remark,example}
+
+% Add custom environments (append to defaults):
+\codepsetup{results+={conjecture,claim}}
+\codepsetup{nonresults+={notation,convention}}
+
+% Full override (replaces defaults entirely):
+\codepsetup{results={theorem,lemma,myresult}}
+\codepsetup{nonresults={definition}}
 ```
 
-Only `proof-targets` can receive auto-attributed proofs via
-adjacency.  A proof after a definition or remark becomes
-unattributed — the CLI flags it for user review.
+A proof after a `nonresults` environment becomes unattributed
+— the CLI flags it for user review.
+
+**`\codeptrack` is deprecated.** All environment registration
+goes through `\codepsetup{results=..., nonresults=...}`.
+Internally `\codeptrack` remains as the hook-installation
+mechanism, but users do not call it directly.
+
+**Future:** auto-hook into `\newtheorem` / `\declaretheorem`
+so custom environments beyond the defaults do not need
+explicit registration at all.
 
 ### Labels
 
