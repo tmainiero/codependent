@@ -493,6 +493,20 @@
   \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
     {\codep@outeratom}{#1}}%
   \codep@queuebackref{\codep@outeratom}%
+  % Anti-orphan: for block/margin styles, prevent page breaks
+  % between the theorem body and the "Used in" line.
+  % \@endparpenalty controls the penalty that \endtrivlist's
+  % \@endparenv inserts; the default is -51 (encourage break).
+  % Override to 10000 (\nobreak) so TeX cannot split the page
+  % at this point.  This assignment is LOCAL to the env group,
+  % so it is automatically restored after \endgroup.
+  \ifx\codep@backrefstyle\codep@const@inline\else
+    \expandafter\def\expandafter\codep@tmp\expandafter{%
+      \the\codep@pendingbr}%
+    \ifx\codep@tmp\@empty\else
+      \@endparpenalty\@M
+    \fi
+  \fi
   % Inline style: flush NOW (still in hmode, inside the env
   % body, before amsthm's \popQED / endmark mechanism runs).
   % Block/margin styles flush later in \AfterEndEnvironment.
@@ -549,6 +563,9 @@
 %   queueing in the cmd/end hook above.
 %   Inline style: already flushed in cmd/end#1/before (above),
 %   so this is a no-op for inline.
+%   Anti-orphan: \@endparpenalty is set to \@M in
+%   \codep@hooktheorem@end@outer so \endtrivlist cannot
+%   introduce a page break before the "Used in" line.
 \def\codep@hooktheorem@afterend#1{%
   \ifx\codep@backrefstyle\codep@const@inline\else
     \codep@flushbackref
@@ -657,6 +674,7 @@
 % \codep@hookproof@end
 %   End cleanup: clear currentatom, sourceatom, inline flush,
 %   decrement nestlevel.
+%   Anti-orphan: same \@endparpenalty override as theorem end.
 \newcommand*{\codep@hookproof@end}{%
   \ifbool{codep@proofsnumbered}{%
     % §8a.5 atom-end clear of the in-atom sentinel.
@@ -666,6 +684,13 @@
     % Inline style: flush before env closes (hmode, before QED).
     \ifx\codep@backrefstyle\codep@const@inline
       \codep@flushbackref
+    \else
+      % Block/margin: prevent orphan "Used in" across page break.
+      \expandafter\def\expandafter\codep@tmp\expandafter{%
+        \the\codep@pendingbr}%
+      \ifx\codep@tmp\@empty\else
+        \@endparpenalty\@M
+      \fi
     \fi
   }{}%
   \advance\codep@nestlevel by -1\relax
