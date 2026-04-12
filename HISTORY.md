@@ -682,6 +682,12 @@ Use for proofs far from their theorem.
   entry is a hyperlink. Already caught a bug in integ-no-cleveref.
 - `TEST-PDF-BACKREF-TARGETS`: verifies links point to correct dests.
 
+**Equation label type contamination** (`2b1c370`). amsmath defers
+`\label` execution past equation end hooks, so `codep@inequation`
+and `\codep@currenttype` are cleared when the label runs. Added
+`\codep@eq@lbltype@pending` register set globally at equation begin,
+consumed by `\codep@writelbltype` with priority over ambient context.
+
 **Design decisions implemented:**
 - Renamed `backref-style=block` → `below` (user-facing option)
 - Changed default `backref-style` → `inline`
@@ -689,6 +695,16 @@ Use for proofs far from their theorem.
 - Renamed `\codep@renderdeferred` → `\codep@renderbackref@para`
 - Split integ-full-stack into integ-full-stack (inline) + integ-full-stack-below
 - Internal macro rename `\codep@sbl@*` → `\codep@cdp@*`
+- `results` / `nonresults` environment categories for proof eligibility
+- `\codepproofin{citation}`, `\codepnoproof{label}` designed (not yet implemented)
+- Restatable environments: restate renders same "Used in" as original (rendering-only, no new .aux records)
+
+**Architecture redesign planned:**
+- Opaque atom IDs replacing type-prefixed display keys
+- TeX-group context stack replacing global mutable sentinel
+- Event-sourced .aux protocol (atomopen, labelatom, atomanchor, atomref, proofbind)
+- Rendering query API (getdisplay, gettype, getanchor, getreflist)
+- Spec produced, sent to Codex for adversarial review
 
 ### Failed approaches (v1.1-dev + v1.1-bugs session additions)
 
