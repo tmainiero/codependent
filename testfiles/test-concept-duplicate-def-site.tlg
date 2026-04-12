@@ -1,0 +1,13 @@
+This is a generated file for the l3build validation system.
+Don't change this file in any respect.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line ....
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line ....
+! Package codependent Error: \\Hom* defined at atoms 1.1 and 2.1.
+See the codependent package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+l. ...  The $\Hom*
+                 {A}{B}$ set is \emph{also} defined here. Second def
+Exactly one definition site is permitted per concept. Use \\Hom (without star) at the non-definitional site.

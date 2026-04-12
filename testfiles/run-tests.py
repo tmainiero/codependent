@@ -28,6 +28,7 @@ Standard library only. No PyYAML, no requests, no third-party deps.
 
 import argparse
 import dataclasses
+import json
 import os
 import re
 import shutil
@@ -86,6 +87,14 @@ METADATA_KEYS = {
     "TEST-PDF-STEXT-NOT": "pdf_stext_not",  # may repeat; regex must NOT match stext XML
     "TEST-PDF-OBJECTS": "pdf_objects",  # may repeat; regex on mutool show grep (link annots, dests)
     "TEST-PDF-OBJECTS-NOT": "pdf_objects_not",  # may repeat; regex must NOT match objects
+    # Object-level PDF link verification (require qpdf --json=2)
+    "TEST-PDF-LINK-DEST": "pdf_link_dest",  # may repeat; regex on link destination names
+    "TEST-PDF-LINK-DEST-NOT": "pdf_link_dest_not",  # may repeat; dest must NOT exist on any link
+    "TEST-PDF-LINK-COUNT": "pdf_link_count",  # exact count of link annotations
+    "TEST-PDF-DEST-EXISTS": "pdf_dest_exists",  # may repeat; regex on named destination names
+    "TEST-PDF-DEST-NOT-EXISTS": "pdf_dest_not_exists",  # may repeat; named dest must NOT exist
+    "TEST-PDF-LINK-RECT": "pdf_link_rect",  # may repeat; "<dest> <x1> <y1> <x2> <y2> <tol>"
+    "TEST-PDF-NO-ORPHAN-LINKS": "pdf_no_orphan_links",  # boolean; every link dest must resolve
 }
 
 REPEATING_KEYS = {
@@ -95,6 +104,9 @@ REPEATING_KEYS = {
     "pdf_contains", "pdf_not",
     "pdf_stext", "pdf_stext_not",
     "pdf_objects", "pdf_objects_not",
+    "pdf_link_dest", "pdf_link_dest_not",
+    "pdf_dest_exists", "pdf_dest_not_exists",
+    "pdf_link_rect",
 }
 
 # No-op definitions for l3build regression-test markers.  l3build provides
@@ -142,6 +154,14 @@ class Fixture:
     pdf_stext_not: list = dataclasses.field(default_factory=list)
     pdf_objects: list = dataclasses.field(default_factory=list)
     pdf_objects_not: list = dataclasses.field(default_factory=list)
+    # Object-level PDF link verification (qpdf --json=2)
+    pdf_link_dest: list = dataclasses.field(default_factory=list)
+    pdf_link_dest_not: list = dataclasses.field(default_factory=list)
+    pdf_link_count: int = -1  # -1 = not specified
+    pdf_dest_exists: list = dataclasses.field(default_factory=list)
+    pdf_dest_not_exists: list = dataclasses.field(default_factory=list)
+    pdf_link_rect: list = dataclasses.field(default_factory=list)
+    pdf_no_orphan_links: bool = False
 
 
 def parse_fixture(path: Path) -> Fixture:
@@ -174,6 +194,11 @@ def parse_fixture(path: Path) -> Fixture:
                     fix.pdf_links = int(value)
                 except ValueError:
                     pass
+            elif attr == "pdf_link_count":
+                try:
+                    fix.pdf_link_count = int(value)
+                except ValueError:
+                    pass
             elif attr == "atoms_min":
                 try:
                     fix.atoms_min = int(value)
@@ -188,6 +213,8 @@ def parse_fixture(path: Path) -> Fixture:
                 fix.packages = [p.strip() for p in value.split(",") if p.strip()]
             elif attr == "pins_known_broken":
                 fix.pins_known_broken = value.lower() in ("yes", "true", "1")
+            elif attr == "pdf_no_orphan_links":
+                fix.pdf_no_orphan_links = value.lower() in ("yes", "true", "1")
             elif attr in REPEATING_KEYS:
                 getattr(fix, attr).append(value)
             else:
@@ -228,6 +255,8 @@ PDF_TEXT_TOOL: str | None = shutil.which("mutool") or shutil.which("pdftotext")
 PDF_LINK_TOOL: str | None = shutil.which("mutool") or shutil.which("qpdf")
 # Structural assertions (stext positions/fonts, PDF objects) require mutool.
 PDF_STEXT_TOOL: str | None = shutil.which("mutool")
+# Object-level link verification requires qpdf >= 11.0 (--json=2).
+PDF_QPDF_TOOL: str | None = shutil.which("qpdf")
 
 
 def _extract_pdf_text(pdf_path: Path) -> str | None:
@@ -329,6 +358,153 @@ def _count_pdf_links(pdf_path: Path) -> int | None:
             return proc.stdout.count("/Link")
     except (subprocess.TimeoutExpired, OSError):
         return None
+
+
+@dataclasses.dataclass
+class PdfLinkInfo:
+    """A single link annotation extracted from PDF objects."""
+    obj_id: str
+    rect: list  # [x1, y1, x2, y2]
+    dest: str   # destination name (e.g. "u:lemma.8")
+
+
+@dataclasses.dataclass
+class PdfLinkObjects:
+    """Structured PDF link/destination data extracted via qpdf --json=2."""
+    links: list   # list of PdfLinkInfo
+    destinations: set  # set of named destination strings
+
+
+def _collect_names_from_tree(objs: dict, obj_ref: str, visited: set) -> list[str]:
+    """Recursively collect named destination strings from a PDF Names tree.
+
+    The Names tree can have leaf nodes (/Names array with /Limits) and
+    intermediate nodes (/Kids array pointing to child nodes).  Object
+    references in qpdf JSON v2 are bare strings like "25 0 R".
+    """
+    if obj_ref in visited:
+        return []
+    visited.add(obj_ref)
+    key = f"obj:{obj_ref}"
+    node = objs.get(key)
+    if not isinstance(node, dict):
+        return []
+    val = node.get("value", {})
+    if not isinstance(val, dict):
+        return []
+
+    names: list[str] = []
+    # Leaf node: /Names is [name1, ref1, name2, ref2, ...]
+    names_arr = val.get("/Names")
+    if isinstance(names_arr, list):
+        for i in range(0, len(names_arr), 2):
+            if i < len(names_arr) and isinstance(names_arr[i], str):
+                names.append(names_arr[i])
+
+    # Intermediate node: /Kids is [ref1, ref2, ...]
+    kids = val.get("/Kids")
+    if isinstance(kids, list):
+        for kid_ref in kids:
+            if isinstance(kid_ref, str):
+                names.extend(_collect_names_from_tree(objs, kid_ref, visited))
+
+    return names
+
+
+def _find_names_root(objs: dict) -> str | None:
+    """Find the Dests Names tree root object reference.
+
+    The catalog object has /Names -> obj with /Dests -> tree root.
+    """
+    for key, val in objs.items():
+        if not isinstance(val, dict):
+            continue
+        v = val.get("value", {})
+        if not isinstance(v, dict):
+            continue
+        # Catalog has /Type /Catalog and /Names pointing to a names dict
+        if v.get("/Type") == "/Catalog":
+            names_ref = v.get("/Names")
+            if isinstance(names_ref, str):
+                # Resolve the names dict object
+                names_obj = objs.get(f"obj:{names_ref}")
+                if isinstance(names_obj, dict):
+                    names_val = names_obj.get("value", {})
+                    if isinstance(names_val, dict):
+                        dests_ref = names_val.get("/Dests")
+                        if isinstance(dests_ref, str):
+                            return dests_ref
+    return None
+
+
+def _extract_pdf_link_objects(pdf_path: Path) -> PdfLinkObjects | None:
+    """Extract link annotations and named destinations via qpdf --json=2.
+
+    Returns a PdfLinkObjects with structured link and destination data,
+    or None if qpdf is unavailable or extraction fails.
+    """
+    if PDF_QPDF_TOOL is None:
+        return None
+    try:
+        proc = subprocess.run(
+            [PDF_QPDF_TOOL, str(pdf_path), "--json=2"],
+            capture_output=True, text=True, timeout=60,
+        )
+        if proc.returncode != 0:
+            return None
+        data = json.loads(proc.stdout)
+    except (subprocess.TimeoutExpired, OSError, json.JSONDecodeError):
+        return None
+
+    qpdf_arr = data.get("qpdf")
+    if not isinstance(qpdf_arr, list) or len(qpdf_arr) < 2:
+        return None
+    objs = qpdf_arr[1]
+    if not isinstance(objs, dict):
+        return None
+
+    # Collect link annotations.
+    links: list[PdfLinkInfo] = []
+    for key, val in objs.items():
+        if not isinstance(val, dict):
+            continue
+        v = val.get("value", {})
+        if not isinstance(v, dict):
+            continue
+        if v.get("/Subtype") != "/Link":
+            continue
+        rect = v.get("/Rect", [])
+        # Determine destination: /A << /S /GoTo /D "dest" >> or /Dest "dest"
+        dest = None
+        action = v.get("/A")
+        if isinstance(action, dict):
+            d = action.get("/D")
+            if isinstance(d, str):
+                dest = d
+            elif isinstance(d, list) and len(d) > 0 and isinstance(d[0], str):
+                # Array form: [page_ref, /Fit...] — not a named dest
+                dest = None
+        if dest is None:
+            d = v.get("/Dest")
+            if isinstance(d, str):
+                dest = d
+            elif isinstance(d, list) and len(d) > 0 and isinstance(d[0], str):
+                dest = None
+        links.append(PdfLinkInfo(
+            obj_id=key,
+            rect=rect if isinstance(rect, list) else [],
+            dest=dest or "",
+        ))
+
+    # Collect named destinations from the Names tree.
+    destinations: set[str] = set()
+    dests_root = _find_names_root(objs)
+    if dests_root is not None:
+        visited: set[str] = set()
+        dest_names = _collect_names_from_tree(objs, dests_root, visited)
+        destinations.update(dest_names)
+
+    return PdfLinkObjects(links=links, destinations=destinations)
 
 
 # ----------------------------------------------------------------------
@@ -498,7 +674,11 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         #    tool is available on PATH.
         has_pdf_checks = (fix.pdf_contains or fix.pdf_not or fix.pdf_links > 0
                           or fix.pdf_stext or fix.pdf_stext_not
-                          or fix.pdf_objects or fix.pdf_objects_not)
+                          or fix.pdf_objects or fix.pdf_objects_not
+                          or fix.pdf_link_dest or fix.pdf_link_dest_not
+                          or fix.pdf_link_count >= 0
+                          or fix.pdf_dest_exists or fix.pdf_dest_not_exists
+                          or fix.pdf_link_rect or fix.pdf_no_orphan_links)
         if has_pdf_checks:
             pdf_file = tmp_path / f"{fix.name}.pdf"
             if not pdf_file.exists():
