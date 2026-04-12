@@ -87,14 +87,14 @@ User clarified that the CLI should NOT die — it should refocus
 on semantic analysis only. Final architecture:
 
 1. `codependent.sty` — numbering + non-semantic backrefs (dpmac port,
-   pure TeX), writes a `.sbl` semantic-hint sidecar
+   pure TeX), writes a `.cdp` semantic-hint sidecar
 2. `codependent-cli` — semantic analysis (UID tracking, concept
-   graphs, `\newmath` coherence). Reads `.tex` source + `.sbl`,
+   graphs, `\newmath` coherence). Reads `.tex` source + `.cdp`,
    writes `concepts.json` / `uid.log` / `deps.dot`. Does NOT
    compute generic backrefs.
 3. mwablab extension — project-specific work on Layer 2
 
-The `.sbl` file is a new wire format, write-only from the .sty,
+The `.cdp` file is a new wire format, write-only from the .sty,
 read-only by the CLI. Carries per-atom semantic metadata
 (source location, labels, user `\codeptag` records,
 `\newmath` declarations and uses).
@@ -136,7 +136,7 @@ Plus the `\newmath` user-API signature was unspecified.
 `tools/codependent/DESIGN.md` grows from 518 to 2058 lines.
 Adds Section 8a (dpmac port + corrected TeX sketch),
 Section 8b (LaTeXML codependent.ltxml binding for hideable HTML
-backrefs), Section 9a (.sbl writer with flattened record format
+backrefs), Section 9a (.cdp writer with flattened record format
 and end-marker sentinel). Also: `tools/codependent-cli/DESIGN.md`
 rewritten from scratch as semantic-analysis-only (480 lines).
 `tools/codependent/CREDITS.md` created with GPLv3 attribution
@@ -163,7 +163,7 @@ in the first pass, not as a follow-up. Outcome:
 
 User-driven sed-safety audit: canonical token is the literal
 lowercase string `codependent`; one sed pass renames everything
-except the `.sbl` extension and the `sbl` substring (which
+except the `.cdp` extension and the `sbl` substring (which
 follow TeX-extension convention and intentionally stay).
 Documented in CREDITS.md "Renameability" section.
 
@@ -191,7 +191,7 @@ specific line numbers.
    in a scope where `\c@theorem` has been re-let to a dummy
    counter. Our hook reads `\edef\codep@currentatom{\theatom}`
    and gets the atom number of an unrelated previous atom.
-   Plus a duplicate `.sbl@atom` record with conflicting type.
+   Plus a duplicate `.cdp@atom` record with conflicting type.
    Fix: one-line guard `\ifx\c@theorem\c@atom`.
 
 3. **`\@startsection` wrapper is a no-op under KOMA-Script,
@@ -209,7 +209,7 @@ The MINORs cover inline `\tikz`/`\tikzcd` suppression (relevant
 because the user does category theory and uses `tikzcd` heavily),
 `enumitem` `\newlist` registration, biblatex hook ordering,
 ntheorem testing, tcolorbox/mdframed suppression, listings/minted
-catcode hazards, subfiles standalone-vs-master `.sbl` divergence.
+catcode hazards, subfiles standalone-vs-master `.cdp` divergence.
 
 ### v1.0-test — Test fixtures + runner before implementation (2026-04-09)
 
@@ -221,7 +221,7 @@ TDD targets. Built in one parallel-dispatch session:
   covering numbering, reference recording (kernel/cleveref/hyperref/
   autoref/eqref/ref-star), KOMA/memoir/titlesec sectioning, suppression
   envs (trivlist/enumitem/tcolorbox/tikz/tikzcd), equations (separate
-  + pinned-broken shared), `.sbl` writer (version/source/end-marker/
+  + pinned-broken shared), `.cdp` writer (version/source/end-marker/
   flat-records), `\label` patching (kernel + cleveref opt-arg), the
   new public API (`\codepNewCommand`/`\codepNewDocumentCommand`/
   `\codeptag`/cmd-uses), hook & load ordering, engine matrix
@@ -250,7 +250,7 @@ TDD targets. Built in one parallel-dispatch session:
 - **Test runner** at `tools/codependent/testfiles/run-tests.py`
   (~430 lines, Python 3 stdlib only). Reads machine-readable
   `%% TEST-*:` metadata headers from each `.lvt` fixture, compiles
-  via pdflatex (configurable engine), reads `.aux`/`.sbl`/`.log`,
+  via pdflatex (configurable engine), reads `.aux`/`.cdp`/`.log`,
   applies assertions (exit code, log patterns, sidecar substring/
   count, atom min count), produces a per-category summary, exits
   non-zero on real failures while exempting `TEST-PINS-KNOWN-BROKEN`
@@ -296,7 +296,7 @@ Added:
   `\Hom*` starred variant inside `\codepNewCommand` marks the def
   site explicitly. New `.aux` records `\codep@concept` /
   `\codep@conceptref` feed into the existing backref pipeline via
-  the `.sty`'s pass-2 rerun. New `.sbl` record `\codep@sbl@def`
+  the `.sty`'s pass-2 rerun. New `.cdp` record `\codep@sbl@def`
   gives the CLI source-grounded concept metadata. Hybrid
   architecture (Option C): both sidecars carry the info, the `.sty`
   typeset PDF is complete without the CLI.
@@ -399,9 +399,9 @@ accepted as live limitations:
   table (default ~15k strings) saturates and lookup degrades.
   Users on pathological documents must increase `hash_extra`
   in `texmf.cnf`. Documented as a known limitation.
-- **`.sbl` extension is independent of the project name.**
+- **`.cdp` extension is independent of the project name.**
   A future rename of `codependent` -> `<other>` requires a second
-  sed pass to also rename `.sbl` if desired. Follows TeX
+  sed pass to also rename `.cdp` if desired. Follows TeX
   convention (`.bbl`, `.nav`, etc.).
 - **No `\providecommand` / `\renewcommand` /
   `\DeclareDocumentCommand` mirrors in v1.** The two-macro
@@ -483,7 +483,7 @@ agents should not propose these without re-litigating:
    Replaced by `\codep@sbl@cmddef` with a `kind`
    discriminator field.
 
-10. **Embedding kv blobs in `.sbl` records** like
+10. **Embedding kv blobs in `.cdp` records** like
     `\codep@sbl@atom{1.2.3}{paragraph}{src=foo,env=bar}`.
     Rejected by REVIEW_C finding 6 because filenames may
     contain commas. Replaced by flat one-pair-per-record

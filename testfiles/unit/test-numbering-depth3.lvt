@@ -6,9 +6,9 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-COUNT: \codep@sbl@atom{1.1.1.1}{paragraph} = 1
-%% TEST-SBL-COUNT: \codep@sbl@atom{1.1.2.1}{paragraph} = 1
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-COUNT: \codep@sbl@atom{1.1.1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@sbl@atom{1.1.2.1}{paragraph} = 1
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2

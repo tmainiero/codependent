@@ -8,17 +8,17 @@
 %% TEST-SECTION: DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@version{1}
-%% TEST-SBL-CONTAINS: \codep@sbl@atom
-%% TEST-SBL-CONTAINS: \codep@sbl@def
-%% TEST-SBL-CONTAINS: \codep@sbl@use
-%% TEST-SBL-CONTAINS: \codep@sbl@label
-%% TEST-SBL-CONTAINS: \codep@sbl@tag
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Ring}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Ring}{arity}{1}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Ideal}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Ideal}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@version{1}
+%% TEST-CDP-CONTAINS: \codep@sbl@atom
+%% TEST-CDP-CONTAINS: \codep@sbl@def
+%% TEST-CDP-CONTAINS: \codep@sbl@use
+%% TEST-CDP-CONTAINS: \codep@sbl@label
+%% TEST-CDP-CONTAINS: \codep@sbl@tag
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Ring}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Ring}{arity}{1}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Ideal}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Ideal}{arity}{2}
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-AUX-CONTAINS: \codep@concept{Ring}
 %% TEST-AUX-CONTAINS: \codep@concept{Ideal}

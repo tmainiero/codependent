@@ -7,10 +7,10 @@
 %% TEST-SECTION: DESIGN.md §9a User API
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Cite}{kind}{NewDocumentCommand}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Cite}{argspec}{s o m}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Cite}{src}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Cite}{kind}{NewDocumentCommand}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Cite}{argspec}{s o m}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Cite}{src}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

@@ -114,7 +114,7 @@ The top-level test harness is expected to:
 4. Collect per-paper metrics:
    - pdflatex exit code,
    - presence of `\codep@sbl@end{OK}` sentinel in the generated
-     `.sbl` file,
+     `.cdp` file,
    - atom-count stability between the two passes,
    - log lines matching `Warning|Error|codependent`.
 5. Triage any failure into a regression fixture under

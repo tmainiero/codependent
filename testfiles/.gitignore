@@ -12,7 +12,7 @@ real-world/.fetched
 *.aux
 *.log
 *.out
-*.sbl
+*.cdp
 *.fls
 *.fdb_latexmk
 *.toc

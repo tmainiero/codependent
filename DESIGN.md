@@ -21,7 +21,7 @@ architecture is three-layered:
 | 3. mwablab ext. | project-specific | Builds on Layer 2 |
 
 Layers 1 and 2 communicate one-way: the `.sty` writes a
-`.sbl` semantic-hint sidecar (Section 9a); the CLI reads it
+`.cdp` semantic-hint sidecar (Section 9a); the CLI reads it
 and never writes anything the `.sty` reads back.  The only
 two-way persistence is LaTeX's own `.aux` file.
 
@@ -33,24 +33,24 @@ bottom layer — it knows nothing about the layers above.
 | Layer | What | Audience |
 |---|---|---|
 | **codependent.sty** | Atom numbering + generic back-ref display (pure TeX, dpmac port) | Anyone (CTAN) |
-| **codependent-cli** | Semantic analysis: `.tex` + `.sbl` -> concept/UID/dep outputs | Anyone using the `.sty` for structured docs |
+| **codependent-cli** | Semantic analysis: `.tex` + `.cdp` -> concept/UID/dep outputs | Anyone using the `.sty` for structured docs |
 | **mwablab extension** | Project-specific semantic tooling on top of the CLI | Project-specific |
 
 The `.sty` is fully standalone for the back-reference-display
 use case.  It computes the back-reference graph in pure TeX
 (see Section 8a) via a direct port of the relevant macros from
 Dmitri Pavlov's `dpmac.tex`, and it writes a companion
-semantic-hint sidecar file (`.sbl`, see Section 9a) that the
+semantic-hint sidecar file (`.cdp`, see Section 9a) that the
 CLI reads for purely semantic work.  The CLI is **not** in
 the back-reference-display pipeline at all.
 
 ## Architecture
 
 ```
-pdflatex main.tex          pass 1: .sty numbers atoms, writes .aux + .sbl
+pdflatex main.tex          pass 1: .sty numbers atoms, writes .aux + .cdp
 pdflatex main.tex          pass 2: .sty reads .aux, inverts the ref graph
                                    in TeX, appends "Used in X, Y." per atom
-codependent-cli analyse main.tex optional: reads .tex + .sbl (+ .aux), writes
+codependent-cli analyse main.tex optional: reads .tex + .cdp (+ .aux), writes
                                       semantic-analysis artifacts
 ```
 
@@ -1378,7 +1378,7 @@ previous atom's display number.  Caching it via `\edef`
 (`\edef\codep@currentatom{\theatom}`) freezes the wrong value
 into the macro for the rest of the atom's body.  Any
 downstream consumer that reads `\codep@currentatom` —
-`\codep@writeatomref`, the planned `.sbl` writer, the
+`\codep@writeatomref`, the planned `.cdp` writer, the
 backref-display lookup — picks up the wrong number.
 
 Empirical confirmation under the v0.1 stub plus Wave 1's
@@ -1489,11 +1489,11 @@ in place:
 
 #### Cross-cutting consequences
 
-Every site that emits a `.sbl` record (Section 9a's
+Every site that emits a `.cdp` record (Section 9a's
 `\codep@sblwrite@atom` helper) also guards on
 `\codep@currentatom`.  Implementing the clear at
 atom-end is therefore a prerequisite for both back-ref
-correctness (Section 8a) and `.sbl` correctness
+correctness (Section 8a) and `.cdp` correctness
 (Section 9a) — fix once, benefit twice.
 
 #### Regression test
@@ -1525,7 +1525,7 @@ regression is caught at the `.lvt` level.
 > counter.  Without a guard, the restated occurrence is
 > attributed to whatever atom was current at the restate
 > site, the back-reference graph gets ghost edges, and
-> the `.sbl` writer emits a duplicate atom record with a
+> the `.cdp` writer emits a duplicate atom record with a
 > conflicting type.
 
 The four bugs documented in REVIEW_E Section R:
@@ -1549,7 +1549,7 @@ The four bugs documented in REVIEW_E Section R:
   `\c@atom` since the alias is broken), but our hook
   still calls `\edef\codep@currentatom{\theatom}` which
   confirms the R-1 wrong-number attribution.
-- **R-3.** The `.sbl` writer emits a duplicate
+- **R-3.** The `.cdp` writer emits a duplicate
   `\codep@sbl@atom{<previous-real-atom>}{theorem}` with
   a conflicting type — the CLI cannot disambiguate.
 - **R-4.** `\label` inside the restated body is gobbled
@@ -1646,7 +1646,7 @@ end, and no stack is required.
 
 > Upstream motivation: **Section 8a.9 concept-aware
 > forward references.**  The inline guard above correctly
-> skips the atom-numbering, `.sbl@atom`, and back-ref
+> skips the atom-numbering, `.cdp` atom record, and back-ref
 > queue work on the restate branch.  But it does NOT
 > touch `\codep@currentatom`, which still holds whatever
 > value the enclosing context left behind — typically the
@@ -1749,7 +1749,7 @@ pass 2 via the concept -> atom map) to the main-body
 declaration atom.
 
 **Effect on `\codep@sblwrite@atom` generally.**  Any
-`.sbl` record routed through `\codep@sblwrite@atom` —
+`.cdp` record routed through `\codep@sblwrite@atom` —
 not just the concept machinery — is dropped inside a
 restated body.  `\codep@sbl@label`, `\codep@sbl@use`,
 `\codep@sbl@tag`, and a hypothetical future atom-scoped
@@ -1780,7 +1780,7 @@ A recap follows.  % stray paragraph to advance atom ctr
 Assertions the fixture must verify:
 
 - `\codep@sbl@atom{<N>}{theorem}` for `thm:A` appears
-  **exactly once** in the `.sbl` (the original
+  **exactly once** in the `.cdp` (the original
   occurrence), never twice.
 - The display number printed for `thm:A` on the first
   (original) occurrence matches the display number
@@ -2355,7 +2355,7 @@ Each sidecar serves a different consumer:
   for explicit `\ref`/`\cref` citations only.  The
   `.aux` concept records exist solely for hyperlink
   resolution.
-- **`.sbl`** (read by the semantic CLI, Layer 2).  One
+- **`.cdp`** (read by the semantic CLI, Layer 2).  One
   new record type (`\codep@sbl@def`) gives the CLI
   source-location-grounded concept def sites; the
   existing `\codep@sbl@use` record is reused for
@@ -2495,7 +2495,7 @@ concept resolution — they all flow through the same
 per-target linked list and the same "Used in X, Y"
 display path.
 
-#### New `.sbl` records
+#### New `.cdp` records
 
 One new record type, plus reuse of an existing one.
 
@@ -2535,7 +2535,7 @@ parsing machinery beyond the one-line addition of the
    `\codep@emit@def` writes
    `\codep@concept{Hom}{<def-atom>}` to the current
    `.aux` file and `\codep@sbl@def{<def-atom>}{Hom}`
-   to the `.sbl`.  User's `\Hom` uses (intro and
+   to the `.cdp`.  User's `\Hom` uses (intro and
    later) each fire `\codep@emit@use`, which writes
    `\codep@conceptref{<use-atom>}{Hom}` to aux and
    `\codep@sbl@use{<use-atom>}{Hom}` to sbl.  Pass 1
@@ -2597,7 +2597,7 @@ parsing machinery beyond the one-line addition of the
 
   No fallback to first-occurrence (explicitly rejected
   by user as 90% wrong).  The concept's use records
-  still appear in the `.sbl`, and the CLI can mark the
+  still appear in the `.cdp`, and the CLI can mark the
   concept as "undefined" in its own output, but the
   `.sty` typeset PDF has no "Used in" line at any atom
   for this concept.  Exit code is 0 (warning, not
@@ -3176,12 +3176,12 @@ DefConstructor('\lxML@codep@atomnum{}',
   . "<ltx:text class='codependent-atomnum-value'>#1</ltx:text>"
   . "</ltx:text>");
 
-# ---- .sbl / \codeptag / \codepnewcommand etc. -----------
+# ---- .cdp / \codeptag / \codepnewcommand etc. -----------
 #
 # These produce no typeset output under pdflatex (they are
 # write-only sidecar records -- see Section 9a).  Under
 # LaTeXML we also want them to produce no HTML, so we
-# define them as no-ops on the typeset side.  The .sbl
+# define them as no-ops on the typeset side.  The .cdp
 # file is still written because LaTeXML honours
 # \immediate\write.
 DefMacro('\codeptag{}{}', '');
@@ -3265,15 +3265,15 @@ the override entirely and rely on `.codependent-usedby-list >
 ltx:ref` CSS selectors, which works with zero `.ltxml`
 complexity.
 
-### Cross-reference to `.sbl` and the semantic CLI
+### Cross-reference to `.cdp` and the semantic CLI
 
-`.sbl` records, `\codeptag`, and `\codepnewcommand` /
+`.cdp` records, `\codeptag`, and `\codepnewcommand` /
 `\codepNewDocumentCommand` metadata do
 **not** need LaTeXML bindings, because they produce no
 typeset output.  They are write-only sidecar data consumed
 by `codependent-cli` (Layer 2).  LaTeXML processes `.tex`
-source to produce HTML; it has no reason to see `.sbl`.
-The semantic CLI is the thing that reads `.sbl`, and it
+source to produce HTML; it has no reason to see `.cdp`.
+The semantic CLI is the thing that reads `.cdp`, and it
 never emits HTML directly in the current design — though
 a future phase may produce HTML fragments for concept
 index pages.  That is out of scope for Section 8b.
@@ -3335,36 +3335,36 @@ valid.  This check is cheap and should be wired into
   sidebar).
 - Does **not** replace the standard LaTeXML pipeline; it
   augments a small number of macro bindings.
-- Does **not** attempt to render the `.sbl` file as HTML;
+- Does **not** attempt to render the `.cdp` file as HTML;
   that is the semantic CLI's concern (and not part of the
   current CLI scope either).
 - Does **not** change Section 8a.  The back-reference
   graph is computed in TeX regardless of output engine.
 
-## Section 9a — Semantic sidecar (.sbl) writer
+## Section 9a — Semantic sidecar (.cdp) writer
 
 ### Purpose
 
-`.sbl` is a write-only sidecar file that `codependent.sty`
+`.cdp` is a write-only sidecar file that `codependent.sty`
 emits during pass 1 (and every subsequent pass) alongside
 the standard `.aux`.  Its purpose is to give Layer 2 (the
 semantic CLI) enough per-atom context to analyse the
 document without re-tokenising the `.tex` source from
 scratch to find atom boundaries.  The `.sty` never reads
-`.sbl` — it is strictly one-way output for downstream
+`.cdp` — it is strictly one-way output for downstream
 semantic tools.
 
-`.sbl` does **not** duplicate anything LaTeX already writes
+`.cdp` does **not** duplicate anything LaTeX already writes
 to `.aux`.  Labels are the one borderline case: the `.aux`
 has `\newlabel{key}{{num}...}` entries already, but the
-`.sbl` ALSO emits `\codep@sbl@label{num}{key}` records so
+`.cdp` ALSO emits `\codep@sbl@label{num}{key}` records so
 that the CLI can read atom-scoped cross-references without
 parsing `.aux` at all.  This redundancy is deliberate and
 documented.
 
-### Location fallback for `.sbl` records
+### Location fallback for `.cdp` records
 
-`.sbl` records include a location (atom number) so the CLI
+`.cdp` records include a location (atom number) so the CLI
 knows where each event occurred.  The location is determined
 by this fallback chain:
 
@@ -3384,7 +3384,7 @@ records entirely loses dependency information the CLI needs.
 A section-level fallback preserves coarse but usable location
 context: "concept Hom used somewhere in section 1.3."
 
-This fallback applies ONLY to `.sbl` records.  The "Used in"
+This fallback applies ONLY to `.cdp` records.  The "Used in"
 display in the PDF is atom-only — section-level locations do
 not appear in backref lists.
 
@@ -3437,18 +3437,18 @@ arguments.  The CLI parses N `{}`-groups and stops.
 | `\codep@sbl@end{OK}` | 1 | Sentinel at `\AtEndDocument`. |
 
 **End marker** (per REVIEW_C finding #7).  The **last line**
-of a complete `.sbl` file is `\codep@sbl@end{OK}`,
+of a complete `.cdp` file is `\codep@sbl@end{OK}`,
 written from the `\AtEndDocument` hook.  Presence of this
 line is the CLI's test for "complete file"; absence means
 pdflatex was killed or crashed mid-run and the CLI must
 treat the sidecar as stale and warn.  (The CLI should NOT
-attempt to recover partial `.sbl` data; that is a recipe
+attempt to recover partial `.cdp` data; that is a recipe
 for silently analysing 70% of a document and producing
 misleading reports.)
 
 ### Open timing
 
-**Per REVIEW_C finding #5**, the `.sbl` stream is opened at
+**Per REVIEW_C finding #5**, the `.cdp` stream is opened at
 `\AtEndPreamble` (equivalently `begindocument/before`
 with an explicit ordering label).  **Not** at
 `\AtBeginDocument`.
@@ -3472,7 +3472,7 @@ precedes every atom write.
 \AddToHook{begindocument/before}[codependent/sbl/open]{%
   \if@filesw
     \newwrite\codep@sblout
-    \immediate\openout\codep@sblout=\jobname.sbl\relax
+    \immediate\openout\codep@sblout=\jobname.cdp\relax
     \global\booltrue{codep@sblopen}%
     \immediate\write\codep@sblout{%
       \string\codep@sbl@version{1}}%
@@ -3490,7 +3490,7 @@ precedes every atom write.
 
 > Upstream motivation: **REVIEW_E finding #8 (MINOR).**
 > biblatex writes extensive `\abx@aux@*` records to `.aux`
-> via `begindocument/before`-adjacent hooks.  Our `.sbl`
+> via `begindocument/before`-adjacent hooks.  Our `.cdp`
 > writer does NOT collide with these (different
 > namespace), but the relative ordering of
 > `codependent/sbl/open` and biblatex's own install hooks is
@@ -3661,17 +3661,17 @@ Net effect:
 ```
 user: \label[type]{key}
   -> cleveref's outer wrap: strips [type], records r@key@cref
-       -> codependent's wrap: emits .sbl record with `key`
+       -> codependent's wrap: emits .cdp record with `key`
             -> kernel \label: writes \newlabel{key}{...}
 ```
 
 Cleveref's `\newlabel{key@cref}{...}` write still happens
-in cleveref's outer layer.  Our `.sbl` record fires from
+in cleveref's outer layer.  Our `.cdp` record fires from
 our middle layer.  The kernel `\newlabel{key}{...}` write
 happens from the bottom layer.  All three artifacts land
 correctly.
 
-- The `.sbl` record always emits only the label KEY
+- The `.cdp` record always emits only the label KEY
   (`#2` in the cleveref-direct-call branch, `##1` in the
   no-cleveref branch), never the `[type]` optional
   argument — the CLI does not need the type hint because
@@ -3729,7 +3729,7 @@ Later, \cref{thm:A} is referenced.
 
 Assertions:
 
-- `.sbl` contains `\codep@sbl@label{<N>}{thm:A}`
+- `.cdp` contains `\codep@sbl@label{<N>}{thm:A}`
   (KEY only, no brackets, no `[theorem]` prefix).
 - `.aux` contains both the kernel `\newlabel{thm:A}{...}`
   and cleveref's `\newlabel{thm:A@cref}{...}`.
@@ -3835,7 +3835,7 @@ common case (definitive command introduction).
   math-mode; any TeX content works.
 
 The `.sty` strips the leading backslash from `<\cmd>` at
-record-write time via `\@gobble\string`, so the `.sbl`
+record-write time via `\@gobble\string`, so the `.cdp`
 records carry the bare name.  This keeps the user-facing
 syntax identical to `\newcommand` while keeping the
 sidecar records readable.
@@ -3885,7 +3885,7 @@ auto-`\ensuremath` the body; the user controls that.
 #### Side effects at declaration time
 
 For `\codepnewcommand`, two global (not atom-scoped)
-`.sbl` records:
+`.cdp` records:
 
 ```tex
 \codep@sbl@cmddef{Hom}{kind}{newcommand}
@@ -3930,7 +3930,7 @@ adding noise without analytic value.
 Both macros are purely optional.  A project that does not
 use the semantic CLI never needs to call them; ordinary
 `\newcommand` and `\NewDocumentCommand` work fine and
-produce no `.sbl` records.  The `.sty` does **not**
+produce no `.cdp` records.  The `.sty` does **not**
 enforce usage of the codependent variants.
 
 Migration from a vanilla preamble to a tracked one is
@@ -4079,7 +4079,7 @@ so on up to 9).
 
 % \codep@emit@def: fires on the STAR branch.
 %   Records the current atom as the defining site for the
-%   concept and emits both aux and .sbl records.  See §8a.9
+%   concept and emits both aux and .cdp records.  See §8a.9
 %   for the aux-record callbacks and the pass-2 concept map.
 \newcommand*{\codep@emit@def}[1]{%
   \ifx\codep@currentatom\@empty
@@ -4191,30 +4191,30 @@ yet.  When they do, the pattern is mechanical.
 
 `\renewcommand` and `\RenewDocumentCommand` are more
 interesting because they imply a *re-tracking* event:
-should the new definition replace the old `.sbl`
+should the new definition replace the old `.cdp`
 records, or append?  The clean answer is "replace the
-records and leave existing `.sbl@use` records as-is
+records and leave existing `.cdp` `@use` records as-is
 since they referred to the old definition at the time
 they fired".  Defer until needed.
 
 ### Relationship to `.aux`
 
-`.aux` and `.sbl` are siblings:
+`.aux` and `.cdp` are siblings:
 
 - `.aux` is LaTeX's standard sidecar.  `codependent.sty` reads
   it (for Section 8a's back-ref graph) and writes to it
   (via `\codep@atomref` and the kernel's label
   machinery).  Read-write from the `.sty` side.
-- `.sbl` is codependent's sidecar.  `codependent.sty` writes it only.
+- `.cdp` is codependent's sidecar.  `codependent.sty` writes it only.
   Read by the CLI (Layer 2), not by the `.sty`.
   Write-only from the `.sty` side.
 
-`.sbl` does not duplicate anything LaTeX already writes to
+`.cdp` does not duplicate anything LaTeX already writes to
 `.aux`, with one deliberate exception: **labels**.  The
 `.aux` has `\newlabel{key}{{num}...}` records that map
 labels to display numbers, and the `.sty`'s own
 `\codep@lblnum@<key>` csname already captures this.  The
-`.sbl` ALSO emits `\codep@sbl@label{num}{key}` because it
+`.cdp` ALSO emits `\codep@sbl@label{num}{key}` because it
 lets the CLI answer "what labels does atom 1.2.4 own?"
 directly from the sidecar, without joining `.aux`
 `\newlabel` entries against atom boundaries.  The
@@ -4224,38 +4224,38 @@ considerably.
 
 Section titles, TOC entries, page numbers, rendered
 output, and anything else LaTeX already writes are NOT
-reproduced in `.sbl`.
+reproduced in `.cdp`.
 
 ### Multi-file documents: `subfiles` / `\include` (REVIEW_E #11)
 
 > Upstream motivation: **REVIEW_E finding #11 (MINOR,
 > documentation-only).**  Users who compile subfiles
 > standalone (`\documentclass[../main.tex]{subfiles}`)
-> produce a per-subfile `.sbl` that does not match the
-> master-compile `.sbl`.  The CLI must not confuse them.
+> produce a per-subfile `.cdp` that does not match the
+> master-compile `.cdp`.  The CLI must not confuse them.
 
-`.sbl` is strictly per-`\jobname`, identical to how
+`.cdp` is strictly per-`\jobname`, identical to how
 `.aux` is per-`\jobname`.  Consequences:
 
-- `pdflatex main.tex` produces `main.sbl` containing
+- `pdflatex main.tex` produces `main.cdp` containing
   atoms from the entire project (main.tex plus all
   included subfiles), with continuous atom numbering.
 - `pdflatex chapters/ch1.tex` (run standalone, using
   `\documentclass[../main.tex]{subfiles}`) produces
-  `chapters/ch1.sbl` containing only ch1's atoms, with
-  **local** atom numbering starting at 1.  This `.sbl`
+  `chapters/ch1.cdp` containing only ch1's atoms, with
+  **local** atom numbering starting at 1.  This `.cdp`
   is correct for the standalone compile and does not
-  corrupt the master's `main.sbl`.
-- If both `main.sbl` and `chapters/ch1.sbl` exist on
+  corrupt the master's `main.cdp`.
+- If both `main.cdp` and `chapters/ch1.cdp` exist on
   disk simultaneously, they describe **different
   documents** — the master version and the standalone
-  draft version.  Atom numbers in `chapters/ch1.sbl`
-  are not a subset of `main.sbl`'s numbering.
+  draft version.  Atom numbers in `chapters/ch1.cdp`
+  are not a subset of `main.cdp`'s numbering.
 
 **CLI contract (per REVIEW_E #11 and the CLI scope
 document).**  `codependent-cli analyse main.tex` reads
-`main.sbl` and nothing else.  It does not discover or
-merge `chapters/ch1.sbl` or any other subfile `.sbl`.
+`main.cdp` and nothing else.  It does not discover or
+merge `chapters/ch1.cdp` or any other subfile `.cdp`.
 If the user wants semantic analysis, they must run
 from the master document.  If they are iterating on a
 single subfile for drafting purposes, the standalone

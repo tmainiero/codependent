@@ -5,9 +5,9 @@
 %% TEST-SECTION: DESIGN.md §Options
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.1}{theorem}
-%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.3}{proof}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.3}{proof}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

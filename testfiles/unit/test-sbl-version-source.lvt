@@ -1,19 +1,19 @@
 %% TEST-NAME: test-sbl-version-source
-%% TEST-WHAT: Verify the first two records of the .sbl sidecar are
+%% TEST-WHAT: Verify the first two records of the .cdp sidecar are
 %%            \codep@sbl@version{1} and \codep@sbl@source{<jobname>.tex},
 %%            written from the begindocument/before hook.
 %% TEST-SOURCE: DESIGN.md §9a "Open timing", §9a "Record format"
-%% TEST-SECTION: DESIGN.md §9a Semantic sidecar (.sbl) writer
+%% TEST-SECTION: DESIGN.md §9a Semantic sidecar (.cdp) writer
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-SBL-CONTAINS: \codep@sbl@version{1}
-%% TEST-SBL-CONTAINS: \codep@sbl@source{test-sbl-version-source.tex}
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@version{1}
+%% TEST-CDP-CONTAINS: \codep@sbl@source{test-sbl-version-source.tex}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
-%% Pins the .sbl header protocol. The writer opens at
+%% Pins the .cdp header protocol. The writer opens at
 %% begindocument/before (NOT \AtBeginDocument, per REVIEW_C #5,
 %% because user hooks may emit atoms from \AtBeginDocument
 %% blocks). The very first two \write calls must produce:
@@ -33,7 +33,7 @@
 
 \section{Header records}
 
-One body paragraph to ensure the .sbl has at least one atom
+One body paragraph to ensure the .cdp has at least one atom
 record between the version/source header and the end marker.
 
 \END

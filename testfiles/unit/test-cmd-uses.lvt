@@ -7,8 +7,8 @@
 %% TEST-SECTION: DESIGN.md §9a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-COUNT: \codep@sbl@use{1.1}{Hom} = 3
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-COUNT: \codep@sbl@use{1.1}{Hom} = 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

@@ -6,14 +6,14 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@label{1.1}{thm:foo}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@label{1.1}{thm:foo}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% Baseline label-wrap regression. A plain \label{thm:foo}
 %% inside a tracked theorem environment must be captured and
-%% mirrored as a \codep@sbl@label record in the .sbl. The
+%% mirrored as a \codep@sbl@label record in the .cdp. The
 %% record's first argument is the atom number (1.1 here) and
 %% the second is the label key. No optional-arg branch is
 %% exercised in this baseline; see test-label-cleveref-opt.

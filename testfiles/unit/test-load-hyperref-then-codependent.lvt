@@ -1,13 +1,13 @@
 %% TEST-NAME: test-load-hyperref-then-codependent
 %% TEST-WHAT: Verify hyperref loaded BEFORE codependent works cleanly (the
-%%            recommended load order); backref edges and the .sbl end
+%%            recommended load order); backref edges and the .cdp end
 %%            marker both land.
 %% TEST-SOURCE: DESIGN.md §Load order "Recommended order"
 %% TEST-SECTION: DESIGN.md §Load order
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
 %% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:A}
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,amsthm,codependent

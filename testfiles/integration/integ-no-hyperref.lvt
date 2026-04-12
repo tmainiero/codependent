@@ -11,13 +11,13 @@
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: \\hypertarget|\\hyperlink|\\@setref.*undefined
 %% TEST-LOG-NOT: Package codependent Warning(?!.*Nested tracked environment)
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@atom
-%% TEST-SBL-CONTAINS: \codep@sbl@label
-%% TEST-SBL-CONTAINS: \codep@sbl@def
-%% TEST-SBL-CONTAINS: \codep@sbl@use
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{GrpOp}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{GrpOp}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@atom
+%% TEST-CDP-CONTAINS: \codep@sbl@label
+%% TEST-CDP-CONTAINS: \codep@sbl@def
+%% TEST-CDP-CONTAINS: \codep@sbl@use
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{GrpOp}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{GrpOp}{arity}{2}
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-AUX-CONTAINS: \codep@concept{GrpOp}
 %% TEST-ATOMS-MIN: 4
@@ -27,7 +27,7 @@
 %% Without hyperref the package must:
 %%   (1) not define or call \hyperlink / \hypertarget
 %%   (2) render "Used in X." as plain, unlinked text
-%%   (3) still record atomrefs and produce a valid .sbl
+%%   (3) still record atomrefs and produce a valid .cdp
 %%
 %% The content is two sections of elementary group theory:
 %%   - Section 1 defines a group (def:group) and states a uniqueness lemma

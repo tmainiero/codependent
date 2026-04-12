@@ -7,7 +7,7 @@ Runs every .lvt fixture under unit/ and integration/ through pdflatex
 header in each fixture, applies assertions, and produces a summary.
 
 Designed to run BEFORE codependent.sty's implementation phase: assertions
-target observable artifacts (.aux, .sbl, .log, exit code, PDF content)
+target observable artifacts (.aux, .cdp, .log, exit code, PDF content)
 rather than golden .tlg files. l3build can later replace this runner
 once the implementation lands and we can lock in golden output.
 
@@ -69,10 +69,10 @@ METADATA_KEYS = {
     "TEST-EXIT": "exit_code",
     "TEST-LOG-NOT": "log_not",  # may repeat
     "TEST-LOG-CONTAINS": "log_contains",  # may repeat
-    "TEST-SBL-CONTAINS": "sbl_contains",  # may repeat
-    "TEST-SBL-NOT-CONTAINS": "sbl_not_contains",  # may repeat
-    "TEST-SBL-COUNT": "sbl_count",  # "<pattern> = <n>", may repeat
-    "TEST-SBL-LAST-RECORD": "sbl_last_record",  # last non-empty line must contain this
+    "TEST-CDP-CONTAINS": "sbl_contains",  # may repeat
+    "TEST-CDP-NOT-CONTAINS": "sbl_not_contains",  # may repeat
+    "TEST-CDP-COUNT": "sbl_count",  # "<pattern> = <n>", may repeat
+    "TEST-CDP-LAST-RECORD": "sbl_last_record",  # last non-empty line must contain this
     "TEST-AUX-CONTAINS": "aux_contains",  # may repeat
     "TEST-AUX-NOT-CONTAINS": "aux_not_contains",  # may repeat
     "TEST-ATOMS-MIN": "atoms_min",
@@ -535,7 +535,7 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         )
         return result
 
-    # Each fixture runs in its own temp dir so .aux/.sbl files don't collide.
+    # Each fixture runs in its own temp dir so .aux/.cdp files don't collide.
     with tempfile.TemporaryDirectory(prefix=f"codep-test-{fix.name}-") as tmp:
         tmp_path = Path(tmp)
         # Copy the fixture and the .sty into the temp dir.
@@ -550,7 +550,7 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         if LTXML_FILE.exists():
             shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
 
-        # Run the engine `rerun` times to populate .aux + .sbl.
+        # Run the engine `rerun` times to populate .aux + .cdp.
         run_log = []
         for pass_num in range(1, fix.rerun + 1):
             cmd = [
@@ -581,7 +581,7 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         # Read artifacts.
         log_file = tmp_path / f"{fix.name}.log"
         aux_file = tmp_path / f"{fix.name}.aux"
-        sbl_file = tmp_path / f"{fix.name}.sbl"
+        sbl_file = tmp_path / f"{fix.name}.cdp"
 
         log_text = log_file.read_text(encoding="utf-8", errors="replace") if log_file.exists() else ""
         aux_text = aux_file.read_text(encoding="utf-8", errors="replace") if aux_file.exists() else ""
@@ -609,27 +609,27 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
             if not re.search(pat, log_text):
                 result.failures.append(f"log missing required pattern: {pat}")
 
-        # 4. SBL assertions.
+        # 4. CDP assertions.
         for s in fix.sbl_contains:
             if s not in sbl_text:
-                result.failures.append(f"sbl missing required string: {s}")
+                result.failures.append(f"cdp missing required string: {s}")
         for s in fix.sbl_not_contains:
             if s in sbl_text:
-                result.failures.append(f"sbl contains forbidden string: {s}")
+                result.failures.append(f"cdp contains forbidden string: {s}")
 
-        # 5. SBL counts: format "<pattern> = <n>".
+        # 5. CDP counts: format "<pattern> = <n>".
         for spec in fix.sbl_count:
             try:
                 pat, expected = spec.rsplit("=", 1)
                 pat = pat.strip()
                 expected_n = int(expected.strip())
             except ValueError:
-                result.failures.append(f"malformed TEST-SBL-COUNT: {spec}")
+                result.failures.append(f"malformed TEST-CDP-COUNT: {spec}")
                 continue
             actual = sbl_text.count(pat)
             if actual != expected_n:
                 result.failures.append(
-                    f"sbl count for {pat!r}: expected {expected_n}, got {actual}"
+                    f"cdp count for {pat!r}: expected {expected_n}, got {actual}"
                 )
 
         # 6. AUX assertions.
@@ -648,7 +648,7 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                     f"atom count: expected >= {fix.atoms_min}, got {atom_count}"
                 )
 
-        # 8. sbl_last_record: the last NON-EMPTY line of .sbl must
+        # 8. sbl_last_record: the last NON-EMPTY line of .cdp must
         #    contain the specified string. Stronger than sbl_contains
         #    because it pins position. Used by test-sbl-end-marker to
         #    enforce that the sentinel is the file-final record, not
@@ -660,11 +660,11 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
             ]
             if not non_empty_lines:
                 result.failures.append(
-                    f"sbl last-record check: file is empty, expected {fix.sbl_last_record!r}"
+                    f"cdp last-record check: file is empty, expected {fix.sbl_last_record!r}"
                 )
             elif fix.sbl_last_record not in non_empty_lines[-1]:
                 result.failures.append(
-                    f"sbl last-record: expected {fix.sbl_last_record!r}, "
+                    f"cdp last-record: expected {fix.sbl_last_record!r}, "
                     f"got last non-empty line: {non_empty_lines[-1]!r}"
                 )
 

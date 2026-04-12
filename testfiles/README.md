@@ -2,7 +2,7 @@
 
 Test fixtures and runner for `codependent.sty`. Designed to be useful
 **before the implementation lands** — the assertions target
-observable artifacts (`.aux`, `.sbl`, `.log`, exit code) so an
+observable artifacts (`.aux`, `.cdp`, `.log`, exit code) so an
 implementer running these tests in red-green-refactor mode has
 concrete TDD targets without needing pre-locked golden files.
 
@@ -58,7 +58,7 @@ python3 run-tests.py --engine xelatex
 
 # Inspect a failing test's working directory.
 python3 run-tests.py --filter test-restatable-single --keep-temp -v
-# -> testfiles/tmp/test-restatable-single/  contains the .aux, .sbl, .log
+# -> testfiles/tmp/test-restatable-single/  contains the .aux, .cdp, .log
 ```
 
 The runner exits **0 only if all real failures are zero**.
@@ -86,10 +86,10 @@ Each fixture is a `.lvt` file with two layers:
 | `TEST-EXIT` | 1 | expected `pdflatex` exit code (almost always `0`) |
 | `TEST-LOG-NOT` | * | regex pattern that must NOT appear in `.log` |
 | `TEST-LOG-CONTAINS` | * | regex pattern that MUST appear in `.log` |
-| `TEST-SBL-CONTAINS` | * | substring that MUST appear in `.sbl` |
-| `TEST-SBL-NOT-CONTAINS` | * | substring that must NOT appear in `.sbl` |
-| `TEST-SBL-COUNT` | * | `<substring> = <n>` count assertion |
-| `TEST-SBL-LAST-RECORD` | 1 | substring that MUST appear in the LAST non-empty line of `.sbl` (stronger than `CONTAINS`; used to pin the end-marker sentinel position) |
+| `TEST-CDP-CONTAINS` | * | substring that MUST appear in `.cdp` |
+| `TEST-CDP-NOT-CONTAINS` | * | substring that must NOT appear in `.cdp` |
+| `TEST-CDP-COUNT` | * | `<substring> = <n>` count assertion |
+| `TEST-CDP-LAST-RECORD` | 1 | substring that MUST appear in the LAST non-empty line of `.cdp` (stronger than `CONTAINS`; used to pin the end-marker sentinel position) |
 | `TEST-AUX-CONTAINS` | * | substring that MUST appear in `.aux` |
 | `TEST-AUX-NOT-CONTAINS` | * | substring that must NOT appear in `.aux` |
 | `TEST-ATOMS-MIN` | 1 | minimum count of `\codep@sbl@atom{` records |
@@ -103,12 +103,12 @@ Repeating keys may appear multiple times in the header.
 
 ```latex
 %% TEST-NAME: test-setref-cleveref
-%% TEST-WHAT: Verify \cref{thm:A} produces a backref edge in .sbl.
+%% TEST-WHAT: Verify \cref{thm:A} produces a backref edge in .cdp.
 %% TEST-SOURCE: REVIEW_E #2 (BLOCKER)
 %% TEST-SECTION: DESIGN.md §8a.0
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
 %% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:A}
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
@@ -161,7 +161,7 @@ points at a specific spec section. Categories:
 - **Suppression**: trivlist, enumitem newlist, tcolorbox,
   tikz, tikzcd
 - **Equations**: separate (default), shared (pinned-broken)
-- **Sidecar `.sbl`**: header records, end marker, flat records
+- **Sidecar `.cdp`**: header records, end marker, flat records
 - **`\label` patching**: kernel and cleveref optional-arg forms
 - **New public API**: `\codepNewCommand`,
   `\codepNewDocumentCommand`, `\codeptag`, command uses
@@ -202,7 +202,7 @@ fixtures will fail when run today** because the v0.1 stub
 does not implement:
 
 - The dpmac-port backref machinery (Section 8a)
-- The `.sbl` writer (Section 9a)
+- The `.cdp` writer (Section 9a)
 - The new public API (`\codepNewCommand`,
   `\codepNewDocumentCommand`, `\codeptag`)
 - The cleveref/hyperref reference patches (Section 8a.0)

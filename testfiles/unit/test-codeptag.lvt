@@ -6,10 +6,10 @@
 %% TEST-SECTION: DESIGN.md §9a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@tag{1.1}{uid}{cat:category}
-%% TEST-SBL-CONTAINS: \codep@sbl@tag{1.1}{introduces}{Hom}
-%% TEST-SBL-CONTAINS: \codep@sbl@tag{1.1}{type}{Cat}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@tag{1.1}{uid}{cat:category}
+%% TEST-CDP-CONTAINS: \codep@sbl@tag{1.1}{introduces}{Hom}
+%% TEST-CDP-CONTAINS: \codep@sbl@tag{1.1}{type}{Cat}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

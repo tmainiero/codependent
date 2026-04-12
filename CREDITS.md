@@ -236,11 +236,11 @@ This handles, in one pass:
 The following tokens are intentionally decoupled from
 the project name and **will survive a rename unchanged**:
 
-- **`.sbl` file extension.**  Three-letter sidecar
+- **`.cdp` file extension.**  Three-letter sidecar
   extension; follows the TeX convention of independent
   3-letter extensions (`.bbl` for biblatex, `.nav` for
   beamer, `.aux` for the kernel).  A future rename
-  may keep `.sbl` or change it to a new acronym in a
+  may keep `.cdp` or change it to a new acronym in a
   separate sed pass.
 - **`sbl` token inside `\codep@sbl@*` records.**  The
   `sbl` substring is the sidecar acronym, not the
@@ -271,16 +271,16 @@ canonical token before committing.
 
 ### Two-step rename (full)
 
-If you also want to rename the `.sbl` extension (e.g.,
+If you also want to rename the `.cdp` extension (e.g.,
 to `.fbl` for a `foobar` rename):
 
 ```sh
 git ls-files | xargs sed -i 's/codep/foobar/g'
-git ls-files | xargs sed -i 's/\.sbl\b/.fbl/g; s/\bsbl\b/fbl/g'
-git mv tools/foobar-sty/test-output.sbl tools/foobar-sty/test-output.fbl  # if test artifacts exist
+git ls-files | xargs sed -i 's/\.cdp\b/.fbl/g; s/\bsbl\b/fbl/g'
+git mv tools/foobar-sty/test-output.cdp tools/foobar-sty/test-output.fbl  # if test artifacts exist
 ```
 
-The second sed targets the `.sbl` extension as a literal
+The second sed targets the `.cdp` extension as a literal
 string and the `sbl` token in records.  This is a
 deliberate second pass because most renames will leave
 the file extension alone (matching the kernel-extension

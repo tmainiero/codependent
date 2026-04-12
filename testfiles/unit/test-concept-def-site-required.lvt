@@ -9,10 +9,10 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-CONTAINS: Package codependent Warning.*no.*definition site
 %% TEST-LOG-NOT: Undefined control sequence
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-NOT-CONTAINS: \codep@sbl@def{1.1}{Hom}
-%% TEST-SBL-NOT-CONTAINS: \codep@sbl@def{1.2}{Hom}
-%% TEST-SBL-CONTAINS: \codep@sbl@use{1.1}{Hom}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-NOT-CONTAINS: \codep@sbl@def{1.1}{Hom}
+%% TEST-CDP-NOT-CONTAINS: \codep@sbl@def{1.2}{Hom}
+%% TEST-CDP-CONTAINS: \codep@sbl@use{1.1}{Hom}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

@@ -8,8 +8,8 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-COUNT: \codep@sbl@atom{1.1}{theorem} = 1
 %% TEST-AUX-CONTAINS: \codep@atomref{(1)}{thm:main}
 %% TEST-AUX-CONTAINS: \codep@anchormap{(1)}
 %% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.1}{thm:main}

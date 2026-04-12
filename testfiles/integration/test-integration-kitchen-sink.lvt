@@ -11,13 +11,13 @@
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning(?!.*Nested tracked environment)
 %% TEST-LOG-CONTAINS: Nested tracked environment
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@version{1}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{arity}{2}
-%% TEST-SBL-CONTAINS: \codep@sbl@tag
-%% TEST-SBL-CONTAINS: \codep@sbl@label
-%% TEST-SBL-CONTAINS: \codep@sbl@use
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@version{1}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Hom}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Hom}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@sbl@tag
+%% TEST-CDP-CONTAINS: \codep@sbl@label
+%% TEST-CDP-CONTAINS: \codep@sbl@use
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-ATOMS-MIN: 10
 %% TEST-PACKAGES: amsmath,mathtools,amsthm,thmtools,hyperref,cleveref,enumitem,tcolorbox,tikz,tikz-cd,codependent
@@ -27,7 +27,7 @@
 %% fixtures pin individual features; this one verifies that
 %% loading every common package together, wiring codependent on
 %% top of the full stack, and exercising every public API
-%% in a single document produces a valid .sbl, a non-empty
+%% in a single document produces a valid .cdp, a non-empty
 %% backref graph, and no surprise interaction failures.
 %%
 %% Covers:

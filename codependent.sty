@@ -267,12 +267,12 @@
 % O(1) append via csname array; O(N) walk in \codepappendix.
 \newcount\codep@atomcount
 
-% Sidecar (.sbl) stream state (§9a).
+% Sidecar (.cdp) stream state (§9a).
 \newbool{codep@sblopen}
 \boolfalse{codep@sblopen}
 
 % Deferred sbl writes: preamble cmddef records accumulate here
-% and flush once the .sbl stream opens at begindocument/before.
+% and flush once the .cdp stream opens at begindocument/before.
 \def\codep@sbl@deferred{}
 
 %% ===================================================================
@@ -412,7 +412,7 @@
 %   detects whether the alias is intact (original occurrence) or
 %   broken (restate occurrence) and skips the hook body on
 %   restate, preventing spurious atom attribution and duplicate
-%   .sbl records.  All envs declared with
+%   .cdp records.  All envs declared with
 %   \newtheorem{...}[<basecounter>] share
 %   \c@<basecounter>, so the guard covers all shared-counter
 %   envs.  Envs with independent counters are not supported by
@@ -1609,7 +1609,7 @@
 %   removed (2026-04-11) because concept edges are NOT cross-
 %   references — they should not appear in "Used in" lists.
 %   The .aux records (\codep@concept, \codep@conceptref) and
-%   .sbl records (\codep@sbl@def, \codep@sbl@use) remain
+%   .cdp records (\codep@sbl@def, \codep@sbl@use) remain
 %   intact for the CLI layer.  The concept warning system
 %   (\codep@conceptwarnscan) also remains.  This function is
 %   now a silent no-op; it is kept so that stale .aux files
@@ -1896,17 +1896,17 @@
 }
 
 %% ===================================================================
-%% Section 9a: Semantic sidecar (.sbl) writer
+%% Section 9a: Semantic sidecar (.cdp) writer
 %% ===================================================================
 %%
 %% Write-only sidecar file for Layer 2 (semantic CLI).  The .sty
-%% never reads .sbl — it is strictly one-way output.  Record format
+%% never reads .cdp — it is strictly one-way output.  Record format
 %% is line-oriented: one \codep@sbl@* control sequence per line
 %% with fixed-arity brace-delimited arguments (no kv blobs).
 %%
 
 % \codep@sblwrite{text}
-%   Guarded write to the .sbl stream.  No-op when the stream
+%   Guarded write to the .cdp stream.  No-op when the stream
 %   is not open (e.g. \if@filesw is false).
 \newcommand*{\codep@sblwrite}[1]{%
   \ifbool{codep@sblopen}{%
@@ -1930,7 +1930,7 @@
 \AddToHook{begindocument/before}[codependent/sbl/open]{%
   \if@filesw
     \newwrite\codep@sblout
-    \immediate\openout\codep@sblout=\jobname.sbl\relax
+    \immediate\openout\codep@sblout=\jobname.cdp\relax
     \global\booltrue{codep@sblopen}%
     \immediate\write\codep@sblout{%
       \string\codep@sbl@version{1}}%
@@ -1991,11 +1991,11 @@
 %% --- Section 9a concept-tracking helpers ---
 %% Supporting macros for \codepnewcommand / \codepNewDocumentCommand.
 %% The public API lives in Section 10; the emit helpers live here
-%% because they write to both .sbl and .aux.
+%% because they write to both .cdp and .aux.
 
 % \codep@sblwrite@deferred{text}
-%   Accumulate a deferred .sbl write for preamble-time emission.
-%   Records queued here are flushed once the .sbl stream opens.
+%   Accumulate a deferred .cdp write for preamble-time emission.
+%   Records queued here are flushed once the .cdp stream opens.
 %   Used for \codep@sbl@cmddef records whose declarations occur
 %   in the preamble before the stream is available.
 %   IMPORTANT: the argument must already be fully expanded (no
@@ -2024,7 +2024,7 @@
 % \codep@emit@def{name}
 %   Star-branch handler: fires when \cmd* is used (defining site).
 %   Records the current atom as the defining site for the named
-%   concept.  Emits both .aux and .sbl records.  Per J2: empty-
+%   concept.  Emits both .aux and .cdp records.  Per J2: empty-
 %   currentatom short-circuit fires BEFORE the duplicate-def check.
 %   name -- bare command name (e.g. "Hom")
 \newcommand*{\codep@emit@def}[1]{%
@@ -2055,7 +2055,7 @@
 
 % \codep@emit@use{name}
 %   Non-star-branch handler: fires when \cmd is used (use site).
-%   Emits both .aux and .sbl records under the current atom guard.
+%   Emits both .aux and .cdp records under the current atom guard.
 %   Registers the concept name for the missing-def-site scan at
 %   \AtEndDocument (first-use only, guarded by conceptused csname).
 %   name -- bare command name (e.g. "Hom")
@@ -2200,7 +2200,7 @@
 }
 
 % \codeptag{kind}{value}
-%   Emit a semantic tag record to the .sbl sidecar, scoped to the
+%   Emit a semantic tag record to the .cdp sidecar, scoped to the
 %   current atom.  No visible typesetting effect.  Ignored outside
 %   a tracked atom.
 %   kind  -- tag category (e.g. uid, introduces, type)
@@ -2250,7 +2250,7 @@
 %   \newcommand exactly: \cmd with backslash, optional [arity]
 %   (default 0), mandatory {body} using #1..#N.
 %
-%   At declaration time, emits three global .sbl records:
+%   At declaration time, emits three global .cdp records:
 %     \codep@sbl@cmddef{name}{kind}{newcommand}
 %     \codep@sbl@cmddef{name}{arity}{N}
 %     \codep@sbl@cmddef{name}{src}{file:line:1}
@@ -2295,7 +2295,7 @@
         \csname codep@star@\codep@tmp@name\endcsname
       \expandafter\noexpand
         \csname codep@nostar@\codep@tmp@name\endcsname}%
-  % 5. Emit global declaration records (deferred: the .sbl
+  % 5. Emit global declaration records (deferred: the .cdp
   %    stream may not be open yet during the preamble).
   %    Records are pre-expanded via \edef so transient values
   %    (\codep@tmp@name, \inputlineno) are captured eagerly.
@@ -2320,7 +2320,7 @@
 %   full argument specification.  Mirrors \NewDocumentCommand
 %   exactly: \cmd with backslash, {argspec} string, {body}.
 %
-%   At declaration time, emits three global .sbl records:
+%   At declaration time, emits three global .cdp records:
 %     \codep@sbl@cmddef{name}{kind}{NewDocumentCommand}
 %     \codep@sbl@cmddef{name}{argspec}{<user-spec>}
 %     \codep@sbl@cmddef{name}{src}{file:line:1}

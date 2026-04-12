@@ -6,16 +6,16 @@
 %% TEST-SECTION: DESIGN.md §9a User API
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{kind}{newcommand}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{arity}{2}
-%% TEST-SBL-CONTAINS: \codep@sbl@cmddef{Hom}{src}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Hom}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Hom}{arity}{2}
+%% TEST-CDP-CONTAINS: \codep@sbl@cmddef{Hom}{src}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%
 %% \codepnewcommand mirrors \newcommand exactly: takes a backslash-
 %% prefixed command, optional bracketed arity, mandatory braced body.
-%% At declaration time it must emit three .sbl records (kind, arity,
+%% At declaration time it must emit three .cdp records (kind, arity,
 %% src). At invocation time inside an atom, the wrapped command must
 %% emit a \codep@sbl@use record per call.
 %%

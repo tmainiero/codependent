@@ -6,16 +6,16 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Proof not adjacent
-%% TEST-SBL-CONTAINS: \codep@sbl@end{OK}
-%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.1}{theorem}
-%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.1*}
-%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.2}{theorem}
-%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.2*}
-%% TEST-SBL-CONTAINS: \codep@sbl@atom{1.3}{theorem}
-%% TEST-SBL-CONTAINS: \codep@sbl@proof{1.3*}
-%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.1*}
-%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.2*}
-%% TEST-SBL-NOT-CONTAINS: \codep@sbl@atom{1.3*}
+%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@sbl@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.2}{theorem}
+%% TEST-CDP-CONTAINS: \codep@sbl@proof{1.2*}
+%% TEST-CDP-CONTAINS: \codep@sbl@atom{1.3}{theorem}
+%% TEST-CDP-CONTAINS: \codep@sbl@proof{1.3*}
+%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{1.1*}
+%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{1.2*}
+%% TEST-CDP-NOT-CONTAINS: \codep@sbl@atom{1.3*}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

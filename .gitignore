@@ -2,7 +2,7 @@
 *.aux
 *.log
 *.out
-*.sbl
+*.cdp
 *.pdf
 *.synctex.gz
 *.fls
