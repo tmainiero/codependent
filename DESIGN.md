@@ -534,19 +534,23 @@ cases.
 1. Nothing intervened (no paragraph, no other tracked env)
 2. The preceding environment is in the `proof-targets` list
 
-Configuration:
+All `\newtheorem`-created environments (including those from
+amsthm and thmtools' `\declaretheorem`) are tracked
+automatically when `codependent` is loaded.  No explicit
+`\codeptrack` call is needed.
+
+Proof eligibility is configured separately:
 
 ```latex
-\codeptrack{theorem,lemma,proposition,corollary,definition,remark}
-\codepsetup{proof-targets={theorem,lemma,proposition,corollary}}
+\usepackage{codependent}
+% proof-targets defaults to {theorem,lemma,proposition,corollary}
+% Add more if needed:
+\codepsetup{proof-targets+={conjecture,claim}}
 ```
 
-All environments are tracked (atom numbers, backrefs, `.cdp`).
 Only `proof-targets` can receive auto-attributed proofs via
 adjacency.  A proof after a definition or remark becomes
 unattributed — the CLI flags it for user review.
-
-Default `proof-targets`: `{theorem,lemma,proposition,corollary}`.
 
 ### Labels
 
