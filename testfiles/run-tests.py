@@ -54,6 +54,7 @@ REAL_WORLD_DIR = SCRIPT_DIR / "real-world" / "wrappers"
 # Where the .sty file lives. The runner copies it into the temp work dir
 # so each test sees a clean kpse search path.
 STY_FILE = PROJECT_ROOT / "codependent.sty"
+RENDER_STY_FILE = PROJECT_ROOT / "codependent-render.sty"
 LTXML_FILE = PROJECT_ROOT / "codependent.ltxml"  # may not exist yet
 
 
@@ -684,6 +685,8 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         content = local_lvt.read_text(encoding="utf-8")
         local_lvt.write_text(INJECT_L3BUILD_NOOPS + content, encoding="utf-8")
         shutil.copy(STY_FILE, tmp_path / "codependent.sty")
+        if RENDER_STY_FILE.exists():
+            shutil.copy(RENDER_STY_FILE, tmp_path / "codependent-render.sty")
         if LTXML_FILE.exists():
             shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
 

@@ -162,8 +162,9 @@
 \newcount\codep@trackedlevel
 \codep@trackedlevel=0\relax
 
-% Pending back-reference text (flushed at para/end or env end).
-\newtoks\codep@pendingbr
+% Pending back-reference text (defined in codependent-render.sty).
+% When rendering is not loaded, the hook points are no-ops so
+% this register is never accessed.
 
 % Current atom display number (set when atom is created).
 \newcommand*{\codep@currentatom}{}
@@ -433,24 +434,6 @@
 %% ===================================================================
 %% Section 6: Theorem environment hooks
 %% ===================================================================
-
-% \codep@preventorphan
-%   Prevent page breaks between an atom body and its "Used in"
-%   line for block/margin styles.  Sets \@endparpenalty to \@M
-%   (10000 = \nobreak) when the pending backref register is
-%   non-empty.  The assignment is LOCAL to the current group,
-%   so it is automatically restored after \endgroup.
-%   No-op when the backref style is inline (inline flushes
-%   in hmode, before the env closes).
-\def\codep@preventorphan{%
-  \ifx\codep@backrefstyle\codep@const@inline\else
-    \expandafter\def\expandafter\codep@tmp\expandafter{%
-      \the\codep@pendingbr}%
-    \ifx\codep@tmp\@empty\else
-      \@endparpenalty\@M
-    \fi
-  \fi
-}%
 
 % \codep@hooktheorem{envname}
 %   Install begin/end hooks for a tracked theorem environment.
@@ -782,17 +765,6 @@
 %% ===================================================================
 %% Section 7: Paragraph numbering
 %% ===================================================================
-
-% \codep@emitmargin{number}
-%   Typeset a superscript atom number in the left margin.
-\newcommand*{\codep@emitmargin}[1]{%
-  \leavevmode%
-  \smash{%
-    \llap{%
-      {\codep@marginfont\textsuperscript{#1}\kern0.5em}%
-    }%
-  }%
-}
 
 % \codep@suppressenv{envname}
 %   Increment nestlevel on entry, decrement on exit.
@@ -1139,21 +1111,6 @@
   \codep@suppresscmd{\maketitle}%
 }
 
-% \codep@parahook@emitdeferred
-%   Emit the deferred backref from the previous paragraph, if any.
-%   Uses \vadjust pre to inject the "Used in X." line above the
-%   current paragraph's first line (end of previous output box)
-%   without a horizontal-mode change.  Clears the register after
-%   emission.  Called from \codep@installparahook.
-\def\codep@parahook@emitdeferred{%
-  \ifx\codep@deferredbr\@empty\else
-    \vadjust pre{%
-      \codep@renderbackref@para{\codep@deferredbr}%
-    }%
-    \global\let\codep@deferredbr\@empty
-  \fi
-}%
-
 % \codep@parahook@paragraph
 %   Paragraph numbering body for a normal (non-suppressed) paragraph.
 %   Increments the atom counter, writes anchormap and SBL records,
@@ -1491,25 +1448,9 @@
   \def\codep@tmp@num{#2}%
 }%
 
-% String constants for type comparisons in display rules.
-\def\codep@const@typeequation{equation}%
-\def\codep@const@typeproof{proof}%
-
-% \codep@displayfromkey{type:num}
-%   Derive the rendered display form from a prefixed key.
-%   equation:X → (X)     (parenthesized)
-%   proof:X    → X*      (starred)
-%   all others → X       (bare number)
-\def\codep@displayfromkey#1{%
-  \expandafter\codep@splitprefix#1\@nil
-  \ifx\codep@tmp@type\codep@const@typeequation
-    (\codep@tmp@num)%
-  \else\ifx\codep@tmp@type\codep@const@typeproof
-    \codep@tmp@num*%
-  \else
-    \codep@tmp@num
-  \fi\fi
-}%
+% Display-key formatting (\codep@displayfromkey, type constants)
+% moved to codependent-render.sty.  Tracking code uses only
+% \codep@splitprefix (above) for key decomposition.
 
 %% --- Section 8a.3: Per-target linked list, processbr, collapsebr ---
 %% For each target atom we maintain:
@@ -1593,39 +1534,7 @@
   \codep@appendbr@core
 }
 
-% \codep@collapsebr{targetnum}
-%   Build a comma-joined display macro \codep@br@<num> from
-%   the per-target node csnames.  Called lazily the first time
-%   \codep@queuebackref looks up <num>.
-\def\codep@collapsebr#1{%
-  \expandafter\ifx\csname codep@brcount@#1\endcsname\relax
-    % No refs to this target.
-    \global\expandafter\let
-      \csname codep@br@#1\endcsname\@empty
-  \else
-    \begingroup
-      \edef\codep@tmp@n{\csname codep@brcount@#1\endcsname}%
-      \def\codep@tmp@acc{}%
-      \count@=\z@
-      \loop
-        \ifnum\count@<\codep@tmp@n
-          \advance\count@ by 1\relax
-          \edef\codep@tmp@node{%
-            \csname codep@brnode@#1@\the\count@\endcsname}%
-          \ifx\codep@tmp@acc\@empty
-            \edef\codep@tmp@acc{%
-              \noexpand\codep@brhyper{\codep@tmp@node}}%
-          \else
-            \edef\codep@tmp@acc{%
-              \unexpanded\expandafter{\codep@tmp@acc}, %
-              \noexpand\codep@brhyper{\codep@tmp@node}}%
-          \fi
-      \repeat
-      \global\expandafter\let
-        \csname codep@br@#1\endcsname\codep@tmp@acc
-    \endgroup
-  \fi
-}
+% \codep@collapsebr — moved to codependent-render.sty.
 
 %% --- Section 8a.4: \newlabel / \newlabelxx override + extractor ---
 %% Per REVIEW_C finding #1, use a \@secondoftwo-style grab of
@@ -1898,228 +1807,9 @@
   {codependent/concept/flush}{after}{codependent/backref/flush}
 
 %% ===================================================================
-%% Section 8: Back-reference emission
+%% Section 8: Back-reference emission (rendering code in
+%%            codependent-render.sty; tracking hooks remain here)
 %% ===================================================================
-
-% \codep@queuebackref{atomnumber}
-%   Look up back-refs for the given atom and queue for emission.
-%   Lazily materialises \codep@br@#1 via \codep@collapsebr
-%   (§8a.3), which walks the per-target linked-list nodes built
-%   from \codep@atomref aux records.  Collapse is idempotent, so
-%   calling it unconditionally is fine.
-\newcommand*{\codep@queuebackref}[1]{%
-  \ifbool{codep@backrefs}{%
-    \codep@pendingbr={}%
-    \codep@collapsebr{#1}%
-    % After collapse, codep@br@#1 is either \@empty (no refs)
-    % or a comma-joined ref list.  \@ifundefined cannot
-    % distinguish \@empty from real data (collapsebr always
-    % defines the csname), so use \ifx against \@empty instead.
-    \expandafter\ifx\csname codep@br@#1\endcsname\@empty
-      % No refs to this target (collapsed to \@empty): skip.
-    \else
-      \ifbool{codep@appendix}{}{%
-        % Inline mode: store ref list for flush.
-        \codep@pendingbr=\expandafter{%
-          \csname codep@br@#1\endcsname}%
-      }%
-    \fi
-  }{}%
-}
-
-% \codep@flushbackref
-%   Emit the pending back-reference and clear it.
-%   The pendingbr register is cleared BEFORE rendering so that
-%   the \par inside \codep@renderbackref cannot re-enter
-%   flushbackref with the same data (para/end → flushbackref
-%   → renderbackref → \par → para/end → flushbackref loop).
-\newcommand*{\codep@flushbackref}{%
-  \ifbool{codep@backrefs}{%
-    \ifbool{codep@appendix}{}{%
-      \expandafter\def\expandafter\codep@tmp\expandafter{%
-        \the\codep@pendingbr}%
-      \codep@pendingbr={}%
-      \ifx\codep@tmp\@empty\else
-        \codep@renderbackref{\codep@tmp}%
-      \fi
-    }%
-  }{}%
-}
-
-% \codep@formatusedin{reflist}
-%   Shared formatting helper for "Used in" lines.  Both the
-%   inline path (\codep@renderbackref) and the deferred
-%   paragraph path (\vadjust pre in \codep@installparahook)
-%   call this, so overriding it changes ALL rendering.
-%   Reads font/prefix/label from \codepsetup configuration.
-\newcommand*{\codep@formatusedin}[1]{%
-  {\normalfont\codep@backreffont
-   \codep@applycolor{\codep@backrefprefix\codep@backreflabel\space#1.}}}
-% \codep@applycolor{text}
-%   Wrap text in \textcolor if backref-color is set and a
-%   color package (xcolor or color) is loaded.  Falls back
-%   to plain text if \textcolor is unavailable.
-\newcommand*{\codep@applycolor}[1]{%
-  \ifx\codep@backrefcolor\@empty
-    #1%
-  \else
-    \@ifundefined{textcolor}{#1}{\textcolor{\codep@backrefcolor}{#1}}%
-  \fi}
-
-% \codep@truncatereflist{reflist}
-%   If reflist has more than \codep@backrefmarginmax comma-separated
-%   entries, truncate and append "...".  Currently a pass-through
-%   stub; proper comma-counting can be added later without changing
-%   the rendering contract.
-\newcommand*{\codep@truncatereflist}[1]{#1}
-
-% \codep@emitmarginbackref{content}
-%   Shared right-margin emission kernel used by \codep@rendermargin
-%   and the margin branch of \codep@renderbackref@para.
-%   Wraps content in \vbox{\hbox to \linewidth{\hfil\smash{\rlap{...}}}}
-%   so it projects past \linewidth without disturbing vertical spacing.
-\def\codep@emitmarginbackref#1{%
-  \vbox{%
-    \hbox to \linewidth{%
-      \hfil
-      \smash{%
-        \rlap{%
-          #1%
-        }%
-      }%
-    }%
-    \vskip\smallskipamount
-  }%
-}%
-
-% \codep@rendermargin{reflist}
-%   Render "Used in X, Y." in the right margin (past \linewidth).
-%   Uses \rlap so it does not conflict with atom numbers in the left margin.
-%   Used for margin backref-style on theorem atoms (non-paragraph).
-\newcommand*{\codep@rendermargin}[1]{%
-  \nobreak
-  \codep@emitmarginbackref{%
-    \kern0.5em
-    {\codep@backreffont\codep@backrefprefix
-     \codep@backreflabel\space
-     \codep@truncatereflist{#1}.}%
-  }%
-}
-
-% \codep@renderbackref{reflist}
-%   Render "Used in X, Y." at the end of the current atom.
-%   Used for theorem/definition/lemma atoms (non-paragraph).
-%   Respects backref-style and backref-align configuration.
-\newcommand*{\codep@renderbackref}[1]{%
-  \ifx\codep@backrefstyle\codep@const@below
-    % Below style: separate line after the atom.
-    \ifx\codep@backrefalign\codep@const@right
-      \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
-      \quad\codep@formatusedin{#1}%
-    \else
-      \leavevmode\unskip\par\nobreak
-      \codep@formatusedin{#1}\hfill\null
-    \fi
-    \par\addvspace{\medskipamount}%
-  \else\ifx\codep@backrefstyle\codep@const@inline
-    % Inline style: same line as content, flows with text.
-    % Flush happens from cmd/end#1/before (hmode, before endmark).
-    % After display math the hlist is empty (\lastnodetype=-1);
-    % after text/inline-math it holds character/math nodes.
-    % Add the 0.5em gap only when there is preceding content,
-    % so "Used in" sits flush-left when it falls on its own line.
-    %
-    % The cmd/end#1/before hook evaluates conditionals during
-    % hook expansion, NOT at typesetting time.  Mode tests
-    % (\ifvmode, \lastnodetype) return wrong values during hook
-    % expansion.  We defer the spacing conditional to typesetting
-    % time via \toks@: TeX inserts the tokens unexpanded, and the
-    % \ifvmode / \lastnodetype checks fire when TeX processes them
-    % in the env body.
-    \def\codep@inline@arg{#1}%
-    \toks@{%
-      \ifvmode
-        \noindent
-      \else
-        \ifnum\lastnodetype<\z@
-          % Hmode but the horizontal list is empty (typical after
-          % display math).  A \parindent-width indent box may or
-          % may not be present; neutralise it by ending the
-          % current paragraph and starting fresh with \noindent.
-          \par\nobreak\noindent
-        \else
-          \unskip\hspace{0.5em}%
-        \fi
-      \fi
-      \expandafter\codep@formatusedin\expandafter{\codep@inline@arg}%
-    }%
-    \the\toks@
-  \else
-    % Margin style: emit in right margin.
-    \codep@rendermargin{#1}%
-  \fi\fi
-}
-
-% \codep@renderbackref@para{reflist}
-%   Render "Used in" inside a \vadjust pre context (vertical
-%   mode).  Used for paragraph atoms via the deferred-backref
-%   mechanism.  Calls \codep@formatusedin for the text.
-%   Respects backref-style and backref-align configuration.
-\newcommand*{\codep@renderbackref@para}[1]{%
-  \nobreak
-  \ifx\codep@backrefstyle\codep@const@below
-    % Below style
-    \vbox{%
-      \hbox to \linewidth{%
-        \ifx\codep@backrefalign\codep@const@right
-          \hfil\codep@formatusedin{#1}%
-        \else
-          \codep@formatusedin{#1}\hfil
-        \fi
-      }%
-      \vskip\medskipamount
-    }%
-  \else\ifx\codep@backrefstyle\codep@const@inline
-    % Inline style for paragraphs: falls back to block-like rendering
-    % (no clean way to inline at paragraph end).  Compact spacing.
-    \vbox{%
-      \hbox to \linewidth{%
-        \hfil\codep@formatusedin{#1}%
-      }%
-      \vskip\smallskipamount
-    }%
-  \else
-    % Margin style: emit in the right margin (past \linewidth).
-    % Uses \rlap without \vtop — paragraph mode inside a box
-    % here triggers the para/begin hook recursively (LaTeX 2022+
-    % para hooks bypass \everypar).  Long reflists are handled
-    % by \codep@truncatereflist instead of line-wrapping.
-    \codep@emitmarginbackref{%
-      \kern0.5em
-      {\codep@backreffont\codep@backrefprefix
-       \codep@backreflabel\space
-       \codep@truncatereflist{#1}.}%
-    }%
-  \fi\fi
-}
-
-% Deferred backref: data saved at para/end, emitted at the
-% next para/begin.  Avoids mode-change error (para/end must
-% stay in horizontal mode; \codep@renderbackref needs \par).
-\gdef\codep@deferredbr{}
-
-% \codep@parendhook@snapshot
-%   Snapshot pending backref data into \codep@deferredbr.
-%   Clears the pendingbr register.  Called from the para/end
-%   hook when inline backrefs are active and not in appendix mode.
-\def\codep@parendhook@snapshot{%
-  \expandafter\def\expandafter\codep@tmp\expandafter{%
-    \the\codep@pendingbr}%
-  \codep@pendingbr={}%
-  \ifx\codep@tmp\@empty\else
-    \global\let\codep@deferredbr\codep@tmp
-  \fi
-}%
 
 % \codep@installparendhook
 %   Install the para/end hook for flushing back-refs.
@@ -2676,81 +2366,14 @@
   \codep@suppresscmd{#1}%
 }
 
-% \codepappendix
-%   Typeset the dependency index (appendix mode only).
-%   Walks the atom array (populated at each atom site) and
-%   emits an entry for every atom that has at least one
-%   back-reference.  Emits section headers (via
-%   \codep@appendixsection) when the section number changes
-%   between consecutive atoms, using titles captured from
-%   \addcontentsline during the document body.
+% \codepappendix — fallback definition when rendering is not loaded.
+%   The live implementation is in codependent-render.sty and
+%   overrides this with \renewcommand.
 \newcommand*{\codepappendix}{%
-  \ifbool{codep@appendix}{%
-    \section*{Dependency Index}%
-    \begingroup
-      \small
-      \def\codep@appendix@lastsec{}%
-      \count@=\z@
-      \loop
-        \ifnum\count@<\codep@atomcount
-        \advance\count@ by 1\relax
-        % Check for section change and emit header if needed.
-        \edef\codep@appendix@thissec{%
-          \csname codep@atom@sec@\the\count@\endcsname}%
-        \ifx\codep@appendix@thissec\codep@appendix@lastsec
-        \else
-          \ifx\codep@appendix@thissec\@empty\else
-            \edef\codep@appendix@thistitle{%
-              \csname codep@sectitle@%
-                \codep@appendix@thissec\endcsname}%
-            \ifx\codep@appendix@thistitle\relax\else
-              \codep@appendixsection%
-                {\codep@appendix@thissec}%
-                {\codep@appendix@thistitle}%
-            \fi
-          \fi
-          \let\codep@appendix@lastsec
-            \codep@appendix@thissec
-        \fi
-        \expandafter\expandafter\expandafter
-          \codep@appendix@emit
-          \csname codep@atom@\the\count@\endcsname
-      \repeat
-    \endgroup
-  }{%
-    \PackageWarning{codependent}{%
-      \string\codepappendix\space ignored: %
-      backrefs mode is not 'appendix'}%
-  }%
-}
-
-% \codep@appendix@emit{prefixedkey}{type}
-%   Collapse back-refs for the prefixed atom key and emit an
-%   appendix entry if any back-references exist.  The display
-%   number is derived from the prefixed key via \codep@displayfromkey.
-\def\codep@appendix@emit#1#2{%
-  \codep@collapsebr{#1}%
-  \expandafter\ifx\csname codep@br@#1\endcsname\@empty\else
-    \codep@appendixentry{\codep@displayfromkey{#1}}{#2}{%
-      \csname codep@br@#1\endcsname}%
-  \fi
-}
-
-% Appendix rendering helpers.
-% \codep@appendixsection{number}{title}
-\newcommand*{\codep@appendixsection}[2]{%
-  \par\medskip\noindent
-  \textbf{#1\quad #2}\par
-}
-
-% \codep@appendixentry{atomnumber}{atomname}{reflist}
-\newcommand*{\codep@appendixentry}[3]{%
-  \par\noindent
-  \hspace{1.5em}%
-  #1\quad #2\quad\dotfill\quad
-  \begin{minipage}[t]{0.45\linewidth}%
-    \raggedright #3%
-  \end{minipage}%
+  \PackageWarning{codependent}{%
+    \string\codepappendix\space requires the rendering layer
+    (codependent-render.sty), which is not loaded when
+    backrefs=none}%
 }
 
 %% ===================================================================
@@ -2768,27 +2391,18 @@
 
 % Hyperref link wrapping for backref numbers.
 % Receives a prefixed key (e.g. theorem:2.1, equation:3.1, proof:2.1).
-% Default (no hyperref): render display form via \codep@displayfromkey.
-% With hyperref: render display form wrapped in \hyperlink to the
-% anchor stored under the prefixed key.
-\newcommand*{\codep@brhyper}[1]{\codep@displayfromkey{#1}}
+% Default (no rendering): bare pass-through.  Redefined by
+% codependent-render.sty to format via \codep@displayfromkey
+% and (with hyperref) wrap in \hyperlink.
+\newcommand*{\codep@brhyper}[1]{#1}
 
+% Hyperref detection: activate atom→anchor aux record WRITING.
+% The reading side (\codep@anchormap) is activated in
+% begindocument/before (§8a.7) so it is live BEFORE the aux read.
+% The \codep@brhyper hyperlink rendering is handled by
+% codependent-render.sty in its own \AtBeginDocument block.
 \AtBeginDocument{%
   \@ifpackageloaded{hyperref}{%
-    \PackageInfo{codependent}{hyperref detected, enabling links}%
-    \renewcommand*{\codep@brhyper}[1]{%
-      \expandafter\ifx\csname codep@anchor@#1\endcsname\relax
-        \codep@brhyper@noanchor{#1}%
-      \else
-        \hyperlink{\csname codep@anchor@#1\endcsname}{%
-          \codep@displayfromkey{#1}}%
-      \fi}%
-    % No anchor for this prefixed key: render display form
-    % without a hyperlink.
-    \def\codep@brhyper@noanchor#1{\codep@displayfromkey{#1}}%
-    % Activate atom→anchor aux record WRITING.  The reading side
-    % (\codep@anchormap) is activated in begindocument/before
-    % (§8a.7) so it is live BEFORE the aux read.
     \renewcommand*{\codep@writeanchormap}[1]{%
       \if@filesw
         \protected@write\@auxout{}{%
@@ -2798,85 +2412,11 @@
 }
 
 %% ===================================================================
-%% Rendering hook activation
+%% Conditional rendering layer load
 %% ===================================================================
-%% Redefine the no-op hook points to wire them to the live
-%% rendering implementations.  If the rendering layer were in a
-%% separate file, this block would live at the top of that file.
-
-% \codep@render@queuebackref{atomkey}
-%   Queue back-references for the given atom key.
-\def\codep@render@queuebackref#1{%
-  \codep@queuebackref{#1}%
-}%
-
-% \codep@render@thm@preparebackref{envname}
-%   Queue backrefs for the outermost atom, apply orphan prevention,
-%   and flush inline style immediately (block/margin defer).
-\def\codep@render@thm@preparebackref#1{%
-  \codep@queuebackref{\codep@outeratom}%
-  \codep@preventorphan
-  \ifx\codep@backrefstyle\codep@const@inline
-    \codep@flushbackref
-  \fi
-}%
-
-% \codep@render@thm@afterend{envname}
-%   Block/margin style: flush after the theorem env fully closes.
-%   Inline style: already flushed in preparebackref, so no-op.
-\def\codep@render@thm@afterend#1{%
-  \ifx\codep@backrefstyle\codep@const@inline\else
-    \codep@flushbackref
-  \fi
-}%
-
-% \codep@render@proof@end
-%   Inline style: flush before proof env closes (hmode, before QED).
-%   Block/margin: apply orphan prevention.
-\def\codep@render@proof@end{%
-  \ifx\codep@backrefstyle\codep@const@inline
-    \codep@flushbackref
-  \else
-    \codep@preventorphan
-  \fi
-}%
-
-% \codep@render@proof@afterend
-%   Block/margin style: flush after proof env closes (vmode, after QED).
-\def\codep@render@proof@afterend{%
-  \ifbool{codep@proofsnumbered}{%
-    \ifx\codep@backrefstyle\codep@const@inline\else
-      \codep@flushbackref
-    \fi
-  }{}%
-}%
-
-% \codep@render@para@emit{prefixedkey}{displaynum}
-%   Emit margin label and queue backref for a paragraph atom.
-\def\codep@render@para@emit#1#2{%
-  \codep@emitmargin{#2}%
-  \codep@queuebackref{#1}%
-}%
-
-% \codep@render@para@emitdeferred
-%   Emit the deferred backref from the previous paragraph, if any.
-\def\codep@render@para@emitdeferred{%
-  \codep@parahook@emitdeferred
-}%
-
-% \codep@render@paraend@snapshot
-%   Snapshot pending backref data for deferred emission.
-\def\codep@render@paraend@snapshot{%
-  \codep@parendhook@snapshot
-}%
-
-% \codep@render@enddocument@flush
-%   Flush any deferred backref from the final paragraph.
-\def\codep@render@enddocument@flush{%
-  \ifx\codep@deferredbr\@empty\else
-    \codep@renderbackref@para{\codep@deferredbr}%
-    \global\let\codep@deferredbr\@empty
-  \fi
-}%
+%% When backrefs are enabled, load codependent-render.sty which
+%% defines all rendering primitives and redefines the no-op hook
+%% points to their live implementations.
+\ifbool{codep@backrefs}{\RequirePackage{codependent-render}}{}
 
 \endinput
