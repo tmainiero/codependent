@@ -2210,12 +2210,19 @@
     {\theatom}{#1}{#2}}%
 }
 
-% \codepproofof{label}
+% \codepproofof{label}    — "Used in 2.4*" links to the theorem
+% \codepproofof*{label}   — "Used in 2.4*" links to the proof
 %   Associate a separated proof with its theorem.  Must be called
 %   inside a \begin{proof}...\end{proof} environment.  Looks up
 %   the label's atom number and sets the current atom to the
 %   starred version (e.g., 2.1*), enabling correct backref
 %   attribution.
+%
+%   The starred form writes an anchormap entry so the hyperlink
+%   for the starred backref points to the proof location instead
+%   of falling back to the theorem.  Use this when the proof is
+%   far from the theorem and the reader should be taken to the
+%   proof, not back to the statement.
 %
 %   Edge case: if the proof was non-adjacent, \codep@hookproof
 %   already called \refstepcounter{atom} and wrote SBL records for
@@ -2228,7 +2235,11 @@
 %   - The backref source switches to starred mid-proof -- any
 %     \ref calls BEFORE \codepproofof use the standalone number,
 %     after it use the starred number
-\newcommand*{\codepproofof}[1]{%
+\newcommand{\codepproofof}{%
+  \@ifstar{\codep@proofof@star}{\codep@proofof@plain}}
+\def\codep@proofof@plain#1{\codep@proofof@do{#1}{}}
+\def\codep@proofof@star#1{\codep@proofof@do{#1}{anchor}}
+\def\codep@proofof@do#1#2{%
   \ifbool{codep@proofsnumbered}{%
     \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax
       \PackageWarning{codependent}{\string\codepproofof: unknown label '#1'.
@@ -2237,9 +2248,14 @@
       \edef\codep@currentatom{\csname codep@lblnum@#1\endcsname*}%
       % Update source atom for starred backref emission.
       \edef\codep@sourceatom{\codep@currentatom}%
-      % Write SBL sub-record.
+      % Write CDP sub-record.
       \codep@sblwrite@atom{%
         \string\codep@sbl@proof{\codep@currentatom}}%
+      % Starred form: anchor the link at the proof location.
+      \def\codep@tmp{#2}%
+      \ifx\codep@tmp\@empty\else
+        \codep@writeanchormap{\codep@currentatom}%
+      \fi
     \fi
   }{}%
 }
