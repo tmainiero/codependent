@@ -1,4 +1,4 @@
-%% TEST-NAME: test-trinity-ta-style
+%% TEST-NAME: trinity-test
 %% TEST-WHAT: Enriched integration fixture combining the trinity-stripped
 %%            scenario with the user's real theorem style (sty-theorems-ta).
 %%            Exercises all 10 theorem env types with custom endmarks,

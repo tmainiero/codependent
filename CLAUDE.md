@@ -44,7 +44,7 @@ nix-shell                                 # dev shell with mutool, qpdf
 When implementing a feature:
 1. Write unit tests for the specific mechanism
 2. Add the feature to `test-ta-style.tex` with realistic usage
-3. Add corresponding assertions to `testfiles/integration/test-trinity-ta-style.lvt`
+3. Add corresponding assertions to `testfiles/integration/trinity-test.lvt`
 4. Compile the stress test and visually verify the PDF
 
 **Do NOT declare a feature done without updating the stress test.**

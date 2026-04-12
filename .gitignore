@@ -11,3 +11,4 @@ texput.*
 
 # Stale copies — use TEXINPUTS to find canonical codependent.sty
 testfiles/compiled-examples/codependent.sty
+build/
