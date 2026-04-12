@@ -799,6 +799,21 @@
   }%
 }
 
+% \codep@dedupwrite{src}{tgt}
+%   Per-(source, target) dedup write.  If the csname flag
+%   codep@arw@<src>@<tgt> is undefined (\relax), set it to
+%   \@empty and write \codep@atomref{src}{tgt} to the .aux
+%   file.  Otherwise skip (already written this run).
+\def\codep@dedupwrite#1#2{%
+  \expandafter\ifx
+      \csname codep@arw@#1@#2\endcsname\relax
+    \global\expandafter\let
+      \csname codep@arw@#1@#2\endcsname\@empty
+    \protected@write\@auxout{}{%
+      \string\codep@atomref{#1}{#2}}%
+  \fi
+}
+
 % \codep@flusheqrange
 %   Compute the equation range and flush all pending refs.
 %   Called at \end{align} (Track 2).
@@ -840,13 +855,7 @@
       % Flush all pending refs (with dedup).
       \if@filesw
         \def\codep@eqpending@entry##1{%
-          \expandafter\ifx
-              \csname codep@arw@\codep@eqatom @##1\endcsname\relax
-            \global\expandafter\let
-              \csname codep@arw@\codep@eqatom @##1\endcsname\@empty
-            \protected@write\@auxout{}{%
-              \string\codep@atomref{\codep@eqatom}{##1}}%
-          \fi
+          \codep@dedupwrite{\codep@eqatom}{##1}%
         }%
         \the\codep@eqpending
       \fi
@@ -861,13 +870,7 @@
             \edef\codep@tmp@srcatom{\codep@sourceatom}%
           \fi
           \def\codep@eqpending@entry##1{%
-            \expandafter\ifx
-                \csname codep@arw@\codep@tmp@srcatom @##1\endcsname\relax
-              \global\expandafter\let
-                \csname codep@arw@\codep@tmp@srcatom @##1\endcsname\@empty
-              \protected@write\@auxout{}{%
-                \string\codep@atomref{\codep@tmp@srcatom}{##1}}%
-            \fi
+            \codep@dedupwrite{\codep@tmp@srcatom}{##1}%
           }%
           \the\codep@eqpending
         \fi
@@ -1132,15 +1135,7 @@
       \edef\codep@tmp@srcatom{\codep@sourceatom}%
     \fi
     % Per-(source, target) dedup: skip if already written.
-    \expandafter\ifx
-        \csname codep@arw@\codep@tmp@srcatom @#1\endcsname\relax
-      \global\expandafter\let
-        \csname codep@arw@\codep@tmp@srcatom @#1\endcsname\@empty
-      \protected@write\@auxout{}{%
-        \string\codep@atomref
-          {\codep@tmp@srcatom}{#1}%
-      }%
-    \fi
+    \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
   \fi
 }
 
@@ -1180,13 +1175,7 @@
         \edef\codep@eqatom{(\theequation)}%
         \codep@writeanchormap{\codep@eqatom}%
         \if@filesw
-          \expandafter\ifx
-              \csname codep@arw@\codep@eqatom @#1\endcsname\relax
-            \global\expandafter\let
-              \csname codep@arw@\codep@eqatom @#1\endcsname\@empty
-            \protected@write\@auxout{}{%
-              \string\codep@atomref{\codep@eqatom}{#1}}%
-          \fi
+          \codep@dedupwrite{\codep@eqatom}{#1}%
         \fi
       \fi
     }%
