@@ -530,11 +530,23 @@ review and can suggest candidates (nearest preceding theorem,
 label references in proof body) or auto-resolve unambiguous
 cases.
 
-**Adjacency rule:** only auto-attributes to the immediately
-preceding tracked environment when nothing (no paragraph, no
-other tracked environment) intervened.  A proof after a remark
-is NOT auto-attributed to an earlier theorem — it becomes
-unattributed, and the CLI flags it.
+**Adjacency rule:** only auto-attributes when:
+1. Nothing intervened (no paragraph, no other tracked env)
+2. The preceding environment is in the `proof-targets` list
+
+Configuration:
+
+```latex
+\codeptrack{theorem,lemma,proposition,corollary,definition,remark}
+\codepsetup{proof-targets={theorem,lemma,proposition,corollary}}
+```
+
+All environments are tracked (atom numbers, backrefs, `.cdp`).
+Only `proof-targets` can receive auto-attributed proofs via
+adjacency.  A proof after a definition or remark becomes
+unattributed — the CLI flags it for user review.
+
+Default `proof-targets`: `{theorem,lemma,proposition,corollary}`.
 
 ### Labels
 
