@@ -178,19 +178,16 @@ State transitions are specified exhaustively below.
 4. `\codep@ctxpush{aN}{proof}`
 5. Write `\codep@atomdecl{aN}{proof}` and `\codep@meta{aN}{src}{\jobname.tex:\the\inputlineno:1}`
 6. **Set** `\codep@proofdisplaypendingtrue`
+<!-- Fixed: R7-MINOR — callers no longer emit display/anchor; bindproofparent is sole emitter -->
 7. Check the replay-loaded proof-parent table for this exact proof ID before doing anything else:
    - If a resolved parent for `aN` is already present in memory:
-     - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}`
-     - Emit `\codep@meta{aN}{display}{<parent-display>*}`
-     - Emit `\codep@meta{aN}{anchor}{<resolved-anchor>}` according to the resolved mode
+     - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (emits display, anchor, aux, cdp)
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
      - Skip adjacency and standalone fallback for this proof
 8. Otherwise, check adjacent binding:
    - If `\codep@pendingresultid` is non-empty:
-     - `\codep@bindproofparent{aN}{<pendingresultid>}{statement}`
-     - Emit `\codep@meta{aN}{display}{<parent-display>*}`
-     - Emit `\codep@meta{aN}{anchor}{<parent-anchor>}`
+     - `\codep@bindproofparent{aN}{<pendingresultid>}{statement}` (emits display, anchor, aux, cdp)
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
 9. Otherwise, leave `\ifcodep@proofdisplaypending` true. The proof will be resolved later by `\codepproofof`, by the first-proof-paragraph re-check, or by the proof-end re-check before standalone fallback.
@@ -214,9 +211,7 @@ The same standalone-fallback helper is called from both fallback sites so empty 
 - If `\ifcodep@proofdisplaypending` is true:
   1. Re-check the resolved proof-parent table for the current proof ID (`\codep@currentproofid`):
      - If a resolved parent is now present (loaded from aux replay during this paragraph event or earlier):
-       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}`
-       - Emit `\codep@meta{aN}{display}{<parent-display>*}`
-       - Emit `\codep@meta{aN}{anchor}{<resolved-anchor>}` (or `{}` if hyperref not loaded)
+       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (emits display, anchor, aux, cdp)
        - **Clear** `\codep@proofdisplaypendingfalse`
      - Else (still unresolved): call the standalone proof fallback materialization helper (see above)
 
@@ -224,9 +219,7 @@ The same standalone-fallback helper is called from both fallback sites so empty 
 1. If `\ifcodep@proofdisplaypending` is true (empty proof body, or proof still pending after `\codepproofof`):
    - Re-check the resolved proof-parent table for the current proof ID:
      - If a resolved parent is now present:
-       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}`
-       - Emit `\codep@meta{aN}{display}{<parent-display>*}`
-       - Emit `\codep@meta{aN}{anchor}{<resolved-anchor>}` (or `{}` if hyperref not loaded)
+       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (emits display, anchor, aux, cdp)
        - **Clear** `\codep@proofdisplaypendingfalse`
      - Else: call the standalone proof fallback materialization helper (see above)
 2. `\codep@ctxpop{proof}`
@@ -693,13 +686,15 @@ Two-stage dedup:
   - For `proof` mode (`\codepproofof*`): create `\hypertarget{codep.proof.aN}{}` at the current call site (if hyperref loaded). `bindproofparent` emits `\codep@meta{aN}{anchor}{codep.proof.aN}` (overrides any earlier anchor). If hyperref not loaded, emits `\codep@meta{aN}{anchor}{}`.
   - If `\ifcodep@proofdisplaypending` was true, clear it now
   - **Stale-parent convergence:** On pass 2, if the user changed the `\codepproofof` target, this fresh binding overwrites the stale preloaded parent. The `.aux` gets the new `proofparent` record. Pass 3 converges. This matches standard LaTeX rerun semantics.
+<!-- Fixed: R7-MAJOR — unknown/ineligible codepproofof must invalidate stale preloaded parent -->
 - If the label is known but resolves to a non-proof-eligible entity (e.g., a `qK` equation target or a paragraph atom):
   - Emit `\PackageWarning{codependent}{\string\codepproofof: label '<label>' does not name a proof-eligible entity}`
-  - Write `\codep@proofbind{<proof-id>}{<label>}{<mode>}` to `.aux` (so it can be re-evaluated on the next pass if the label changes type)
-  - Leave `\ifcodep@proofdisplaypending` unchanged
+  - **Invalidate** any preloaded/adjacent parent that was applied at proof-begin: clear the proof-parent table entry for this proof ID, and set `\codep@proofdisplaypendingtrue` (forces re-evaluation at fallback points)
+  - Do NOT write `\codep@proofparent` (the stale one from `.aux` will not be rewritten; a fresh run will not preload it because the label doesn't resolve to a proof-eligible atom)
+  - Do NOT write `\codep@proofbind` (the label IS known, just ineligible — `proofbind` is only for unknown labels)
 - If the label is not yet known:
+  - **Invalidate** any preloaded/adjacent parent: clear the proof-parent table entry, set `\codep@proofdisplaypendingtrue`
   - Write `\codep@proofbind{<proof-id>}{<label>}{<mode>}` to `.aux`
-  - Leave `\ifcodep@proofdisplaypending` unchanged
 
 <!-- Fixed: R2-BLOCKER 6 -->
 **Operational resolution order for proof display/anchor:** The proof display state is decided in exactly this order, and later steps run only while `\ifcodep@proofdisplaypending` is still true.
