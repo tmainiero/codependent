@@ -40,6 +40,9 @@ All semantic state is explicit and global. No semantic state depends on TeX grou
 
 \newcommand*\codep@pendingresultid{}   % last adjacent proof-eligible result atom
 \newcommand*\codep@currentproofid{}    % current proof atom ID or empty
+% Proof-nesting save stack (for nested proofs):
+% Each entry: {currentproofid, proofdisplaypending, proofbind-marker}
+\newtoks\codep@proofneststack           % token register used as a stack
 ```
 
 **Equation-local accumulator state** (added by the equation-fix revision):
@@ -126,7 +129,8 @@ This design is required because `cmd/theorem/before` and `cmd/proof/before` fire
 
 ### 2.4 Hook Plan (theorem, proof, paragraph, equation)
 
-All graph callbacks and ref interception install in `begindocument/before`. Queued proof bindings and ref events flush in `begindocument/end`.
+<!-- Fixed: R12-NEW-MAJOR — correct hook timing: aux readers at begindocument/before, ref patches at begindocument/end -->
+Aux record readers (the `\providecommand` handlers for `atomdecl`, `meta`, etc.) install at package load time so they are active when the `.aux` file is read during `\begin{document}`. Ref interception patches and label wrappers install at `begindocument/end`, which fires AFTER `\AtBeginDocument` (where hyperref/cleveref finalize their own `\ref`/`\label` wrappers). This ensures codependent wraps the live outer definitions. Queued proof bindings and ref events also flush at `begindocument/end`.
 
 #### Tracked theorem-like envs `E`
 
@@ -171,23 +175,25 @@ A future `results={theorem,lemma,...}` / `nonresults={definition,...}` option co
 
 State transitions are specified exhaustively below.
 
+<!-- Fixed: R12 — nested proof state saved/restored; nested check before push -->
 **`cmd/proof/before`:**
 1. `\codep@closeparagraphifopen`
-2. Allocate proof atom `aN` via `\codep@allocatomid`
-3. **Set** `\gdef\codep@currentproofid{aN}`
-4. `\codep@ctxpush{aN}{proof}`
-5. Write `\codep@atomdecl{aN}{proof}` and `\codep@meta{aN}{src}{\jobname.tex:\the\inputlineno:1}`
-6. **Set** `\codep@proofdisplaypendingtrue`
-<!-- Fixed: R7-MINOR — callers no longer emit display/anchor; bindproofparent is sole emitter -->
-7. Check the replay-loaded proof-parent table for this exact proof ID before doing anything else:
+2. **Save outer proof state** if `\codep@currentproofid` is non-empty (nested proof):
+   - Push `{currentproofid, proofdisplaypending, pending-proofbind-marker}` onto a proof-nesting save stack
+   - Set `\codep@isnested` flag for use in step 8
+3. Allocate proof atom `aN` via `\codep@allocatomid`
+4. **Set** `\gdef\codep@currentproofid{aN}`
+5. `\codep@ctxpush{aN}{proof}`
+6. Write `\codep@atomdecl{aN}{proof}` and `\codep@meta{aN}{src}{\jobname.tex:\the\inputlineno:1}`
+7. **Set** `\codep@proofdisplaypendingtrue`
+8. Check the replay-loaded proof-parent table for this exact proof ID:
    - If a resolved parent for `aN` is already present in memory:
      - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
      - Skip adjacency and standalone fallback for this proof
-<!-- Fixed: R11-MAJOR — nested proof must not consume outer pendingresultid -->
-8. Otherwise, check adjacent binding (only if this is NOT a nested proof):
-   - If `\codep@ctxpeekkind` (the kind BELOW the just-pushed proof) is `proof`: this is a nested proof. **Do NOT consume `\codep@pendingresultid`.** Leave pending true. Nested proofs are never auto-adjacent.
+9. Otherwise, check adjacent binding (only if NOT nested):
+   - If `\codep@isnested`: **Do NOT consume `\codep@pendingresultid`.** Nested proofs are never auto-adjacent.
    - Else if `\codep@pendingresultid` is non-empty:
      - `\codep@bindproofparent{aN}{<pendingresultid>}{statement}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
      - **Clear** `\codep@proofdisplaypendingfalse`
@@ -230,7 +236,7 @@ The same standalone-fallback helper is called from both fallback sites so empty 
    - If an unresolved `proofbind` was requested by `\codepproofof`: write `\codep@proofbind{aN}{<label>}{<mode>}` to `.aux` and `\codep@cdp@proofbind{aN}{<label>}{<mode>}` to `.cdp`
    - This is the **single serialization point** for proof parentage. No earlier hook writes these records.
 3. `\codep@ctxpop{proof}`
-4. **Clear** `\gdef\codep@currentproofid{}`
+4. **Restore outer proof state:** If the proof-nesting save stack is non-empty, pop `{currentproofid, proofdisplaypending, pending-proofbind-marker}` and restore them. Otherwise, clear `\gdef\codep@currentproofid{}`.
 5. Rendering: flush inline/orphan display
 
 **`env/proof/after`:** Rendering flush only; no semantic state changes.
@@ -344,7 +350,7 @@ Note: numbered display math environments (`equation`, `align`, `gather`, `multli
 
 Note: `\caption` is NOT patched because its complex calling convention (`\@ifstar` + optional arg) makes etoolbox patching unreliable; captions appear only inside `figure`/`table` environments, which are already suppressed at the env level.
 
-**Conditional package suppression** (installed at `begindocument/before`):
+**Conditional package suppression** (installed at `begindocument/end`):
 - `tcolorbox` (if loaded): `\codep@suppressenv{tcolorbox}`
 - `mdframed` (if loaded): `\codep@suppressenv{mdframed}`
 - `enumitem` (if loaded): patches `\newlist` so every user-defined list environment is automatically registered for suppression
@@ -354,19 +360,24 @@ Note: `\caption` is NOT patched because its complex calling convention (`\@ifsta
 <!-- Fixed: MAJOR 13 -->
 #### Hook ordering and `\DeclareHookRule` requirements
 
-All graph callbacks and ref interception install at `begindocument/before`. This timing is critical: it runs AFTER `hyperref` and `cleveref` have finished their own `\AtBeginDocument` wrapping of `\ref`, `\label`, `\cref`, etc. The codependent patches therefore wrap the live outer definitions.
+<!-- Fixed: R12-NEW-MAJOR — begindocument/before runs BEFORE AtBeginDocument, not after -->
+Two distinct hook timing points are used:
 
-Required hook ordering rules (installed at package load time or `begindocument/before`):
+1. **Aux record readers** (the `\providecommand` active handlers for `atomdecl`, `targetdecl`, `meta`, `labelentity`, `refevent`, `proofparent`, `proofbind`): defined at **package load time** so they are active when the kernel reads `.aux` during `\begin{document}` processing (which happens between `begindocument/before` and `begindocument/end`).
 
-1. **Ref interception after hyperref/cleveref wrapping:** The `\codep@writeatomref` (or its replacement `\codep@writerefevent`) wrapper around `\@setref` must run AFTER `hyperref`'s `\@setref` redefinition is in place, so that codependent intercepts the final expanded form. This is achieved by installing at `begindocument/before` which fires after `\AtBeginDocument` where hyperref installs patches.
+2. **Ref interception patches and label wrappers**: installed at **`begindocument/end`**. This fires AFTER `\AtBeginDocument` (where `hyperref` and `cleveref` finalize their `\ref`/`\label`/`\cref` wrappers). Codependent's patches therefore wrap the live outer definitions. Queue flushes (proof-bind, ref-event) also happen here.
 
-2. **Label wrapper before cleveref optional-argument wrapper:** `\codep@recordlabelowner` patches `\label` to record equation label ownership. When `cleveref` is loaded, it also patches `\label` (for its optional-argument extension). Codependent's `\label` patch must wrap cleveref's, so codependent installs its `\label` wrapper at `begindocument/before` AFTER cleveref has installed its wrapper. The codependent wrapper calls the (already-cleveref-wrapped) original `\label` internally.
+Required ordering rules:
+
+1. **Ref interception after hyperref/cleveref wrapping:** `\codep@writerefevent` wrapper around `\@setref` installs at `begindocument/end`, which fires after hyperref's `\AtBeginDocument` patches.
+
+2. **Label wrapper after cleveref:** `\codep@recordlabelowner` patches `\label` at `begindocument/end`, after cleveref has installed its optional-argument `\label` wrapper in `\AtBeginDocument`. The codependent wrapper calls the (already-cleveref-wrapped) original `\label` internally.
 
 3. **Sectioning hooks:** `\AddToHook{cmd/<level>/before}[codependent/sectioning]{...}` uses the named label `codependent/sectioning`. No explicit `\DeclareHookRule` is needed for sectioning because the one-shot flag mechanism is order-independent with respect to other packages' sectioning hooks.
 
 4. **Paragraph hooks:** `\AddToHook{para/begin}` and `\AddToHook{para/end}` use default ordering. No other package is known to install semantic `para/begin` hooks that would conflict.
 
-The current .sty achieves correct ordering by installing all patches inside `\AddToHook{begindocument/before}[codependent]{...}`, which fires at the correct time in the LaTeX hook sequence. This mechanism must be preserved through all waves.
+The redesign uses `\AddToHook{begindocument/end}[codependent]{...}` for ref/label patches (after hyperref/cleveref finalize) and defines aux record handlers at package load time (so they're active during `.aux` read). This two-point installation must be preserved through all waves.
 
 ### 2.5 Reference Interception
 
@@ -447,7 +458,7 @@ The config hash covers every option that changes allocation or display metadata:
 - `refevent` queues unresolved label-based edges.
 - `proofbind` queues unresolved proof label bindings.
 - At `begindocument/end`:
-  1. Flush proof-bind queue (resolve labels to entities; ineligible targets produce warnings)
+  1. Flush proof-bind queue (resolve labels to entities; **ignore labels whose entity ID has no matching `atomdecl` or `targetdecl`** — same orphan check as ref-event flush; ineligible targets produce warnings)
   2. Flush ref-event queue: resolve each `(source-atom-id, target-label)` to `(source-atom-id, target-entity-id)`. **Ignore any `labelentity` record whose entity ID has no matching `atomdecl` or `targetdecl`.** This handles discarded equation labels from all-`\notag` blocks: the `labelentity` was written at `\label` time, but the `targetdecl` was never emitted because the block produced no numbers. Such orphan `labelentity` records are harmless stale data.
   3. Mark rerun-needed on any unresolved label
 
@@ -494,9 +505,11 @@ New:
 \codep@meta{a4}{display}{(1)}
 \codep@meta{a4}{anchor}{codep.eqsrc.4}
 \codep@meta{a4}{src}{main.tex:131:1}
+<!-- Fixed: R12-NEW-MINOR — equation target examples include required src metadata -->
 \codep@targetdecl{q1}{equation}
 \codep@meta{q1}{display}{(1)}
 \codep@meta{q1}{anchor}{equation.1}
+\codep@meta{q1}{src}{main.tex:131:1}
 \codep@meta{q1}{owner}{a4}
 \codep@labelentity{eq:use}{q1}
 \codep@refevent{a4}{thm:main}
@@ -522,16 +535,19 @@ New:
 \codep@targetdecl{q3}{equation}
 \codep@meta{q3}{display}{(1)}
 \codep@meta{q3}{anchor}{equation.1}
+\codep@meta{q3}{src}{main.tex:56:1}
 \codep@meta{q3}{owner}{a7}
 \codep@labelentity{eq:a}{q3}
 \codep@targetdecl{q4}{equation}
 \codep@meta{q4}{display}{(2)}
 \codep@meta{q4}{anchor}{equation.2}
+\codep@meta{q4}{src}{main.tex:57:1}
 \codep@meta{q4}{owner}{a7}
 \codep@labelentity{eq:b}{q4}
 \codep@targetdecl{q5}{equation}
 \codep@meta{q5}{display}{(3)}
 \codep@meta{q5}{anchor}{equation.3}
+\codep@meta{q5}{src}{main.tex:58:1}
 \codep@meta{q5}{owner}{a7}
 \codep@labelentity{eq:c}{q5}
 \codep@refevent{a7}{thm:X}
@@ -578,6 +594,7 @@ No `\codep@atomdecl{a...}{equation}` is written. The `q...` target records still
 \codep@targetdecl{q1}{equation}
 \codep@meta{q1}{display}{(1)}
 \codep@meta{q1}{anchor}{equation.1}
+\codep@meta{q1}{src}{main.tex:45:1}
 \codep@meta{q1}{owner}{a2}
 \codep@labelentity{eq:inner}{q1}
 % no equation source atom -- refs attribute to a2
@@ -695,7 +712,8 @@ Two-stage dedup:
 **`\codepproofof{label}` / `\codepproofof*{label}`:** This macro runs **unconditionally** — it is NOT gated on `\ifcodep@proofdisplaypending`. This is critical for two reasons: (a) proof-mode anchor placement must happen at the call site on every pass, and (b) a changed `\codepproofof` argument must override a stale preloaded parent from a previous run. Consult the live `label -> entity` map:
 
 <!-- Fixed: R11-MAJOR — successful bind clears any pending proofbind marker -->
-- If the label resolves immediately to a proof-eligible atom:
+<!-- Fixed: R12 — live codepproofof also checks entity has a declaration (atomdecl/targetdecl) -->
+- If the label resolves to an entity ID that has a matching `atomdecl` or `targetdecl` AND is proof-eligible:
   - `\codep@bindproofparent{<proof-id>}{<parent-atom-id>}{statement|proof}` — this **overrides** any earlier binding (including a preloaded one from aux replay) AND **clears any pending `proofbind` marker** so that `cmd/endproof/before` will serialize `proofparent` only, not both. It stores in memory and emits `display`/`anchor` metadata. Serialization to `.aux`/`.cdp` is deferred to `cmd/endproof/before`.
   - For `statement` mode: emits `\codep@meta{aN}{anchor}{<parent-anchor>}` (or `{}` if hyperref not loaded)
   - For `proof` mode (`\codepproofof*`): create `\hypertarget{codep.proof.aN}{}` at the current call site (if hyperref loaded). Emits `\codep@meta{aN}{anchor}{codep.proof.aN}` (overrides any earlier anchor). If hyperref not loaded, emits `\codep@meta{aN}{anchor}{}`.
