@@ -181,13 +181,13 @@ State transitions are specified exhaustively below.
 <!-- Fixed: R7-MINOR — callers no longer emit display/anchor; bindproofparent is sole emitter -->
 7. Check the replay-loaded proof-parent table for this exact proof ID before doing anything else:
    - If a resolved parent for `aN` is already present in memory:
-     - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (emits display, anchor, aux, cdp)
+     - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
      - Skip adjacency and standalone fallback for this proof
 8. Otherwise, check adjacent binding:
    - If `\codep@pendingresultid` is non-empty:
-     - `\codep@bindproofparent{aN}{<pendingresultid>}{statement}` (emits display, anchor, aux, cdp)
+     - `\codep@bindproofparent{aN}{<pendingresultid>}{statement}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
 9. Otherwise, leave `\ifcodep@proofdisplaypending` true. The proof will be resolved later by `\codepproofof`, by the first-proof-paragraph re-check, or by the proof-end re-check before standalone fallback.
@@ -211,7 +211,7 @@ The same standalone-fallback helper is called from both fallback sites so empty 
 - If `\ifcodep@proofdisplaypending` is true:
   1. Re-check the resolved proof-parent table for the current proof ID (`\codep@currentproofid`):
      - If a resolved parent is now present (loaded from aux replay during this paragraph event or earlier):
-       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (emits display, anchor, aux, cdp)
+       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
        - **Clear** `\codep@proofdisplaypendingfalse`
      - Else (still unresolved): call the standalone proof fallback materialization helper (see above)
 
@@ -219,7 +219,7 @@ The same standalone-fallback helper is called from both fallback sites so empty 
 1. If `\ifcodep@proofdisplaypending` is true (empty proof body, or proof still pending after `\codepproofof`):
    - Re-check the resolved proof-parent table for the current proof ID:
      - If a resolved parent is now present:
-       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (emits display, anchor, aux, cdp)
+       - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
        - **Clear** `\codep@proofdisplaypendingfalse`
      - Else: call the standalone proof fallback materialization helper (see above)
 2. **Serialize proof parentage to `.aux` and `.cdp`:** Look up `\codep@currentproofid` in the in-memory proof-parent table.
@@ -414,6 +414,9 @@ The config hash covers every option that changes allocation or display metadata:
 | `refevent` | `{source-atom-id}{target-label}` | edges (source atom references target) | Queued, flushed at `begindocument/end` |
 | `proofparent` | `{proof-atom-id}{parent-atom-id}{mode}` | proof atoms only (resolved binding) | Yes, immediate |
 | `proofbind` | `{proof-atom-id}{label}{mode}` | proof atoms only (unresolved binding) | Queued, flushed at `begindocument/end` |
+
+<!-- Fixed: R9 — duplicate meta writes are legal, last-write-wins -->
+**`\codep@meta` override semantics:** Multiple `\codep@meta` records with the same `{entity-id}{key}` may appear in a single run. **Last write wins** — the reader overwrites previous values for the same key. This is required because proof binding may emit `display`/`anchor` metadata at bind time (from `bindproofparent`), then re-emit different values if the binding is invalidated and standalone fallback fires. The same holds for `\codepproofof*` overriding a statement-mode anchor with a proof-mode anchor.
 
 <!-- Fixed: R2-BLOCKER 11 -->
 **Metadata keys by entity type:**
@@ -686,9 +689,9 @@ Two-stage dedup:
 **`\codepproofof{label}` / `\codepproofof*{label}`:** This macro runs **unconditionally** — it is NOT gated on `\ifcodep@proofdisplaypending`. This is critical for two reasons: (a) proof-mode anchor placement must happen at the call site on every pass, and (b) a changed `\codepproofof` argument must override a stale preloaded parent from a previous run. Consult the live `label -> entity` map:
 
 - If the label resolves immediately to a proof-eligible atom:
-  - `\codep@bindproofparent{<proof-id>}{<parent-atom-id>}{statement|proof}` — this **overrides** any earlier binding (including a preloaded one from aux replay). `bindproofparent` handles memory, `.aux`, and `.cdp` serialization. It also emits `\codep@meta{aN}{display}{<parent-display>*}` and the anchor metadata (see below).
-  - For `statement` mode: `bindproofparent` emits `\codep@meta{aN}{anchor}{<parent-anchor>}` (or `{}` if hyperref not loaded)
-  - For `proof` mode (`\codepproofof*`): create `\hypertarget{codep.proof.aN}{}` at the current call site (if hyperref loaded). `bindproofparent` emits `\codep@meta{aN}{anchor}{codep.proof.aN}` (overrides any earlier anchor). If hyperref not loaded, emits `\codep@meta{aN}{anchor}{}`.
+  - `\codep@bindproofparent{<proof-id>}{<parent-atom-id>}{statement|proof}` — this **overrides** any earlier binding (including a preloaded one from aux replay). It stores in memory and emits `display`/`anchor` metadata. Serialization to `.aux`/`.cdp` is deferred to `cmd/endproof/before`.
+  - For `statement` mode: emits `\codep@meta{aN}{anchor}{<parent-anchor>}` (or `{}` if hyperref not loaded)
+  - For `proof` mode (`\codepproofof*`): create `\hypertarget{codep.proof.aN}{}` at the current call site (if hyperref loaded). Emits `\codep@meta{aN}{anchor}{codep.proof.aN}` (overrides any earlier anchor). If hyperref not loaded, emits `\codep@meta{aN}{anchor}{}`.
   - If `\ifcodep@proofdisplaypending` was true, clear it now
   - **Stale-parent convergence:** On pass 2, if the user changed the `\codepproofof` target, this fresh binding overwrites the stale preloaded parent. The `.aux` gets the new `proofparent` record. Pass 3 converges. This matches standard LaTeX rerun semantics.
 <!-- Fixed: R7-MAJOR — unknown/ineligible codepproofof must invalidate stale preloaded parent -->
