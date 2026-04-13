@@ -1,75 +1,92 @@
 # codependent.sty — IMPLEMENTATION PICKUP POINT
 
-> **If you are a fresh agent, READ ALL OF THIS FILE FIRST. The canonical
-> detailed pickup doc is in agent memory — this file points you there.
-> DO NOT SKIP. Skipping has caused repeated regressions.**
+> **If you are a fresh orchestrator, READ ALL OF THIS FILE FIRST.**
+> **DO NOT SKIP. Skipping has caused repeated regressions.**
 
-This file is deliberately short and pointers-only. Full state lives at:
+## One-sentence state (as of 2026-04-13)
 
-`~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_status.md`
-
-Read that file in full before touching anything. Then read `project_pickup_next_session.md`
-(linked from the same memory directory).
-
-## The one-sentence state (as of 2026-04-11)
-
-`codependent.sty` is **complete and passing** (77/77 tests, all known bugs fixed).
-The next major work is the **graph redesign** — a 5-wave migration to opaque atom IDs
-and an explicit context stack. The big-bang approach was tried and reverted; use waves only.
+Phase 1 (test coverage) is **DONE** (94/94 pass). Wave 2.1 (rename) is **DONE**.
+Phase 3 (graph redesign) has a **reviewed spec** (`PHASE3_SPEC.md`, 12 rounds of Codex adversarial review). Implementation has **NOT started**.
 
 ## Minimum reading list (in order)
 
 1. **This file** — done.
-2. **`~/.claude/.../memory/project_status.md`** — current test count, bug list, architecture
-3. **`~/.claude/.../memory/project_pickup_next_session.md`** — where to start work
-4. **`DESIGN.md`** — living spec (updated this session)
-5. **`HISTORY.md`** — chronological audit trail; "What did NOT work" register must be read
-6. **`CREDITS.md`** — GPLv3 attribution; read before any edit
-7. **`.claude/comms/codex-spec-review.md`** — Codex adversarial review of redesign spec (4 BLOCKERs, all resolved)
-8. **`.claude/agent_memory/graph_redesign_final.md`** — synthesized 5-wave spec
-9. **`.claude/agent_memory/test_gap_analysis.md`** — top 20 missing tests
+2. **`PHASE3_SPEC.md`** — the implementation spec. Self-contained. 1050+ lines. Covers target architecture, migration waves, invariants, risks.
+3. **`CONVENTIONS.md`** — coding conventions for .sty files.
+4. **`DESIGN.md`** — living spec for the CURRENT architecture (will be superseded by Phase 3).
+5. **`HISTORY.md`** — audit trail. Read the "What did NOT work" sections.
 
 ## Verification checkpoint — MANDATORY
 
 Before editing `codependent.sty`, confirm:
 
-1. Tests are 77/77 pass: `python3 testfiles/run-tests.py 2>&1 | tail -5`
-2. You know why the big-bang rewrite was reverted and will not repeat it.
-3. You have read the 5-wave migration plan and understand Wave 1's scope.
-4. You have read the test gap analysis and know which negative assertions are missing.
-5. You are NOT re-implementing anything already in `project_status.md`'s "BUGS — ALL FIXED" list.
+1. Tests are 94/94 pass: `nix develop --command python3 testfiles/run-tests.py 2>&1 | tail -5`
+2. You have read `PHASE3_SPEC.md` sections 1-2 (architecture) and section 3 (your wave).
+3. You know the big-bang rewrite was tried and reverted. You will NOT repeat it.
+4. You know all tests MUST run via `nix develop` (PDF assertions fail without mutool/qpdf).
+5. Both linters pass: `python3 .claude/scripts/lint_sty_structural.py` and `.claude/scripts/lint-tests.sh`
 
-If any answer is no, **stop and read**.
+## Phase 3 migration waves
+
+| Wave | Goal | Risk | Status |
+|------|------|------|--------|
+| 1 | Query API shim — rendering layer stops reading graph internals | Low | NOT STARTED |
+| 2 | Replace state machine with atom IDs + context stack (old .aux/.cdp) | Medium | NOT STARTED |
+| 3 | Switch .aux to opaque ID protocol (44 test fixtures change) | HIGH | NOT STARTED |
+| 4 | Switch .cdp to v2 (74 test fixtures change) | Medium-High | NOT STARTED |
+| 5 | Remove last prefixed-key compatibility code | Low | NOT STARTED |
+
+**Each wave must leave 94+ tests passing.** No exceptions.
+
+## Process rules
+
+- **All tests via `nix develop`** — PDF assertions fail silently otherwise
+- **Orchestrator NEVER edits .sty** — dispatch agents, verify their output
+- **Every agent dispatch has**: scope boundary, min assertion count, quality gates, forbidden actions
+- **Orchestrator reads every diff** and runs tests independently
+- **No hybrid architectures** — pick one approach and commit fully
+- **No parallel old+new state** — each wave's new code is canonical; old code is removed in the same wave
+- **Linters are mandatory** — `.claude/scripts/lint_sty_structural.py` (179 pre-existing errors to fix during rewrite) and `.claude/scripts/lint-tests.sh` (94/94 clean)
+- **Unique output filenames** for agent-dispatch.sh (timestamp or round number)
+
+## What you are NOT allowed to do
+
+- No big-bang rewrites — wave-based only
+- No editing `codependent.sty` without running the test suite first
+- No running tests outside `nix develop`
+- No declaring a wave done without ALL tests passing
+- No "trust me bro" — every test must pass, zero exceptions
+- No allowlists or "known-failing" tests
+
+## Key files
+
+| File | What |
+|------|------|
+| `PHASE3_SPEC.md` | Implementation spec (12 rounds of adversarial review) |
+| `codependent.sty` | The package (2513 lines, 94/94 tests pass) |
+| `codependent-render.sty` | Rendering layer (562 lines) |
+| `testfiles/run-tests.py` | Test runner (1388 lines, 28 assertion types) |
+| `.claude/scripts/lint_sty_structural.py` | Structural TeX linter (zero false positives) |
+| `.claude/scripts/lint-tests.sh` | Test convention linter |
+| `.claude/scripts/lint-sty.sh` | Basic .sty linter (grep-based, supplementary) |
+| `.claude/settings.json` | Hooks: PostToolUse lint on .sty/.lvt edits, PreCommit lint |
+| `CONVENTIONS.md` | Coding conventions |
+| `DESIGN.md` | Current architecture spec |
+| `HISTORY.md` | Audit trail |
 
 ## First commands
 
 ```sh
 # 1. Confirm passing baseline
-python3 testfiles/run-tests.py 2>&1 | tail -5
+nix develop --command python3 testfiles/run-tests.py 2>&1 | tail -5
 
-# 2. Review recent commits
+# 2. Check linter state
+python3 .claude/scripts/lint_sty_structural.py 2>&1 | tail -5
+.claude/scripts/lint-tests.sh 2>&1 | tail -3
+
+# 3. Read the spec
+# PHASE3_SPEC.md — start with sections 1-2, then your wave in section 3
+
+# 4. Recent commits
 git log --oneline | head -20
-
-# 3. Read the synthesized redesign spec
-cat .claude/agent_memory/graph_redesign_final.md
-
-# 4. Read the test gap analysis
-cat .claude/agent_memory/test_gap_analysis.md
 ```
-
-## What you are NOT allowed to do
-
-- No big-bang rewrites — wave-based only (see project_pickup_next_session.md)
-- No re-proposing anything in `HISTORY.md`'s failure register
-- No editing `codependent.sty` without running the test runner first
-- No re-implementing bugs already marked FIXED in `project_status.md`
-- No updating `flake.nix` (system-wide `texlive-full` is a documented exception)
-- No coupling to mwablab internals (codependent is standalone)
-- No content-hash staleness detection (`rerunfilecheck` handles it)
-- No declaring appendix mode working until Appendix Bug 6 (all backrefs show same value) is fixed
-
-## Why this file is short
-
-The agent-memory pickup doc is the canonical, detailed reference with full rationale,
-forbidden-actions list, and architecture history. This file exists only as a trip-wire
-to redirect agents who enter via the repo rather than via agent memory.
