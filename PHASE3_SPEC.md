@@ -75,15 +75,15 @@ All semantic state is explicit and global. No semantic state depends on TeX grou
 ```
 
 <!-- Fixed: R4-NEW-BLOCKER — bindproofparent must serialize -->
-<!-- Fixed: R6-NEW-MINOR — bindproofparent also emits display and anchor metadata -->
+<!-- Fixed: R8-MAJOR — defer proof-parent serialization to proof end to allow codepproofof override -->
 `\codep@bindproofparent` is the single authoritative proof-resolution macro. It MUST:
-1. Store the binding in memory (proof-parent table: `proof-id -> {parent-id, mode}`)
-2. Write `\codep@proofparent{#1}{#2}{#3}` to `.aux` (so pass N+1 can preload it)
-3. Write `\codep@cdp@proofparent{#1}{#2}{#3}` to `.cdp` (if cdp writer is active)
-4. Emit `\codep@meta{#1}{display}{<parent-display>*}` (looked up from parent's metadata)
-5. Emit anchor metadata: for `statement` mode, `\codep@meta{#1}{anchor}{<parent-anchor>}`. For `proof` mode, the caller (`\codepproofof*`) handles anchor separately since it must place a hypertarget at the call site. If hyperref not loaded, emit `\codep@meta{#1}{anchor}{}`.
+1. Store the binding **in memory only** (proof-parent table: `proof-id -> {parent-id, mode}`)
+2. Emit `\codep@meta{#1}{display}{<parent-display>*}` (looked up from parent's metadata)
+3. Emit anchor metadata: for `statement` mode, `\codep@meta{#1}{anchor}{<parent-anchor>}`. For `proof` mode, the caller (`\codepproofof*`) handles anchor separately since it must place a hypertarget at the call site. If hyperref not loaded, emit `\codep@meta{#1}{anchor}{}`.
 
-Every resolved proof path (replay-loaded, adjacent, `\codepproofof`, re-check) calls this macro. No other code writes `\codep@proofparent` to `.aux`.
+**It does NOT write `\codep@proofparent` to `.aux` or `.cdp` at call time.** Serialization is deferred to `cmd/endproof/before` (see below). This allows a later `\codepproofof` to override a replay-loaded or adjacent binding before anything hits disk.
+
+Every resolved proof path (replay-loaded, adjacent, `\codepproofof`, re-check) calls this macro. The single serialization point is `cmd/endproof/before`.
 
 `\codep@ctxpop` must include a hard mismatch/underflow check. `\codep@ctxpeekkind` is required for mode decisions and assertions -- `ctxpeekid` alone is too weak.
 
@@ -222,9 +222,14 @@ The same standalone-fallback helper is called from both fallback sites so empty 
        - `\codep@bindproofparent{aN}{<parent-atom-id>}{<mode>}` (emits display, anchor, aux, cdp)
        - **Clear** `\codep@proofdisplaypendingfalse`
      - Else: call the standalone proof fallback materialization helper (see above)
-2. `\codep@ctxpop{proof}`
-3. **Clear** `\gdef\codep@currentproofid{}`
-4. Rendering: flush inline/orphan display
+2. **Serialize proof parentage to `.aux` and `.cdp`:** Look up `\codep@currentproofid` in the in-memory proof-parent table.
+   - If a binding exists: write `\codep@proofparent{aN}{<parent-id>}{<mode>}` to `.aux` and `\codep@cdp@proofparent{aN}{<parent-id>}{<mode>}` to `.cdp`
+   - If no binding (standalone proof): do NOT write `proofparent` (standalone proofs have no parent record)
+   - If an unresolved `proofbind` was requested by `\codepproofof`: write `\codep@proofbind{aN}{<label>}{<mode>}` to `.aux` and `\codep@cdp@proofbind{aN}{<label>}{<mode>}` to `.cdp`
+   - This is the **single serialization point** for proof parentage. No earlier hook writes these records.
+3. `\codep@ctxpop{proof}`
+4. **Clear** `\gdef\codep@currentproofid{}`
+5. Rendering: flush inline/orphan display
 
 **`env/proof/after`:** Rendering flush only; no semantic state changes.
 
@@ -437,7 +442,7 @@ The config hash covers every option that changes allocation or display metadata:
 - `refevent` queues unresolved label-based edges.
 - `proofbind` queues unresolved proof label bindings.
 - At `begindocument/end`:
-  1. Flush proof-bind queue (resolve labels to atoms)
+  1. Flush proof-bind queue (resolve labels to entities; ineligible targets produce warnings)
   2. Flush ref-event queue (resolve labels to entity IDs)
   3. Mark rerun-needed on any unresolved label
 
@@ -690,11 +695,11 @@ Two-stage dedup:
 - If the label is known but resolves to a non-proof-eligible entity (e.g., a `qK` equation target or a paragraph atom):
   - Emit `\PackageWarning{codependent}{\string\codepproofof: label '<label>' does not name a proof-eligible entity}`
   - **Invalidate** any preloaded/adjacent parent that was applied at proof-begin: clear the proof-parent table entry for this proof ID, and set `\codep@proofdisplaypendingtrue` (forces re-evaluation at fallback points)
-  - Do NOT write `\codep@proofparent` (the stale one from `.aux` will not be rewritten; a fresh run will not preload it because the label doesn't resolve to a proof-eligible atom)
-  - Do NOT write `\codep@proofbind` (the label IS known, just ineligible — `proofbind` is only for unknown labels)
+  - Since serialization is deferred to `cmd/endproof/before`, the stale parent never reaches `.aux`
+  - Do NOT mark a `proofbind` (the label IS known, just ineligible)
 - If the label is not yet known:
   - **Invalidate** any preloaded/adjacent parent: clear the proof-parent table entry, set `\codep@proofdisplaypendingtrue`
-  - Write `\codep@proofbind{<proof-id>}{<label>}{<mode>}` to `.aux`
+  - Mark an unresolved `proofbind{<proof-id>}{<label>}{<mode>}` for deferred serialization at `cmd/endproof/before`
 
 <!-- Fixed: R2-BLOCKER 6 -->
 **Operational resolution order for proof display/anchor:** The proof display state is decided in exactly this order, and later steps run only while `\ifcodep@proofdisplaypending` is still true.
