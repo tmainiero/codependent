@@ -97,37 +97,42 @@ Every resolved proof path (replay-loaded, adjacent, `\codepproofof`, re-check) c
 `\codep@ctxpop` must include a hard mismatch/underflow check. `\codep@ctxpeekkind` is required for mode decisions and assertions -- `ctxpeekid` alone is too weak.
 
 <!-- Fixed: BLOCKER 3 -->
+<!-- Fixed: R13b-MAJOR 5 — closeparagraphifopen render flush is deferred snapshot, not immediate typesetting -->
 **`\codep@closeparagraphifopen` is full paragraph finalization, not a simple pop.** When `\ifcodep@paragraphopen` is true, it must:
 1. Snapshot the current paragraph's rendering state (deferred backref data).
 2. Call the render flush hook so that any pending paragraph display is emitted.
 3. `\codep@ctxpop{paragraph}` -- pop the paragraph from the context stack.
 4. `\codep@paragraphopenfalse` -- clear the paragraph-open flag.
 
+**Render safety note:** Step 2 uses the **same deferred snapshot mechanism** as `para/end`. It does NOT force immediate typesetting of backrefs into the document stream. Instead, it snapshots the current backref state for later rendering by the deferred render pipeline in `codependent-render.sty`. This is safe to call at any hook site (including `cmd/theorem/before` and `cmd/proof/before`) because no TeX box-building or node insertion occurs at flush time — only state capture. The actual rendering tokens are emitted later, at the point where the render hook fires during normal document processing (see `\codep@render@para@emitdeferred` in `codependent-render.sty` lines ~358ff). This matches the current package's deferred render pipeline.
+
 After `\codep@closeparagraphifopen` runs, the subsequent `para/end` hook (which will fire later in the normal TeX event sequence) must be a no-op: `para/end` checks `\ifcodep@paragraphopen` and only acts when it is true. Since `closeparagraphifopen` already cleared the flag, `para/end` skips its body. This makes the pair idempotent.
 
 This design is required because `cmd/theorem/before` and `cmd/proof/before` fire BEFORE the prior `para/end` in LaTeX's hook ordering. Without full finalization in `closeparagraphifopen`, the paragraph rendering state would be lost or the later `para/end` would underflow the context stack.
 
 <!-- Fixed: BLOCKER 10 — owner/anchor/source are determined at env/Q/after time, not at \label time; may be fallback-or-empty in outer/off mode -->
-**Equation label buffering model.** `\codep@recordlabelowner` is called at `\label` time inside an equation environment. Owner, anchor, and source atom are NOT known at `\label` time; they are determined at `env/Q/after`. The full buffered data model is:
+<!-- Fixed: R13b-BLOCKER 4 — buffer stores equation-counter and anchor snapshots captured at \label time -->
+**Equation label buffering model.** `\codep@recordlabelowner` is called at `\label` time inside an equation environment. Owner and source atom are NOT known at `\label` time; they are determined at `env/Q/after`. However, the per-row display tag and hyperref anchor ARE available at `\label` time (amsmath sets `\theequation` and `\@currentHref` before firing the `\label` hook). These must be captured immediately because they will change for subsequent rows in a multi-row environment. The full buffered data model is:
 
 1. **At `\label{eq:foo}` time** (inside equation body):
    - Allocate a fresh target ID `qK` via `\codep@alloctargetid`
    - Write `\codep@labelentity{eq:foo}{qK}` to `.aux` immediately (label-to-entity binding is unconditional)
-   - Append `{qK, eq:foo, \jobname.tex:\the\inputlineno:1}` to the equation label buffer (a token list local to this equation block)
-   - The display string, anchor, and owner are NOT known yet (counter has not been stepped, tag may change, and the owner depends on `equations` mode and enclosing context)
+   - Capture `\codep@tmp@eqcountersnap` = current value of `\theequation` (the equation counter display string for this row, e.g., `1` or `4.3`)
+   - Capture `\codep@tmp@eqanchorsnap` = `\@currentHref` if hyperref is loaded, else `\@empty`
+   - Append `{qK, eq:foo, \jobname.tex:\the\inputlineno:1, \codep@tmp@eqcountersnap, \codep@tmp@eqanchorsnap}` to the equation label buffer (a token list local to this equation block)
+   - The owner atom ID is NOT known yet (it depends on `equations` mode and enclosing context, which are resolved at `env/Q/after`)
+
+   **Why capture at `\label` time:** In a multi-row `align`, each row has its own `\theequation` and `\@currentHref` values. By the time `env/Q/after` fires, both reflect only the last row. The per-row snapshot approach is the only way to recover correct `display` and `anchor` values for each row independently.
 
 2. **At `env/Q/after`** (after amsmath has finalized all tags and labels):
    - Determine the owner atom ID for this block:
      - In `equations=all` or top-level `equations=outer`: use the equation source atom `aN` (the atom allocated at `env/Q/begin` for this block)
      - In `equations=outer` (nested) or `equations=off`: use the fallback enclosing atom ID if one is on the context stack, else use the empty string
-   - Determine the anchor for each equation row:
-     - If `hyperref` is loaded: use the hyperref anchor for that row (e.g., `equation.N`)
-     - If `hyperref` is not loaded: use the empty string
    - If the block produced at least one number:
-     - For each buffered label entry `{qK, label-key, src}`:
+     - For each buffered label entry `{qK, label-key, src, eqcountersnap, eqanchorsnap}`:
        - Write `\codep@targetdecl{qK}{equation}`
-       - Write `\codep@meta{qK}{display}{(N)}` where `(N)` is the resolved tag for this label's equation row
-       - Write `\codep@meta{qK}{anchor}{<anchor-or-empty>}` (empty string when hyperref not loaded)
+       - Write `\codep@meta{qK}{display}{(\codep@tmp@eqcountersnap)}` — formatted display using the per-row counter snapshot
+       - Write `\codep@meta{qK}{anchor}{\codep@tmp@eqanchorsnap}` if non-empty, else `\codep@meta{qK}{anchor}{}`
        - Write `\codep@meta{qK}{owner}{<owner-atom-id-or-empty>}` (may be empty in outer/off with no enclosing source)
        - Write `\codep@meta{qK}{src}{<captured-src>}`
    - If the block produced no number:
@@ -155,14 +160,25 @@ Aux record readers (the `\providecommand` handlers for `atomdecl`, `meta`, etc.)
 - If hyperref loaded: write `\codep@meta{aN}{anchor}{\@currentHref}`
 - Else: write `\codep@meta{aN}{anchor}{}`
 
+<!-- Fixed: R13b-BLOCKER 5 — starred tracked environments specified -->
+**Starred variants (`theorem*`, `definition*`, etc.):** Starred tracked environments are tracked **identically** to their unstarred counterparts. They:
+- Allocate atoms via `\codep@allocatomid` (same as unstarred)
+- Push context via `\codep@ctxpush{aN}{E}` (same)
+- Write all records (`atomdecl`, `meta`, `labelentity`, `refevent`) (same)
+- Use `\theatom` for display (see below)
+
+The key difference is that the theorem backend suppresses the theorem counter step for starred variants (since they have no number from the theorem system). **Codependent does NOT rely on the theorem counter step.** Instead, `\codep@allocatomid` steps the shared `\c@atom` counter directly (via `\global\advance\codep@atomid by 1`), and `\theatom` is always valid. The display string `\theatom` is the atom sequence number, not a section-prefixed theorem number. For starred envs in `equations=all` mode, this is the expected and correct behavior.
+
+This is the current `.sty` behavior: `\codep@hooktheorem@begin` hooks into both starred and unstarred variants via `\codep@hooktheorem` (which calls `\AddToHook{cmd/#1/before}` and `\AddToHook{cmd/end#1/before}` for the given env name), and the begin hook allocates atoms unconditionally for outermost non-replay occurrences regardless of whether the variant is starred. No special-casing of starred envs is needed in the new architecture.
+
 **`cmd/endE/before`:**
-<!-- Fixed: BLOCKER 5 -->
 - Pop or decrement nested depth
 - If outermost non-replay: set `\codep@pendingresultid` to `aN`
 
-**Proof-eligible environments.** Currently, ALL tracked theorem-like environments are proof-eligible. The current .sty sets `\codep@lasttheorematom` (the pending result) for every outermost tracked env at `cmd/endE/before`, without distinguishing "result" from "non-result" environments. This means a proof immediately after any tracked env (theorem, definition, lemma, remark, etc.) will inherit adjacency.
+<!-- Fixed: R13b-MINOR — rewritten to state the normative rule first, then note current .sty behavior parenthetically -->
+**Proof-eligible environments.** ALL tracked theorem-like environments are proof-eligible. `\codep@pendingresultid` is set unconditionally at the end of any outermost tracked env, without distinguishing "result" from "non-result" environments. A proof immediately after any tracked env (theorem, definition, lemma, remark, etc.) inherits adjacency. *[Continuity note: this matches the current `.sty` behavior and is preserved in the redesign.]*
 
-This is the correct default: `\codep@pendingresultid` is set unconditionally at the end of any outermost tracked env. It is cleared by:
+`\codep@pendingresultid` is set unconditionally at the end of any outermost tracked env. It is cleared by:
 - A paragraph beginning at top level (intervening text breaks adjacency)
 - A sectioning command (`cmd/section/before` etc.)
 - Another tracked env beginning (the new env replaces the pending result)
@@ -182,7 +198,9 @@ A future `results={theorem,lemma,...}` / `nonresults={definition,...}` option co
 State transitions are specified exhaustively below.
 
 <!-- Fixed: R12 — nested proof state saved/restored; nested check before push -->
+<!-- Fixed: R13b-BLOCKER 2 — proofs=off branch specified -->
 **`cmd/proof/before`:**
+0. **If `proofs=off`:** increment `suppressdepth` only. Do NOT allocate a proof atom, do NOT push context, do NOT check adjacency, do NOT write any records. Skip all remaining steps in this hook. The corresponding `cmd/endproof/before` must mirror this: if `proofs=off`, decrement `suppressdepth` only and skip all other serialization steps. This matches the current `.sty` guard `\ifbool{codep@proofsnumbered}{...}{\advance\codep@nestlevel by 1}` (see `\codep@hookproof@begin` / `\ifbool{codep@proofsnumbered}` at line ~665). The `proofs` option value is hashed into the config hash (§2.12), so changing `proofs=on` to `proofs=off` between runs triggers a stale-aux warning and fresh record rewrite.
 1. `\codep@closeparagraphifopen`
 2. **Save outer proof state** if `\codep@currentproofid` is non-empty (nested proof):
    - Push `{currentproofid, proofdisplaypending, pending-proofbind-marker}` onto a proof-nesting save stack
@@ -204,7 +222,8 @@ State transitions are specified exhaustively below.
      - `\codep@bindproofparent{aN}{<pendingresultid>}{statement}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
-9. Otherwise, leave `\ifcodep@proofdisplaypending` true. The proof will be resolved later by `\codepproofof`, by the first-proof-paragraph re-check, or by the proof-end re-check before standalone fallback.
+<!-- Fixed: R13b-MINOR — renumbered to avoid duplicate step 9 -->
+10. Otherwise, leave `\ifcodep@proofdisplaypending` true. The proof will be resolved later by `\codepproofof`, by the first-proof-paragraph re-check, or by the proof-end re-check before standalone fallback.
 
 <!-- Fixed: R2-BLOCKER 4; superseded by authoritative \codepproofof spec in §2.10 -->
 **`\codepproofof{label}` / `\codepproofof*{label}`:** See §2.10 for the authoritative specification. Key point: this macro runs **unconditionally** (not gated on pending) and can override a preloaded parent.
@@ -251,10 +270,12 @@ The same standalone-fallback helper is called from both fallback sites so empty 
 #### Paragraphs
 
 <!-- Fixed: R13 — para/begin clears pendingresultid (intervening text breaks adjacency) -->
+<!-- Fixed: R13b-BLOCKER 1 — paragraphs=off branch specified -->
 **`para/begin`:**
 - Emit deferred previous-paragraph rendering
 - **Clear `\codep@pendingresultid`** (a top-level paragraph breaks proof adjacency)
 - If inside proof with pending display: re-check resolved proof-parent table first; if resolved, apply binding and clear pending; else call standalone proof fallback materialization helper (§2.4 Proofs)
+- **If `paragraphs=off`:** increment `suppressdepth` only. Do NOT allocate a paragraph atom, do NOT push context (`\codep@ctxpush`), do NOT set `\ifcodep@paragraphopen`, do NOT write any records (`atomdecl`, `display`, `anchor`, `src`). Skip the rest of the paragraph path. The matching `para/end` hook checks `\ifcodep@paragraphopen`; since it was never set, `para/end` is a no-op. This matches the current `.sty` where `\ifnum\codep@nestlevel>0` guards the paragraph allocation (see `\codep@parahook@paragraph` / `\codep@installparahook`).
 - If `suppressdepth > 0` or `ctxdepth > 0`: do not open paragraph atom
 - Else:
   - Allocate paragraph atom `aN`
@@ -272,6 +293,16 @@ The same standalone-fallback helper is called from both fallback sites so empty 
 #### Equations
 
 Tracked equation environments: `equation`, `align`, `gather`, `multline`, `flalign`.
+
+<!-- Fixed: R13b-MAJOR 4 — custom equation env registration specified -->
+**User-registered equation environments.** `\codeptrackeq{myenv}` and `\codeptrackalign{myenv}` install the same hooks as the built-in tracked equation environments listed above. User-registered environments participate in the buffer/owner model identically:
+
+- `\codeptrackeq{myenv}` installs the `env/Q/begin`, `env/Q/after` hook pair for a single-row-style environment (`equation`-like: at most one label per env).
+- `\codeptrackalign{myenv}` installs the same pair for a multi-row-style environment (`align`-like: multiple `\label` calls, one `qK` target per row).
+- Both registration macros also call `\codep@suppressenv{myenv*}` for the starred (unnumbered) variant if it exists.
+- The registered environment names are included in the config hash (§2.12). Adding or removing a registered environment between runs triggers a stale-aux warning and full rewrite.
+
+The sentence "Tracked equation environments: `equation`, `align`, ...`" above is the default set installed by `\codep@installequations`. User-registered envs extend that set dynamically.
 
 <!-- Fixed: R2-BLOCKER 10 -->
 **`env/Q/begin`:**
@@ -334,7 +365,7 @@ Tracked equation environments: `equation`, `align`, `gather`, `multline`, `flali
 - Clear `\codep@pendingresultid`
 - Set one-shot sectioning suppression flag: `\global\booltrue{codep@sectioning}`
 
-The `codep@sectioning` flag is a one-shot boolean (not `suppressdepth`). It fires in `para/begin` before the paragraph allocation check: if `codep@sectioning` is true, clear it (`\global\boolfalse{codep@sectioning}`) and skip paragraph atom allocation for this one paragraph. This matches the current .sty behavior where `\codep@suppresssectioning` sets the flag in `cmd/<level>/before` hooks and the `\codep@installparahook` clears it on the next `para/begin`. The flag is consumed exactly once per sectioning command, so nested section headings each get their own flag-set/flag-clear cycle.
+The `codep@sectioning` flag is a one-shot boolean (not `suppressdepth`). It fires in `para/begin` before the paragraph allocation check: if `codep@sectioning` is true, clear it (`\global\boolfalse{codep@sectioning}`) and skip paragraph atom allocation for this one paragraph. The flag is consumed exactly once per sectioning command, so nested section headings each get their own flag-set/flag-clear cycle. *[Continuity note: this is the same mechanism as in the current `.sty`.]*
 
 Any tracked env begin also clears `\codep@pendingresultid` unless consumed by an immediately adjacent proof.
 
@@ -388,6 +419,15 @@ Required ordering rules:
 
 The redesign uses `\AddToHook{begindocument/end}[codependent]{...}` for ref/label patches (after hyperref/cleveref finalize) and defines aux record handlers at package load time (so they're active during `.aux` read). This two-point installation must be preserved through all waves.
 
+<!-- Fixed: R13b-MAJOR 1 — begin-document refs coverage: two-phase install or explicit gap documentation -->
+**Coverage of refs/labels in `\AtBeginDocument` hooks.** Moving ref/label wrapping to `begindocument/end` means that any `\ref` or `\label` call executed from user or package `\AtBeginDocument` hooks fires BEFORE codependent's wrappers are installed and is therefore NOT tracked. There are two acceptable approaches:
+
+- **Two-phase install (recommended):** Install a PRELIMINARY wrapper at `begindocument/before` that captures the current `\ref`/`\label` definitions and replaces them with simple codependent-tracking stubs. At `begindocument/end`, UPGRADE those stubs to the full pipeline (wrapping the now-finalized hyperref/cleveref definitions). The preliminary wrapper is minimal — it just records `(context, target-label)` into a queue; the final wrapper is the complete ref pipeline. This preserves tracking for refs/labels from `\AtBeginDocument` hooks while still wrapping the final hyperref/cleveref definitions.
+
+- **Explicit gap documentation (acceptable):** Document that refs/labels issued inside `\AtBeginDocument` hooks are not tracked. This gap is acceptable because: (a) such refs are uncommon in mathematical documents; (b) the current `.sty` already installs at `begindocument/before` which gives it priority over hyperref/cleveref's `\AtBeginDocument` patches but does not wrap them (see `codependent.sty` lines 1789 and 1975 — the current install point). The new `begindocument/end` install eliminates a known wrapping-order fragility at the cost of this gap.
+
+The choice between these approaches is deferred to Wave 2 implementation. If the two-phase install is used, the preliminary stubs and final upgrade must both be tested. If the gap approach is used, add a test `test-label-in-atbegindocument.lvt` that verifies the gap is benign (i.e., the document compiles without error; the ref just goes untracked).
+
 ### 2.5 Reference Interception
 
 Source ownership is read only from the explicit global stack top. There is no shared slot updated sometimes with `\gdef` and sometimes with local `\def`.
@@ -396,11 +436,43 @@ Write-time dedup: `(source-atom-id, target-label)` -- suppress duplicate writes 
 
 Replay-time dedup: `(source-atom-id, target-entity-id)` -- collapse multiple labels on the same theorem atom but keep distinct equation labels distinct.
 
+<!-- Fixed: R13b-MAJOR 2 — \ifmeasuring@ guard specified normatively -->
+**amsmath measuring-pass guard.** All ref interception (`\codep@writerefevent`) must include a guard against amsmath's double-pass measurement. When `amsmath` is loaded, `align`-like environments are processed **twice**: once in a measuring pass (to compute column widths) and once for typesetting. Without a guard, each `\ref` inside an `align` body fires twice, producing duplicate `refevent` records and duplicate backref edges. The mandatory guard pattern is:
+
+```tex
+\@ifundefined{ifmeasuring@}{%
+  \codep@writerefevent{#1}%
+}{%
+  \ifmeasuring@\else
+    \codep@writerefevent{#1}%
+  \fi
+}
+```
+
+This tests whether `\ifmeasuring@` is defined (it is defined by amsmath at load time) and, if so, suppresses the ref event during the measuring pass. This guard applies to the `\@setref` wrapper, the `\cref@getlabel` wrapper, and any other ref-interception hook that calls `\codep@writerefevent`. The current `.sty` implements this guard in `\codep@writeatomref` at lines ~1352--1357. The guard must be preserved through all waves.
+
 Storage backend may stay the current csname linked list, keyed by resolved entity ID:
 ```tex
 \codep@brcount@<entity-id>
 \codep@brnode@<entity-id>@<k> = <source-atom-id>
 ```
+
+<!-- Fixed: R13b-BLOCKER 3 — non-equation label binding path specified -->
+#### Non-equation label binding
+
+When `\label{key}` is called **outside an equation environment** (i.e., inside the body of a tracked theorem-like env, inside a proof, or inside a paragraph atom), the label wrapper must emit:
+
+```tex
+\codep@labelentity{key}{aN}
+```
+
+where `aN` is the atom ID obtained from `\codep@ctxpeekid` at the moment `\label` fires. This is the **generic label-binding path**. It binds the label text `key` to the currently open source atom so that future `\ref{key}` calls resolve to that atom via the `labelentity` table.
+
+This path is distinct from the **equation-specific label-binding path** (§2.4 Equations), which allocates a fresh `qK` target and defers all metadata until `env/Q/after`. The label wrapper must check whether it is currently inside an equation accumulator (`\codep@suppressdepth > 0` AND an equation body is active) and dispatch to the equation path in that case; otherwise it uses this generic path.
+
+**If `\codep@ctxpeekid` returns empty** (the label fires outside any tracked atom, e.g., in a suppressed environment or before tracking begins), the `labelentity` record is NOT emitted. The label is processed normally by the underlying LaTeX/hyperref/cleveref machinery, but codependent records no ownership. This matches the current `.sty` where `\codep@writelbltype` checks `\codep@currentatom` is non-empty before writing (see lines ~2010--2030 in `codependent.sty`).
+
+**Replay semantics:** The `\codep@labelentity{key}{aN}` record, when replayed from `.aux`, populates the `label -> entity-id` table. During `begindocument/end` queue flush, `refevent{aN}{key}` records look up `key` in this table to resolve the target entity for graph-edge construction.
 
 ### 2.6 .aux Protocol
 
@@ -472,6 +544,9 @@ The config hash covers every option that changes allocation or display metadata:
   3. Mark rerun-needed on any unresolved label
 
 On compatible aux: load declarations and metadata immediately, then flush queues in order. On mismatch: suppress rendering, write fresh records, warn.
+
+<!-- Fixed: R13b-MINOR — current-run writes also update in-memory tables -->
+**Current-run writes update in-memory tables.** Aux replay populates tables from the previous run's `.aux` file. But current-run writes (e.g., `\codep@atomdecl`, `\codep@meta`, `\codep@labelentity` emitted during the current document traversal) ALSO update the same in-memory tables immediately at emit time. This is required for within-run resolution to work: `\codepproofof{label}` consults the live `label -> entity` map, which must contain labels defined earlier in the same run (not just from the previous run's `.aux`). Similarly, `\codep@bindproofparent` looks up parent metadata (display, anchor) from the in-memory `meta` table, which must already contain entries written earlier in the current run. The in-memory tables are therefore populated from two sources: aux replay (at `begindocument/before` / `begindocument/end`) and current-run emit hooks (during document traversal). Both sources write to the same tables; last-write-wins semantics apply (§2.6).
 
 Changing `equations=all` to `equations=outer` between runs is well-defined: first run after the change ignores old equation-source records (config hash mismatch); second run reflects outer-mode fallthrough.
 
@@ -619,10 +694,11 @@ Bump to `\codep@cdp@version{2}`. Atom-scoped records use atom IDs, not display n
 \codep@cdp@source{\jobname.tex}
 
 \codep@cdp@atom{a12}{lemma}
-\codep@cdp@target{q7}{equation}
 \codep@cdp@meta{a12}{display}{2.3}
-\codep@cdp@meta{q7}{display}{(4.1)}
+\codep@cdp@meta{a12}{env}{lemma}
 \codep@cdp@meta{a12}{src}{main.tex:84:1}
+\codep@cdp@target{q7}{equation}
+\codep@cdp@meta{q7}{display}{(4.1)}
 \codep@cdp@meta{q7}{src}{main.tex:131:1}
 \codep@cdp@label{a12}{lem:main}
 \codep@cdp@label{q7}{eq:a}
@@ -636,6 +712,7 @@ Bump to `\codep@cdp@version{2}`. Atom-scoped records use atom IDs, not display n
 
 \codep@cdp@end{OK}
 ```
+<!-- Fixed: R13b-MAJOR 3 — added \codep@cdp@meta{a12}{env}{lemma} to example; env key is required for theorem atoms -->
 
 <!-- Fixed: R2-NEW-NITPICK (mandatory labels) -->
 **Requirements:**
@@ -661,12 +738,14 @@ Current v1:
 ```
 
 <!-- Fixed: BLOCKER 12 — resolved proof uses proofparent, not proofbind -->
+<!-- Fixed: R13b-MAJOR 3 — added env metadata to theorem atom in New v2 example -->
 New v2:
 ```tex
 \codep@cdp@version{2}
 \codep@cdp@source{example.tex}
 \codep@cdp@atom{a1}{theorem}
 \codep@cdp@meta{a1}{display}{1.1}
+\codep@cdp@meta{a1}{env}{theorem}
 \codep@cdp@label{a1}{thm:main}
 \codep@cdp@atom{a2}{proof}
 \codep@cdp@meta{a2}{display}{1.1*}
@@ -723,6 +802,9 @@ Two-stage dedup:
 
 <!-- Fixed: R11-MAJOR — successful bind clears any pending proofbind marker -->
 <!-- Fixed: R12 — live codepproofof also checks entity has a declaration (atomdecl/targetdecl) -->
+<!-- Fixed: R13b-MAJOR 6 — proof atoms are explicitly proof-eligible -->
+**Proof-eligible entities for `\codepproofof`.** An entity is proof-eligible if and only if it has a matching `atomdecl` with `kind` equal to `theorem`, `lemma`, `definition`, or any other tracked theorem-like environment name — OR with `kind` equal to `proof`. **A label pointing to a proof atom IS proof-eligible.** Proofs can be chained: `\codepproofof{lab}` where `lab` labels a proof atom `aK` is valid and sets `aK` as the parent of the current proof. This allows proof-of-proof attribution. Non-eligible entities are `qK` equation targets (kind `equation` with a `q` prefix) and paragraph atoms (kind `paragraph`).
+
 - If the label resolves to an entity ID that has a matching `atomdecl` or `targetdecl` AND is proof-eligible:
   - `\codep@bindproofparent{<proof-id>}{<parent-atom-id>}{statement|proof}` — this **overrides** any earlier binding (including a preloaded one from aux replay) AND **clears any pending `proofbind` marker** so that `cmd/endproof/before` will serialize `proofparent` only, not both. It stores in memory and emits `display`/`anchor` metadata. Serialization to `.aux`/`.cdp` is deferred to `cmd/endproof/before`.
   - For `statement` mode: emits `\codep@meta{aN}{anchor}{<parent-anchor>}` (or `{}` if hyperref not loaded)
@@ -806,6 +888,8 @@ This makes option changes between runs well-defined without requiring manual aux
 
 **What changes:**
 - Add the five query API macros in `codependent.sty` (`\codep@graph@hasrefs`, `\codep@graph@getdisplay`, `\codep@graph@getanchor`, `\codep@graph@getkind`, `\codep@graph@foreachref`) as shims over the current prefixed-key graph.
+<!-- Fixed: R13b-MAJOR 7 — \codep@render@equationblock added to Wave 1 scope -->
+- Add `\codep@render@equationblock{source-atom-id}{fallback-atom-id}{\do{q1}\do{q2}...}` to `codependent.sty` as a shim that calls existing render internals. This is part of the render barrier: `codependent-render.sty` must call `\codep@render@equationblock` (not access equation internals directly) starting from Wave 1. The shim implementation in Wave 1 can forward to current render helpers; the real implementation lands in Wave 2/3.
 - In `codependent-render.sty`, replace all direct reads inside `\codep@collapsebr`, `\codep@queuebackref`, `\codep@appendix@emit`, and `\codep@brhyper` to go through the query API.
 - Delete all direct `\csname codep@brcount@...\endcsname`, `\csname codep@brnode@...\endcsname`, and `\csname codep@anchor@...\endcsname` access paths from `codependent-render.sty`.
 
