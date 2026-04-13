@@ -7,6 +7,8 @@
 %% TEST-SECTION: DESIGN.md §8a.9
 %% TEST-EXIT: 1
 %% TEST-LOG-CONTAINS: Package codependent Error.*defined at atoms
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@def{2.1}{Hom}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 1
 %%
