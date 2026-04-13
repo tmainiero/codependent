@@ -140,8 +140,12 @@ This design is required because `cmd/theorem/before` and `cmd/proof/before` fire
 
 ### 2.4 Hook Plan (theorem, proof, paragraph, equation)
 
-<!-- Fixed: R12-NEW-MAJOR — correct hook timing: aux readers at begindocument/before, ref patches at begindocument/end -->
-Aux record readers (the `\providecommand` handlers for `atomdecl`, `meta`, etc.) install at package load time so they are active when the `.aux` file is read during `\begin{document}`. Ref interception patches and label wrappers install at `begindocument/end`, which fires AFTER `\AtBeginDocument` (where hyperref/cleveref finalize their own `\ref`/`\label` wrappers). This ensures codependent wraps the live outer definitions. Queued proof bindings and ref events also flush at `begindocument/end`.
+<!-- Fixed: R14-BLOCKER — three-point timing: aux at load, label at before, ref at end -->
+Three distinct hook timing points:
+
+1. **Aux record readers**: defined at **package load time** (active when `.aux` is read during `\begin{document}`).
+2. **Label wrapper** (`\codep@recordlabelowner`): installed at **`begindocument/before`**. This MUST run before amsmath's `begindocument/end` hook which snapshots `\label` into `\ltx@label` for use inside display math (`amsmath.sty` line 1228). If the label wrapper installs later, amsmath's snapshot bypasses it and equation labels are silently untracked. This matches the current .sty's timing.
+3. **Ref interception patches**: installed at **`begindocument/end`**. This fires AFTER hyperref/cleveref finalize their `\ref`/`\cref` wrappers in `\AtBeginDocument`. Queue flushes (proof-bind, ref-event) also happen here.
 
 #### Tracked theorem-like envs `E`
 
@@ -275,7 +279,8 @@ The same standalone-fallback helper is called from both fallback sites so empty 
 - Emit deferred previous-paragraph rendering
 - **Clear `\codep@pendingresultid`** (a top-level paragraph breaks proof adjacency)
 - If inside proof with pending display: re-check resolved proof-parent table first; if resolved, apply binding and clear pending; else call standalone proof fallback materialization helper (§2.4 Proofs)
-- **If `paragraphs=off`:** increment `suppressdepth` only. Do NOT allocate a paragraph atom, do NOT push context (`\codep@ctxpush`), do NOT set `\ifcodep@paragraphopen`, do NOT write any records (`atomdecl`, `display`, `anchor`, `src`). Skip the rest of the paragraph path. The matching `para/end` hook checks `\ifcodep@paragraphopen`; since it was never set, `para/end` is a no-op. This matches the current `.sty` where `\ifnum\codep@nestlevel>0` guards the paragraph allocation (see `\codep@parahook@paragraph` / `\codep@installparahook`).
+<!-- Fixed: R14-MAJOR — paragraphs=off must not touch suppressdepth (unbalanced) -->
+- **If `paragraphs=off`:** skip paragraph atom allocation entirely. Do NOT increment `suppressdepth` (that would be unbalanced since `para/end` doesn't decrement). Do NOT push context, do NOT set `\ifcodep@paragraphopen`, do NOT write any records. The `para/end` hook checks `\ifcodep@paragraphopen`; since it was never set, `para/end` is a no-op. Paragraph suppression for content inside other atoms (theorems, proofs) is already handled by their own `suppressdepth` increments — `paragraphs=off` only affects top-level bare paragraphs.
 - If `suppressdepth > 0` or `ctxdepth > 0`: do not open paragraph atom
 - Else:
   - Allocate paragraph atom `aN`
@@ -400,18 +405,20 @@ Note: `\caption` is NOT patched because its complex calling convention (`\@ifsta
 <!-- Fixed: MAJOR 13 -->
 #### Hook ordering and `\DeclareHookRule` requirements
 
-<!-- Fixed: R12-NEW-MAJOR — begindocument/before runs BEFORE AtBeginDocument, not after -->
-Two distinct hook timing points are used:
+<!-- Fixed: R14 — three-point timing matching §2.4 header -->
+Three distinct hook timing points (matching §2.4 header):
 
-1. **Aux record readers** (the `\providecommand` active handlers for `atomdecl`, `targetdecl`, `meta`, `labelentity`, `refevent`, `proofparent`, `proofbind`): defined at **package load time** so they are active when the kernel reads `.aux` during `\begin{document}` processing (which happens between `begindocument/before` and `begindocument/end`).
+1. **Aux record readers**: defined at **package load time** (active during `.aux` read).
 
-2. **Ref interception patches and label wrappers**: installed at **`begindocument/end`**. This fires AFTER `\AtBeginDocument` (where `hyperref` and `cleveref` finalize their `\ref`/`\label`/`\cref` wrappers). Codependent's patches therefore wrap the live outer definitions. Queue flushes (proof-bind, ref-event) also happen here.
+2. **Label wrapper** (`\codep@recordlabelowner`): installed at **`begindocument/before`**. Must run before amsmath's `begindocument/end` snapshot of `\label` into `\ltx@label`. Cleveref compatibility: codependent's label wrapper saves `\label` at `begindocument/before`; cleveref installs its optional-argument wrapper in `\AtBeginDocument`; amsmath snapshots the result at `begindocument/end`. All three compose correctly because each wraps the previous.
+
+3. **Ref interception patches**: installed at **`begindocument/end`**. Fires AFTER hyperref/cleveref finalize `\ref`/`\cref` wrappers. Queue flushes also happen here.
 
 Required ordering rules:
 
-1. **Ref interception after hyperref/cleveref wrapping:** `\codep@writerefevent` wrapper around `\@setref` installs at `begindocument/end`, which fires after hyperref's `\AtBeginDocument` patches.
+1. **Ref interception after hyperref/cleveref wrapping:** `\codep@writerefevent` wrapper around `\@setref` installs at `begindocument/end`.
 
-2. **Label wrapper after cleveref:** `\codep@recordlabelowner` patches `\label` at `begindocument/end`, after cleveref has installed its optional-argument `\label` wrapper in `\AtBeginDocument`. The codependent wrapper calls the (already-cleveref-wrapped) original `\label` internally.
+2. **Label wrapper before amsmath snapshot:** `\codep@recordlabelowner` patches `\label` at `begindocument/before`. Amsmath snapshots `\label` into `\ltx@label` at `begindocument/end` — the snapshot captures the already-wrapped `\label`.
 
 3. **Sectioning hooks:** `\AddToHook{cmd/<level>/before}[codependent/sectioning]{...}` uses the named label `codependent/sectioning`. No explicit `\DeclareHookRule` is needed for sectioning because the one-shot flag mechanism is order-independent with respect to other packages' sectioning hooks.
 
