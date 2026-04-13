@@ -74,7 +74,7 @@ All semantic state is explicit and global. No semantic state depends on TeX grou
 \def\codep@bindproofparent#1#2#3{...}% #1=proof-atom-id, #2=parent-atom-id, #3=mode
 ```
 
-<!-- Fixed: R4-NEW-BLOCKER — bindproofparent must serialize -->
+<!-- Fixed: R4/R8/R10 — bindproofparent binds in memory; serialization deferred to proof end -->
 <!-- Fixed: R8-MAJOR — defer proof-parent serialization to proof end to allow codepproofof override -->
 `\codep@bindproofparent` is the single authoritative proof-resolution macro. It MUST:
 1. Store the binding **in memory only** (proof-parent table: `proof-id -> {parent-id, mode}`)
@@ -683,7 +683,7 @@ Two-stage dedup:
 **Adjacent proofs:** If `\codep@pendingresultid` is non-empty when a proof begins, bind immediately to that atom with mode `statement`. Clear pending result.
 
 <!-- Fixed: R2-NEW-MINOR (\codepproofof ineligible label) -->
-<!-- Fixed: R5-NEW-MINOR — codepproofof calls bindproofparent (sole serializer), does not write proofparent directly -->
+<!-- Fixed: R5/R10 — codepproofof calls bindproofparent (memory + metadata only; .aux/.cdp deferred to proof end) -->
 <!-- Fixed: R5-NEW-MAJOR — proof-mode hypertarget placement on converged pass-2 runs -->
 <!-- Fixed: R6 — codepproofof always runs (overrides preloaded parent), fixes stale-parent bug, anchor emission via bindproofparent -->
 **`\codepproofof{label}` / `\codepproofof*{label}`:** This macro runs **unconditionally** — it is NOT gated on `\ifcodep@proofdisplaypending`. This is critical for two reasons: (a) proof-mode anchor placement must happen at the call site on every pass, and (b) a changed `\codepproofof` argument must override a stale preloaded parent from a previous run. Consult the live `label -> entity` map:
@@ -895,12 +895,12 @@ Rollback must revert code AND the 44 fixture updates together.
 <!-- Fixed: R2-BLOCKER 12 (cdp cutover What changes) -->
 **What changes:**
 - Change open hook to `\codep@cdp@version{2}`.
-- Rewrite emit sites in `\codep@hooktheorem@record`, `\codep@proof@materialize`, `\codep@proof@adjacent`, `\codep@parahook@paragraph`, and the label wrapper to emit ID-based records.
+- Rewrite emit sites in `\codep@hooktheorem@record`, `\codep@parahook@paragraph`, the label wrapper, and `cmd/endproof/before` (proof serialization point) to emit ID-based records.
 - **Add new emit sites:**
   - **Equation-target emission:** At `env/Q/after`, emit `\codep@cdp@target{qK}{equation}`, `\codep@cdp@meta{qK}{display}{...}`, `\codep@cdp@meta{qK}{src}{...}`, and `\codep@cdp@label{qK}{eq:...}` for each buffered equation label.
   - **Equation-source atom emission:** At `env/Q/after` (when block produced a number), emit `\codep@cdp@atom{aN}{equation}`, `\codep@cdp@meta{aN}{display}{(N--M)}`, `\codep@cdp@meta{aN}{src}{...}`.
   - **Graph-ref emission:** At ref interception time, emit `\codep@cdp@ref{aN}{label-key}` for each `\codep@writerefevent` call. (Buffered equation refs emit at `env/Q/after` alongside the `.aux` ref events.)
-- **Proof relation emission:** Emit `\codep@cdp@proofparent{proof-id}{parent-id}{mode}` whenever the proof binding is already resolved in the current run, including adjacency and non-forward `\codepproofof` cases. Emit `\codep@cdp@proofbind{proof-id}{label}{mode}` only when the binding remains unresolved after the `\codepproofof` call. Pass-2 settlement therefore changes a proof from `proofbind` to `proofparent`; it does not keep `proofbind` as the canonical v2 representation of parentage.
+- **Proof relation emission:** All proof `.cdp` records are written at `cmd/endproof/before` (the single serialization point, matching `.aux`). Emit `\codep@cdp@proofparent{proof-id}{parent-id}{mode}` if a binding was resolved during this proof. Emit `\codep@cdp@proofbind{proof-id}{label}{mode}` only if the binding remains unresolved. Standalone proofs emit neither. Pass-2 settlement changes a proof from `proofbind` to `proofparent`.
 - Remove v1-only `\codep@cdp@proof` emission path.
 - Keep non-graph records unchanged: `source`, `cmddef`, `def`, `use`, `tag`, `end`.
 
