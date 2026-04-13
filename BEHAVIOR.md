@@ -148,15 +148,15 @@ Load **after** the theorem backend (amsthm/ntheorem) and **after** all
 
 | Property | Behavior |
 |---|---|
-| Shared counter | One counter for all tracked environments + paragraphs + proofs |
-| Display format (`depth=1`) | `section.N` (article) or `chapter.N` (book/report) |
-| Display format (`depth=2`) | `section.subsection.N` or `chapter.section.N` |
-| Counter reset | Resets at the deepest sectioning level in the display |
-| Sequential | All tracked envs share one counter: Def 1.1, Thm 1.2, Lem 1.3, ... |
-| Paragraphs | Superscript margin number (left margin) when `paragraphs=on` |
-| Equations | Independent counter; never shares the atom counter |
-| Starred envs | `theorem*` gets an atom number (same counter) |
-| Nested tracked envs | Inner env suppressed; outer env's number covers both |
+| [B-NUM-SHARED] Shared counter | One counter for all tracked environments + paragraphs + proofs |
+| [B-NUM-DEPTH1] Display format (`depth=1`) | `section.N` (article) or `chapter.N` (book/report) |
+| [B-NUM-DEPTH2] Display format (`depth=2`) | `section.subsection.N` or `chapter.section.N` |
+| [B-NUM-RESET] Counter reset | Resets at the deepest sectioning level in the display |
+| [B-NUM-SEQ] Sequential | All tracked envs share one counter: Def 1.1, Thm 1.2, Lem 1.3, ... |
+| [B-NUM-PARA] Paragraphs | Superscript margin number (left margin) when `paragraphs=on` |
+| [B-NUM-EQINDEP] Equations | Independent counter; never shares the atom counter |
+| [B-NUM-STARRED] Starred envs | `theorem*` gets an atom number (same counter) |
+| [B-NUM-NESTED] Nested tracked envs | Inner env suppressed; outer env's number covers both |
 
 ### 3.2 Back-reference display
 
@@ -167,76 +167,76 @@ displays "Used in A" in the PDF.
 
 | Source type | Display | Example |
 |---|---|---|
-| Theorem/definition/etc. | bare number | `2.1` |
-| Proof (adjacent) | starred | `2.1*` |
-| Equation (standalone) | parenthesized | `(3)` |
-| Equation (align range) | parenthesized range | `(3--5)` |
-| Paragraph | bare number | `2.1` |
+| [B-DISP-THM] Theorem/definition/etc. | bare number | `2.1` |
+| [B-DISP-PROOF] Proof (adjacent) | starred | `2.1*` |
+| [B-DISP-EQ] Equation (standalone) | parenthesized | `(3)` |
+| [B-DISP-EQRANGE] Equation (align range) | parenthesized range | `(3--5)` |
+| [B-DISP-PARA] Paragraph | bare number | `2.1` |
 
 **Rendering modes:**
 
 | Mode | Where it appears | Layout |
 |---|---|---|
-| `inline` (default) | End of the atom body, same line as content | `...text. Used in 2.1, 3.4.` |
-| `below` | Separate line after the atom | Right- or left-aligned per `backref-align` |
-| `margin` | Right margin | Small text past line width |
-| `appendix` | Collected in dependency index | Via `\codepappendix` |
+| [B-REND-INLINE] `inline` (default) | End of the atom body, same line as content | `...text. Used in 2.1, 3.4.` |
+| [B-REND-BELOW] `below` | Separate line after the atom | Right- or left-aligned per `backref-align` |
+| [B-REND-MARGIN] `margin` | Right margin | Small text past line width |
+| [B-REND-APPENDIX] `appendix` | Collected in dependency index | Via `\codepappendix` |
 
-**Deduplication:** Multiple `\ref`s from the same source to the same target produce one backref entry.
+- [B-DEDUP] **Deduplication:** Multiple `\ref`s from the same source to the same target produce one backref entry.
 
-**Self-reference:** `\ref` to the containing atom is not recorded as a backref.
+- [B-SELFREF] **Self-reference:** `\ref` to the containing atom is not recorded as a backref.
 
-**Zero inbound refs:** No "Used in" annotation appears.
+- [B-ZERO-REF] **Zero inbound refs:** No "Used in" annotation appears.
 
 ### 3.3 Hyperlinks
 
-- When hyperref is loaded, every entry in "Used in X, Y" is a clickable link.
-- Link targets point to the correct atom's location in the PDF.
-- `\codepproofof*` overrides the link target to point to the proof location.
-- Adjacent proofs link to the theorem's location (they share its identity).
-- No orphan links: every link resolves to a valid PDF destination.
+- [B-LINK-CLICKABLE] When hyperref is loaded, every entry in "Used in X, Y" is a clickable link.
+- [B-LINK-CORRECT] Link targets point to the correct atom's location in the PDF.
+- [B-LINK-PROOFOF-STAR] `\codepproofof*` overrides the link target to point to the proof location.
+- [B-LINK-ADJ-PROOF] Adjacent proofs link to the theorem's location (they share its identity).
+- [B-LINK-NO-ORPHAN] No orphan links: every link resolves to a valid PDF destination.
 
 ### 3.4 Equation tracking
 
 | Mode | Equations outside theorems | Equations inside theorems |
 |---|---|---|
-| `outer` (default) | Tracked as backref sources | Fall through to containing theorem |
-| `all` | Tracked as backref sources | Tracked as backref sources |
-| `off` | Not tracked | Not tracked |
+| [B-EQ-OUTER] `outer` (default) | Tracked as backref sources | Fall through to containing theorem |
+| [B-EQ-ALL] `all` | Tracked as backref sources | Tracked as backref sources |
+| [B-EQ-OFF] `off` | Not tracked | Not tracked |
 
-**Track 1 (single-number):** `equation` -- displays as `(N)`.
+- [B-EQ-TRACK1] **Track 1 (single-number):** `equation` -- displays as `(N)`.
 
-**Track 2 (multi-number):** `align`, `gather`, `multline`, `flalign` -- displays as `(N--M)` range.
+- [B-EQ-TRACK2] **Track 2 (multi-number):** `align`, `gather`, `multline`, `flalign` -- displays as `(N--M)` range.
 
 **Edge cases:**
-- All-`\notag` align: no equation tracking; falls through to containing atom or silently dropped.
-- `\subequations` wrapping align: range uses subeq format, e.g. `(1a--1c)`.
-- Unnumbered envs (`equation*`, `align*`, etc.): no tracking, paragraph suppression only.
+- [B-EQ-NOTAG] All-`\notag` align: no equation tracking; falls through to containing atom or silently dropped.
+- [B-EQ-SUBEQ] `\subequations` wrapping align: range uses subeq format, e.g. `(1a--1c)`.
+- [B-EQ-UNNUM] Unnumbered envs (`equation*`, `align*`, etc.): no tracking, paragraph suppression only.
 
 ### 3.5 Proof attribution
 
 | Situation | Atom identity | Display in backrefs |
 |---|---|---|
-| Adjacent proof (directly after a tracked result env) | Inherits theorem's number | `2.1*` |
-| Separated proof with `\codepproofof{label}` | Inherits target's number | `2.1*` |
-| Non-adjacent proof (no `\codepproofof`) | Gets own atom number + warning | `3.5` |
-| Proof inside a tracked env | Suppressed (part of outer atom) | N/A |
-| `proofs=off` | No atom number, paragraph suppression only | N/A |
+| [B-PROOF-ADJ] Adjacent proof (directly after a tracked result env) | Inherits theorem's number | `2.1*` |
+| [B-PROOF-SEP] Separated proof with `\codepproofof{label}` | Inherits target's number | `2.1*` |
+| [B-PROOF-NONADJ] Non-adjacent proof (no `\codepproofof`) | Gets own atom number + warning | `3.5` |
+| [B-PROOF-INNER] Proof inside a tracked env | Suppressed (part of outer atom) | N/A |
+| [B-PROOF-OFF] `proofs=off` | No atom number, paragraph suppression only | N/A |
 
-**Adjacency rule:** Auto-attribution fires only when nothing (no paragraph, no other tracked env) intervenes between a result-type environment and the proof.
+- [B-PROOF-ADJRULE] **Adjacency rule:** Auto-attribution fires only when nothing (no paragraph, no other tracked env) intervenes between a result-type environment and the proof.
 
-**Result-type environments** (eligible for auto-attributed proofs): `theorem`, `lemma`, `proposition`, `corollary` (and any registered via `results`).
+- [B-PROOF-RESULT] **Result-type environments** (eligible for auto-attributed proofs): `theorem`, `lemma`, `proposition`, `corollary` (and any registered via `results`).
 
 ### 3.6 Concept tracking
 
-- `\codepnewcommand`-defined commands produce concept-use edges in the backref graph.
-- All uses (`\cmd`) of a concept appear as "Used in" entries on the def-site atom.
-- The def site is marked by `\cmd*`; exactly one per concept.
-- Concept edges do NOT appear in "Used in" lists of referenced atoms -- they appear only on the definition atom.
-- Forward references (use before def) are resolved on pass 2.
-- Missing def site: warning; concept backrefs disabled for that command.
-- Duplicate def site: error; build halts.
-- Invocations outside any atom (headings, captions, footnotes): silently ignored.
+- [B-CONC-EDGES] `\codepnewcommand`-defined commands produce concept-use edges in the backref graph.
+- [B-CONC-USEDIN] All uses (`\cmd`) of a concept appear as "Used in" entries on the def-site atom.
+- [B-CONC-DEFSITE] The def site is marked by `\cmd*`; exactly one per concept.
+- [B-CONC-SCOPE] Concept edges do NOT appear in "Used in" lists of referenced atoms -- they appear only on the definition atom.
+- [B-CONC-FWDREF] Forward references (use before def) are resolved on pass 2.
+- [B-CONC-NODEF] Missing def site: warning; concept backrefs disabled for that command.
+- [B-CONC-DUPDEF] Duplicate def site: error; build halts.
+- [B-CONC-OUTSIDE] Invocations outside any atom (headings, captions, footnotes): silently ignored.
 
 ### 3.7 Suppression
 
@@ -244,23 +244,23 @@ Paragraph numbers are suppressed inside:
 
 | Category | Environments / commands |
 |---|---|
-| Lists | `enumerate`, `itemize`, `description` |
-| Quoting | `quote`, `quotation` |
-| Floats | `figure`, `table` |
-| Boxes | `minipage`, `\parbox` |
-| Tables | `tabular`, `tabularx`, `longtable` |
-| Math display | `equation(*)`, `align(*)`, `gather(*)`, `multline(*)`, `flalign(*)`, `displaymath` |
-| Tracked envs | All environments registered via `\codeptrack` |
-| Commands | `\footnote`, `\parbox`, `\maketitle` |
-| Sectioning | `\section`, `\subsection`, etc. (heading paragraph only) |
+| [B-SUPP-LISTS] Lists | `enumerate`, `itemize`, `description` |
+| [B-SUPP-QUOTE] Quoting | `quote`, `quotation` |
+| [B-SUPP-FLOATS] Floats | `figure`, `table` |
+| [B-SUPP-BOXES] Boxes | `minipage`, `\parbox` |
+| [B-SUPP-TABLES] Tables | `tabular`, `tabularx`, `longtable` |
+| [B-SUPP-MATH] Math display | `equation(*)`, `align(*)`, `gather(*)`, `multline(*)`, `flalign(*)`, `displaymath` |
+| [B-SUPP-TRACKED] Tracked envs | All environments registered via `\codeptrack` |
+| [B-SUPP-CMDS] Commands | `\footnote`, `\parbox`, `\maketitle` |
+| [B-SUPP-SECTION] Sectioning | `\section`, `\subsection`, etc. (heading paragraph only) |
 
-User-extensible via `\codepsuppress{env}` and `\codepsuppresscmd{\cmd}`.
+- [B-SUPP-EXTEND] User-extensible via `\codepsuppress{env}` and `\codepsuppresscmd{\cmd}`.
 
 ### 3.8 Restatable support
 
-- `\begin{restatable}{theorem}{TheoremCmd}...\end{restatable}` works normally (first occurrence gets the atom).
-- `\TheoremCmd*` (restate) does NOT create a duplicate atom or backref entries.
-- Concept commands (`\cmd*`) inside a restated body register the def site only at the original declaration, not at the restate site.
+- [B-REST-FIRST] `\begin{restatable}{theorem}{TheoremCmd}...\end{restatable}` works normally (first occurrence gets the atom).
+- [B-REST-NODUP] `\TheoremCmd*` (restate) does NOT create a duplicate atom or backref entries.
+- [B-REST-CONCEPT] Concept commands (`\cmd*`) inside a restated body register the def site only at the original declaration, not at the restate site.
 
 ---
 
@@ -286,12 +286,12 @@ User-extensible via `\codepsuppress{env}` and `\codepsuppresscmd{\cmd}`.
 
 | Pass | What happens | What the user sees |
 |---|---|---|
-| Pass 1 | Atoms numbered, references recorded | Correct numbering; NO "Used in" annotations |
-| Pass 2 | Reference graph inverted, backrefs rendered | Full "Used in" annotations with links |
+| [B-PASS-ONE] Pass 1 | Atoms numbered, references recorded | Correct numbering; NO "Used in" annotations |
+| [B-PASS-TWO] Pass 2 | Reference graph inverted, backrefs rendered | Full "Used in" annotations with links |
 
-- A single-pass build produces a correctly numbered document without backrefs.
-- "Rerun needed" = labels changed; standard LaTeX `Label(s) may have changed` warning.
-- Three runs needed when labels are newly created (first run establishes labels, second reads them, third stabilizes backrefs).
+- [B-PASS-SINGLE] A single-pass build produces a correctly numbered document without backrefs.
+- [B-PASS-RERUN] "Rerun needed" = labels changed; standard LaTeX `Label(s) may have changed` warning.
+- [B-PASS-THREE] Three runs needed when labels are newly created (first run establishes labels, second reads them, third stabilizes backrefs).
 
 ---
 
@@ -299,19 +299,19 @@ User-extensible via `\codepsuppress{env}` and `\codepsuppresscmd{\cmd}`.
 
 | Scenario | Expected outcome |
 |---|---|
-| Atom with zero inbound refs | No "Used in" annotation |
-| Multiple `\ref` to same target from one atom | Single backref entry (deduplicated) |
-| `\ref` in section heading | Not attributed to any atom; no backref recorded |
-| `\ref` in footnote | Not attributed to any atom (suppressed context) |
-| Nested tracked environments | Inner env suppressed; no separate atom number |
-| Proof after any tracked env (including definition, remark) | Adjacent; inherits parent number with * |
-| All-`\notag` align block | No equation tracking; falls through to containing atom |
-| Empty proof (no body content) | Still gets an atom number |
-| `\codepproofof` with invalid label | Warning; proof becomes standalone with own number |
-| `\codeptrack` called twice | Error: "codeptrack called twice" |
-| `\codeptrack` before `\newtheorem` | Error: counter undefined |
-| `\codepnewcommand` cmd used in caption/heading | No concept record (outside atom context) |
-| Restated theorem refire | No duplicate atom; restate body is inert for tracking |
-| `paragraphs=off` + standalone equation | Equation tracked normally if `equations=outer` or `all` |
-| Same atom references same target multiple times | Deduplicated; single backref entry |
-| `\hyperref[label]{text}` inside an atom | Link rendered but NO backref edge recorded |
+| [B-EDGE-ZERO-REF] Atom with zero inbound refs | No "Used in" annotation |
+| [B-EDGE-DEDUP] Multiple `\ref` to same target from one atom | Single backref entry (deduplicated) |
+| [B-EDGE-HEADING] `\ref` in section heading | Not attributed to any atom; no backref recorded |
+| [B-EDGE-FOOTNOTE] `\ref` in footnote | Not attributed to any atom (suppressed context) |
+| [B-EDGE-NESTED] Nested tracked environments | Inner env suppressed; no separate atom number |
+| [B-EDGE-PROOF-ANY] Proof after any tracked env (including definition, remark) | Adjacent; inherits parent number with * |
+| [B-EDGE-NOTAG] All-`\notag` align block | No equation tracking; falls through to containing atom |
+| [B-EDGE-EMPTY-PROOF] Empty proof (no body content) | Still gets an atom number |
+| [B-EDGE-BADLABEL] `\codepproofof` with invalid label | Warning; proof becomes standalone with own number |
+| [B-EDGE-TRACK-TWICE] `\codeptrack` called twice | Error: "codeptrack called twice" |
+| [B-EDGE-TRACK-ORDER] `\codeptrack` before `\newtheorem` | Error: counter undefined |
+| [B-EDGE-CONC-OUTSIDE] `\codepnewcommand` cmd used in caption/heading | No concept record (outside atom context) |
+| [B-EDGE-RESTATE] Restated theorem refire | No duplicate atom; restate body is inert for tracking |
+| [B-EDGE-PARAOFF-EQ] `paragraphs=off` + standalone equation | Equation tracked normally if `equations=outer` or `all` |
+| [B-EDGE-MULTI-SAME] Same atom references same target multiple times | Deduplicated; single backref entry |
+| [B-EDGE-HYPERREF] `\hyperref[label]{text}` inside an atom | Link rendered but NO backref edge recorded |

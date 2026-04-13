@@ -3,15 +3,15 @@
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash -c 'CHANGED=\"$CLAUDE_FILE_PATH\"; case \"$CHANGED\" in *.sty) python3 .claude/scripts/lint_sty_structural.py \"$CHANGED\" ;; *.lvt) .claude/scripts/lint-tests.sh \"$CHANGED\" ;; esac'",
-        "description": "Structural lint .sty files after edit; lint .lvt files after edit",
+        "command": "bash -c 'CHANGED=\"$CLAUDE_FILE_PATH\"; case \"$CHANGED\" in *.sty) python3 .claude/scripts/lint_sty_structural.py \"$CHANGED\"; python3 .claude/scripts/lint_traceability.py --changed-file \"$CHANGED\" ;; *.lvt) .claude/scripts/lint-tests.sh \"$CHANGED\" ;; esac'",
+        "description": "Structural lint .sty files after edit; lint .lvt files after edit; report affected behavioral specs",
         "blocking": true
       }
     ],
     "PreCommit": [
       {
-        "command": "bash -c 'STAGED_STY=$(git diff --cached --name-only -- \"*.sty\" 2>/dev/null); STAGED_LVT=$(git diff --cached --name-only -- \"*.lvt\" 2>/dev/null); OK=true; if [ -n \"$STAGED_STY\" ]; then python3 .claude/scripts/lint_sty_structural.py $STAGED_STY || OK=false; fi; if [ -n \"$STAGED_LVT\" ]; then .claude/scripts/lint-tests.sh $STAGED_LVT || OK=false; fi; $OK'",
-        "description": "Lint only staged .sty and .lvt files before commit",
+        "command": "bash -c 'STAGED_STY=$(git diff --cached --name-only -- \"*.sty\" 2>/dev/null); STAGED_LVT=$(git diff --cached --name-only -- \"*.lvt\" 2>/dev/null); OK=true; if [ -n \"$STAGED_STY\" ]; then python3 .claude/scripts/lint_sty_structural.py $STAGED_STY || OK=false; fi; if [ -n \"$STAGED_LVT\" ]; then .claude/scripts/lint-tests.sh $STAGED_LVT || OK=false; fi; python3 .claude/scripts/lint_traceability.py || OK=false; $OK'",
+        "description": "Lint staged .sty/.lvt files; check behavioral traceability (fails on broken refs, not low coverage)",
         "blocking": true
       }
     ]
