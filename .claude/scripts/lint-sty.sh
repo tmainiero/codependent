@@ -68,7 +68,37 @@ for FILE in "${FILES[@]}"; do
     err "$FILE: $TRAILING lines have trailing whitespace"
   fi
 
-  # 7. Lines inside macro bodies missing % at end
+  # 7. No \def for public macros (must use \newcommand/\NewDocumentCommand)
+  #    Public = starts with \codep followed by lowercase (no @)
+  if grep -Pn '\\def\\codep[a-z]' "$FILE" | grep -v '^\s*%' | head -5 | grep -q .; then
+    err "$FILE: \\def used for public macro (use \\newcommand or \\NewDocumentCommand):"
+    grep -Pn '\\def\\codep[a-z]' "$FILE" | grep -v '^\s*%' | head -5 >&2
+  fi
+
+  # 8. No \everypar or direct \par patching (use \AddToHook)
+  if grep -Pn '\\everypar\b' "$FILE" | grep -v '^\s*%' | head -5 | grep -q .; then
+    err "$FILE: direct \\everypar found (use \\AddToHook{para/begin}):"
+    grep -Pn '\\everypar\b' "$FILE" | grep -v '^\s*%' | head -5 >&2
+  fi
+
+  # 9. All internal macros must use \codep@ prefix (catch leaked bare names)
+  #    Look for \def or \newcommand of non-standard non-codep names
+  #    Skip known LaTeX overrides (\newlabel, \label, etc.)
+  if grep -Pn '\\(def|newcommand|renewcommand)\s*\\(?!codep|@|if|the|c@)([a-zA-Z]+)' "$FILE" | grep -v '^\s*%' | grep -v 'orig@' | head -5 | grep -q .; then
+    warn "$FILE: possible non-codep@ internal macro definition:"
+    grep -Pn '\\(def|newcommand|renewcommand)\s*\\(?!codep|@|if|the|c@)([a-zA-Z]+)' "$FILE" | grep -v '^\s*%' | grep -v 'orig@' | head -5 >&2
+  fi
+
+  # 10. Section headers present and in order
+  SECTIONS=$(grep -n '^%% Section' "$FILE" | awk -F: '{print $2}' | sed 's/.*Section \([0-9a-z]*\).*/\1/')
+  if [ -n "$SECTIONS" ]; then
+    SORTED=$(echo "$SECTIONS" | sort -V)
+    if [ "$SECTIONS" != "$SORTED" ]; then
+      warn "$FILE: section headers may be out of order"
+    fi
+  fi
+
+  # 11. Lines inside macro bodies missing % at end
   #    Heuristic: lines between \def/\newcommand and the next blank line or section header
   #    that don't end with % or { or } and aren't comments
   #    This is a best-effort check — TeX makes this hard to do perfectly

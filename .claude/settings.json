@@ -3,15 +3,15 @@
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash -c 'CHANGED=\"$CLAUDE_FILE_PATH\"; case \"$CHANGED\" in *.sty) .claude/scripts/lint-sty.sh \"$CHANGED\" ;; esac'",
-        "description": "Lint .sty files after edit",
+        "command": "bash -c 'CHANGED=\"$CLAUDE_FILE_PATH\"; case \"$CHANGED\" in *.sty) .claude/scripts/lint-sty.sh \"$CHANGED\" ;; *.lvt) .claude/scripts/lint-tests.sh \"$CHANGED\" ;; esac'",
+        "description": "Lint .sty and .lvt files after edit",
         "blocking": true
       }
     ],
     "PreCommit": [
       {
-        "command": ".claude/scripts/lint-sty.sh",
-        "description": "Lint all .sty files before commit",
+        "command": ".claude/scripts/lint-sty.sh && .claude/scripts/lint-tests.sh",
+        "description": "Lint all .sty and .lvt files before commit",
         "blocking": true
       }
     ]
