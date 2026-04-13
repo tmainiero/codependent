@@ -43,6 +43,12 @@ All semantic state is explicit and global. No semantic state depends on TeX grou
 % Proof-nesting save stack (for nested proofs):
 % Each entry: {currentproofid, proofdisplaypending, proofbind-marker}
 \newtoks\codep@proofneststack           % token register used as a stack
+
+% Per-proof deferred proofbind marker (for cmd/endproof serialization):
+% When \codepproofof writes a proofbind, this stores {label, mode}.
+% When bindproofparent succeeds, this is cleared.
+% At cmd/endproof/before, if non-empty, serialize as \codep@proofbind.
+\newcommand*\codep@pendingproofbind{}   % empty = no deferred bind; else {label}{mode}
 ```
 
 **Equation-local accumulator state** (added by the equation-fix revision):
@@ -236,15 +242,18 @@ The same standalone-fallback helper is called from both fallback sites so empty 
    - If an unresolved `proofbind` was requested by `\codepproofof`: write `\codep@proofbind{aN}{<label>}{<mode>}` to `.aux` and `\codep@cdp@proofbind{aN}{<label>}{<mode>}` to `.cdp`
    - This is the **single serialization point** for proof parentage. No earlier hook writes these records.
 3. `\codep@ctxpop{proof}`
-4. **Restore outer proof state:** If the proof-nesting save stack is non-empty, pop `{currentproofid, proofdisplaypending, pending-proofbind-marker}` and restore them. Otherwise, clear `\gdef\codep@currentproofid{}`.
-5. Rendering: flush inline/orphan display
+4. **Clear `\codep@pendingresultid`** — a theorem/lemma created inside this proof must not leak its pending state and auto-bind a later top-level proof.
+5. **Restore outer proof state:** If the proof-nesting save stack is non-empty, pop `{currentproofid, proofdisplaypending, pending-proofbind-marker}` and restore them. Otherwise, clear `\gdef\codep@currentproofid{}`.
+6. Rendering: flush inline/orphan display
 
 **`env/proof/after`:** Rendering flush only; no semantic state changes.
 
 #### Paragraphs
 
+<!-- Fixed: R13 — para/begin clears pendingresultid (intervening text breaks adjacency) -->
 **`para/begin`:**
 - Emit deferred previous-paragraph rendering
+- **Clear `\codep@pendingresultid`** (a top-level paragraph breaks proof adjacency)
 - If inside proof with pending display: re-check resolved proof-parent table first; if resolved, apply binding and clear pending; else call standalone proof fallback materialization helper (§2.4 Proofs)
 - If `suppressdepth > 0` or `ctxdepth > 0`: do not open paragraph atom
 - Else:
@@ -703,7 +712,8 @@ Two-stage dedup:
 
 ### 2.10 Proof Binding
 
-**Adjacent proofs:** If `\codep@pendingresultid` is non-empty when a proof begins, bind immediately to that atom with mode `statement`. Clear pending result.
+<!-- Fixed: R13 — adjacency text notes nested-proof exception -->
+**Adjacent proofs:** If `\codep@pendingresultid` is non-empty when a proof begins AND the proof is NOT nested (i.e., `\codep@currentproofid` was empty before this proof), bind immediately to that atom with mode `statement`. Clear pending result. Nested proofs never auto-bind — see §2.4.
 
 <!-- Fixed: R2-NEW-MINOR (\codepproofof ineligible label) -->
 <!-- Fixed: R5/R10 — codepproofof calls bindproofparent (memory + metadata only; .aux/.cdp deferred to proof end) -->
