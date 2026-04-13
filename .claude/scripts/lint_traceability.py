@@ -2,25 +2,23 @@
 """
 lint_traceability.py -- Behavioral traceability linter for codependent.
 
-Parses BEHAVIOR.md for behavioral statement IDs ([B-XXX-YYY]) and .sty files
-for @behavior / @implements / @utility tags.  Checks cross-references and
-reports coverage.
-
-Checks:
-  1. Every BEHAVIOR.md ID has at least one @behavior tag in the code
-     (reported as UNCOVERED, not an error -- coverage improves over time)
-  2. Every @behavior tag references a real BEHAVIOR.md ID (ERROR)
-  3. Every @implements \\foo references a macro that has @behavior tags (ERROR)
-  4. No macro has BOTH @behavior and @implements (ERROR)
-  5. Coverage summary
+ENFORCES:
+  1. Every macro definition must be classified: @behavior, @implements, or @utility.
+     Unclassified macros are ERRORs unless listed in .traceability-baseline.
+  2. Every BEHAVIOR.md [B-XXX] statement must have at least one @behavior tag.
+     Uncovered statements are ERRORs unless listed in .traceability-baseline.
+  3. Every @behavior tag must reference a real BEHAVIOR.md ID.
+  4. Every @implements must reference a macro with @behavior tags.
+  5. No macro has BOTH @behavior and @implements.
 
 Exit codes:
-  0 -- no errors (low coverage is OK)
-  1 -- errors found (stale tags, broken references)
+  0 -- all checks pass
+  1 -- errors found
 
 Usage:
   python3 lint_traceability.py                        # full check
   python3 lint_traceability.py --changed-file F.sty   # report affected behaviors
+  python3 lint_traceability.py --update-baseline       # regenerate baseline from current state
 """
 
 import os
@@ -35,26 +33,17 @@ from typing import Dict, List, Optional, Set, Tuple
 
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BEHAVIOR_MD = os.path.join(PROJ_ROOT, "BEHAVIOR.md")
+BASELINE_FILE = os.path.join(PROJ_ROOT, ".traceability-baseline")
 STY_FILES = [
     os.path.join(PROJ_ROOT, "codependent.sty"),
     os.path.join(PROJ_ROOT, "codependent-render.sty"),
 ]
 
-# Regex for behavior IDs in BEHAVIOR.md: [B-SECTION-ITEM] at start of a
-# table cell or bullet point.  Captures the ID and the rest of the line
-# as the description.
 RE_BEHAVIOR_ID = re.compile(r'\[B-([A-Z0-9]+(?:-[A-Z0-9]+)*)\]')
-
-# Regex for @behavior tags in .sty comment lines: %% @behavior B-XXX-YYY
 RE_STY_BEHAVIOR = re.compile(r'^%%\s+@behavior\s+(B-[A-Z0-9]+(?:-[A-Z0-9]+)*)')
-
-# Regex for @implements tags: %% @implements \macro@name
 RE_STY_IMPLEMENTS = re.compile(r'^%%\s+@implements\s+(\\[a-zA-Z@]+)')
-
-# Regex for @utility tags: %% @utility
 RE_STY_UTILITY = re.compile(r'^%%\s+@utility\b')
 
-# Regex for macro definitions (the "next macro" after a tag block)
 RE_MACRO_DEF = re.compile(
     r'\\(?:def|newcommand|renewcommand|NewDocumentCommand|RenewDocumentCommand'
     r'|DeclareDocumentCommand|ProvideDocumentCommand'
@@ -62,15 +51,50 @@ RE_MACRO_DEF = re.compile(
     r'|long\s*\\def|gdef|edef|xdef)'
     r'\s*\{?\s*(\\[a-zA-Z@]+)'
 )
+RE_PLAIN_DEF = re.compile(r'\\(?:def|gdef|edef|xdef)\s*(\\[a-zA-Z@]+)')
 
-# Also match \cs_new:Npn style and plain \def\macro
-RE_MACRO_DEF_ALT = re.compile(
-    r'\\(?:cs_new(?:_protected)?(?:_nopar)?:Npn)\s+(\\[a-zA-Z@_:]+)'
-)
 
-RE_PLAIN_DEF = re.compile(
-    r'\\(?:def|gdef|edef|xdef)\s*(\\[a-zA-Z@]+)'
-)
+# ---------------------------------------------------------------------------
+# Baseline
+# ---------------------------------------------------------------------------
+
+def load_baseline(path: str) -> Tuple[Set[str], Set[str]]:
+    """Load .traceability-baseline. Returns (unclassified_macros, uncovered_bids)."""
+    macros: Set[str] = set()
+    bids: Set[str] = set()
+    if not os.path.isfile(path):
+        return macros, bids
+    with open(path, "r", encoding="utf-8") as f:
+        section = None
+        for line in f:
+            line = line.strip()
+            if line == "# unclassified-macros":
+                section = "macros"
+                continue
+            elif line == "# uncovered-behaviors":
+                section = "bids"
+                continue
+            elif line.startswith("#") or not line:
+                continue
+            if section == "macros":
+                macros.add(line)
+            elif section == "bids":
+                bids.add(line)
+    return macros, bids
+
+
+def write_baseline(path: str, unclassified: Set[str], uncovered: Set[str]) -> None:
+    """Write .traceability-baseline from current state."""
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# Traceability baseline — pre-rewrite unclassified macros and uncovered behaviors.\n")
+        f.write("# This file shrinks with each Phase 3 wave. Empty = 100% coverage.\n")
+        f.write("# Regenerate: python3 .claude/scripts/lint_traceability.py --update-baseline\n\n")
+        f.write("# unclassified-macros\n")
+        for m in sorted(unclassified):
+            f.write(f"{m}\n")
+        f.write("\n# uncovered-behaviors\n")
+        for b in sorted(uncovered):
+            f.write(f"{b}\n")
 
 
 # ---------------------------------------------------------------------------
@@ -83,34 +107,25 @@ def parse_behavior_md(path: str) -> Dict[str, str]:
     if not os.path.isfile(path):
         print(f"WARNING: {path} not found", file=sys.stderr)
         return specs
-
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
             m = RE_BEHAVIOR_ID.search(line)
             if m:
                 bid = "B-" + m.group(1)
-                # Extract description: everything after the [B-XXX] tag on the line,
-                # stripping markdown table separators and leading/trailing whitespace.
-                rest = line[m.end():].strip()
-                # Remove leading pipe if in a table row
-                rest = rest.lstrip("|").strip()
-                # Truncate at next pipe (for table rows with multiple columns)
+                rest = line[m.end():].strip().lstrip("|").strip()
                 if "|" in rest:
                     rest = rest[:rest.index("|")].strip()
-                # For bullet points, the description is the rest of the line
                 if not rest:
-                    # Try to get something from before the ID
                     rest = "(no description)"
                 specs[bid] = rest
     return specs
 
 
 # ---------------------------------------------------------------------------
-# .sty file parser
+# .sty parser — finds ALL macro definitions AND their tags
 # ---------------------------------------------------------------------------
 
 class MacroInfo:
-    """Collected tag information for a single macro."""
     def __init__(self, name: str, filename: str, line: int):
         self.name = name
         self.filename = filename
@@ -119,137 +134,84 @@ class MacroInfo:
         self.implements: List[str] = []
         self.is_utility: bool = False
 
-
-def parse_sty_file(path: str) -> Tuple[List[MacroInfo], int, int, int]:
-    """
-    Parse a .sty file for @behavior, @implements, @utility tags.
-
-    Returns (macros, behavior_count, implements_count, utility_count).
-    Each macro in the list has its tags attached.  Tags accumulate in a
-    pending buffer until a macro definition line is encountered.
-    """
-    macros: List[MacroInfo] = []
-    behavior_count = 0
-    implements_count = 0
-    utility_count = 0
-
-    if not os.path.isfile(path):
-        return macros, 0, 0, 0
-
-    with open(path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-
-    # Pending tags accumulate until the next macro definition
-    pending_behaviors: List[str] = []
-    pending_implements: List[str] = []
-    pending_utility: bool = False
-    pending_start_line: Optional[int] = None
-
-    for lineno, line in enumerate(lines, 1):
-        stripped = line.strip()
-
-        # Check for tag lines (must be %% comment lines)
-        m_beh = RE_STY_BEHAVIOR.match(stripped)
-        if m_beh:
-            bid = m_beh.group(1)
-            pending_behaviors.append(bid)
-            behavior_count += 1
-            if pending_start_line is None:
-                pending_start_line = lineno
-            continue
-
-        m_impl = RE_STY_IMPLEMENTS.match(stripped)
-        if m_impl:
-            macro_ref = m_impl.group(1)
-            pending_implements.append(macro_ref)
-            implements_count += 1
-            if pending_start_line is None:
-                pending_start_line = lineno
-            continue
-
-        m_util = RE_STY_UTILITY.match(stripped)
-        if m_util:
-            pending_utility = True
-            utility_count += 1
-            if pending_start_line is None:
-                pending_start_line = lineno
-            continue
-
-        # If we have pending tags, look for a macro definition
-        if pending_behaviors or pending_implements or pending_utility:
-            macro_name = _extract_macro_name(stripped)
-            if macro_name:
-                info = MacroInfo(macro_name, os.path.basename(path), lineno)
-                info.behavior_ids = pending_behaviors[:]
-                info.implements = pending_implements[:]
-                info.is_utility = pending_utility
-                macros.append(info)
-                pending_behaviors.clear()
-                pending_implements.clear()
-                pending_utility = False
-                pending_start_line = None
-            # If the line is not a comment and not blank, and we have pending
-            # tags but no macro def found, keep accumulating (tags might span
-            # multiple comment lines before the def).  But if it's a non-comment,
-            # non-blank, non-tag line that's also not a macro def, the tags are
-            # orphaned -- we still attach them when the next macro appears.
-
-    # Handle any orphaned pending tags at EOF (shouldn't happen in well-formed code)
-    if pending_behaviors or pending_implements or pending_utility:
-        info = MacroInfo("(orphaned-at-EOF)", os.path.basename(path),
-                         pending_start_line or len(lines))
-        info.behavior_ids = pending_behaviors[:]
-        info.implements = pending_implements[:]
-        info.is_utility = pending_utility
-        macros.append(info)
-
-    return macros, behavior_count, implements_count, utility_count
+    @property
+    def is_classified(self) -> bool:
+        return bool(self.behavior_ids) or bool(self.implements) or self.is_utility
 
 
 def _extract_macro_name(line: str) -> Optional[str]:
-    """Try to extract a macro name from a definition line."""
-    # Skip pure comment lines and blank lines
     if not line or line.startswith("%"):
         return None
-
-    for pattern in [RE_MACRO_DEF, RE_MACRO_DEF_ALT, RE_PLAIN_DEF]:
+    for pattern in [RE_MACRO_DEF, RE_PLAIN_DEF]:
         m = pattern.search(line)
         if m:
             return m.group(1)
     return None
 
 
+def parse_sty_file(path: str) -> List[MacroInfo]:
+    """Parse a .sty file. Returns ALL macros with their tags (or no tags)."""
+    if not os.path.isfile(path):
+        return []
+
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    macros: List[MacroInfo] = []
+    pending_behaviors: List[str] = []
+    pending_implements: List[str] = []
+    pending_utility: bool = False
+
+    basename = os.path.basename(path)
+
+    for lineno, line in enumerate(lines, 1):
+        stripped = line.strip()
+
+        # Collect tags
+        m_beh = RE_STY_BEHAVIOR.match(stripped)
+        if m_beh:
+            pending_behaviors.append(m_beh.group(1))
+            continue
+
+        m_impl = RE_STY_IMPLEMENTS.match(stripped)
+        if m_impl:
+            pending_implements.append(m_impl.group(1))
+            continue
+
+        m_util = RE_STY_UTILITY.match(stripped)
+        if m_util:
+            pending_utility = True
+            continue
+
+        # Check for macro definition
+        macro_name = _extract_macro_name(stripped)
+        if macro_name:
+            info = MacroInfo(macro_name, basename, lineno)
+            info.behavior_ids = pending_behaviors[:]
+            info.implements = pending_implements[:]
+            info.is_utility = pending_utility
+            macros.append(info)
+            pending_behaviors.clear()
+            pending_implements.clear()
+            pending_utility = False
+
+    return macros
+
+
 # ---------------------------------------------------------------------------
-# Full check mode
+# Full check
 # ---------------------------------------------------------------------------
 
 def run_full_check() -> int:
-    """Run the full traceability check.  Returns exit code."""
     specs = parse_behavior_md(BEHAVIOR_MD)
+    baseline_macros, baseline_bids = load_baseline(BASELINE_FILE)
 
     all_macros: List[MacroInfo] = []
-    total_behavior = 0
-    total_implements = 0
-    total_utility = 0
-    file_reports: List[str] = []
-
     for sty in STY_FILES:
-        if not os.path.isfile(sty):
-            continue
-        macros, bc, ic, uc = parse_sty_file(sty)
-        all_macros.extend(macros)
-        total_behavior += bc
-        total_implements += ic
-        total_utility += uc
-        file_reports.append(
-            f"  {os.path.basename(sty)}: {bc} @behavior tags, "
-            f"{ic} @implements tags, {uc} @utility tags"
-        )
+        all_macros.extend(parse_sty_file(sty))
 
-    # Build lookup structures
-    # behavior_id -> list of macros implementing it
+    # Build lookups
     id_to_macros: Dict[str, List[MacroInfo]] = {}
-    # macro_name -> MacroInfo (for @implements lookups)
     name_to_macro: Dict[str, MacroInfo] = {}
     for mi in all_macros:
         name_to_macro[mi.name] = mi
@@ -262,27 +224,28 @@ def run_full_check() -> int:
     for mi in all_macros:
         for bid in mi.behavior_ids:
             if bid not in specs:
-                errors.append(
-                    f"@behavior {bid} in {mi.name}: nonexistent spec ID"
-                )
+                errors.append(f"@behavior {bid} in {mi.name} ({mi.filename}:{mi.line}): nonexistent spec ID")
 
-    # Check 2: Every @implements \foo references a macro with @behavior tags
+    # Check 2: Every @implements references a macro with @behavior tags
     for mi in all_macros:
         for impl_ref in mi.implements:
             target = name_to_macro.get(impl_ref)
             if target is None or not target.behavior_ids:
-                errors.append(
-                    f"@implements {impl_ref} but {impl_ref} has no @behavior tags"
-                )
+                errors.append(f"@implements {impl_ref} in {mi.name} ({mi.filename}:{mi.line}): target has no @behavior tags")
 
     # Check 3: No macro has BOTH @behavior and @implements
     for mi in all_macros:
         if mi.behavior_ids and mi.implements:
-            errors.append(
-                f"{mi.name} has both @behavior and @implements"
-            )
+            errors.append(f"{mi.name} ({mi.filename}:{mi.line}): has both @behavior and @implements")
 
-    # Coverage
+    # Check 4: Every macro must be classified (unless in baseline)
+    unclassified = []
+    for mi in all_macros:
+        if not mi.is_classified and mi.name not in baseline_macros:
+            unclassified.append(mi)
+            errors.append(f"{mi.name} ({mi.filename}:{mi.line}): UNCLASSIFIED — must have @behavior, @implements, or @utility")
+
+    # Check 5: Every behavioral statement must be covered (unless in baseline)
     covered_ids: Set[str] = set()
     for mi in all_macros:
         for bid in mi.behavior_ids:
@@ -290,40 +253,50 @@ def run_full_check() -> int:
                 covered_ids.add(bid)
 
     uncovered_ids = sorted(set(specs.keys()) - covered_ids)
+    new_uncovered = [bid for bid in uncovered_ids if bid not in baseline_bids]
+    if new_uncovered:
+        for bid in new_uncovered:
+            desc = specs[bid]
+            if len(desc) > 60:
+                desc = desc[:57] + "..."
+            errors.append(f"UNCOVERED {bid}: {desc}")
+
+    # Check 6: Baseline entries that are now covered/classified should be removed
+    stale_baseline_macros = [m for m in baseline_macros if m in name_to_macro and name_to_macro[m].is_classified]
+    stale_baseline_bids = [b for b in baseline_bids if b in covered_ids]
+
+    # Stats
+    n_total_macros = len(all_macros)
+    n_classified = sum(1 for mi in all_macros if mi.is_classified)
+    n_baseline_macros = sum(1 for mi in all_macros if not mi.is_classified and mi.name in baseline_macros)
+    n_specs = len(specs)
     n_covered = len(covered_ids)
-    n_total = len(specs)
-    pct = (n_covered / n_total * 100) if n_total > 0 else 0
+    n_baseline_bids = len([b for b in uncovered_ids if b in baseline_bids])
 
     # Output
     print("=== Behavioral Traceability ===")
-    print(f"BEHAVIOR.md: {n_total} behavioral statements parsed")
-    for fr in file_reports:
-        print(fr)
+    print(f"BEHAVIOR.md: {n_specs} behavioral statements")
+    print(f"Macros: {n_total_macros} total, {n_classified} classified, {n_baseline_macros} baselined, {len(unclassified)} unclassified")
+    print(f"Coverage: {n_covered}/{n_specs} statements covered ({n_covered/n_specs*100:.0f}%), {n_baseline_bids} baselined")
     print()
 
+    if stale_baseline_macros or stale_baseline_bids:
+        print("STALE BASELINE (remove these — they're now classified/covered):")
+        for m in sorted(stale_baseline_macros):
+            print(f"  macro: {m}")
+        for b in sorted(stale_baseline_bids):
+            print(f"  behavior: {b}")
+        print()
+
     if errors:
-        print("ERRORS:")
+        print(f"ERRORS ({len(errors)}):")
         for e in errors:
             print(f"  {e}")
         print()
-
-    print(f"COVERAGE: {n_covered}/{n_total} behavioral statements covered ({pct:.0f}%)")
-
-    if uncovered_ids:
-        print(f"\nUNCOVERED (remaining {len(uncovered_ids)}):")
-        for bid in uncovered_ids:
-            desc = specs[bid]
-            # Truncate long descriptions
-            if len(desc) > 72:
-                desc = desc[:69] + "..."
-            print(f"  {bid}: {desc}")
-
-    print()
-    if errors:
-        print(f"RESULT: {len(errors)} error(s) found -- FAIL")
+        print(f"RESULT: FAIL ({len(errors)} errors)")
         return 1
     else:
-        print("RESULT: 0 errors -- OK")
+        print("RESULT: PASS")
         return 0
 
 
@@ -332,33 +305,15 @@ def run_full_check() -> int:
 # ---------------------------------------------------------------------------
 
 def run_changed_file(filepath: str) -> int:
-    """
-    Report which behavioral statements are affected by an edit to a .sty file.
-    Parses the file for @behavior tags and reports which spec IDs are touched.
-    Returns 0 always (informational only).
-    """
-    if not filepath.endswith(".sty"):
+    if not filepath.endswith(".sty") or not os.path.isfile(filepath):
         return 0
 
-    if not os.path.isfile(filepath):
-        return 0
-
-    macros, bc, ic, uc = parse_sty_file(filepath)
-
-    if bc == 0 and ic == 0:
-        # No traceability tags in this file -- nothing to report
-        return 0
-
-    # Collect all behavior IDs referenced
+    macros = parse_sty_file(filepath)
     affected_ids: Set[str] = set()
-    for mi in macros:
-        affected_ids.update(mi.behavior_ids)
-
-    # Also resolve @implements chains
     name_to_macro: Dict[str, MacroInfo] = {}
     for mi in macros:
         name_to_macro[mi.name] = mi
-
+        affected_ids.update(mi.behavior_ids)
     for mi in macros:
         for impl_ref in mi.implements:
             target = name_to_macro.get(impl_ref)
@@ -367,16 +322,45 @@ def run_changed_file(filepath: str) -> int:
 
     if affected_ids:
         specs = parse_behavior_md(BEHAVIOR_MD)
-        id_list = sorted(affected_ids)
-        descriptions = []
-        for bid in id_list:
-            desc = specs.get(bid, "(unknown)")
-            if len(desc) > 50:
-                desc = desc[:47] + "..."
-            descriptions.append(f"{bid}")
-        print(f"Edit touches code implementing: {', '.join(descriptions)}")
-        print("  -- verify BEHAVIOR.md still matches.")
+        print(f"Edit touches code implementing: {', '.join(sorted(affected_ids))}")
+        print("  — verify BEHAVIOR.md still matches.")
 
+    # Check for unclassified macros in the edited file
+    baseline_macros, _ = load_baseline(BASELINE_FILE)
+    new_unclassified = [mi for mi in macros if not mi.is_classified and mi.name not in baseline_macros]
+    if new_unclassified:
+        print(f"UNCLASSIFIED macros (must add @behavior/@implements/@utility):")
+        for mi in new_unclassified:
+            print(f"  {mi.name} ({mi.filename}:{mi.line})")
+        return 1
+
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Update baseline
+# ---------------------------------------------------------------------------
+
+def run_update_baseline() -> int:
+    specs = parse_behavior_md(BEHAVIOR_MD)
+    all_macros: List[MacroInfo] = []
+    for sty in STY_FILES:
+        all_macros.extend(parse_sty_file(sty))
+
+    unclassified = {mi.name for mi in all_macros if not mi.is_classified}
+
+    covered_ids: Set[str] = set()
+    for mi in all_macros:
+        for bid in mi.behavior_ids:
+            if bid in specs:
+                covered_ids.add(bid)
+    uncovered = set(specs.keys()) - covered_ids
+
+    write_baseline(BASELINE_FILE, unclassified, uncovered)
+    print(f"Baseline written to {BASELINE_FILE}")
+    print(f"  {len(unclassified)} unclassified macros")
+    print(f"  {len(uncovered)} uncovered behavioral statements")
+    print(f"Phase 3 goal: reduce both to 0.")
     return 0
 
 
@@ -387,11 +371,13 @@ def run_changed_file(filepath: str) -> int:
 def main() -> int:
     args = sys.argv[1:]
 
+    if "--update-baseline" in args:
+        return run_update_baseline()
+
     if "--changed-file" in args:
         idx = args.index("--changed-file")
         if idx + 1 < len(args):
-            filepath = args[idx + 1]
-            return run_changed_file(filepath)
+            return run_changed_file(args[idx + 1])
         else:
             print("ERROR: --changed-file requires a file path", file=sys.stderr)
             return 1
