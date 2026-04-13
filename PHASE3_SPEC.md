@@ -185,8 +185,10 @@ State transitions are specified exhaustively below.
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
      - Skip adjacency and standalone fallback for this proof
-8. Otherwise, check adjacent binding:
-   - If `\codep@pendingresultid` is non-empty:
+<!-- Fixed: R11-MAJOR — nested proof must not consume outer pendingresultid -->
+8. Otherwise, check adjacent binding (only if this is NOT a nested proof):
+   - If `\codep@ctxpeekkind` (the kind BELOW the just-pushed proof) is `proof`: this is a nested proof. **Do NOT consume `\codep@pendingresultid`.** Leave pending true. Nested proofs are never auto-adjacent.
+   - Else if `\codep@pendingresultid` is non-empty:
      - `\codep@bindproofparent{aN}{<pendingresultid>}{statement}` (binds in memory + emits display/anchor metadata; .aux/.cdp deferred to proof end)
      - **Clear** `\codep@proofdisplaypendingfalse`
      - **Clear** `\gdef\codep@pendingresultid{}`
@@ -446,7 +448,7 @@ The config hash covers every option that changes allocation or display metadata:
 - `proofbind` queues unresolved proof label bindings.
 - At `begindocument/end`:
   1. Flush proof-bind queue (resolve labels to entities; ineligible targets produce warnings)
-  2. Flush ref-event queue (resolve labels to entity IDs)
+  2. Flush ref-event queue: resolve each `(source-atom-id, target-label)` to `(source-atom-id, target-entity-id)`. **Ignore any `labelentity` record whose entity ID has no matching `atomdecl` or `targetdecl`.** This handles discarded equation labels from all-`\notag` blocks: the `labelentity` was written at `\label` time, but the `targetdecl` was never emitted because the block produced no numbers. Such orphan `labelentity` records are harmless stale data.
   3. Mark rerun-needed on any unresolved label
 
 On compatible aux: load declarations and metadata immediately, then flush queues in order. On mismatch: suppress rendering, write fresh records, warn.
@@ -552,10 +554,14 @@ New:
 \codep@refevent{a6}{thm:target}
 ```
 
+<!-- Fixed: R11-MAJOR — forward-label proof still gets standalone display/anchor on pass 1 -->
 **Proof (forward label, unresolved on pass 1):**
+On pass 1, `\codepproofof{lem:future}` can't resolve the label. The proof hits standalone fallback at `para/begin` or `cmd/endproof/before`, which assigns standalone display/anchor. At proof end, both the standalone metadata and the `proofbind` are serialized:
 
 ```tex
 \codep@atomdecl{a9}{proof}
+\codep@meta{a9}{display}{3.1*}
+\codep@meta{a9}{anchor}{codep.proof.a9}
 \codep@meta{a9}{src}{main.tex:80:1}
 \codep@proofbind{a9}{lem:future}{proof}
 ```
@@ -688,8 +694,9 @@ Two-stage dedup:
 <!-- Fixed: R6 — codepproofof always runs (overrides preloaded parent), fixes stale-parent bug, anchor emission via bindproofparent -->
 **`\codepproofof{label}` / `\codepproofof*{label}`:** This macro runs **unconditionally** — it is NOT gated on `\ifcodep@proofdisplaypending`. This is critical for two reasons: (a) proof-mode anchor placement must happen at the call site on every pass, and (b) a changed `\codepproofof` argument must override a stale preloaded parent from a previous run. Consult the live `label -> entity` map:
 
+<!-- Fixed: R11-MAJOR — successful bind clears any pending proofbind marker -->
 - If the label resolves immediately to a proof-eligible atom:
-  - `\codep@bindproofparent{<proof-id>}{<parent-atom-id>}{statement|proof}` — this **overrides** any earlier binding (including a preloaded one from aux replay). It stores in memory and emits `display`/`anchor` metadata. Serialization to `.aux`/`.cdp` is deferred to `cmd/endproof/before`.
+  - `\codep@bindproofparent{<proof-id>}{<parent-atom-id>}{statement|proof}` — this **overrides** any earlier binding (including a preloaded one from aux replay) AND **clears any pending `proofbind` marker** so that `cmd/endproof/before` will serialize `proofparent` only, not both. It stores in memory and emits `display`/`anchor` metadata. Serialization to `.aux`/`.cdp` is deferred to `cmd/endproof/before`.
   - For `statement` mode: emits `\codep@meta{aN}{anchor}{<parent-anchor>}` (or `{}` if hyperref not loaded)
   - For `proof` mode (`\codepproofof*`): create `\hypertarget{codep.proof.aN}{}` at the current call site (if hyperref loaded). Emits `\codep@meta{aN}{anchor}{codep.proof.aN}` (overrides any earlier anchor). If hyperref not loaded, emits `\codep@meta{aN}{anchor}{}`.
   - If `\ifcodep@proofdisplaypending` was true, clear it now
@@ -992,7 +999,8 @@ These must be true at ALL times during migration, after every wave:
 ### High risk
 
 **Proof parent mis-binding (Wave 3).** The `\codep@pendingresultid` mechanism must be typed, explicit, and cleared only at defined boundary hooks. Adjacent proof detection is the single most fragile interaction in the package.
-- *Mitigation:* Focused test battery on all `test-proofs-*` fixtures after Wave 2 state machine is live. Add negative assertions proving non-result environments clear pending state.
+<!-- Fixed: R11-MINOR — all tracked envs are proof-eligible; non-result envs do NOT clear pending -->
+- *Mitigation:* Focused test battery on all `test-proofs-*` fixtures after Wave 2 state machine is live. Verify that ALL tracked environments (including definitions, remarks, etc.) set `pendingresultid` and that proofs after non-result environments inherit adjacency (matching `test-proofs-after-non-result.lvt` expectations).
 
 **Equation target distinctness loss (Wave 3).** If the dedup collapses two labels in the same `align` to one entity, equation-level backrefs break silently.
 - *Mitigation:* Explicit test asserting `\codep@targetdecl{q3}{equation}` and `\codep@targetdecl{q4}{equation}` are both present for a two-label align.
