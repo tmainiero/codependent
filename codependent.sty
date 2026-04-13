@@ -1118,10 +1118,10 @@
 %   and strips \numberline from the entry via controlled \edef
 %   to recover the bare title text.
 \def\codep@checktocsection#1#2#3{%
-  \def\codep@tmp@a{#1}\def\codep@tmp@b{toc}%
-  \ifx\codep@tmp@a\codep@tmp@b
-    \def\codep@tmp@a{#2}\def\codep@tmp@b{section}%
-    \ifx\codep@tmp@a\codep@tmp@b
+  \def\codep@tmp@tocfile{#1}\def\codep@tmp@toctype{toc}%
+  \ifx\codep@tmp@tocfile\codep@tmp@toctype
+    \def\codep@tmp@tocfile{#2}\def\codep@tmp@toctype{section}%
+    \ifx\codep@tmp@tocfile\codep@tmp@toctype
       \codep@extractsectitle{#3}%
     \fi
   \fi
@@ -1134,8 +1134,8 @@
   \begingroup
     \let\protect\@empty
     \def\numberline##1{}%
-    \edef\codep@tmp{#1}%
-    \global\let\codep@tmp@result\codep@tmp
+    \edef\codep@tmp@expanded{#1}%
+    \global\let\codep@tmp@result\codep@tmp@expanded
   \endgroup
   \xdef\codep@cursecnum{\thesection}%
   \global\let\codep@cursectitle\codep@tmp@result
@@ -1642,8 +1642,8 @@
 }
 \def\codep@extractanchor@ii#1#2{%
   % #1 = anchor (4th field or empty), #2 = label key
-  \def\codep@tmp{#1}%
-  \ifx\codep@tmp\@empty\else
+  \def\codep@tmp@anchorfield{#1}%
+  \ifx\codep@tmp@anchorfield\@empty\else
     \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax\else
       % Resolve atom number first, then define the anchor mapping
       % using the prefixed key (type:number).
@@ -1669,10 +1669,10 @@
 \def\codep@ifdatakey#1{%
   \codep@isdatafalse
   \def\codep@ifdatakey@probe##1@data##2\@nil{%
-    \def\codep@tmp@b{##2}%
-    \ifx\codep@tmp@b\@empty\else
-      \def\codep@tmp@c{@data}%
-      \ifx\codep@tmp@b\codep@tmp@c
+    \def\codep@tmp@datasuffix{##2}%
+    \ifx\codep@tmp@datasuffix\@empty\else
+      \def\codep@tmp@datasentinel{@data}%
+      \ifx\codep@tmp@datasuffix\codep@tmp@datasentinel
         \codep@isdatatrue
       \fi
     \fi
@@ -1711,8 +1711,8 @@
       % ##5 is the hyperref anchor name; store reverse mapping
       % using prefixed key if type is known.
       \codep@ifcrefkey{##1}{}{%
-        \def\codep@tmp{##5}%
-        \ifx\codep@tmp\@empty\else
+        \def\codep@tmp@anchorval{##5}%
+        \ifx\codep@tmp@anchorval\@empty\else
           \expandafter\ifx\csname codep@ltype@##1\endcsname\relax
             \expandafter\xdef
               \csname codep@anchor@##2\endcsname{##5}%
@@ -1757,12 +1757,12 @@
 \def\codep@ifcrefkey#1{%
   \codep@iscreffalse
   \def\codep@ifcrefkey@probe##1@cref##2\@nil{%
-    \def\codep@tmp@b{##2}%
-    \ifx\codep@tmp@b\@empty
+    \def\codep@tmp@crefsuffix{##2}%
+    \ifx\codep@tmp@crefsuffix\@empty
       % No @cref in the key at all; the probe's own trailing
       % @cref absorbed the split -> NOT a cref key.
     \else
-      \ifx\codep@tmp@b\codep@ifcrefsentinel
+      \ifx\codep@tmp@crefsuffix\codep@ifcrefsentinel
         \codep@iscreftrue
       \fi
     \fi
@@ -2261,10 +2261,10 @@
   % Hook each listed environment and its starred variant.
   % Note: \expandafter ensures the env name is fully expanded
   % before \codep@hooktheorem captures it in \AddToHook
-  % bodies; without this, a stale \codep@tmp reference would
+  % bodies; without this, a stale \codep@tmp@envname reference would
   % resolve to the wrong name at hook-fire time.
-  \@for\codep@tmp:=#1\do{%
-    \ifx\codep@tmp\@empty\else
+  \@for\codep@tmp@envname:=#1\do{%
+    \ifx\codep@tmp@envname\@empty\else
       % Re-alias this env's counter to \c@atom.  When thmtools
       % declares an env with sibling=<base>, it \let-aliases
       % \c@<env> to \c@<base> at declaration time.  But
@@ -2273,21 +2273,21 @@
       % register.  This re-let ensures every tracked env's
       % counter is \c@atom, regardless of declaration order.
       \expandafter\@ifundefined\expandafter{%
-        \expandafter c@\codep@tmp
+        \expandafter c@\codep@tmp@envname
       }{}{%
-        \expandafter\let\csname c@\codep@tmp\endcsname\c@atom
+        \expandafter\let\csname c@\codep@tmp@envname\endcsname\c@atom
         % Also alias the display macro \the<env> to \theatom.
         % When thmtools declares an env with sibling=<base>, it
         % snapshots \the<base> at declaration time.  If codependent
         % later rewires \the<base> to \theatom, the sibling's
         % display macro still has the old format.  This re-let
         % ensures every tracked env uses the atom display format.
-        \expandafter\let\csname the\codep@tmp\endcsname\theatom
+        \expandafter\let\csname the\codep@tmp@envname\endcsname\theatom
       }%
       \expandafter\codep@hooktheorem
-        \expandafter{\codep@tmp}%
+        \expandafter{\codep@tmp@envname}%
       % Auto-register starred variant (amsthm creates foo*).
-      \edef\codep@starred{\codep@tmp*}%
+      \edef\codep@starred{\codep@tmp@envname*}%
       \expandafter\@ifundefined\expandafter{%
         \codep@starred
       }{}{%
@@ -2363,8 +2363,8 @@
         \string\codep@cdp@proof{%
           \csname codep@lblnum@#1\endcsname*}}%
       % Starred form: anchor the link at the proof location.
-      \def\codep@tmp{#2}%
-      \ifx\codep@tmp\@empty\else
+      \def\codep@tmp@anchormode{#2}%
+      \ifx\codep@tmp@anchormode\@empty\else
         \codep@writeanchormap{\codep@currentatom}%
       \fi
       % Queue backref for the proof atom.

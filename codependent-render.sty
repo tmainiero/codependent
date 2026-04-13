@@ -138,11 +138,11 @@
 \newcommand*{\codep@flushbackref}{%
   \ifbool{codep@backrefs}{%
     \ifbool{codep@appendix}{}{%
-      \expandafter\def\expandafter\codep@tmp\expandafter{%
+      \expandafter\def\expandafter\codep@tmp@flushed\expandafter{%
         \the\codep@pendingbr}%
       \codep@pendingbr={}%
-      \ifx\codep@tmp\@empty\else
-        \codep@renderbackref{\codep@tmp}%
+      \ifx\codep@tmp@flushed\@empty\else
+        \codep@renderbackref{\codep@tmp@flushed}%
       \fi
     }%
   }{}%
@@ -330,9 +330,9 @@
 %   in hmode, before the env closes).
 \def\codep@preventorphan{%
   \ifx\codep@backrefstyle\codep@const@inline\else
-    \expandafter\def\expandafter\codep@tmp\expandafter{%
+    \expandafter\def\expandafter\codep@tmp@pendingsnap\expandafter{%
       \the\codep@pendingbr}%
-    \ifx\codep@tmp\@empty\else
+    \ifx\codep@tmp@pendingsnap\@empty\else
       \@endparpenalty\@M
     \fi
   \fi
@@ -347,11 +347,11 @@
 %   Clears the pendingbr register.  Called from the para/end
 %   hook when inline backrefs are active and not in appendix mode.
 \def\codep@parendhook@snapshot{%
-  \expandafter\def\expandafter\codep@tmp\expandafter{%
+  \expandafter\def\expandafter\codep@tmp@brsnap\expandafter{%
     \the\codep@pendingbr}%
   \codep@pendingbr={}%
-  \ifx\codep@tmp\@empty\else
-    \global\let\codep@deferredbr\codep@tmp
+  \ifx\codep@tmp@brsnap\@empty\else
+    \global\let\codep@deferredbr\codep@tmp@brsnap
   \fi
 }%
 
