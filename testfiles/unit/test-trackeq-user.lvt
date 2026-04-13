@@ -1,0 +1,63 @@
+%% TEST-NAME: test-trackeq-user
+%% TEST-WHAT: \codeptrackeq{myequation} registers a custom single-number
+%%            equation environment for Track 1 tracking.  A \ref inside
+%%            the custom environment creates a \codep@atomref{equation:N}
+%%            record, just as the built-in equation environment does.
+%% TEST-SOURCE: codependent.sty line 2441 \codeptrackeq
+%% TEST-SECTION: codependent.sty §User API (\codeptrackeq), \codep@trackeqenv
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1}{thm:main}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1}{thm:main}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsmath,amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% \codeptrackeq delegates to \codep@trackeqenv, which installs
+%% AtBeginEnvironment / AtEndEnvironment / AfterEndEnvironment hooks.
+%% Track 1: the equation counter steps at \begin{myequation}, so
+%% \theequation is correct when \ref{thm:main} fires inside the body.
+%% The backref record must use "equation:N" (N = 1 here, the first
+%% step of the equation counter).
+%%
+%% The custom environment wraps amsmath's \equation / \endequation
+%% primitives.  This reuses the standard equation counter and
+%% formatting, ensuring \theequation is correct at tracking time.
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem}
+
+%% Custom single-number equation environment.
+%% Wraps amsmath's equation using primitive \equation/\endequation
+%% so the equation counter steps correctly at \begin{myequation}.
+\newenvironment{myequation}{\equation}{\endequation}
+
+%% Register myequation for Track 1 tracking.
+\codeptrackeq{myequation}
+
+\begin{document}
+\START
+
+\section{Results}
+
+%% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  The main theorem.
+\end{theorem}
+
+%% Custom equation (equation counter steps to 1 at \begin{myequation}).
+%% The \ref{thm:main} fires with codep@inequation set; Track 1 records
+%% \codep@atomref{equation:1}{thm:main} in the .aux.
+\begin{myequation}\label{eq:custom}
+  f(x) = g(x) \quad\text{by Theorem~\ref{thm:main}}.
+\end{myequation}
+
+\END
+\end{document}

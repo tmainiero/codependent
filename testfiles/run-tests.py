@@ -570,11 +570,16 @@ def _parse_backref_lines_from_stext(stext_xml: str) -> list[_BackrefLine]:
 
     # Find all <line> elements containing "Used in"
     line_re = re.compile(
-        r'<line\s+bbox="([^"]+)"[^>]*text="(Used in[^"]*)"'
+        r'<line\s+bbox="([^"]+)"[^>]*text="([^"]*Used in[^"]*)"'
     )
     for m in line_re.finditer(stext_xml):
         bbox_str = m.group(1)
         text = m.group(2)
+        # Extract the "Used in ..." portion from the full line text.
+        ui_idx = text.find("Used in")
+        if ui_idx < 0:
+            continue
+        text = text[ui_idx:]
         try:
             bbox = [float(x) for x in bbox_str.split()]
         except ValueError:
@@ -828,9 +833,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                     "pdf assertions present but no PDF was produced"
                 )
             elif PDF_TEXT_TOOL is None and (fix.pdf_contains or fix.pdf_not):
-                sys.stderr.write(
-                    f"  WARN: skipping PDF text checks for {fix.name} "
-                    f"(no mutool or pdftotext on PATH)\n"
+                result.failures.append(
+                    "PDF text assertions require mutool or pdftotext "
+                    "(not on PATH). Run inside 'nix develop'."
                 )
             else:
                 # Text-based checks.
@@ -856,9 +861,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                 # Link count check.
                 if fix.pdf_links > 0:
                     if PDF_LINK_TOOL is None:
-                        sys.stderr.write(
-                            f"  WARN: skipping PDF link check for {fix.name} "
-                            f"(no mutool or qpdf on PATH)\n"
+                        result.failures.append(
+                            "PDF link count assertion requires mutool or qpdf "
+                            "(not on PATH). Run inside 'nix develop'."
                         )
                     else:
                         link_count = _count_pdf_links(pdf_file)
@@ -876,9 +881,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                 # 10. Structured text assertions (positions, fonts).
                 if fix.pdf_stext or fix.pdf_stext_not:
                     if PDF_STEXT_TOOL is None:
-                        sys.stderr.write(
-                            f"  WARN: skipping PDF stext checks for {fix.name} "
-                            f"(no mutool on PATH)\n"
+                        result.failures.append(
+                            "PDF stext assertions require mutool "
+                            "(not on PATH). Run inside 'nix develop'."
                         )
                     else:
                         stext_xml = _extract_pdf_stext(pdf_file)
@@ -932,9 +937,9 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                 )
                 if has_qpdf_checks:
                     if PDF_QPDF_TOOL is None:
-                        sys.stderr.write(
-                            f"  WARN: skipping PDF object-level link checks "
-                            f"for {fix.name} (no qpdf on PATH)\n"
+                        result.failures.append(
+                            "PDF link/dest assertions require qpdf "
+                            "(not on PATH). Run inside 'nix develop'."
                         )
                     else:
                         link_data = _extract_pdf_link_objects(pdf_file)
@@ -1050,9 +1055,10 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                             missing.append("mutool")
                         if PDF_QPDF_TOOL is None:
                             missing.append("qpdf")
-                        sys.stderr.write(
-                            f"  WARN: skipping backref link checks for "
-                            f"{fix.name} (missing: {', '.join(missing)})\n"
+                        result.failures.append(
+                            f"PDF backref assertions require mutool and qpdf "
+                            f"(missing: {', '.join(missing)}). "
+                            f"Run inside 'nix develop'."
                         )
                     else:
                         # Extract stext for "Used in" line positions.
@@ -1312,10 +1318,8 @@ def main():
     # System TeX notice.
     sys.stderr.write(
         f"codependent.sty test runner — using system TeX: {engine_bin}\n"
-        f"NOTE: per user direction 2026-04-09, the project's Nix flake does\n"
-        f"      not yet include all required packages. System-wide texlive-full\n"
-        f"      is in use as a one-time exception. Future runs should go\n"
-        f"      through `nix develop` once the flake is updated.\n\n"
+        f"NOTE: Run inside `nix develop` to enable PDF assertion tools\n"
+        f"      (mutool, qpdf). TeX Live is provided system-wide.\n\n"
     )
 
     # PDF tool notice.
@@ -1323,29 +1327,32 @@ def main():
         sys.stderr.write(f"PDF text extraction: {PDF_TEXT_TOOL}\n")
     else:
         sys.stderr.write(
-            "WARN: no PDF text tool found (mutool or pdftotext). "
-            "TEST-PDF-CONTAINS / TEST-PDF-NOT checks will be skipped.\n"
+            "NOTE: PDF text tool not found (mutool or pdftotext). "
+            "Tests with TEST-PDF-CONTAINS / TEST-PDF-NOT assertions will FAIL. "
+            "Run inside 'nix develop' to enable.\n"
         )
     if PDF_LINK_TOOL:
         sys.stderr.write(f"PDF link counting:   {PDF_LINK_TOOL}\n")
     else:
         sys.stderr.write(
-            "WARN: no PDF link tool found (mutool or qpdf). "
-            "TEST-PDF-LINKS checks will be skipped.\n"
+            "NOTE: PDF link tool not found (mutool or qpdf). "
+            "Tests with TEST-PDF-LINKS assertions will FAIL. "
+            "Run inside 'nix develop' to enable.\n"
         )
     if PDF_STEXT_TOOL:
         sys.stderr.write(f"PDF structural:      {PDF_STEXT_TOOL}\n")
     else:
         sys.stderr.write(
-            "WARN: no mutool found. TEST-PDF-STEXT / TEST-PDF-OBJECTS "
-            "checks will be skipped. Install: nix-shell -p mupdf qpdf\n"
+            "NOTE: mutool not found. Tests with TEST-PDF-STEXT / TEST-PDF-OBJECTS "
+            "assertions will FAIL. Run inside 'nix develop' to enable.\n"
         )
     if PDF_QPDF_TOOL:
         sys.stderr.write(f"PDF object links:    {PDF_QPDF_TOOL}\n")
     else:
         sys.stderr.write(
-            "WARN: no qpdf found. TEST-PDF-LINK-DEST / TEST-PDF-DEST-EXISTS / "
-            "TEST-PDF-NO-ORPHAN-LINKS checks will be skipped.\n"
+            "NOTE: qpdf not found. Tests with TEST-PDF-LINK-DEST / "
+            "TEST-PDF-DEST-EXISTS / TEST-PDF-NO-ORPHAN-LINKS assertions will FAIL. "
+            "Run inside 'nix develop' to enable.\n"
         )
     sys.stderr.write("\n")
 

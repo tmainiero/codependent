@@ -44,6 +44,27 @@
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-RERUN: 3
 %%
+%% PDF-level assertions: verify "Used in" text appears and links are correct
+%% TEST-PDF-CONTAINS: Used in
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%%
+%% Backref hyperlink correctness: verify specific atoms have backrefs to the right targets.
+%% NOTE: The test runner detects "Used in" lines that begin a new stext <line>.
+%% With inline backref-style, most "Used in" text is appended to the theorem
+%% body on the same stext line.  Only atoms whose "Used in" falls on its own
+%% line (after display math, tikz-cd, etc.) are detectable.
+%%
+%% prop:square (Proposition 2.2, dest proposition.27) — proof backref;
+%%   "Used in 2.3*." appears on its own line after the tikz-cd diagram.
+%%   proof:2.3 has anchor equation.32.
+%% TEST-PDF-BACKREF-TARGETS: proposition\.27 = equation\.32
+%%
+%% lem:pentagon (Lemma 2.3, dest lemma.30) — cross-section backref;
+%%   "Used in 3.3." appears on its own line after the align equations.
+%%   corollary:3.3 has anchor corollary.49.
+%% TEST-PDF-BACKREF-TARGETS: lemma\.30 = corollary\.49
+%%
 %% This fixture inlines the theorem declarations from sty-theorems-ta.sty
 %% (the three-avatars monograph's real theorem style) to avoid an external
 %% file dependency in the test runner.  The declarations are a faithful

@@ -1,0 +1,59 @@
+%% TEST-NAME: test-proofs-after-non-result
+%% TEST-WHAT: A proof immediately after a tracked definition inherits the
+%%            definition's atom number (current behavior: all tracked envs
+%%            set the adjacency flag, no result-vs-definition distinction).
+%% TEST-SOURCE: DESIGN.md §Proof adjacency, codependent.sty §6 line 582
+%% TEST-SECTION: codependent.sty §6
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Proof not adjacent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{definition}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{proof}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% Documents current behavior: \codep@lasttheorematom is set by ANY
+%% tracked environment's end hook (§6 line 582), not just "result"
+%% environments.  A proof immediately after a tracked definition is
+%% therefore treated as adjacent, inheriting the definition's atom
+%% number with a star suffix (1.2*).  No "not adjacent" warning fires.
+%%
+%% If the package later distinguishes result-type vs non-result envs,
+%% this test should be updated to match the new behavior.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\usepackage{codependent}
+\codeptrack{theorem,definition}
+
+\begin{document}
+\START
+
+\section{Definition followed by proof}
+
+% Atom 1.1 -- theorem (establishes baseline)
+\begin{theorem}
+  A theorem statement.
+\end{theorem}
+
+% Atom 1.2 -- definition (tracked, sets adjacency flag)
+\begin{definition}
+  A definition of a key concept.
+\end{definition}
+
+% Adjacent proof: inherits 1.2* from the definition
+% (current behavior: no result/non-result distinction)
+\begin{proof}
+  Proof that the definition is well-formed.
+\end{proof}
+
+\END
+\end{document}

@@ -1,0 +1,68 @@
+%% TEST-NAME: test-book-class
+%% TEST-WHAT: codependent works with \documentclass{book} and depth=1,
+%%            producing chapter.atom numbering (e.g. "1.1", "2.1").
+%%            The atom counter resets at each \chapter boundary.
+%% TEST-SOURCE: DESIGN.md §Numbering "Depth", codependent.sty \codep@configuredepth@book
+%% TEST-SECTION: codependent.sty §Depth (book-class path, \codep@configuredepth@book)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.2}{theorem}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{0.
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% With book class and depth=1, \codep@configuredepth@book activates
+%% the chapter-level path:
+%%   \@addtoreset{atom}{chapter}
+%%   \renewcommand*{\theatom}{\thechapter.\arabic{atom}}
+%%
+%% Chapter 1 layout:
+%%   1.1 paragraph  (chapter title paragraph)
+%%   1.2 theorem    (thm:chap1)
+%%   1.3 paragraph  (body paragraph with \ref)
+%% Chapter 2 layout:
+%%   2.1 paragraph  (chapter title paragraph)
+%%   2.2 theorem    (thm:chap2)
+%%
+%% Key invariants verified:
+%%   - Atoms carry the chapter prefix (1.X, 2.X -- NOT 0.X or bare N)
+%%   - Atom counter resets at \chapter (chapter 2 starts at 2.1 not 1.4)
+%%   - Theorems in each chapter are correctly typed as "theorem"
+%%   - No "0.X" atoms appear (nothing numbered before chapter 1)
+%%
+%% Negative assertion: no "0." prefix ensures the depth-1 / book-class
+%% \@addtoreset{atom}{chapter} path is active.
+
+\documentclass{book}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[chapter]
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+%% Chapter 1: theorem at 1.2 (after the chapter-title paragraph at 1.1).
+\chapter{First Chapter}
+
+\begin{theorem}\label{thm:chap1}
+  Theorem in chapter one.
+\end{theorem}
+
+%% Body paragraph: atom 1.3.
+A paragraph referencing Theorem~\ref{thm:chap1}.
+
+%% Chapter 2: atom counter resets; chapter-title paragraph is 2.1,
+%% theorem is 2.2.
+\chapter{Second Chapter}
+
+\begin{theorem}\label{thm:chap2}
+  Theorem in chapter two.
+\end{theorem}
+
+\END
+\end{document}

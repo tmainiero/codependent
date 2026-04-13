@@ -1,0 +1,130 @@
+%% TEST-NAME: test-namespace-isolation
+%% TEST-WHAT: Verify type-prefixed keys keep theorem, definition, and
+%%            paragraph atoms distinct in the backref graph.  Every
+%%            \codep@atomref source key must carry its type prefix
+%%            (theorem:, definition:, paragraph:); bare unprefixed
+%%            numbers must never appear.
+%% TEST-SOURCE: DESIGN.md §8a type-prefixed keys, test_gap_analysis.md Gap #1
+%% TEST-SECTION: codependent.sty \codep@writeatomref@do, \codep@dedupwrite
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%%
+%% --- Positive: type-prefixed atomref records exist ---
+%% Three DIFFERENT type prefixes appear as source keys in the .aux:
+%%   theorem:1.2  (a theorem referencing a definition)
+%%   definition:2.2 (a definition referencing back to the theorem)
+%%   paragraph:3.1  (a paragraph referencing both)
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{def:beta}
+%% TEST-AUX-CONTAINS: \codep@atomref{definition:2.2}{thm:alpha}
+%% TEST-AUX-CONTAINS: \codep@atomref{paragraph:3.1}{thm:alpha}
+%% TEST-AUX-CONTAINS: \codep@atomref{paragraph:3.1}{def:beta}
+%%
+%% --- Negative: no bare (unprefixed) atomref keys ---
+%% The first argument of \codep@atomref must ALWAYS have a type
+%% prefix (word + colon).  A bare number like {1.2} or {3.1}
+%% without a prefix means the type-prefix machinery is broken.
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{1.
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{2.
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{3.
+%%
+%% --- CDP atom counts by type ---
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{2.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{2.2}{definition} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{3.1}{paragraph} = 1
+%%
+%% --- Sanity floor ---
+%% TEST-ATOMS-MIN: 5
+%%
+%% --- PDF-level backref link assertions ---
+%% Verify "Used in" text renders in the PDF
+%% TEST-PDF-CONTAINS: Used in
+%% Every standalone "Used in" entry must be a hyperlink
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% No dangling link destinations
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% Theorem 1.2 (thm:alpha) "Used in 2.2, 3.1" is inline (same typographic line as
+%% the theorem text), so TEST-PDF-BACKREF-TARGETS can't parse it.  Verify the link
+%% destinations exist instead.
+%% TEST-PDF-LINK-DEST: theorem\.2\.2
+%% TEST-PDF-LINK-DEST: atom\.3\.1
+%% Definition 2.2 (def:beta) "Used in 1.2, 3.1" is on a standalone line — full check.
+%% TEST-PDF-BACKREF-TARGETS: theorem\.2\.2 = theorem\.1\.2, atom\.3\.1
+%% Named destinations exist for all atoms
+%% TEST-PDF-DEST-EXISTS: theorem\.1\.2
+%% TEST-PDF-DEST-EXISTS: theorem\.2\.2
+%% TEST-PDF-DEST-EXISTS: atom\.3\.1
+%%
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% This test exercises the CRITICAL namespace isolation property of
+%% the backref graph.  All atom types share the same counter (reset
+%% per section), so display numbers within a section are always unique.
+%% However, the type prefix is still load-bearing: the backref graph's
+%% internal per-target linked lists (codep@brlast@, codep@brhead@,
+%% etc.) must use the FULL prefixed key to distinguish sources.  If
+%% the prefix is dropped, dedup or rendering logic could conflate
+%% sources that happen to share a display number in different sections.
+%%
+%% Document structure:
+%%   Section 1: paragraph 1.1, theorem 1.2 (labeled thm:alpha)
+%%              — theorem body \ref's def:beta (forward ref)
+%%   Section 2: paragraph 2.1, definition 2.2 (labeled def:beta)
+%%              — definition body \ref's thm:alpha (back ref)
+%%   Section 3: paragraph 3.1 references BOTH thm:alpha AND def:beta
+%%
+%% Result: three distinct type-prefixed source keys appear in the .aux:
+%%   theorem:1.2, definition:2.2, paragraph:3.1.  All referencing the
+%%   same two target labels.  No bare unprefixed key appears.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\usepackage{codependent}
+\codeptrack{theorem,definition}
+
+\begin{document}
+\START
+
+\section{Source atoms}
+
+% Atom 1.1 (paragraph): first paragraph in section 1.
+A paragraph providing context for the theorem below.
+
+% Atom 1.2 (theorem): tracked theorem environment.
+% Contains a forward \ref to def:beta, producing
+% \codep@atomref{theorem:1.2}{def:beta} in the .aux.
+\begin{theorem}\label{thm:alpha}
+  Every group of prime order is cyclic; see \ref{def:beta}.
+\end{theorem}
+
+\section{More source atoms}
+
+% Atom 2.1 (paragraph): first paragraph in section 2.
+A paragraph providing context for the definition below.
+
+% Atom 2.2 (definition): tracked definition environment.
+% Contains a back \ref to thm:alpha, producing
+% \codep@atomref{definition:2.2}{thm:alpha} in the .aux.
+\begin{definition}\label{def:beta}
+  A \emph{normal subgroup} is invariant under conjugation
+  (cf.\ \ref{thm:alpha}).
+\end{definition}
+
+\section{Consumer atom}
+
+% Atom 3.1 (paragraph): references BOTH a theorem and a definition.
+% This creates two atomref edges from paragraph:3.1 to two different
+% target labels, exercising the namespace isolation: the backref graph
+% must record paragraph:3.1 -> thm:alpha AND paragraph:3.1 -> def:beta
+% as distinct edges with the type-prefixed source key.
+By \ref{thm:alpha} and \ref{def:beta}, the result follows.
+
+\END
+\end{document}

@@ -1,0 +1,64 @@
+%% TEST-NAME: test-trackalign-user
+%% TEST-WHAT: \codeptrackalign{myalign} registers a custom multi-number
+%%            equation environment for Track 2 tracking.  Two numbered
+%%            lines produce a range backref source (N--M), just as the
+%%            built-in align environment does.
+%% TEST-SOURCE: codependent.sty line 2444 \codeptrackalign
+%% TEST-SECTION: codependent.sty §User API (\codeptrackalign), \codep@trackalignenv
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1--2}{thm:alpha}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1}{thm:alpha}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsmath,amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% \codeptrackalign delegates to \codep@trackalignenv, which installs
+%% AtBeginEnvironment / AtEndEnvironment / AfterEndEnvironment hooks.
+%% Track 2: the equation counter steps at each \\, so \theequation is
+%% stale at \ref time.  A pending list accumulates refs and the range
+%% is computed at \end{myalign}.
+%%
+%% The custom environment wraps amsmath's \align / \endalign primitives.
+%% Two numbered lines step the equation counter from 0 to 1 and 2,
+%% producing the range source "1--2".  A single \ref to thm:alpha
+%% appears on the first line; the range attribution must cover it.
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem}
+
+%% Custom multi-number equation environment wrapping amsmath align.
+\newenvironment{myalign}{\align}{\endalign}
+
+%% Register myalign for Track 2 tracking.
+\codeptrackalign{myalign}
+
+\begin{document}
+\START
+
+\section{Results}
+
+%% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:alpha}
+  The main theorem.
+\end{theorem}
+
+%% Custom align environment.
+%% Line 1: equation counter steps to 1 (ref to thm:alpha queued).
+%% Line 2: equation counter steps to 2 (no ref).
+%% Range computed at \end{myalign}: "1--2".
+%% \codep@atomref{equation:1--2}{thm:alpha} must appear in .aux.
+\begin{myalign}
+  x &= y \quad\text{by Theorem~\ref{thm:alpha}} \label{eq:row1} \\
+  a &= b                                         \label{eq:row2}
+\end{myalign}
+
+\END
+\end{document}

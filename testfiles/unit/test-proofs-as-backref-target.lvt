@@ -1,0 +1,69 @@
+%% TEST-NAME: test-proofs-as-backref-target
+%% TEST-WHAT: A label placed inside an adjacent proof body becomes a backref
+%%            target; a later theorem referencing that label generates an
+%%            atomref record with the proof's atom key as the target.
+%% TEST-SOURCE: DESIGN.md §Proof adjacency, §Back-reference graph
+%% TEST-SECTION: codependent.sty §6, §8a
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Proof not adjacent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@label{1.1}{prf:inside}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{prf:inside}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.1*}
+%% TEST-ATOMS-MIN: 3
+%% --- PDF-level link assertions ---
+%% The \ref{prf:inside} in theorem 1.2 must resolve to a real destination.
+%% The proof label resolves to the parent theorem's anchor (theorem.1.1).
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-LINK-DEST: theorem\.1\.1
+%% TEST-PDF-DEST-EXISTS: theorem\.1\.1
+%% TEST-PDF-DEST-EXISTS: theorem\.1\.2
+%% TEST-PDF-DEST-EXISTS: theorem\.1\.3
+%%
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% Places a \label inside an adjacent proof body.  A later theorem
+%% \ref's that label, generating a backref edge where the proof atom
+%% is the TARGET.  The .cdp label record uses \theatom (the theorem's
+%% counter value, 1.1) since adjacent proofs don't refstepcounter.
+%% The .aux atomref records theorem:1.2 as source, prf:inside as target.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Proof as target}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:source}
+  Source theorem.
+\end{theorem}
+
+% Adjacent proof: inherits 1.1*
+% Label inside the proof body becomes a backref target.
+\begin{proof}
+  The key step is here.\label{prf:inside}
+\end{proof}
+
+% Atom 1.2 -- theorem that references the proof label
+\begin{theorem}\label{thm:referer}
+  By the argument in~\ref{prf:inside}, we obtain a stronger result.
+\end{theorem}
+
+% Atom 1.3 -- a third theorem to ensure atom count
+\begin{theorem}
+  A third independent theorem.
+\end{theorem}
+
+\END
+\end{document}

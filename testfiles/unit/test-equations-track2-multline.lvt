@@ -1,0 +1,51 @@
+%% TEST-NAME: test-equations-track2-multline
+%% TEST-WHAT: Track 2: multline produces a single equation number (last
+%%            line only).  Start and end counters are equal, so the key
+%%            is equation:1, not a range.  A \ref inside the body is
+%%            attributed to equation:1.  No range key is written.
+%% TEST-SOURCE: DESIGN.md §Equations as backref sources (Track 2)
+%% TEST-SECTION: codependent.sty \codep@trackalignenv
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1}{thm:main}
+%% TEST-AUX-CONTAINS: \codep@anchormap{equation:1}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1--1}{thm:main}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1--}{thm:main}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% multline numbers only the last line, so \c@equation advances by 1.
+%% \codep@flusheqrange@numbered sees start==end and builds equation:1
+%% (not a range).  The \ref in the body must be attributed to that key.
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage[depth=1]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  The main theorem statement.
+\end{theorem}
+
+% Standalone multline: only the last line is numbered (equation 1).
+% Single-number path: range key collapses to equation:1.
+\begin{multline}
+  f(x) + g(x) + h(x) \\
+  = k(x) \quad\text{by Theorem~\ref{thm:main}} \label{eq:multi}
+\end{multline}
+
+\END
+\end{document}

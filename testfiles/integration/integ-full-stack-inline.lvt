@@ -41,6 +41,23 @@
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% Backref hyperlink correctness: every "Used in" entry must be a hyperlink
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% Verify specific atoms have backrefs linking to the correct targets.
+%% Note: inline backref style embeds "Used in" within theorem text, so only
+%% atoms whose "Used in" wraps to its own stext line are detectable by the
+%% test runner's regex. theorem.10 and theorem.24 have standalone "Used in"
+%% lines; the remaining atoms (definition.4, definition.6, lemma.8,
+%% proposition.13, corollary.19) have "Used in" embedded mid-line and are
+%% tested via TEST-PDF-ALL-BACKREFS-LINKED instead. The below-style
+%% counterpart (integ-full-stack-below.lvt) covers definition.4, definition.6,
+%% and lemma.8 with explicit target assertions.
+%% Theorem 1.5 (thm:hilbert-basis): Used in 2.2, 2.5*, 3.2, 3.4
+%%   2.2 = atom.16 (para), 2.5* = atom.27 (proof), 3.2 = theorem.31, 3.4 = atom.34 (proof)
+%% TEST-PDF-BACKREF-TARGETS: theorem\.10 = atom\.16, atom\.27, theorem\.31, atom\.34
+%% TEST-PDF-BACKREF-TARGETS: theorem\.10 = atom\.27, theorem\.31
+%% TEST-PDF-BACKREF-TARGETS: theorem\.10 = atom\.16, atom\.34
+%% Theorem 2.5 (thm:noether): Used in 3.2, 3.2*
+%%   3.2 = theorem.31 (thm:structure), 3.2* = theorem.31 (proof of thm:structure)
+%% TEST-PDF-BACKREF-TARGETS: theorem\.24 = theorem\.31
 %% TEST-PDF-LINK-DEST: definition\.4
 %% TEST-PDF-LINK-DEST: definition\.6
 %% TEST-PDF-LINK-DEST: lemma\.8

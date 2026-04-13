@@ -1,0 +1,68 @@
+%% TEST-NAME: test-suppresscmd-user
+%% TEST-WHAT: \codepsuppresscmd{\mycmd} patches a user command so that
+%%            any paragraphs opened INSIDE the command body see
+%%            codep@nestlevel > 0 and are suppressed.  Also verifies
+%%            that paragraphs containing \mycmd are still numbered and
+%%            that calling \codepsuppresscmd compiles without error.
+%% TEST-SOURCE: codependent.sty line 2453 \codepsuppresscmd
+%% TEST-SECTION: codependent.sty §User API (\codepsuppresscmd)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{paragraph} = 1
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.4}{paragraph}
+%% TEST-ATOMS-MIN: 3
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% \codepsuppresscmd delegates to \codep@suppresscmd, which uses
+%% \pretocmd / \apptocmd to increment/decrement codep@nestlevel
+%% during the command body.  Any para/begin hooks that fire INSIDE
+%% the command (e.g. inside marginal notes or box commands that
+%% create paragraph contexts) will be suppressed.
+%%
+%% We use \codepsuppresscmd on a simple wrapper \myemph.  The
+%% primary assertions verify:
+%%   (a) \codepsuppresscmd is accepted without error
+%%   (b) Paragraphs containing the suppressed command are still
+%%       numbered as atoms (1.1, 1.2, 1.3)
+%%   (c) No spurious atom 1.4 appears
+%%
+%% The negative assertion (TEST-CDP-NOT-CONTAINS: 1.4) guards
+%% against the patching accidentally creating an extra atom.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+%% User-defined inline command: no internal paragraph contexts.
+\newcommand{\myemph}[1]{\emph{#1}}
+
+%% Register \myemph for suppression (user-level API under test).
+%% Although \myemph has no internal paragraphs, this is valid
+%% user usage and must not cause errors.
+\codepsuppresscmd{\myemph}
+
+\begin{document}
+\START
+
+\section{suppresscmd test}
+
+%% Atom 1.1: first body paragraph.
+First body paragraph. This is atom 1.1.
+
+%% Atom 1.2: paragraph that uses the suppressed command.
+%% The outer paragraph IS numbered; only inner paragraph contexts
+%% inside \myemph would be suppressed (there are none here).
+Second paragraph using \myemph{emphasized text}. This is atom 1.2.
+
+%% Atom 1.3: third body paragraph confirms counting continues.
+Third body paragraph confirming atom numbering is unaffected. Atom 1.3.
+
+\END
+\end{document}

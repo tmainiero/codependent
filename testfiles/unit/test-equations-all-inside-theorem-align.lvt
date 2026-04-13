@@ -1,0 +1,84 @@
+%% TEST-NAME: test-equations-all-inside-theorem-align
+%% TEST-WHAT: With equations=all, an align block inside a theorem
+%%            produces Track 2 equation-sourced atomref records (not
+%%            falling through to the theorem atom).  The theorem itself
+%%            is also a backref target when referenced from outside.
+%% TEST-SOURCE: DESIGN.md §Equation backref tracking, equations=all
+%% TEST-SECTION: codependent.sty \codep@eqshouldtrack, \codep@trackalignenv
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{definition} = 1
+%%
+%% Equation range inside theorem: with equations=all, the align's
+%% \codep@eqshouldtrack sets \codep@eqatom to "pending" even though
+%% codep@intheorem is true.  The range (1--2) is the backref source.
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1--2}{thm:alpha}
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:1--2}{def:beta}
+%% TEST-AUX-CONTAINS: \codep@anchormap{equation:1--2}
+%%
+%% Theorem itself as a backref target: the definition references
+%% thm:alpha from outside the align, so the theorem atom is also
+%% recorded as a backref target via the definition's atom.
+%% TEST-AUX-CONTAINS: \codep@atomref{definition:1.2}{thm:alpha}
+%%
+%% Negative assertions:
+%% The equation range should NOT use per-line keys (Track 2 merges
+%% into a single range, not individual equation numbers).
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1}{thm:alpha}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:2}{def:beta}
+%%
+%% The theorem atom itself should NOT be the source for the align's
+%% refs (equations=all prevents fallthrough to the enclosing theorem).
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1}{thm:alpha}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1}{def:beta}
+%%
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%%
+%% With equations=all, even equations inside theorems use equation-
+%% prefixed keys.  The align inside Theorem 1.1 has two numbered
+%% lines referencing thm:alpha and def:beta.  Track 2 merges these
+%% into range (1--2).  The definition also references thm:alpha
+%% from its body text, producing a definition:1.2 atomref.
+%%
+%% Key difference from equations=outer (default): in outer mode,
+%% \codep@eqshouldtrack checks codep@intheorem and suppresses
+%% equation tracking, making the refs fall through to theorem:1.1.
+%% In all mode, the check is skipped so the equation range fires.
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\usepackage{hyperref}
+\usepackage[depth=1,equations=all]{codependent}
+\codeptrack{theorem,definition}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem containing an align block
+\begin{theorem}\label{thm:alpha}
+  A theorem with an internal aligned system.
+  % With equations=all, this align produces equation:1--2 as
+  % the backref source, NOT theorem:1.1.
+  \begin{align}
+    x &= y  \quad\text{by \ref{thm:alpha}} \label{eq:line1} \\
+    a &= b  \quad\text{by \ref{def:beta}}  \label{eq:line2}
+  \end{align}
+\end{theorem}
+
+% Atom 1.2 -- definition referencing the theorem from body text
+\begin{definition}\label{def:beta}
+  A definition that references Theorem~\ref{thm:alpha}
+  from its body text (outside any equation environment).
+\end{definition}
+
+\END
+\end{document}

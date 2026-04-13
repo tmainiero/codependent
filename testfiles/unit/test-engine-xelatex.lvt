@@ -1,0 +1,46 @@
+%% TEST-NAME: test-engine-xelatex
+%% TEST-WHAT: Verify codependent.sty compiles cleanly and tracks one theorem
+%%            under the xelatex engine. Catches any pdftex-specific primitives
+%%            (\pdftexversion, \pdfmdfivesum, etc.) that would fail under XeTeX.
+%% TEST-SOURCE: DESIGN.md §Compatibility "Engine matrix"
+%% TEST-SECTION: DESIGN.md §Compatibility
+%% TEST-EXIT: 0
+%% TEST-ENGINE: xelatex
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% Engine matrix: xelatex. Runs the same minimal theorem tracking
+%% test but under xelatex (XeTeX backend). Catches regressions
+%% where codependent uses a pdftex-only primitive without an
+%% xetex fallback — e.g., \pdfmdfivesum, \pdftexversion, or any
+%% direct \pdfsavepos / \pdflastxpos call.
+%%
+%% NOTE: This test is run by invoking the runner with --engine xelatex.
+%% TEST-ENGINE is a documentary header only; the runner selects the
+%% engine globally via the --engine CLI flag.
+%%
+%% If xelatex is not present on PATH, the runner will exit FATAL.
+%% Run from inside `nix develop` or ensure texlive-full is installed.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{xelatex engine}
+
+\begin{theorem}
+  Theorem under xelatex.
+\end{theorem}
+
+\END
+\end{document}

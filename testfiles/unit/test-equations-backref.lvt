@@ -15,6 +15,21 @@
 %% TEST-AUX-CONTAINS: \codep@anchormap{equation:1}
 %% TEST-AUX-CONTAINS: \codep@atomref{definition:1.2}{thm:main}
 %% TEST-ATOMS-MIN: 2
+%% --- PDF-level backref link assertions ---
+%% Verify "Used in" text renders in the PDF
+%% TEST-PDF-CONTAINS: Used in
+%% No dangling link destinations
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% Theorem 1.1 (thm:main) "Used in (1), 1.2" is inline (same typographic line as
+%% the theorem text), so TEST-PDF-BACKREF-TARGETS can't parse it.  Verify the
+%% backref link destinations exist instead.
+%% TEST-PDF-LINK-DEST: equation\.1
+%% TEST-PDF-LINK-DEST: theorem\.1\.2
+%% Named destinations exist for tracked atoms
+%% TEST-PDF-DEST-EXISTS: theorem\.1\.1
+%% TEST-PDF-DEST-EXISTS: equation\.1
+%% TEST-PDF-DEST-EXISTS: theorem\.1\.2
+%%
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 %%

@@ -1,0 +1,47 @@
+%% TEST-NAME: test-backrefs-none
+%% TEST-WHAT: With backrefs=none, tracking (.cdp and .aux records) still
+%%            works, but codependent-render.sty is NOT loaded and no
+%%            "Used in" text appears.
+%% TEST-SOURCE: codependent.sty line 2511 (conditional render load)
+%% TEST-SECTION: codependent.sty §Options (backrefs/none), §Rendering
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{paragraph:1.2}
+%% TEST-LOG-NOT: codependent-render
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{0.
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% With backrefs=none the bool codep@backrefs is false, so the
+%% conditional at line 2511 does NOT load codependent-render.sty.
+%% All tracking (cdp file, aux atomref records) must still function
+%% correctly.  The paragraph that \refs the theorem (atom 1.2)
+%% creates a backref graph entry in the .aux even though rendering
+%% is disabled.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[backrefs=none]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+% Atom 1.1 -- theorem
+\begin{theorem}\label{thm:main}
+  The main theorem.
+\end{theorem}
+
+% Atom 1.2 -- paragraph referencing the theorem.
+% The \ref creates a \codep@atomref{paragraph:1.2}{thm:main} .aux entry
+% even though render.sty is not loaded.
+A paragraph that references Theorem~\ref{thm:main}.
+
+\END
+\end{document}

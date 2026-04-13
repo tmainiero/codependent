@@ -1,0 +1,48 @@
+%% TEST-NAME: test-proofof-invalid-label
+%% TEST-WHAT: \codepproofof with a nonexistent label produces a warning
+%%            (not a crash); compilation succeeds.
+%% TEST-SOURCE: DESIGN.md §Proof attribution, codependent.sty §10 \codepproofof
+%% TEST-SECTION: codependent.sty §10
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-CONTAINS: codepproofof: unknown label 'bogus-label'
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{bogus}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%%
+%% When \codepproofof references a label that does not exist,
+%% the package emits a warning via \PackageWarning but does not
+%% crash.  The proof falls through to standalone materialization
+%% (deferred path) since \codepproofof did not resolve an identity.
+%% On rerun the label is still undefined, so the warning persists.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Invalid label test}
+
+% Atom 1.1 -- theorem (establishes baseline)
+\begin{theorem}\label{thm:exists}
+  A theorem that actually exists.
+\end{theorem}
+
+% Non-adjacent proof (intervening paragraph clears adjacency)
+A paragraph of text.
+
+% Standalone proof with \codepproofof pointing to bogus label
+\begin{proof}
+  \codepproofof{bogus-label}%
+  This proof claims to be of a nonexistent theorem.
+\end{proof}
+
+\END
+\end{document}
