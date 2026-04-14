@@ -152,51 +152,59 @@
 % Base counter name: auto-detected from the first env in \codeptrack.
 \newcommand*{\codep@basecounter}{}
 
-% Suppression nesting depth.  When > 0, para/begin skips numbering.
-\newcount\codep@nestlevel
-\codep@nestlevel=0\relax
+% Monotone internal source-atom IDs (a1, a2, ...).
+\newcount\codep@atomid
+\codep@atomid=0\relax
 
-% Tracked-env nesting depth.  When > 1, inner tracked envs are
-% suppressed (no atom record, no SBL entry).  Uses \global\advance
-% because hooks may run inside groups.
-\newcount\codep@trackedlevel
-\codep@trackedlevel=0\relax
+% Monotone internal target IDs (q1, q2, ...).
+\newcount\codep@targetid
+\codep@targetid=0\relax
 
-% Pending back-reference text (defined in codependent-render.sty).
-% When rendering is not loaded, the hook points are no-ops so
-% this register is never accessed.
+% Source-context stack depth.
+\newcount\codep@ctxdepth
+\codep@ctxdepth=0\relax
 
-% Current atom display number (set when atom is created).
-\newcommand*{\codep@currentatom}{}
+% Paragraph suppression depth.
+\newcount\codep@suppressdepth
+\codep@suppressdepth=0\relax
 
-% Current atom type prefix for backref graph keys.
-% Set alongside \codep@currentatom; used by \codep@writeatomref
-% to construct the prefixed source key at write time.  Values:
-% thm, para, proof, eq (matching the type: prefix scheme).
-\newcommand*{\codep@currenttype}{}
+% Tracked theorem-like nesting depth.
+\newcount\codep@trackeddepth
+\codep@trackeddepth=0\relax
 
-% Last theorem atom number for proof adjacency detection.
-% Set at theorem end, cleared at next top-level para/begin.
-% When non-empty, a standalone proof inherits this number
-% with a star suffix instead of getting its own atom number.
-% Stores the prefixed key (thm:X).
-\newcommand*{\codep@lasttheorematom}{}
+% Restatable replay depth.
+\newcount\codep@replaydepth
+\codep@replaydepth=0\relax
 
-% Override source atom for \codep@writeatomref.  When non-empty,
-% \codep@writeatomref uses this instead of \theatom as the source
-% atom number in aux records.  Used by adjacent proofs to emit
-% proof-prefixed atom keys (e.g. "proof:2.1") in backref records.
-\newcommand*{\codep@sourceatom}{}
+% Flag: true when a paragraph atom is currently open.
+\newif\ifcodep@paragraphopen
+\codep@paragraphopenfalse
+
+% Flag: true when the current proof still lacks display identity.
+\newif\ifcodep@proofdisplaypending
+\codep@proofdisplaypendingfalse
+
+% Pending proof-adjacent result atom ID.
+%% @utility
+\newcommand*{\codep@pendingresultid}{}
+
+% Current proof atom ID (empty outside proofs).
+%% @utility
+\newcommand*{\codep@currentproofid}{}
+
+% Saved nested-proof state.
+\newtoks\codep@proofneststack
+\codep@proofneststack={}
+
+% Deferred proof-binding marker.
+%% @utility
+\newcommand*{\codep@pendingproofbind}{}
 
 % Saved atom number for the outermost tracked env.  When nesting
 % occurs, \theatom at end-time reflects the LAST \refstepcounter
 % (the inner env), not the outermost.  This macro captures the
 % correct value after the outermost env's \refstepcounter fires.
 \newcommand*{\codep@outeratom}{}
-
-% Flag: true inside a tracked theorem environment.
-\newbool{codep@intheorem}
-\boolfalse{codep@intheorem}
 
 % Flag: true when \codeptrack has been called.
 \newbool{codep@tracked}
@@ -207,45 +215,15 @@
 \newbool{codep@sectioning}
 \boolfalse{codep@sectioning}
 
-% Flag: true when a standalone proof atom is deferred (lazy creation).
-% Set by \codep@proof@standalone, cleared by \codepproofof or at the
-% first para/begin inside the proof (whichever comes first).
-\newbool{codep@proofdeferred}
-\boolfalse{codep@proofdeferred}
-
-% Restate guard: counter-indexed LIFO stack for save/clear/restore
-% of \codep@currentatom across restated theorem occurrences
-% (§8a.5.a).  Depth 0 = no active restate; each push increments.
-\newcount\codep@restate@depth
-\codep@restate@depth=0\relax
-
-% \codep@pushcurrentatom
-%   Save \codep@currentatom onto the restate stack and clear it
-%   to \@empty so semantic commands inside the restated body no-op.
-\newcommand*{\codep@pushcurrentatom}{%
-  \global\advance\codep@restate@depth 1\relax
-  \expandafter\xdef
-    \csname codep@saved@currentatom@%
-      \the\codep@restate@depth\endcsname
-    {\codep@currentatom}%
-  \global\let\codep@currentatom\@empty
-}
-
-% \codep@popcurrentatom
-%   Restore \codep@currentatom from the restate stack, undefine
-%   the slot, and decrement the depth counter.
-\newcommand*{\codep@popcurrentatom}{%
-  \global\expandafter\let\expandafter\codep@currentatom
-    \csname codep@saved@currentatom@%
-      \the\codep@restate@depth\endcsname
-  \global\expandafter\let
-    \csname codep@saved@currentatom@%
-      \the\codep@restate@depth\endcsname\@undefined
-  \global\advance\codep@restate@depth -1\relax
-}
-
 % Flag: true inside a tracked equation environment.
 \newbool{codep@inequation}
+\boolfalse{codep@inequation}
+
+% Track 1 / Track 2 source-ownership state for equations.
+%% @utility
+\newcommand*{\codep@currenteqsourceid}{}
+%% @utility
+\newcommand*{\codep@eqfallbacksourceid}{}
 
 % Track 1: current equation atom (set at \ref time for single-number envs).
 \newcommand*{\codep@eqatom}{}
@@ -265,6 +243,11 @@
 
 % Track 2 flag: distinguishes Track 1 vs Track 2 envs.
 \newbool{codep@eqmultiline}
+\boolfalse{codep@eqmultiline}
+
+% Flag: true when the current equation block produced a number.
+\newbool{codep@eqnumbered}
+\boolfalse{codep@eqnumbered}
 
 % Standalone-equation label type pending.
 % Set globally at \AtBeginEnvironment for standalone equations so
@@ -311,6 +294,302 @@
 \def\codep@render@para@emitdeferred{}%
 \def\codep@render@paraend@snapshot{}%
 \def\codep@render@enddocument@flush{}%
+
+%% ===================================================================
+%% Section 4a: Runtime helpers
+%% ===================================================================
+
+%% @utility
+% \codep@allocatomid{macro}{kind}
+%   Allocate a fresh opaque source-atom ID (aN) into macro.
+\def\codep@allocatomid#1#2{%
+  \global\advance\codep@atomid by 1\relax
+  \xdef#1{a\the\codep@atomid}%
+  \expandafter\xdef\csname codep@atomkind@#1\endcsname{#2}%
+}%
+
+%% @utility
+% \codep@alloctargetid{macro}{kind}
+%   Allocate a fresh opaque target ID (qN) into macro.
+\def\codep@alloctargetid#1#2{%
+  \global\advance\codep@targetid by 1\relax
+  \xdef#1{q\the\codep@targetid}%
+  \expandafter\xdef\csname codep@targetkind@#1\endcsname{#2}%
+}%
+
+%% @utility
+% \codep@ctxpush{atom-id}{kind}
+%   Push one source context entry onto the global stack.
+\def\codep@ctxpush#1#2{%
+  \global\advance\codep@ctxdepth by 1\relax%
+  \expandafter\xdef\csname codep@ctxid@\the\codep@ctxdepth\endcsname{#1}%
+  \expandafter\xdef%
+    \csname codep@ctxkind@\the\codep@ctxdepth\endcsname{#2}%
+}%
+
+%% @utility
+% \codep@ctxpop{kind}
+%   Pop one source context entry, hard-erroring on mismatch.
+\def\codep@ctxpop#1{%
+  \ifnum\codep@ctxdepth<1\relax%
+    \PackageError{codependent}{Context stack underflow on '#1'}{%
+      codependent detected an internal stack underflow while%
+      closing '#1'.}%
+  \else%
+    \edef\codep@tmp@ctxkind{%
+      \csname codep@ctxkind@\the\codep@ctxdepth\endcsname}%
+    \def\codep@tmp@expected{#1}%
+    \ifx\codep@tmp@ctxkind\codep@tmp@expected\else%
+      \PackageError{codependent}{Context stack mismatch on '#1'}{%
+        Expected to pop '#1' but found '\codep@tmp@ctxkind'.}%
+    \fi%
+    \global\expandafter\let%
+      \csname codep@ctxid@\the\codep@ctxdepth\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@ctxkind@\the\codep@ctxdepth\endcsname\@undefined%
+    \global\advance\codep@ctxdepth by -1\relax%
+  \fi%
+}%
+
+%% @utility
+% \codep@ctxpeekid{macro}
+%   Store the top source-context ID into macro, else \@empty.
+\def\codep@ctxpeekid#1{%
+  \ifnum\codep@ctxdepth<1\relax%
+    \let#1\@empty%
+  \else%
+    \expandafter\let\expandafter#1%
+      \csname codep@ctxid@\the\codep@ctxdepth\endcsname%
+  \fi%
+}%
+
+%% @utility
+% \codep@ctxpeekkind{macro}
+%   Store the top source-context kind into macro, else \@empty.
+\def\codep@ctxpeekkind#1{%
+  \ifnum\codep@ctxdepth<1\relax%
+    \let#1\@empty%
+  \else%
+    \expandafter\let\expandafter#1%
+      \csname codep@ctxkind@\the\codep@ctxdepth\endcsname%
+  \fi%
+}%
+
+%% @utility
+% \codep@atomsetkey{atom-id}{prefixed-key}
+%   Persist the legacy prefixed key derived for this atom.
+\def\codep@atomsetkey#1#2{%
+  \expandafter\xdef\csname codep@atomkey@#1\endcsname{#2}%
+  \expandafter\xdef\csname codep@idbykey@#2\endcsname{#1}%
+  \expandafter\codep@splitprefix#2\@nil%
+  \expandafter\xdef\csname codep@atomdisplay@#1\endcsname{%
+    \codep@tmp@num}%
+}%
+
+%% @utility
+% \codep@atomsetanchor{atom-id}{anchor}
+%   Persist the effective hyperlink anchor for this atom.
+\def\codep@atomsetanchor#1#2{%
+  \expandafter\xdef\csname codep@atomanchor@#1\endcsname{#2}%
+}%
+
+%% @utility
+% \codep@atomgetkey{atom-id}{macro}
+%   Store the legacy prefixed key for atom-id into macro.
+\def\codep@atomgetkey#1#2{%
+  \ifx#1\@empty%
+    \let#2\@empty%
+  \else%
+    \expandafter\ifx\csname codep@atomkey@#1\endcsname\relax%
+      \let#2\@empty%
+    \else%
+      \expandafter\let\expandafter#2\csname codep@atomkey@#1\endcsname%
+    \fi%
+  \fi%
+}%
+
+%% @utility
+% \codep@atomgetdisplay{atom-id}{macro}
+%   Store the bare legacy display number for atom-id into macro.
+\def\codep@atomgetdisplay#1#2{%
+  \ifx#1\@empty%
+    \let#2\@empty%
+  \else%
+    \expandafter\ifx\csname codep@atomdisplay@#1\endcsname\relax%
+      \let#2\@empty%
+    \else%
+      \expandafter\let\expandafter#2%
+        \csname codep@atomdisplay@#1\endcsname%
+    \fi%
+  \fi%
+}%
+
+%% @utility
+% \codep@atomgetkind{atom-id}{macro}
+%   Store the registered kind for atom-id into macro.
+\def\codep@atomgetkind#1#2{%
+  \ifx#1\@empty%
+    \let#2\@empty%
+  \else%
+    \expandafter\ifx\csname codep@atomkind@#1\endcsname\relax%
+      \let#2\@empty%
+    \else%
+      \expandafter\let\expandafter#2\csname codep@atomkind@#1\endcsname%
+    \fi%
+  \fi%
+}%
+
+%% @utility
+% \codep@atomgetanchor{atom-id}{macro}
+%   Store the effective anchor for atom-id into macro.
+\def\codep@atomgetanchor#1#2{%
+  \ifx#1\@empty%
+    \let#2\@empty%
+  \else%
+    \expandafter\ifx\csname codep@atomanchor@#1\endcsname\relax%
+      \let#2\@empty%
+    \else%
+      \expandafter\let\expandafter#2%
+        \csname codep@atomanchor@#1\endcsname%
+    \fi%
+  \fi%
+}%
+
+%% @utility
+% \codep@keytoid{prefixed-key}{macro}
+%   Resolve a legacy prefixed key back to an internal atom ID.
+\def\codep@keytoid#1#2{%
+  \expandafter\ifx\csname codep@idbykey@#1\endcsname\relax%
+    \let#2\@empty%
+  \else%
+    \expandafter\let\expandafter#2\csname codep@idbykey@#1\endcsname%
+  \fi%
+}%
+
+%% @implements \codep@writerefevent
+% \codep@getcurrentownerid{macro}
+%   Resolve the active owning atom ID, honouring proof pending state.
+\def\codep@getcurrentownerid#1{%
+  \ifnum\codep@replaydepth>0\relax%
+    \let#1\@empty%
+  \else%
+    \codep@ctxpeekkind\codep@tmp@ctxkind%
+    \codep@ctxpeekid\codep@tmp@ctxid%
+    \def\codep@tmp@proofkind{proof}%
+    \ifx\codep@tmp@ctxkind\@empty%
+      \let#1\@empty%
+    \else\ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
+      \ifcodep@proofdisplaypending%
+        \let#1\@empty%
+      \else%
+        \let#1\codep@tmp@ctxid%
+      \fi%
+    \else%
+      \let#1\codep@tmp@ctxid%
+    \fi\fi%
+  \fi%
+}%
+
+%% @implements \codep@writerefevent
+% \codep@getcurrentatomkey{macro}
+%   Resolve the active source atom's legacy prefixed key.
+\def\codep@getcurrentatomkey#1{%
+  \codep@getcurrentownerid\codep@tmp@ownerid%
+  \codep@atomgetkey{\codep@tmp@ownerid}{#1}%
+}%
+
+%% @implements \codep@recordlabelowner
+% \codep@getcurrentatomdisplay{macro}
+%   Resolve the active source atom's bare legacy display number.
+\def\codep@getcurrentatomdisplay#1{%
+  \codep@getcurrentatomkey\codep@tmp@atomkey%
+  \ifx\codep@tmp@atomkey\@empty%
+    \let#1\@empty%
+  \else%
+    \expandafter\codep@splitprefix\codep@tmp@atomkey\@nil%
+    \let#1\codep@tmp@num%
+  \fi%
+}%
+
+%% @implements \codep@recordlabelowner
+% \codep@getcurrentatomkind{macro}
+%   Resolve the active source atom's legacy type prefix.
+\def\codep@getcurrentatomkind#1{%
+  \codep@getcurrentatomkey\codep@tmp@atomkey%
+  \ifx\codep@tmp@atomkey\@empty%
+    \let#1\@empty%
+  \else%
+    \expandafter\codep@splitprefix\codep@tmp@atomkey\@nil%
+    \let#1\codep@tmp@type%
+  \fi%
+}%
+
+%% @behavior B-NUM-PARA
+% \codep@closeparagraphifopen
+%   Finalise the current paragraph atom, if any.
+\def\codep@closeparagraphifopen{%
+  \ifcodep@paragraphopen%
+    \ifbool{codep@tracked}{%
+      \ifbool{codep@backrefs}{%
+        \ifbool{codep@appendix}{}{\codep@render@paraend@snapshot}%
+      }{}%
+    }{}%
+    \codep@ctxpop{paragraph}%
+    \global\codep@paragraphopenfalse%
+  \fi%
+}%
+
+%% @behavior B-NUM-EQINDEP
+% \codep@recordlabelowner{label}
+%   Write the legacy label-type ownership record for label.
+\def\codep@recordlabelowner#1{%
+  \if@filesw%
+    \ifnum\codep@replaydepth>0\relax%
+    \else%
+      \ifx\codep@eq@lbltype@pending\@empty%
+        \codep@getcurrentatomkind\codep@tmp@labelkind%
+        \ifx\codep@tmp@labelkind\@empty\else%
+          \expandafter\gdef\csname codep@ltype@#1\endcsname{%
+            \codep@tmp@labelkind}%
+          \protected@write\@auxout{}{%
+            \string\codep@lbltype{#1}{\codep@tmp@labelkind}}%
+        \fi%
+      \else%
+        \expandafter\gdef\csname codep@ltype@#1\endcsname{%
+          \codep@eq@lbltype@pending}%
+        \protected@write\@auxout{}{%
+          \string\codep@lbltype{#1}{\codep@eq@lbltype@pending}}%
+      \fi%
+    \fi%
+  \fi%
+}%
+
+%% @behavior B-DEDUP
+%% @behavior B-EDGE-HEADING
+% \codep@writerefevent{label}
+%   Emit one legacy atomref write from the active source atom.
+\def\codep@writerefevent#1{%
+  \if@filesw%
+    \codep@getcurrentatomkey\codep@tmp@srcatom%
+    \ifx\codep@tmp@srcatom\@empty\else%
+      \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
+    \fi%
+  \fi%
+}%
+
+%% @behavior B-PROOF-ADJ
+%% @behavior B-PROOF-SEP
+% \codep@bindproofparent{proof-id}{parent-id}{mode}
+%   Bind proof-id to parent-id and derive the proof's legacy key.
+\def\codep@bindproofparent#1#2#3{%
+  \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
+  \expandafter\xdef\csname codep@proofparentmode@#1\endcsname{#3}%
+  \codep@atomgetdisplay{#2}\codep@tmp@parentdisplay%
+  \ifx\codep@tmp@parentdisplay\@empty\else%
+    \edef\codep@tmp@proofkey{proof:\codep@tmp@parentdisplay}%
+    \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
+  \fi%
+}%
 
 %% ===================================================================
 %% Section 5: Core numbering machinery
@@ -485,65 +764,52 @@
 %   \codep@hooktheorem is a thin orchestrator that wires them
 %   into the four hook points.
 
+%% @behavior B-NUM-NESTED
+%% @behavior B-EDGE-RESTATE
 % \codep@hooktheorem@begin{envname}
-%   Begin-hook body: restate dispatch, trackedlevel,
-%   nestlevel, intheorem, currentatom sentinel.
+%   Begin-hook body for tracked theorem-like environments.
 \def\codep@hooktheorem@begin#1{%
-  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
-    % Original occurrence: alias intact, normal hook body.
-    \global\advance\codep@trackedlevel by 1\relax
-    \advance\codep@nestlevel by 1\relax
-    \ifnum\codep@trackedlevel>1\relax
-      % Nested tracked env: suppress atom creation.
-      \PackageWarning{codependent}{Nested tracked environment '#1'
-        inside another tracked environment. The inner
+  \codep@closeparagraphifopen%
+  \global\let\codep@pendingresultid\@empty%
+  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+    \global\advance\codep@trackeddepth by 1\relax%
+    \global\advance\codep@suppressdepth by 1\relax%
+    \ifnum\codep@trackeddepth>1\relax%
+      \PackageWarning{codependent}{Nested tracked environment '#1'\space%
+        inside another tracked environment. The inner\space%
         environment will not be assigned its own atom number}%
-    \else
-      \booltrue{codep@intheorem}%
-      % Sentinel only — the actual atom number is read at write
-      % time via \theatom (see §8a.5.0).
-      \def\codep@currentatom{1}%
-      \def\codep@currenttype{#1}%
-    \fi
-  \else
-    % Restate occurrence: \c@<basecounter> re-let to dummy
-    % counter by thm-restate.sty.  Suppress the hook body to avoid
-    %   (a) reading the wrong \theatom,
-    %   (b) writing a duplicate \codep@cdp@atom record,
-    %   (c) queuing back-refs against a stale atom number.
-    % Bump nestlevel so paragraph numbering is suppressed
-    % inside the restated body (matching normal theorem
-    % semantics), and save/clear currentatom so semantic
-    % commands inside the restated body no-op.
-    \advance\codep@nestlevel by 1\relax
-    \codep@pushcurrentatom
-  \fi
-}
+    \else%
+      \codep@allocatomid{\codep@thisatomid}{#1}%
+      \codep@ctxpush{\codep@thisatomid}{#1}%
+    \fi%
+  \else%
+    \global\advance\codep@replaydepth by 1\relax%
+    \global\advance\codep@suppressdepth by 1\relax%
+  \fi%
+}%
 
+%% @behavior B-NUM-STARRED
 % \codep@hooktheorem@after{envname}
-%   After-hook body: save outeratom and write anchormap.
-%   cmd/#1/after fires AFTER amsthm's \refstepcounter (unlike
-%   cmd/#1/before which fires BEFORE it), so \theatom is correct
-%   here.  For nested tracked envs this is a no-op; only
-%   trackedlevel=1 saves.  The restate guard is not needed here
-%   because trackedlevel is only incremented on the original path.
+%   Capture the theorem's legacy prefixed key after its counter steps.
 \def\codep@hooktheorem@after#1{%
-  \ifnum\codep@trackedlevel=1\relax
+  \ifnum\codep@trackeddepth=1\relax%
+    \codep@ctxpeekid\codep@thisatomid%
     \xdef\codep@outeratom{#1:\theatom}%
-    % Write atom->anchor mapping for hyperlinks (no-op without hyperref).
-    \codep@writeanchormap{#1:\theatom}%
-  \fi
-}
+    \codep@atomsetkey{\codep@thisatomid}{\codep@outeratom}%
+    \codep@writeanchormap{\codep@outeratom}%
+    \@ifpackageloaded{hyperref}{%
+      \codep@atomsetanchor{\codep@thisatomid}{\@currentHref}%
+    }{%
+      \codep@atomsetanchor{\codep@thisatomid}{}%
+    }%
+  \fi%
+}%
 
+%% @behavior B-NUM-SEQ
 % \codep@hooktheorem@record{envname}
-%   Sidecar writes + atom-array registration.
-%   Uses \codep@outeratom (captured after the outermost env's
-%   \refstepcounter) instead of \theatom, because nested tracked
-%   envs may have advanced the counter.
+%   Emit the theorem's legacy .cdp records and appendix entry.
 \def\codep@hooktheorem@record#1{%
-  % .cdp records use bare display numbers (CLI does its own processing).
-  % Extract bare number from prefixed \codep@outeratom (envname:X → X).
-  \expandafter\codep@splitprefix\codep@outeratom\@nil
+  \expandafter\codep@splitprefix\codep@outeratom\@nil%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@atom{\codep@tmp@num}{#1}}%
   \codep@cdpwrite@atom{%
@@ -551,7 +817,6 @@
   \codep@cdpwrite@atom{%
     \string\codep@cdp@meta{\codep@tmp@num}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
-  % Atom array stores the prefixed key for backref graph.
   \codep@registeratom{\codep@outeratom}{#1}%
 }%
 
@@ -563,45 +828,36 @@
   \codep@render@thm@preparebackref{#1}%
 }%
 
+%% @behavior B-PROOF-ADJ
 % \codep@hooktheorem@end@outer{envname}
-%   Outermost-end logic: record, backref, atom-state cleanup,
-%   adjacency flag.  Delegates heavy lifting to helpers.
+%   Outermost theorem end: serialize and arm proof adjacency.
 \def\codep@hooktheorem@end@outer#1{%
+  \codep@ctxpeekid\codep@thisatomid%
   \codep@hooktheorem@record{#1}%
   \codep@hooktheorem@preparebackref{#1}%
-  % §8a.5 atom-end clear of the in-atom sentinel.
-  \let\codep@currentatom\@empty
-  \let\codep@currenttype\@empty
-  \global\advance\codep@trackedlevel by -1\relax
-  \advance\codep@nestlevel by -1\relax
-  \ifnum\codep@nestlevel=0\relax
-    \boolfalse{codep@intheorem}%
-  \fi
-  % Set adjacency flag for proof inheritance.
-  % Stores the prefixed key (envname:X) for proof adjacency.
-  \global\edef\codep@lasttheorematom{\codep@outeratom}%
-}
+  \codep@ctxpop{#1}%
+  \global\advance\codep@trackeddepth by -1\relax%
+  \global\advance\codep@suppressdepth by -1\relax%
+  \xdef\codep@pendingresultid{\codep@thisatomid}%
+}%
 
+%% @behavior B-NUM-NESTED
+%% @behavior B-EDGE-RESTATE
 % \codep@hooktheorem@end{envname}
-%   End-hook body: restate dispatch to nested vs outer.
+%   End-hook body: unwind replay, nested, or outer theorem state.
 \def\codep@hooktheorem@end#1{%
-  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom
-    % Original occurrence: normal end body.
-    \ifnum\codep@trackedlevel>1\relax
-      % Nested end: skip SBL/backref, just decrement.
-      \global\advance\codep@trackedlevel by -1\relax
-      \advance\codep@nestlevel by -1\relax
-    \else
-      % Outermost end: delegate to \codep@hooktheorem@end@outer.
+  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+    \ifnum\codep@trackeddepth>1\relax%
+      \global\advance\codep@trackeddepth by -1\relax%
+      \global\advance\codep@suppressdepth by -1\relax%
+    \else%
       \codep@hooktheorem@end@outer{#1}%
-    \fi
-  \else
-    % Restate end: restore currentatom from the stack, then
-    % decrement nestlevel (LIFO order per §8a.5.a).
-    \codep@popcurrentatom
-    \advance\codep@nestlevel by -1\relax
-  \fi
-}
+    \fi%
+  \else%
+    \global\advance\codep@replaydepth by -1\relax%
+    \global\advance\codep@suppressdepth by -1\relax%
+  \fi%
+}%
 
 % \codep@hooktheorem@afterend{envname}
 %   After-end-environment body: block/margin backref flush.
@@ -649,266 +905,304 @@
 %     \codep@proof@adjacent      — adjacent proof path
 %     \codep@hookproof@end       — end cleanup
 %     \codep@hookproof@afterend  — block/margin flush
+%% @behavior B-PROOF-ADJ
+%% @behavior B-PROOF-NONADJ
 \newcommand*{\codep@hookproof}{%
   \@ifundefined{proof}{}{%
     \AtBeginEnvironment{proof}{\codep@hookproof@begin}%
     \AtEndEnvironment{proof}{\codep@hookproof@end}%
     \AfterEndEnvironment{proof}{\codep@hookproof@afterend}%
   }%
-}
+}%
 
+%% @implements \codep@hookproof@begin
+% \codep@proofstatesave{proof-id}
+%   Save the outer proof state under the nested proof-id.
+\def\codep@proofstatesave#1{%
+  \expandafter\xdef\csname codep@savedproofid@#1\endcsname{%
+    \codep@currentproofid}%
+  \ifcodep@proofdisplaypending%
+    \expandafter\gdef\csname codep@savedproofpending@#1\endcsname{1}%
+  \else%
+    \expandafter\gdef\csname codep@savedproofpending@#1\endcsname{0}%
+  \fi%
+  \expandafter\xdef\csname codep@savedproofbind@#1\endcsname{%
+    \codep@pendingproofbind}%
+  \global\codep@proofneststack=\expandafter{%
+    \the\codep@proofneststack{\codep@currentproofid}}%
+}%
+
+%% @implements \codep@hookproof@end
+% \codep@proofstaterestore{proof-id}
+%   Restore any outer proof state saved under proof-id.
+\def\codep@proofstaterestore#1{%
+  \expandafter\ifx\csname codep@savedproofid@#1\endcsname\relax%
+    \global\let\codep@currentproofid\@empty%
+    \global\let\codep@pendingproofbind\@empty%
+    \global\codep@proofdisplaypendingfalse%
+  \else%
+    \global\expandafter\let\expandafter\codep@currentproofid%
+      \csname codep@savedproofid@#1\endcsname%
+    \edef\codep@tmp@proofpending{%
+      \csname codep@savedproofpending@#1\endcsname}%
+    \def\codep@tmp@proofone{1}%
+    \ifx\codep@tmp@proofpending\codep@tmp@proofone%
+      \global\codep@proofdisplaypendingtrue%
+    \else%
+      \global\codep@proofdisplaypendingfalse%
+    \fi%
+    \global\expandafter\let\expandafter\codep@pendingproofbind%
+      \csname codep@savedproofbind@#1\endcsname%
+    \global\expandafter\let%
+      \csname codep@savedproofid@#1\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@savedproofpending@#1\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@savedproofbind@#1\endcsname\@undefined%
+  \fi%
+}%
+
+%% @behavior B-PROOF-OFF
+%% @behavior B-PROOF-INNER
+%% @behavior B-PROOF-ADJ
+%% @behavior B-PROOF-NONADJ
 % \codep@hookproof@begin
-%   Begin dispatch for proof environment.
-%   4-way branch: proofs off / inside tracked / standalone
-%   non-adjacent / standalone adjacent.
+%   Begin dispatch for proof environments.
 \newcommand*{\codep@hookproof@begin}{%
+  \codep@closeparagraphifopen%
   \ifbool{codep@proofsnumbered}{%
-    \ifnum\codep@nestlevel>0\relax
-      % Inside a tracked env: just suppress.
-      \advance\codep@nestlevel by 1\relax
-    \else
-      % Standalone proof: check adjacency.
-      \ifx\codep@lasttheorematom\@empty
-        \codep@proof@standalone
-      \else
-        \codep@proof@adjacent
-      \fi
-    \fi
+    \codep@ctxpeekkind\codep@tmp@ctxkind%
+    \def\codep@tmp@proofkind{proof}%
+    \ifx\codep@currentproofid\@empty%
+      \ifnum\codep@ctxdepth>0\relax%
+        \global\advance\codep@suppressdepth by 1\relax%
+      \else\ifnum\codep@suppressdepth>0\relax%
+        \global\advance\codep@suppressdepth by 1\relax%
+      \else%
+        \codep@allocatomid{\codep@thisproofid}{proof}%
+        \xdef\codep@currentproofid{\codep@thisproofid}%
+        \codep@ctxpush{\codep@currentproofid}{proof}%
+        \global\advance\codep@suppressdepth by 1\relax%
+        \let\codep@pendingproofbind\@empty%
+        \codep@proof@standalone%
+        \ifx\codep@pendingresultid\@empty\else%
+          \codep@proof@adjacent%
+        \fi%
+      \fi\fi%
+    \else%
+      \codep@allocatomid{\codep@thisproofid}{proof}%
+      \codep@proofstatesave{\codep@thisproofid}%
+      \xdef\codep@currentproofid{\codep@thisproofid}%
+      \codep@ctxpush{\codep@currentproofid}{proof}%
+      \global\advance\codep@suppressdepth by 1\relax%
+      \let\codep@pendingproofbind\@empty%
+      \codep@proof@standalone%
+    \fi%
   }{%
-    % proofs=off: just suppress paragraph numbering.
-    \advance\codep@nestlevel by 1\relax
+    \global\advance\codep@suppressdepth by 1\relax%
   }%
-}
+}%
 
+%% @behavior B-PROOF-NONADJ
 % \codep@proof@standalone
-%   Non-adjacent proof path: deferred atom creation.
-%   Sets the deferred flag and suppresses paragraph numbering, but
-%   does NOT create the atom yet.  The atom is materialized later by
-%   either \codepproofof (which overrides identity) or the first
-%   para/begin inside the proof (fallback), or proof end (edge case).
-%   During the deferred phase, \codep@currentatom is empty so that
-%   \cref calls in the proof heading go unattributed (correct on
-%   pass 2+ once identity is resolved).
+%   Leave the current proof unresolved until fallback or \codepproofof.
 \newcommand*{\codep@proof@standalone}{%
-  \advance\codep@nestlevel by 1\relax
-  \booltrue{codep@proofdeferred}%
-  \let\codep@currentatom\@empty
-  \def\codep@currenttype{proof}%
-}
+  \global\codep@proofdisplaypendingtrue%
+}%
 
+%% @behavior B-PROOF-NONADJ
+%% @behavior B-EDGE-EMPTY-PROOF
 % \codep@proof@materialize
-%   Materialize the deferred standalone proof atom.  Called from
-%   para/begin (first paragraph inside proof) or from proof end
-%   (empty proof body) when \codepproofof did not fire.
+%   Materialize the current proof as a standalone numbered proof atom.
 \newcommand*{\codep@proof@materialize}{%
-  \boolfalse{codep@proofdeferred}%
+  \global\codep@proofdisplaypendingfalse%
   \refstepcounter{atom}%
-  \codep@writeanchormap{proof:\theatom}%
-  \edef\codep@currentatom{proof:\theatom}%
-  \def\codep@currenttype{proof}%
-  \edef\codep@sourceatom{\codep@currentatom}%
+  \edef\codep@tmp@proofkey{proof:\theatom}%
+  \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+  \codep@writeanchormap{\codep@tmp@proofkey}%
+  \@ifpackageloaded{hyperref}{%
+    \codep@atomsetanchor{\codep@currentproofid}{\@currentHref}%
+  }{%
+    \codep@atomsetanchor{\codep@currentproofid}{}%
+  }%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@atom{\theatom}{proof}}%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@meta{\theatom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
-  \codep@registeratom{proof:\theatom}{proof}%
-  \codep@render@queuebackref{proof:\theatom}%
+  \codep@registeratom{\codep@tmp@proofkey}{proof}%
+  \codep@render@queuebackref{\codep@tmp@proofkey}%
   \ifbool{codep@proofwarnings}{%
-    \PackageWarning{codependent}{Proof not adjacent to a tracked
+    \PackageWarning{codependent}{Proof not adjacent to a tracked\space%
       environment; assigned independent atom number \theatom}%
   }{}%
-}
+}%
 
+%% @behavior B-PROOF-ADJ
 % \codep@proof@adjacent
-%   Adjacent proof path: inherit lasttheorematom with proof: prefix.
-%   \codep@lasttheorematom is envname:X; extract X, build proof:X.
+%   Bind the current proof to the pending adjacent theorem/result atom.
 \newcommand*{\codep@proof@adjacent}{%
-  \advance\codep@nestlevel by 1\relax
-  % Extract bare number from envname:X.
-  \expandafter\codep@splitprefix\codep@lasttheorematom\@nil
-  \edef\codep@currentatom{proof:\codep@tmp@num}%
-  \def\codep@currenttype{proof}%
-  % Override source atom for \codep@writeatomref so
-  % that \ref inside this proof writes proof:X (starred display)
-  % instead of envname:X (bare \theatom).
-  \edef\codep@sourceatom{\codep@currentatom}%
-  % Copy theorem's anchor to proof key so hyperlinks resolve.
-  % The theorem's anchor is at codep@anchor@<lasttheorematom>;
-  % copy it to codep@anchor@proof:X so \codep@brhyper finds it.
-  % Guarded: only when the source anchor exists (hyperref loaded).
-  \edef\codep@tmp@thmanchor{%
-    \expandafter\ifx
-        \csname codep@anchor@\codep@lasttheorematom\endcsname\relax
-      \noexpand\@empty
-    \else
-      \csname codep@anchor@\codep@lasttheorematom\endcsname
-    \fi}%
-  \ifx\codep@tmp@thmanchor\@empty\else
-    \expandafter\xdef
-      \csname codep@anchor@\codep@currentatom\endcsname
+  \codep@bindproofparent{\codep@currentproofid}{\codep@pendingresultid}{%
+    statement}%
+  \global\codep@proofdisplaypendingfalse%
+  \codep@atomgetdisplay{\codep@pendingresultid}\codep@tmp@num%
+  \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@parentkey}%
+  \codep@atomgetanchor{\codep@pendingresultid}{\codep@tmp@thmanchor}%
+  \ifx\codep@tmp@thmanchor\@empty%
+    \expandafter\ifx%
+        \csname codep@anchor@\codep@tmp@parentkey\endcsname\relax%
+    \else%
+      \edef\codep@tmp@thmanchor{%
+        \csname codep@anchor@\codep@tmp@parentkey\endcsname}%
+    \fi%
+  \fi%
+  \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+  \ifx\codep@tmp@thmanchor\@empty\else%
+    \expandafter\xdef%
+      \csname codep@anchor@\codep@tmp@proofkey\endcsname%
       {\codep@tmp@thmanchor}%
-    % Persist the proof→theorem anchor mapping to .aux so that
-    % backrefs rendered BEFORE this proof (earlier in the document)
-    % can resolve the hyperlink on the next pass.
-    \if@filesw
+    \codep@atomsetanchor{\codep@currentproofid}{\codep@tmp@thmanchor}%
+    \if@filesw%
       \protected@write\@auxout{}{%
-        \string\codep@anchormap{\codep@currentatom}%
+        \string\codep@anchormap{\codep@tmp@proofkey}%
           {\codep@tmp@thmanchor}}%
-    \fi
-  \fi
-  \global\let\codep@lasttheorematom\@empty
-  % SBL sub-record for the inherited proof.
-  % .cdp records use bare display form (X*) for the proof atom.
+    \fi%
+  \fi%
+  \global\let\codep@pendingresultid\@empty%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@proof{\codep@tmp@num*}}%
-  % No \refstepcounter -- inheriting the theorem's number.
-  % No margin number -- proof shares theorem's visual
-  % identity; the proof heading ("Proof.") is sufficient.
-  % No atomcount append -- proof is not a separate atom.
-  \codep@render@queuebackref{\codep@currentatom}%
-}
+  \codep@render@queuebackref{\codep@tmp@proofkey}%
+}%
 
+%% @behavior B-PROOF-OFF
+%% @behavior B-PROOF-NONADJ
 % \codep@hookproof@end
-%   End cleanup: clear currentatom, sourceatom, rendering,
-%   decrement nestlevel.
-%   Rendering (inline flush / orphan prevention) delegated to hook.
-%   Edge case: if codep@proofdeferred is still true, the proof body
-%   had no paragraphs and \codepproofof did not fire — materialize
-%   the standalone atom now before closing.
+%   Finalize and unwind the current proof environment.
 \newcommand*{\codep@hookproof@end}{%
   \ifbool{codep@proofsnumbered}{%
-    % Edge case: empty proof body without \codepproofof.
-    \ifbool{codep@proofdeferred}{%
-      \codep@proof@materialize
-    }{}%
-    % §8a.5 atom-end clear of the in-atom sentinel.
-    \let\codep@currentatom\@empty
-    \let\codep@currenttype\@empty
-    % Clear source atom override (adjacent proof path).
-    \let\codep@sourceatom\@empty
-    % Rendering: inline flush or orphan prevention.
-    \codep@render@proof@end
+    \codep@ctxpeekkind\codep@tmp@ctxkind%
+    \def\codep@tmp@proofkind{proof}%
+    \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
+      \ifcodep@proofdisplaypending%
+        \codep@proof@materialize%
+      \fi%
+      \codep@ctxpeekid\codep@thisproofid%
+      \codep@render@proof@end%
+      \codep@ctxpop{proof}%
+      \global\let\codep@pendingresultid\@empty%
+      \codep@proofstaterestore{\codep@thisproofid}%
+    \fi%
   }{}%
-  \advance\codep@nestlevel by -1\relax
-}
+  \global\advance\codep@suppressdepth by -1\relax%
+}%
 
+%% @behavior B-REND-INLINE
+%% @behavior B-REND-BELOW
+%% @behavior B-REND-MARGIN
 % \codep@hookproof@afterend
 %   Block/margin style: flush after env closes (vmode, after QED).
-%   Delegates to the rendering hook point.
 \newcommand*{\codep@hookproof@afterend}{%
-  \codep@render@proof@afterend
-}
+  \codep@render@proof@afterend%
+}%
 
 %% ===================================================================
 %% Section 7: Paragraph numbering
 %% ===================================================================
 
+%% @behavior B-SUPP-EXTEND
 % \codep@suppressenv{envname}
-%   Increment nestlevel on entry, decrement on exit.
+%   Increment suppressdepth on entry, decrement it on exit.
 \newcommand*{\codep@suppressenv}[1]{%
   \AtBeginEnvironment{#1}{%
-    \advance\codep@nestlevel by 1\relax
+    \global\advance\codep@suppressdepth by 1\relax
   }%
   \AtEndEnvironment{#1}{%
-    \advance\codep@nestlevel by -1\relax
+    \global\advance\codep@suppressdepth by -1\relax
   }%
-}
+}%
 
 %% --- Equation backref tracking (two-track design) ---
 %% Track 1: single-number environments (equation).
 %% Track 2: multi-number environments (align, gather, multline, flalign).
 
+%% @behavior B-EQ-OUTER
+%% @behavior B-EQ-ALL
+%% @behavior B-EQ-OFF
 % \codep@eqshouldtrack
-%   Set \codep@eqatom to a non-empty sentinel if equation tracking
-%   should proceed, empty if suppressed by the current mode.
-%   Early-return structure: off → false; outer+intheorem → false;
-%   otherwise → true.
+%   Set \codep@eqatom to a non-empty sentinel if this block owns refs.
 \newcommand*{\codep@eqshouldtrack}{%
   \def\codep@eqatom{}%
-  \ifx\codep@equationmode\codep@const@off
-  \else\ifx\codep@equationmode\codep@const@outer
-    \ifbool{codep@intheorem}{}{\def\codep@eqatom{pending}}%
-  \else
+  \ifx\codep@equationmode\codep@const@off%
+  \else\ifx\codep@equationmode\codep@const@outer%
+    \ifnum\codep@trackeddepth>0\relax\else%
+      \def\codep@eqatom{pending}%
+    \fi%
+  \else%
     \def\codep@eqatom{pending}%
-  \fi\fi
-}
+  \fi\fi%
+}%
 
+%% @behavior B-EQ-TRACK1
 % \codep@trackeqenv{envname}
-%   Track 1: single-number equation environments.
-%   \theequation is correct at \ref time (counter steps at \begin).
-%   Suppresses paragraph numbering and sets the equation flag.
-%   Sets \codep@currenttype to "equation" for standalone equations so
-%   that \label writes the correct type to .aux (not the enclosing
-%   paragraph type).  When inside a theorem/proof, the theorem's type
-%   remains authoritative and \codep@currenttype is left unchanged.
+%   Track one-row equation environments.
 \newcommand*{\codep@trackeqenv}[1]{%
   \AtBeginEnvironment{#1}{%
-    \advance\codep@nestlevel by 1\relax
+    \global\let\codep@pendingresultid\@empty%
+    \global\advance\codep@suppressdepth by 1\relax%
     \booltrue{codep@inequation}%
     \boolfalse{codep@eqmultiline}%
-    \ifbool{codep@intheorem}{}{%
-      \def\codep@currenttype{equation}%
-      % amsmath defers \label to after environment end; use a global
-      % register so \codep@writelbltype sees the type even then.
+    \boolfalse{codep@eqnumbered}%
+    \codep@getcurrentownerid\codep@tmp@eqowner%
+    \xdef\codep@eqfallbacksourceid{\codep@tmp@eqowner}%
+    \global\let\codep@currenteqsourceid\@empty%
+    \ifnum\codep@trackeddepth>0\relax\else%
       \global\def\codep@eq@lbltype@pending{equation}%
-    }%
+    \fi%
+    \codep@eqshouldtrack%
+    \ifx\codep@eqatom\@empty\else%
+      \codep@allocatomid{\codep@currenteqsourceid}{equation}%
+      \codep@ctxpush{\codep@currenteqsourceid}{equation}%
+    \fi%
   }%
   \AtEndEnvironment{#1}{%
-    \advance\codep@nestlevel by -1\relax
     \boolfalse{codep@inequation}%
     \def\codep@eqatom{}%
-    \ifbool{codep@intheorem}{}{%
-      \let\codep@currenttype\@empty
-    }%
+    \ifx\codep@currenteqsourceid\@empty\else%
+      \codep@ctxpop{equation}%
+    \fi%
+    \global\let\codep@currenteqsourceid\@empty%
+    \global\let\codep@eqfallbacksourceid\@empty%
+    \global\advance\codep@suppressdepth by -1\relax%
   }%
   \AfterEndEnvironment{#1}{%
-    % Safety net: clear the pending type after amsmath has had a
-    % chance to fire any deferred \label calls.
-    \global\let\codep@eq@lbltype@pending\@empty
+    \global\let\codep@eq@lbltype@pending\@empty%
   }%
-}
+}%
 
+%% @behavior B-EQ-TRACK2
 % \codep@trackalignenv{envname}
-%   Track 2: multi-number equation environments (align, gather, etc.).
-%   \theequation is stale at \ref time (counter steps at \\).
-%   Saves the equation counter at \begin, defers \ref targets to a
-%   pending list, and computes the range at \end.
-%   Sets \codep@currenttype to "equation" for standalone equations so
-%   that \label writes the correct type to .aux (not the enclosing
-%   paragraph type).  When inside a theorem/proof, the theorem's type
-%   remains authoritative and \codep@currenttype is left unchanged.
-%
-%   Timing: the equation counter for the LAST numbered line is
-%   stepped during \end<env> (amsmath processes the final row
-%   there), AFTER \AtEndEnvironment fires but BEFORE
-%   \AfterEndEnvironment fires.  The flush therefore runs in
-%   \AfterEndEnvironment to see the final counter value.
-%   Nestlevel/flag cleanup stays in \AtEndEnvironment (LOCAL
-%   to the group) so it is undone together with the increment;
-%   putting it in \AfterEndEnvironment would fire OUTSIDE the
-%   group, after TeX has already undone the local +1, pushing
-%   nestlevel to -1.
+%   Track multi-row equation environments.
 \newcommand*{\codep@trackalignenv}[1]{%
   \AtBeginEnvironment{#1}{%
-    \advance\codep@nestlevel by 1\relax
+    \global\let\codep@pendingresultid\@empty%
+    \global\advance\codep@suppressdepth by 1\relax%
     \booltrue{codep@inequation}%
     \booltrue{codep@eqmultiline}%
-    \ifbool{codep@intheorem}{}{%
-      \def\codep@currenttype{equation}%
-      % amsmath defers \label to after environment end; use a global
-      % register so \codep@writelbltype sees the type even then.
+    \boolfalse{codep@eqnumbered}%
+    \codep@getcurrentownerid\codep@tmp@eqowner%
+    \xdef\codep@eqfallbacksourceid{\codep@tmp@eqowner}%
+    \global\let\codep@currenteqsourceid\@empty%
+    \ifnum\codep@trackeddepth>0\relax\else%
       \global\def\codep@eq@lbltype@pending{equation}%
-    }%
-    % Save counter for range computation.
-    \global\codep@eq@startcount=\c@equation\relax
-    % Clear pending list.
+    \fi%
+    \global\codep@eq@startcount=\c@equation\relax%
     \global\codep@eqpending={}%
-    \global\codep@eqpendingcount=0\relax
-    % Inject a dedicated hypertarget for the block anchor.
-    % \@currentHref at \end is stale (points to last row's anchor).
-    % Use \xdef so the anchor name survives group boundaries
-    % (needed at \AfterEndEnvironment flush time).
+    \global\codep@eqpendingcount=0\relax%
+    \codep@eqshouldtrack%
+    \ifx\codep@eqatom\@empty\else%
+      \codep@allocatomid{\codep@currenteqsourceid}{equation}%
+      \codep@ctxpush{\codep@currenteqsourceid}{equation}%
+    \fi%
     \@ifpackageloaded{hyperref}{%
       \xdef\codep@eq@anchor{codep.eq.\the\c@equation}%
       \Hy@raisedlink{%
@@ -916,27 +1210,23 @@
     }{}%
   }%
   \AtEndEnvironment{#1}{%
-    \advance\codep@nestlevel by -1\relax
     \boolfalse{codep@inequation}%
     \boolfalse{codep@eqmultiline}%
     \def\codep@eqatom{}%
-    \ifbool{codep@intheorem}{}{%
-      \let\codep@currenttype\@empty
-    }%
   }%
   \AfterEndEnvironment{#1}{%
-    % Flush ONLY — all state cleanup already done above.
-    % The flush stays here because amsmath steps the last row's
-    % counter during \endalign, which runs between \AtEndEnvironment
-    % and \AfterEndEnvironment.  The range computation needs the
-    % final counter value.
-    \ifnum\codep@eqpendingcount>0\relax
-      \codep@flusheqrange
-    \fi
-    % Clear pending label type after amsmath has fired deferred \label.
-    \global\let\codep@eq@lbltype@pending\@empty
+    \ifnum\codep@eqpendingcount>0\relax%
+      \codep@flusheqrange%
+    \fi%
+    \ifx\codep@currenteqsourceid\@empty\else%
+      \codep@ctxpop{equation}%
+    \fi%
+    \global\let\codep@currenteqsourceid\@empty%
+    \global\let\codep@eqfallbacksourceid\@empty%
+    \global\let\codep@eq@lbltype@pending\@empty%
+    \global\advance\codep@suppressdepth by -1\relax%
   }%
-}
+}%
 
 % \codep@dedupwrite{src}{tgt}
 %   Per-(source, target) dedup write.  If the csname flag
@@ -957,6 +1247,9 @@
 %   Numbered-line path: counter advanced, so compute the
 %   equation range, write the anchormap entry, and flush
 %   all pending refs with dedup.
+%% @behavior B-DISP-EQRANGE
+% \codep@flusheqrange@numbered
+%   Compute the legacy equation range key and flush pending refs.
 \def\codep@flusheqrange@numbered{%
   % Compute formatted start: saved+1 in a group.
   \begingroup
@@ -966,52 +1259,52 @@
   \endgroup
   \edef\codep@tmp@eqend{\theequation}%
   % Build the equation:-prefixed key; display renders as (N) or (N--M).
-  \ifx\codep@tmp@eqstart\codep@tmp@eqend
+  \ifx\codep@tmp@eqstart\codep@tmp@eqend%
     % Single numbered line: equation:N
     \edef\codep@eqatom{equation:\codep@tmp@eqstart}%
-  \else
+  \else%
     % Range: equation:N--M
     \edef\codep@eqatom{equation:\codep@tmp@eqstart--\codep@tmp@eqend}%
-  \fi
+  \fi%
+  \ifx\codep@currenteqsourceid\@empty\else%
+    \codep@atomsetkey{\codep@currenteqsourceid}{\codep@eqatom}%
+  \fi%
   % Write anchormap entry using dedicated block anchor.
   \@ifpackageloaded{hyperref}{%
-    \expandafter\xdef
-      \csname codep@anchor@\codep@eqatom\endcsname
+    \expandafter\xdef%
+      \csname codep@anchor@\codep@eqatom\endcsname%
       {\codep@eq@anchor}%
-    \if@filesw
+    \ifx\codep@currenteqsourceid\@empty\else%
+      \codep@atomsetanchor{\codep@currenteqsourceid}{\codep@eq@anchor}%
+    \fi%
+    \if@filesw%
       \protected@write\@auxout{}{%
         \string\codep@anchormap{\codep@eqatom}{\codep@eq@anchor}}%
-    \fi
+    \fi%
   }{}%
   % Flush all pending refs (with dedup).
-  \if@filesw
+  \if@filesw%
     \def\codep@eqpending@entry##1{%
       \codep@dedupwrite{\codep@eqatom}{##1}%
     }%
-    \the\codep@eqpending
-  \fi
-}
+    \the\codep@eqpending%
+  \fi%
+}%
 
+%% @behavior B-EQ-NOTAG
 % \codep@flusheqrange@fallback
-%   All-notag path: counter didn't advance, so fall through
-%   to the containing atom (if any) for pending refs.
+%   All-notag path: replay pending refs from the enclosing owner.
 \def\codep@flusheqrange@fallback{%
-  \ifx\codep@currentatom\@empty\else
-    \if@filesw
-      % Construct prefixed source from \codep@sourceatom
-      % (already prefixed) or \codep@currenttype:\theatom.
-      \ifx\codep@sourceatom\@empty
-        \edef\codep@tmp@srcatom{\codep@currenttype:\theatom}%
-      \else
-        \edef\codep@tmp@srcatom{\codep@sourceatom}%
-      \fi
+  \codep@atomgetkey{\codep@eqfallbacksourceid}{\codep@tmp@srcatom}%
+  \ifx\codep@tmp@srcatom\@empty\else%
+    \if@filesw%
       \def\codep@eqpending@entry##1{%
         \codep@dedupwrite{\codep@tmp@srcatom}{##1}%
       }%
-      \the\codep@eqpending
-    \fi
-  \fi
-}
+      \the\codep@eqpending%
+    \fi%
+  \fi%
+}%
 
 % \codep@flusheqrange
 %   Compute the equation range and flush all pending refs.
@@ -1019,8 +1312,8 @@
 %   \codep@flusheqrange@numbered or @fallback.
 \def\codep@flusheqrange{%
   % Check equation mode.
-  \codep@eqshouldtrack
-  \ifx\codep@eqatom\@empty
+  \codep@eqshouldtrack%
+  \ifx\codep@eqatom\@empty%
     % Mode says don't track; silently drop pending refs.
     \global\codep@eqpending={}%
     \global\codep@eqpendingcount=0\relax
@@ -1038,10 +1331,13 @@
 
 % \codep@suppresscmd{command}
 %   Patch a command to suppress numbering in its body.
+%% @behavior B-SUPP-EXTEND
+% \codep@suppresscmd{command}
+%   Patch a command to suppress paragraph numbering in its body.
 \newcommand*{\codep@suppresscmd}[1]{%
-  \pretocmd{#1}{\advance\codep@nestlevel by 1\relax}{}{}%
-  \apptocmd{#1}{\advance\codep@nestlevel by -1\relax}{}{}%
-}
+  \pretocmd{#1}{\global\advance\codep@suppressdepth by 1\relax}{}{}%
+  \apptocmd{#1}{\global\advance\codep@suppressdepth by -1\relax}{}{}%
+}%
 
 % \codep@installsuppress
 %   Hook suppression for standard environments.
@@ -1081,20 +1377,35 @@
 %   fire universally across standard classes, KOMA-Script,
 %   memoir, and titlesec (unlike the old \@startsection wrapper
 %   which was a no-op under those packages).
+%% @behavior B-SUPP-SECTION
+% \codep@suppresssectioning
+%   One-shot suppression for heading paragraphs.
 \newcommand*{\codep@suppresssectioning}{%
   \AddToHook{cmd/section/before}[codependent/sectioning]{%
+    \codep@closeparagraphifopen%
+    \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
   \AddToHook{cmd/subsection/before}[codependent/sectioning]{%
+    \codep@closeparagraphifopen%
+    \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
   \AddToHook{cmd/subsubsection/before}[codependent/sectioning]{%
+    \codep@closeparagraphifopen%
+    \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
   \AddToHook{cmd/chapter/before}[codependent/sectioning]{%
+    \codep@closeparagraphifopen%
+    \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
   \AddToHook{cmd/paragraph/before}[codependent/sectioning]{%
+    \codep@closeparagraphifopen%
+    \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
   \AddToHook{cmd/subparagraph/before}[codependent/sectioning]{%
+    \codep@closeparagraphifopen%
+    \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
-}
+}%
 
 % \codep@capturesectitle
 %   Intercept \addcontentsline to capture section titles for
@@ -1182,64 +1493,61 @@
   \codep@suppresscmd{\maketitle}%
 }
 
+%% @behavior B-NUM-PARA
 % \codep@parahook@paragraph
-%   Paragraph numbering body for a normal (non-suppressed) paragraph.
-%   Increments the atom counter, writes anchormap and SBL records,
-%   updates the atom queue, emits the margin label, and queues the
-%   backref.  Only runs when codep@paragraphs is true.
-%   Called from \codep@installparahook.
+%   Open a paragraph atom at top level.
 \def\codep@parahook@paragraph{%
-  \ifbool{codep@paragraphs}{%
-    \refstepcounter{atom}%
-    \codep@writeanchormap{paragraph:\theatom}%
-    \edef\codep@currentatom{paragraph:\theatom}%
-    \def\codep@currenttype{paragraph}%
-    \codep@cdpwrite@atom{%
-      \string\codep@cdp@atom
-        {\theatom}{paragraph}}%
-    \codep@cdpwrite@atom{%
-      \string\codep@cdp@meta{\theatom}{src}%
-        {\jobname.tex:\the\inputlineno:1}}%
-    \codep@registeratom{paragraph:\theatom}{paragraph}%
-    \codep@render@para@emit{\codep@currentatom}{\theatom}%
-  }{}%
+  \codep@allocatomid{\codep@thisatomid}{paragraph}%
+  \codep@ctxpush{\codep@thisatomid}{paragraph}%
+  \global\codep@paragraphopentrue%
+  \refstepcounter{atom}%
+  \edef\codep@tmp@parakey{paragraph:\theatom}%
+  \codep@atomsetkey{\codep@thisatomid}{\codep@tmp@parakey}%
+  \codep@writeanchormap{\codep@tmp@parakey}%
+  \@ifpackageloaded{hyperref}{%
+    \codep@atomsetanchor{\codep@thisatomid}{\@currentHref}%
+  }{%
+    \codep@atomsetanchor{\codep@thisatomid}{}%
+  }%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@atom{\theatom}{paragraph}}%
+  \codep@cdpwrite@atom{%
+    \string\codep@cdp@meta{\theatom}{src}%
+      {\jobname.tex:\the\inputlineno:1}}%
+  \codep@registeratom{\codep@tmp@parakey}{paragraph}%
+  \codep@render@para@emit{\codep@tmp@parakey}{\theatom}%
 }%
 
+%% @behavior B-NUM-PARA
+%% @behavior B-PROOF-ADJRULE
 % \codep@installparahook
-%   Install the para/begin hook for paragraph numbering.
-%   Guard chain (outermost -> innermost):
-%   1. codep@tracked: hook is active at all
-%   2. codep@sectioning: one-shot skip for heading paragraphs
-%   3. codep@nestlevel > 0: inside a suppressed env/command
-%   Deferred backref emission and proof-adjacency reset are
-%   unconditional under codep@tracked (delegated to helpers).
+%   Install the top-level para/begin paragraph allocator.
 \newcommand*{\codep@installparahook}{%
   \AddToHook{para/begin}{%
     \ifbool{codep@tracked}{%
-      \codep@render@para@emitdeferred
-      % Clear proof adjacency flag on any top-level paragraph.
-      % A paragraph between a theorem and a proof means the
-      % proof is not adjacent and must get its own atom number.
-      \ifnum\codep@nestlevel=0\relax
-        \global\let\codep@lasttheorematom\@empty
-      \fi
-      % Lazy proof materialization: if a standalone proof atom
-      % is deferred, materialize it now (first para inside proof).
-      \ifbool{codep@proofdeferred}{%
-        \codep@proof@materialize
-      }{}%
-      % Sectioning heading paragraph: skip entirely.
+      \codep@render@para@emitdeferred%
+      \global\let\codep@pendingresultid\@empty%
+      \ifcodep@proofdisplaypending%
+        \codep@ctxpeekkind\codep@tmp@ctxkind%
+        \def\codep@tmp@proofkind{proof}%
+        \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
+          \codep@proof@materialize%
+        \fi%
+      \fi%
       \ifbool{codep@sectioning}{%
         \global\boolfalse{codep@sectioning}%
       }{%
-        % Normal paragraph (not suppressed).
-        \ifnum\codep@nestlevel>0\relax\else
-          \codep@parahook@paragraph
-        \fi
+        \ifbool{codep@paragraphs}{%
+          \ifnum\codep@suppressdepth>0\relax%
+          \else\ifnum\codep@ctxdepth>0\relax%
+          \else%
+            \codep@parahook@paragraph%
+          \fi\fi%
+        }{}%
       }%
     }{}%
   }%
-}
+}%
 
 %% ===================================================================
 %% Section 8a: Back-reference graph (dpmac port, GPLv3)
@@ -1334,20 +1642,8 @@
 %   original \codep@writeatomref body so equation branches can
 %   fall through to it.
 \def\codep@writeatomref@do#1{%
-  \if@filesw
-    % Determine source atom with type prefix.
-    % Priority: \codep@sourceatom (already prefixed, e.g.
-    % proof:X for adjacent proofs) > construct from
-    % \codep@currenttype:\theatom (thm/para).
-    \ifx\codep@sourceatom\@empty
-      \edef\codep@tmp@srcatom{\codep@currenttype:\theatom}%
-    \else
-      \edef\codep@tmp@srcatom{\codep@sourceatom}%
-    \fi
-    % Per-(source, target) dedup: skip if already written.
-    \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
-  \fi
-}
+  \codep@writerefevent{#1}%
+}%
 
 \def\codep@writeatomref#1{%
   % (a) Skip during amsmath measuring pass.
@@ -1360,41 +1656,45 @@
 %   Track 2 (align/gather multiline) path: defer the ref
 %   to the pending list for later flush by \codep@flusheqrange.
 \def\codep@writeatomref@tracktwo#1{%
-  \codep@eqshouldtrack
-  \ifx\codep@eqatom\@empty
-    % Mode suppressed; fall through to containing atom.
-    \ifx\codep@currentatom\@empty\else
-      \codep@writeatomref@do{#1}%
-    \fi
-  \else
+  \codep@eqshouldtrack%
+  \ifx\codep@eqatom\@empty%
+    \codep@writeatomref@do{#1}%
+  \else%
     \global\codep@eqpending=\expandafter{%
       \the\codep@eqpending\codep@eqpending@entry{#1}}%
-    \global\advance\codep@eqpendingcount by 1\relax
-  \fi
-}
+    \global\advance\codep@eqpendingcount by 1\relax%
+  \fi%
+}%
 
 % \codep@writeatomref@trackone{target}
 %   Track 1 (single equation) path: record the ref directly
 %   with the parenthesized equation number.
 \def\codep@writeatomref@trackone#1{%
-  \codep@eqshouldtrack
-  \ifx\codep@eqatom\@empty
-    % Mode suppressed; fall through to containing atom.
-    \ifx\codep@currentatom\@empty\else
-      \codep@writeatomref@do{#1}%
-    \fi
-  \else
-    % Record with equation:-prefixed key; display renders as (X).
+  \codep@eqshouldtrack%
+  \ifx\codep@eqatom\@empty%
+    \codep@writeatomref@do{#1}%
+  \else%
     \edef\codep@eqatom{equation:\theequation}%
+    \ifx\codep@currenteqsourceid\@empty\else%
+      \codep@atomsetkey{\codep@currenteqsourceid}{\codep@eqatom}%
+    \fi%
     \codep@writeanchormap{\codep@eqatom}%
-    \if@filesw
+    \@ifpackageloaded{hyperref}{%
+      \ifx\codep@currenteqsourceid\@empty\else%
+        \codep@atomsetanchor{\codep@currenteqsourceid}{\@currentHref}%
+      \fi%
+    }{%
+      \ifx\codep@currenteqsourceid\@empty\else%
+        \codep@atomsetanchor{\codep@currenteqsourceid}{}%
+      \fi%
+    }%
+    \if@filesw%
       \codep@dedupwrite{\codep@eqatom}{#1}%
-    \fi
-  \fi
-}
+    \fi%
+  \fi%
+}%
 
 \def\codep@writeatomref@body#1{%
-  % Equation environment handling.
   \ifbool{codep@inequation}{%
     \ifbool{codep@eqmultiline}{%
       \codep@writeatomref@tracktwo{#1}%
@@ -1402,12 +1702,9 @@
       \codep@writeatomref@trackone{#1}%
     }%
   }{%
-    % Normal (non-equation) path.
-    \ifx\codep@currentatom\@empty\else
-      \codep@writeatomref@do{#1}%
-    \fi
+    \codep@writeatomref@do{#1}%
   }%
-}
+}%
 
 % \codep@installatomrefpatch
 %   Install all three patch sites.  Called from the
@@ -1990,19 +2287,22 @@
 %   \codep@deferredbr and clear the register.  The deferred
 %   data is emitted at the NEXT para/begin, before the new
 %   atom's margin number.
+%% @behavior B-NUM-PARA
+% \codep@installparendhook
+%   Install the para/end paragraph finalization hook.
 \newcommand*{\codep@installparendhook}{%
   \AddToHook{para/end}{%
     \ifbool{codep@tracked}{%
-      \ifbool{codep@intheorem}{}{%
+      \ifcodep@paragraphopen%
         \ifbool{codep@backrefs}{%
           \ifbool{codep@appendix}{}{\codep@render@paraend@snapshot}%
         }{}%
-        \let\codep@currentatom\@empty
-        \let\codep@currenttype\@empty
-      }%
+        \codep@ctxpop{paragraph}%
+        \global\codep@paragraphopenfalse%
+      \fi%
     }{}%
   }%
-}
+}%
 
 %% ===================================================================
 %% Section 9a: Semantic sidecar (.cdp) writer
@@ -2027,10 +2327,11 @@
 %   Atom-scoped guard: drops the write when not inside a tracked
 %   atom (\codep@currentatom is empty).
 \newcommand*{\codep@cdpwrite@atom}[1]{%
-  \ifx\codep@currentatom\@empty\else
+  \codep@getcurrentatomdisplay\codep@tmp@cdpdisplay%
+  \ifx\codep@tmp@cdpdisplay\@empty\else%
     \codep@cdpwrite{#1}%
-  \fi
-}
+  \fi%
+}%
 
 %% --- Section 9a open hook (begindocument/before) ---
 %% Per REVIEW_C finding #5, the stream opens at begindocument/before
@@ -2077,28 +2378,37 @@
   }{%
     %% No cleveref: \label{key} only.
     \def\label#1{%
-      \codep@cdpwrite@atom{%
-        \string\codep@cdp@label
-          {\theatom}{#1}}%
-      \codep@writelbltype{#1}%
+      \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
+      \ifx\codep@tmp@labeldisplay\@empty\else%
+        \codep@cdpwrite@atom{%
+          \string\codep@cdp@label
+            {\codep@tmp@labeldisplay}{#1}}%
+      \fi%
+      \codep@recordlabelowner{#1}%
       \codep@orig@label{#1}%
     }%
   }%
 }
 \def\codep@cdp@label@withopt[#1]#2{%
-  \codep@cdpwrite@atom{%
-    \string\codep@cdp@label
-      {\theatom}{#2}}%
-  \codep@writelbltype{#2}%
+  \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
+  \ifx\codep@tmp@labeldisplay\@empty\else%
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@label
+        {\codep@tmp@labeldisplay}{#2}}%
+  \fi%
+  \codep@recordlabelowner{#2}%
   \codep@orig@label[#1]{#2}%
-}
+}%
 \def\codep@cdp@label@noopt#1{%
-  \codep@cdpwrite@atom{%
-    \string\codep@cdp@label
-      {\theatom}{#1}}%
-  \codep@writelbltype{#1}%
+  \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
+  \ifx\codep@tmp@labeldisplay\@empty\else%
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@label
+        {\codep@tmp@labeldisplay}{#1}}%
+  \fi%
+  \codep@recordlabelowner{#1}%
   \codep@orig@label{#1}%
-}
+}%
 
 % \codep@writelbltype{label}
 %   Write the current atom type prefix to .aux for this label.
@@ -2113,20 +2423,7 @@
 %      write \codep@currenttype (set by the theorem hook).
 %   3. Otherwise: no-op (no owning atom).
 \def\codep@writelbltype#1{%
-  \if@filesw
-    \ifx\codep@eq@lbltype@pending\@empty
-      % Not a standalone equation label — use theorem/paragraph context.
-      \ifx\codep@currentatom\@empty\else
-        \protected@write\@auxout{}{%
-          \string\codep@lbltype{#1}{\codep@currenttype}}%
-      \fi
-    \else
-      % Standalone equation: pending type overrides ambient atom context.
-      \protected@write\@auxout{}{%
-        \string\codep@lbltype{#1}{\codep@eq@lbltype@pending}}%
-      \global\let\codep@eq@lbltype@pending\@empty
-    \fi
-  \fi
+  \codep@recordlabelowner{#1}%
 }%
 
 %% --- Section 9a concept-tracking helpers ---
@@ -2169,30 +2466,30 @@
 %   currentatom short-circuit fires BEFORE the duplicate-def check.
 %   name -- bare command name (e.g. "Hom")
 \newcommand*{\codep@emit@def}[1]{%
-  \ifx\codep@currentatom\@empty
-    % No atom context (footnote, caption, orphan): silent no-op
-    % per §8a.9 error model.
-  \else
+  \codep@getcurrentatomdisplay\codep@tmp@conceptatom%
+  \ifx\codep@tmp@conceptatom\@empty%
+    % No atom context (footnote, caption, orphan): silent no-op.
+  \else%
     \@ifundefined{codep@concept@#1}%
-      {\expandafter\xdef
-         \csname codep@concept@#1\endcsname
-         {\theatom}%
-       \if@filesw
+      {\expandafter\xdef%
+         \csname codep@concept@#1\endcsname%
+         {\codep@tmp@conceptatom}%
+       \if@filesw%
          \immediate\write\@auxout{%
-           \string\codep@concept{#1}{\theatom}}%
-       \fi
+           \string\codep@concept{#1}{\codep@tmp@conceptatom}}%
+       \fi%
        \codep@cdpwrite@atom{%
-         \string\codep@cdp@def{\theatom}{#1}}%
+         \string\codep@cdp@def{\codep@tmp@conceptatom}{#1}}%
       }%
       {\PackageError{codependent}%
-        {\string\\#1* defined at atoms
-         \csname codep@concept@#1\endcsname\space and
-         \theatom}%
-        {Exactly one definition site is permitted per
-         concept.  Use \string\\#1\space (without star)
+        {\string\\#1* defined at atoms\space%
+         \csname codep@concept@#1\endcsname\space and\space%
+         \codep@tmp@conceptatom}%
+        {Exactly one definition site is permitted per\space%
+         concept.  Use \string\\#1\space (without star)\space%
          at the non-definitional site.}%
       }%
-  \fi}
+  \fi}%
 
 % \codep@emit@use{name}
 %   Non-star-branch handler: fires when \cmd is used (use site).
@@ -2201,20 +2498,21 @@
 %   \AtEndDocument (first-use only, guarded by conceptused csname).
 %   name -- bare command name (e.g. "Hom")
 \newcommand*{\codep@emit@use}[1]{%
-  \ifx\codep@currentatom\@empty\else
+  \codep@getcurrentatomdisplay\codep@tmp@conceptatom%
+  \ifx\codep@tmp@conceptatom\@empty\else%
     % Register concept name for end-document missing-def scan.
     \@ifundefined{codep@conceptused@#1}{%
-      \expandafter\gdef
+      \expandafter\gdef%
         \csname codep@conceptused@#1\endcsname{1}%
       \g@addto@macro\codep@conceptnames{\do{#1}}%
     }{}%
-    \if@filesw
+    \if@filesw%
       \immediate\write\@auxout{%
-        \string\codep@conceptref{\theatom}{#1}}%
-    \fi
+        \string\codep@conceptref{\codep@tmp@conceptatom}{#1}}%
+    \fi%
     \codep@cdpwrite@atom{%
-      \string\codep@cdp@use{\theatom}{#1}}%
-  \fi}
+      \string\codep@cdp@use{\codep@tmp@conceptatom}{#1}}%
+  \fi}%
 
 %% --- Section 9a.9: Concept missing-def-site scan ---
 %% At \AtEndDocument, walk the concept name list and check each
@@ -2409,10 +2707,13 @@
 %   kind  -- tag category (e.g. uid, introduces, type)
 %   value -- tag payload (free-form UTF-8)
 \newcommand*{\codeptag}[2]{%
-  \codep@cdpwrite@atom{%
-    \string\codep@cdp@tag
-    {\theatom}{#1}{#2}}%
-}
+  \codep@getcurrentatomdisplay\codep@tmp@tagatom%
+  \ifx\codep@tmp@tagatom\@empty\else%
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@tag%
+      {\codep@tmp@tagatom}{#1}{#2}}%
+  \fi%
+}%
 
 % \codepproofof{label}    — "Used in 2.4*" links to the theorem
 % \codepproofof*{label}   — "Used in 2.4*" links to the proof
@@ -2439,32 +2740,35 @@
 \def\codep@proofof@star#1{\codep@proofof@do{#1}{anchor}}
 \def\codep@proofof@do#1#2{%
   \ifbool{codep@proofsnumbered}{%
-    % Clear the deferred flag — proof identity is now known.
-    \boolfalse{codep@proofdeferred}%
-    \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax
-      \PackageWarning{codependent}{\string\codepproofof: unknown label '#1'.
-        The label may not exist or may not have been processed yet}%
-    \else
-      % Construct proof:X key from resolved label number.
-      \edef\codep@currentatom{%
-        proof:\csname codep@lblnum@#1\endcsname}%
-      \def\codep@currenttype{proof}%
-      % Update source atom for proof-prefixed backref emission.
-      \edef\codep@sourceatom{\codep@currentatom}%
-      % Write CDP sub-record (bare display form with star).
-      \codep@cdpwrite@atom{%
-        \string\codep@cdp@proof{%
-          \csname codep@lblnum@#1\endcsname*}}%
-      % Starred form: anchor the link at the proof location.
-      \def\codep@tmp@anchormode{#2}%
-      \ifx\codep@tmp@anchormode\@empty\else
-        \codep@writeanchormap{\codep@currentatom}%
-      \fi
-      % Queue backref for the proof atom.
-      \codep@render@queuebackref{\codep@currentatom}%
-    \fi
+    \ifx\codep@currentproofid\@empty\else%
+      \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax%
+        \PackageWarning{codependent}{\string\codepproofof: unknown label '#1'.\space%
+          The label may not exist or may not have been processed yet}%
+      \else%
+        \edef\codep@tmp@proofkey{proof:\csname codep@lblnum@#1\endcsname}%
+        \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+        \global\codep@proofdisplaypendingfalse%
+        \global\let\codep@pendingproofbind\@empty%
+        \codep@cdpwrite@atom{%
+          \string\codep@cdp@proof{%
+            \csname codep@lblnum@#1\endcsname*}}%
+        \def\codep@tmp@anchormode{#2}%
+        \ifx\codep@tmp@anchormode\@empty\else%
+          \codep@writeanchormap{\codep@tmp@proofkey}%
+          \@ifpackageloaded{hyperref}{%
+            \expandafter\xdef%
+              \csname codep@anchor@\codep@tmp@proofkey\endcsname%
+              {\@currentHref}%
+            \codep@atomsetanchor{\codep@currentproofid}{\@currentHref}%
+          }{%
+            \codep@atomsetanchor{\codep@currentproofid}{}%
+          }%
+        \fi%
+        \codep@render@queuebackref{\codep@tmp@proofkey}%
+      \fi%
+    \fi%
   }{}%
-}
+}%
 
 % \codepnewcommand{\cmd}[arity]{body}
 %   Define a command with codependent concept tracking.  Mirrors
