@@ -153,3 +153,60 @@ for the full test file list.  At minimum:
 - Do not handle math rendering. That is the preamble's job.
 - Do not assume a specific numbering depth (some documents
   may not use subsections).
+
+## Behavioral Traceability (mandatory)
+
+Every top-level macro definition in `.sty` files MUST have exactly
+one classification tag in the `%%` comment block immediately above it.
+
+### Tag types
+
+```tex
+%% @behavior B-XXX-YYY
+\def\codep@macroname{...}
+```
+This macro directly implements behavioral statement `[B-XXX-YYY]`
+from `BEHAVIOR.md`. Multiple `@behavior` tags allowed (one macro
+may implement several behaviors).
+
+```tex
+%% @implements \codep@parentmacro
+\def\codep@helpername{...}
+```
+This macro is a helper for `\codep@parentmacro`, which must itself
+have `@behavior` tags. Use this for decomposed helpers that serve
+one parent.
+
+```tex
+%% @utility
+\def\codep@purelibrary{...}
+```
+Pure internal plumbing with no behavioral decisions. If a utility
+starts making behavioral choices (checking options, branching on
+atom type, etc.), it must be promoted to `@behavior` or split.
+
+### Rules
+
+- **No unclassified macros.** The traceability linter
+  (`lint_traceability.py`) rejects any new macro without a tag.
+  Pre-existing unclassified macros are listed in
+  `.traceability-baseline` and must be classified during the
+  Phase 3 rewrite.
+- **No macro may have both `@behavior` and `@implements`.**
+  It is either a contract holder or a helper, not both.
+- **Every `@behavior` ID must exist in `BEHAVIOR.md`.**
+  Stale or invented IDs are errors.
+- **Every `@implements` target must have `@behavior` tags.**
+  Orphan helpers are errors.
+- **Baseline can only shrink, never grow.** Classifying a
+  baselined macro requires removing it from the baseline.
+
+### Verification
+
+```sh
+python3 .claude/scripts/lint_traceability.py          # full check
+python3 .claude/scripts/lint_traceability.py --update-baseline  # regenerate
+```
+
+The linter runs automatically via PostToolUse (on .sty edits) and
+PreCommit hooks.
