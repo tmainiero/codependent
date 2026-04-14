@@ -48,6 +48,13 @@ Before editing `codependent.sty`, confirm:
 - **No parallel old+new state** — each wave's new code is canonical; old code is removed in the same wave
 - **Linters are mandatory** — `.claude/scripts/lint_sty_structural.py` (179 pre-existing errors to fix during rewrite) and `.claude/scripts/lint-tests.sh` (94/94 clean)
 - **Unique output filenames** for agent-dispatch.sh (timestamp or round number)
+- **Branch before agent edits** — `git checkout -b wave<N>-wip` immediately after GPT delivers. Every fix is a commit on that branch. No working-tree-only state.
+- **Save patch after every successful agent** — `git diff > .claude/comms/wave<N>-checkpoint-<K>.patch` after each fix. Backups are non-negotiable.
+- **NEVER `git checkout` or `git restore` on dirty tracked files** — use `git stash` or save a patch first. This has destroyed work.
+- **Wire-format diff after every .sty change** — `.claude/scripts/compare-wire-format.sh compare` after every agent edit. Empty diff = correct.
+- **GPT dispatch includes old function bodies** — the spec describes the target; the old code describes current behavior. Both are required. Use `extract-old-functions.sh` or include them manually.
+- **Verify fix before dispatching** — no speculative fixes. Confirm the diagnosis, check edge cases, then dispatch.
+- **No fix without a failing test** — if a fix doesn't change test results, either write a test first or document it as a comment without changing code.
 
 ## What you are NOT allowed to do
 
@@ -57,6 +64,7 @@ Before editing `codependent.sty`, confirm:
 - No declaring a wave done without ALL tests passing
 - No "trust me bro" — every test must pass, zero exceptions
 - No allowlists or "known-failing" tests
+- No `git checkout <file>` or `git restore <file>` without saving a patch first
 
 ## Key files
 

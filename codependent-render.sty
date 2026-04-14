@@ -86,7 +86,7 @@
 %   calling it unconditionally is fine.
 \newcommand*{\codep@queuebackref}[1]{%
   \ifbool{codep@backrefs}{%
-    \codep@pendingbr={}%
+    \global\codep@pendingbr={}%
     \codep@collapsebr{#1}%
     % After collapse, codep@br@#1 is either \@empty (no refs)
     % or a comma-joined ref list.  \@ifundefined cannot
@@ -97,7 +97,7 @@
     \else
       \ifbool{codep@appendix}{}{%
         % Inline mode: store ref list for flush.
-        \codep@pendingbr=\expandafter{%
+        \global\codep@pendingbr=\expandafter{%
           \csname codep@br@#1\endcsname}%
       }%
     \fi

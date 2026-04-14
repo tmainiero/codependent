@@ -310,8 +310,17 @@ Tracked equation environments: `equation`, `align`, `gather`, `multline`, `flali
 The sentence "Tracked equation environments: `equation`, `align`, ...`" above is the default set installed by `\codep@installequations`. User-registered envs extend that set dynamically.
 
 <!-- Fixed: R2-BLOCKER 10 -->
+<!-- Fixed: R15 — removed closeparagraphifopen from equation begin. Equations do NOT close
+     an open paragraph; they only suppress new paragraph allocation via suppressdepth.
+     The paragraph stays open (frozen) across the equation body and resumes after it ends.
+     Rationale: closeparagraphifopen here caused premature paragraph finalization, splitting
+     one logical paragraph into an empty atom (with stray "Used in" rendering) and a content
+     atom. The old architecture never closed paragraphs at equation begin — it only incremented
+     nestlevel. The context stack model does not require paragraph closure here because
+     eqfallbacksourceid is only meaningful inside a tracked theorem (where paragraphs are
+     already suppressed), never at top level where a paragraph would be on the stack. -->
 **`env/Q/begin`:**
-- `\codep@closeparagraphifopen`
+- Do NOT call `\codep@closeparagraphifopen` — equations nest inside open paragraphs
 - Clear `\codep@pendingresultid`
 - Increment `\codep@suppressdepth`
 - Capture the current enclosing source atom into `\codep@eqfallbacksourceid` via `\codep@ctxpeekid`
