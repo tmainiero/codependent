@@ -149,8 +149,27 @@ def _extract_macro_name(line: str) -> Optional[str]:
     return None
 
 
+def _count_braces(line: str) -> int:
+    """Count net brace depth change for a line, ignoring \\{ \\} and comments."""
+    depth = 0
+    i = 0
+    while i < len(line):
+        c = line[i]
+        if c == '%':
+            break  # rest is comment
+        if c == '\\' and i + 1 < len(line):
+            i += 2  # skip escaped char (\{ \} \% etc.)
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+        i += 1
+    return depth
+
+
 def parse_sty_file(path: str) -> List[MacroInfo]:
-    """Parse a .sty file. Returns ALL macros with their tags (or no tags)."""
+    """Parse a .sty file. Returns only TOP-LEVEL macros (brace depth 0) with their tags."""
     if not os.path.isfile(path):
         return []
 
@@ -158,42 +177,67 @@ def parse_sty_file(path: str) -> List[MacroInfo]:
         lines = f.readlines()
 
     macros: List[MacroInfo] = []
+    errors: List[str] = []
     pending_behaviors: List[str] = []
     pending_implements: List[str] = []
     pending_utility: bool = False
+    brace_depth: int = 0
 
     basename = os.path.basename(path)
 
     for lineno, line in enumerate(lines, 1):
         stripped = line.strip()
 
-        # Collect tags
-        m_beh = RE_STY_BEHAVIOR.match(stripped)
-        if m_beh:
-            pending_behaviors.append(m_beh.group(1))
-            continue
+        # Only collect tags at brace depth 0 (top level)
+        if brace_depth == 0:
+            m_beh = RE_STY_BEHAVIOR.match(stripped)
+            if m_beh:
+                pending_behaviors.append(m_beh.group(1))
+                continue
 
-        m_impl = RE_STY_IMPLEMENTS.match(stripped)
-        if m_impl:
-            pending_implements.append(m_impl.group(1))
-            continue
+            m_impl = RE_STY_IMPLEMENTS.match(stripped)
+            if m_impl:
+                pending_implements.append(m_impl.group(1))
+                continue
 
-        m_util = RE_STY_UTILITY.match(stripped)
-        if m_util:
-            pending_utility = True
-            continue
+            m_util = RE_STY_UTILITY.match(stripped)
+            if m_util:
+                pending_utility = True
+                continue
 
-        # Check for macro definition
-        macro_name = _extract_macro_name(stripped)
-        if macro_name:
-            info = MacroInfo(macro_name, basename, lineno)
-            info.behavior_ids = pending_behaviors[:]
-            info.implements = pending_implements[:]
-            info.is_utility = pending_utility
-            macros.append(info)
-            pending_behaviors.clear()
-            pending_implements.clear()
-            pending_utility = False
+        # Check for macro definition ONLY at brace depth 0
+        if brace_depth == 0:
+            macro_name = _extract_macro_name(stripped)
+            if macro_name:
+                info = MacroInfo(macro_name, basename, lineno)
+                info.behavior_ids = pending_behaviors[:]
+                info.implements = pending_implements[:]
+                info.is_utility = pending_utility
+                macros.append(info)
+                pending_behaviors.clear()
+                pending_implements.clear()
+                pending_utility = False
+
+        # Track brace depth
+        brace_depth += _count_braces(line)
+        if brace_depth < 0:
+            brace_depth = 0  # malformed input recovery
+
+    # Orphaned tags at EOF
+    if pending_behaviors or pending_implements or pending_utility:
+        tags = []
+        if pending_behaviors:
+            tags.extend(f"@behavior {b}" for b in pending_behaviors)
+        if pending_implements:
+            tags.extend(f"@implements {i}" for i in pending_implements)
+        if pending_utility:
+            tags.append("@utility")
+        # Store as a pseudo-macro so the error is caught
+        info = MacroInfo("(orphaned-tags-at-EOF)", basename, len(lines))
+        info.behavior_ids = pending_behaviors[:]
+        info.implements = pending_implements[:]
+        info.is_utility = pending_utility
+        macros.append(info)
 
     return macros
 

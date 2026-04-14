@@ -3,18 +3,10 @@
 # Regenerate: python3 .claude/scripts/lint_traceability.py --update-baseline
 
 # unclassified-macros
-\@elt
-\@setref
-\HyRef@@StarSetRef
-\HyRef@autosetref
-\addcontentsline
 \codep@anchormap@active
 \codep@appendbr
 \codep@appendbr@core
 \codep@appendix@emit
-\codep@appendix@lastsec
-\codep@appendix@thissec
-\codep@appendix@thistitle
 \codep@appendixentry
 \codep@appendixsection
 \codep@applycolor
@@ -29,7 +21,6 @@
 \codep@backrefstyle
 \codep@basecounter
 \codep@brhyper
-\codep@brhyper@noanchor
 \codep@capturesectitle
 \codep@cdp@deferred
 \codep@cdp@label@noopt
@@ -56,7 +47,6 @@
 \codep@const@right
 \codep@const@typeequation
 \codep@const@typeproof
-\codep@cur
 \codep@currentatom
 \codep@currenttype
 \codep@cursecnum
@@ -73,7 +63,6 @@
 \codep@eq@anchor
 \codep@eq@lbltype@pending
 \codep@eqatom
-\codep@eqpending@entry
 \codep@eqshouldtrack
 \codep@equationmode
 \codep@extractanchor
@@ -103,11 +92,8 @@
 \codep@hooktheorem@preparebackref
 \codep@hooktheorem@record
 \codep@ifcrefkey
-\codep@ifcrefkey@probe
 \codep@ifcrefsentinel
 \codep@ifdatakey
-\codep@ifdatakey@probe
-\codep@inline@arg
 \codep@installatomrefpatch
 \codep@installnewlabel
 \codep@installparahook
@@ -151,37 +137,11 @@
 \codep@setupcounter
 \codep@sourceatom
 \codep@splitprefix
-\codep@starred
 \codep@suppresscmd
 \codep@suppresscommands
 \codep@suppressenv
 \codep@suppresssectioning
-\codep@tgt
-\codep@tmp@acc
-\codep@tmp@anchorfield
-\codep@tmp@anchormode
-\codep@tmp@anchorval
-\codep@tmp@crefsuffix
-\codep@tmp@datasentinel
-\codep@tmp@datasuffix
-\codep@tmp@eqend
-\codep@tmp@eqstart
-\codep@tmp@expanded
-\codep@tmp@k
-\codep@tmp@last
-\codep@tmp@n
-\codep@tmp@name
-\codep@tmp@node
-\codep@tmp@num
 \codep@tmp@opts
-\codep@tmp@prefixed
-\codep@tmp@rec
-\codep@tmp@src
-\codep@tmp@srcatom
-\codep@tmp@tgt
-\codep@tmp@thmanchor
-\codep@tmp@tocfile
-\codep@tmp@type
 \codep@trackalignenv
 \codep@trackeqenv
 \codep@truncatereflist
@@ -203,16 +163,6 @@
 \codeptrack
 \codeptrackalign
 \codeptrackeq
-\cref@getlabel
-\csname
-\do
-\expandafter
-\label
-\newlabel
-\newlabelxx
-\newlist
-\numberline
-\theatom
 
 # uncovered-behaviors
 B-CONC-DEFSITE
