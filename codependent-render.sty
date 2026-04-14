@@ -6,11 +6,15 @@
 %% It is loaded conditionally by codependent.sty when backrefs are
 %% enabled (\ifbool{codep@backrefs}).
 %%
-%% The rendering layer READS tracking state (codep@brcount@,
-%% codep@brnode@, codep@anchor@, \codep@atomcount, etc.) but does
-%% NOT write to it.  Rendering-specific pgfkeys (backref-style,
-%% backref-font, etc.) are defined in the driver and store into
-%% macros; this file reads those macros.
+%% The rendering layer accesses graph state ONLY through the
+%% query API defined in codependent.sty (Section 8a.3a):
+%%   \codep@graph@hasrefs, \codep@graph@getdisplay,
+%%   \codep@graph@getanchor, \codep@graph@getkind,
+%%   \codep@graph@foreachref.
+%% It does NOT read codep@brcount@, codep@brnode@, or
+%% codep@anchor@ directly.  Rendering-specific pgfkeys
+%% (backref-style, backref-font, etc.) are defined in the driver
+%% and store into macros; this file reads those macros.
 %%
 \NeedsTeXFormat{LaTeX2e}[2021/06/01]
 \ProvidesPackage{codependent-render}[2026/04/11 v1.0 %
@@ -34,65 +38,40 @@
 % after the options block.
 
 %% ===================================================================
-%% Display-key helpers (rendering-only)
-%% ===================================================================
-
-% String constants for type comparisons in display rules.
-\def\codep@const@typeequation{equation}%
-\def\codep@const@typeproof{proof}%
-
-% \codep@displayfromkey{type:num}
-%   Derive the rendered display form from a prefixed key.
-%   equation:X → (X)     (parenthesized)
-%   proof:X    → X*      (starred)
-%   all others → X       (bare number)
-\def\codep@displayfromkey#1{%
-  \expandafter\codep@splitprefix#1\@nil
-  \ifx\codep@tmp@type\codep@const@typeequation
-    (\codep@tmp@num)%
-  \else\ifx\codep@tmp@type\codep@const@typeproof
-    \codep@tmp@num*%
-  \else
-    \codep@tmp@num
-  \fi\fi
-}%
-
-%% ===================================================================
 %% Graph collapse
 %% ===================================================================
 
 % \codep@collapsebr{targetnum}
 %   Build a comma-joined display macro \codep@br@<num> from
-%   the per-target node csnames.  Called lazily the first time
-%   \codep@queuebackref looks up <num>.
+%   the per-target source refs.  Uses the query API
+%   (\codep@graph@hasrefs, \codep@graph@foreachref) instead
+%   of reading graph internals directly.  Called lazily the
+%   first time \codep@queuebackref looks up <num>.
+% Callback for \codep@collapsebr.  Defined at top level to avoid
+% parameter-doubling issues when nested inside other macros.
+%% @utility
+\def\codep@collapsebr@cb#1{%
+  \ifx\codep@tmp@acc\@empty%
+    \edef\codep@tmp@acc{%
+      \noexpand\codep@brhyper{#1}}%
+  \else%
+    \edef\codep@tmp@acc{%
+      \unexpanded\expandafter{\codep@tmp@acc}, %
+      \noexpand\codep@brhyper{#1}}%
+  \fi%
+}%
 \def\codep@collapsebr#1{%
-  \expandafter\ifx\csname codep@brcount@#1\endcsname\relax
-    % No refs to this target.
-    \global\expandafter\let
-      \csname codep@br@#1\endcsname\@empty
-  \else
-    \begingroup
-      \edef\codep@tmp@n{\csname codep@brcount@#1\endcsname}%
-      \def\codep@tmp@acc{}%
-      \count@=\z@
-      \loop
-        \ifnum\count@<\codep@tmp@n
-          \advance\count@ by 1\relax
-          \edef\codep@tmp@node{%
-            \csname codep@brnode@#1@\the\count@\endcsname}%
-          \ifx\codep@tmp@acc\@empty
-            \edef\codep@tmp@acc{%
-              \noexpand\codep@brhyper{\codep@tmp@node}}%
-          \else
-            \edef\codep@tmp@acc{%
-              \unexpanded\expandafter{\codep@tmp@acc}, %
-              \noexpand\codep@brhyper{\codep@tmp@node}}%
-          \fi
-      \repeat
-      \global\expandafter\let
-        \csname codep@br@#1\endcsname\codep@tmp@acc
-    \endgroup
-  \fi
+  \begingroup%
+    \def\codep@tmp@acc{}%
+    \codep@graph@foreachref{#1}{\codep@collapsebr@cb}%
+    \ifx\codep@tmp@acc\@empty%
+      \global\expandafter\let%
+        \csname codep@br@#1\endcsname\@empty%
+    \else%
+      \global\expandafter\let%
+        \csname codep@br@#1\endcsname\codep@tmp@acc%
+    \fi%
+  \endgroup%
 }
 
 %% ===================================================================
@@ -425,11 +404,12 @@
 % \codep@appendix@emit{prefixedkey}{type}
 %   Collapse back-refs for the prefixed atom key and emit an
 %   appendix entry if any back-references exist.  The display
-%   number is derived from the prefixed key via \codep@displayfromkey.
+%   number is derived via the query API (\codep@graph@getdisplay).
 \def\codep@appendix@emit#1#2{%
   \codep@collapsebr{#1}%
   \expandafter\ifx\csname codep@br@#1\endcsname\@empty\else
-    \codep@appendixentry{\codep@displayfromkey{#1}}{#2}{%
+    \codep@graph@getdisplay{#1}{\codep@tmp@display}%
+    \codep@appendixentry{\codep@tmp@display}{#2}{%
       \csname codep@br@#1\endcsname}%
   \fi
 }
@@ -457,24 +437,25 @@
 
 % Hyperref link wrapping for backref numbers.
 % Receives a prefixed key (e.g. theorem:2.1, equation:3.1, proof:2.1).
-% Default (no hyperref): render display form via \codep@displayfromkey.
+% Default (no hyperref): render display form via query API.
 % With hyperref: render display form wrapped in \hyperlink to the
-% anchor stored under the prefixed key.
-\renewcommand*{\codep@brhyper}[1]{\codep@displayfromkey{#1}}
+% anchor retrieved via \codep@graph@getanchor.
+\renewcommand*{\codep@brhyper}[1]{%
+  \codep@graph@getdisplay{#1}{\codep@tmp@brdisplay}%
+  \codep@tmp@brdisplay%
+}
 
 \AtBeginDocument{%
   \@ifpackageloaded{hyperref}{%
     \PackageInfo{codependent-render}{hyperref detected, enabling links}%
     \renewcommand*{\codep@brhyper}[1]{%
-      \expandafter\ifx\csname codep@anchor@#1\endcsname\relax
-        \codep@brhyper@noanchor{#1}%
-      \else
-        \hyperlink{\csname codep@anchor@#1\endcsname}{%
-          \codep@displayfromkey{#1}}%
+      \codep@graph@getanchor{#1}{\codep@tmp@branchor}%
+      \codep@graph@getdisplay{#1}{\codep@tmp@brdisplay}%
+      \ifx\codep@tmp@branchor\@empty%
+        \codep@tmp@brdisplay%
+      \else%
+        \hyperlink{\codep@tmp@branchor}{\codep@tmp@brdisplay}%
       \fi}%
-    % No anchor for this prefixed key: render display form
-    % without a hyperlink.
-    \def\codep@brhyper@noanchor#1{\codep@displayfromkey{#1}}%
   }{}%
 }
 

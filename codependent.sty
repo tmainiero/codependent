@@ -1612,6 +1612,99 @@
 
 % \codep@collapsebr — moved to codependent-render.sty.
 
+%% --- Section 8a.3a: Rendering query API shims ---
+%% These macros form the render barrier: codependent-render.sty
+%% calls ONLY these to read graph state.  The implementations
+%% wrap the current prefixed-key internals (codep@brcount@,
+%% codep@brnode@, codep@anchor@, \codep@splitprefix).  In later
+%% waves the shim bodies change but the signatures stay fixed.
+
+% String constants for type comparisons in display rules.
+% Needed by \codep@graph@getdisplay; previously in render.sty.
+\def\codep@const@typeequation{equation}%
+\def\codep@const@typeproof{proof}%
+
+%% @utility
+% \codep@graph@hasrefs{target-key}{then}{else}
+%   Test whether the target has at least one backref edge.
+%   #1 = target key (prefixed key like "theorem:1.2")
+%   #2 = then branch
+%   #3 = else branch
+\def\codep@graph@hasrefs#1#2#3{%
+  \expandafter\ifx\csname codep@brcount@#1\endcsname\relax%
+    #3%
+  \else%
+    #2%
+  \fi%
+}%
+
+%% @utility
+% \codep@graph@getdisplay{entity-key}{macro}
+%   Derive the rendered display form from a prefixed key and
+%   store it in #2.
+%   equation:X → (X)   proof:X → X*   otherwise → X
+\def\codep@graph@getdisplay#1#2{%
+  \expandafter\codep@splitprefix#1\@nil%
+  \ifx\codep@tmp@type\codep@const@typeequation%
+    \def#2{(\codep@tmp@num)}%
+  \else\ifx\codep@tmp@type\codep@const@typeproof%
+    \def#2{\codep@tmp@num*}%
+  \else%
+    \let#2\codep@tmp@num%
+  \fi\fi%
+}%
+
+%% @utility
+% \codep@graph@getanchor{entity-key}{macro}
+%   Retrieve the hyperref anchor for entity-key into #2,
+%   or set #2 to \@empty if no anchor exists.
+\def\codep@graph@getanchor#1#2{%
+  \expandafter\ifx\csname codep@anchor@#1\endcsname\relax%
+    \let#2\@empty%
+  \else%
+    \expandafter\let\expandafter#2%
+      \csname codep@anchor@#1\endcsname%
+  \fi%
+}%
+
+%% @utility
+% \codep@graph@getkind{entity-key}{macro}
+%   Extract the type prefix from a prefixed key into #2.
+\def\codep@graph@getkind#1#2{%
+  \expandafter\codep@splitprefix#1\@nil%
+  \let#2\codep@tmp@type%
+}%
+
+%% @utility
+% \codep@graph@foreachref{target-key}{callback}
+%   Iterate over all source refs for target-key, calling
+%   #2{source-key} for each.  #2 is a macro that takes one arg.
+\def\codep@graph@foreachref#1#2{%
+  \expandafter\ifx\csname codep@brcount@#1\endcsname\relax\else%
+    \edef\codep@tmp@n{\csname codep@brcount@#1\endcsname}%
+    \count@=\z@%
+    \loop%
+      \ifnum\count@<\codep@tmp@n%
+        \advance\count@ by 1\relax%
+        \edef\codep@tmp@node{%
+          \csname codep@brnode@#1@\the\count@\endcsname}%
+        \expandafter#2\expandafter{\codep@tmp@node}%
+    \repeat%
+  \fi%
+}%
+
+%% @utility
+% \codep@render@equationblock{source-atom-id}{fallback-atom-id}{target-list}
+%   Wave 1 pass-through shim for equation rendering.
+%   #1 = source atom id (prefixed eq key, e.g. "equation:1")
+%   #2 = fallback atom id (empty or enclosing atom key)
+%   #3 = target list as \do{q1}\do{q2}...
+%   In the current architecture equation rendering is already
+%   handled by \codep@render@queuebackref called from the
+%   tracking hooks, so this shim is intentionally empty.
+%   The real implementation lands in Wave 2/3.
+\def\codep@render@equationblock#1#2#3{}%
+
 %% --- Section 8a.4: \newlabel / \newlabelxx override + extractor ---
 %% Per REVIEW_C finding #1, use a \@secondoftwo-style grab of
 %% the first braced subgroup.  Per REVIEW_C finding #3, install
