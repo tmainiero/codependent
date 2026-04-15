@@ -387,13 +387,6 @@
 }%
 
 %% @utility
-% \codep@atomsetanchor{atom-id}{anchor}
-%   Persist the effective hyperlink anchor for this atom.
-\def\codep@atomsetanchor#1#2{%
-  \expandafter\xdef\csname codep@atomanchor@#1\endcsname{#2}%
-}%
-
-%% @utility
 % \codep@atomgetkey{atom-id}{macro}
 %   Store the legacy prefixed key for atom-id into macro.
 \def\codep@atomgetkey#1#2{%
@@ -435,22 +428,6 @@
       \let#2\@empty%
     \else%
       \expandafter\let\expandafter#2\csname codep@atomkind@#1\endcsname%
-    \fi%
-  \fi%
-}%
-
-%% @utility
-% \codep@atomgetanchor{atom-id}{macro}
-%   Store the effective anchor for atom-id into macro.
-\def\codep@atomgetanchor#1#2{%
-  \ifx#1\@empty%
-    \let#2\@empty%
-  \else%
-    \expandafter\ifx\csname codep@atomanchor@#1\endcsname\relax%
-      \let#2\@empty%
-    \else%
-      \expandafter\let\expandafter#2%
-        \csname codep@atomanchor@#1\endcsname%
     \fi%
   \fi%
 }%
@@ -791,17 +768,16 @@
 %% @behavior B-NUM-STARRED
 % \codep@hooktheorem@after{envname}
 %   Capture the theorem's legacy prefixed key after its counter steps.
+%   Anchor written here captures the theorem's own \@currentHref;
+%   the extractanchor mechanism (§8a.5) overwrites codep@anchor@<key>
+%   on pass 2+ with the equation-shifted anchor when an equation inside
+%   the theorem shares the same display number.
 \def\codep@hooktheorem@after#1{%
   \ifnum\codep@trackeddepth=1\relax%
     \codep@ctxpeekid\codep@thisatomid%
     \xdef\codep@outeratom{#1:\theatom}%
     \codep@atomsetkey{\codep@thisatomid}{\codep@outeratom}%
     \codep@writeanchormap{\codep@outeratom}%
-    \@ifpackageloaded{hyperref}{%
-      \codep@atomsetanchor{\codep@thisatomid}{\@currentHref}%
-    }{%
-      \codep@atomsetanchor{\codep@thisatomid}{}%
-    }%
   \fi%
 }%
 
@@ -1020,11 +996,6 @@
   \edef\codep@tmp@proofkey{proof:\theatom}%
   \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \codep@writeanchormap{\codep@tmp@proofkey}%
-  \@ifpackageloaded{hyperref}{%
-    \codep@atomsetanchor{\codep@currentproofid}{\@currentHref}%
-  }{%
-    \codep@atomsetanchor{\codep@currentproofid}{}%
-  }%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@atom{\theatom}{proof}}%
   \codep@cdpwrite@atom{%
@@ -1058,7 +1029,6 @@
     \expandafter\xdef%
       \csname codep@anchor@\codep@tmp@proofkey\endcsname%
       {\codep@tmp@thmanchor}%
-    \codep@atomsetanchor{\codep@currentproofid}{\codep@tmp@thmanchor}%
     \if@filesw%
       \protected@write\@auxout{}{%
         \string\codep@anchormap{\codep@tmp@proofkey}%
@@ -1271,9 +1241,6 @@
     \expandafter\xdef%
       \csname codep@anchor@\codep@eqatom\endcsname%
       {\codep@eq@anchor}%
-    \ifx\codep@currenteqsourceid\@empty\else%
-      \codep@atomsetanchor{\codep@currenteqsourceid}{\codep@eq@anchor}%
-    \fi%
     \if@filesw%
       \protected@write\@auxout{}{%
         \string\codep@anchormap{\codep@eqatom}{\codep@eq@anchor}}%
@@ -1513,11 +1480,6 @@
   \edef\codep@tmp@parakey{paragraph:\theatom}%
   \codep@atomsetkey{\codep@thisatomid}{\codep@tmp@parakey}%
   \codep@writeanchormap{\codep@tmp@parakey}%
-  \@ifpackageloaded{hyperref}{%
-    \codep@atomsetanchor{\codep@thisatomid}{\@currentHref}%
-  }{%
-    \codep@atomsetanchor{\codep@thisatomid}{}%
-  }%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@atom{\theatom}{paragraph}}%
   \codep@cdpwrite@atom{%
@@ -1688,15 +1650,6 @@
       \codep@atomsetkey{\codep@currenteqsourceid}{\codep@eqatom}%
     \fi%
     \codep@writeanchormap{\codep@eqatom}%
-    \@ifpackageloaded{hyperref}{%
-      \ifx\codep@currenteqsourceid\@empty\else%
-        \codep@atomsetanchor{\codep@currenteqsourceid}{\@currentHref}%
-      \fi%
-    }{%
-      \ifx\codep@currenteqsourceid\@empty\else%
-        \codep@atomsetanchor{\codep@currenteqsourceid}{}%
-      \fi%
-    }%
     \if@filesw%
       \codep@dedupwrite{\codep@eqatom}{#1}%
     \fi%
@@ -2768,10 +2721,7 @@
             \expandafter\xdef%
               \csname codep@anchor@\codep@tmp@proofkey\endcsname%
               {\@currentHref}%
-            \codep@atomsetanchor{\codep@currentproofid}{\@currentHref}%
-          }{%
-            \codep@atomsetanchor{\codep@currentproofid}{}%
-          }%
+          }{}%
         \fi%
         \codep@render@queuebackref{\codep@tmp@proofkey}%
       \fi%

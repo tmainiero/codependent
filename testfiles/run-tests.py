@@ -1099,6 +1099,18 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                                                 f"only {n_links} covering "
                                                 f"link(s)"
                                             )
+                                        for link in overlapping:
+                                            if (
+                                                link.dest
+                                                and link.dest
+                                                not in br_link_data.destinations
+                                            ):
+                                                result.failures.append(
+                                                    f"all-backrefs-linked: "
+                                                    f"'{bline.text}' has link with "
+                                                    f"dest '{link.dest}' that does not "
+                                                    f"exist in PDF named destinations"
+                                                )
 
                                 # TEST-PDF-BACKREF-TARGETS
                                 for spec in fix.pdf_backref_targets:
