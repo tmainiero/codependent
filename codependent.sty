@@ -1047,15 +1047,12 @@
   \global\codep@proofdisplaypendingfalse%
   \codep@atomgetdisplay{\codep@pendingresultid}\codep@tmp@num%
   \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@parentkey}%
-  \codep@atomgetanchor{\codep@pendingresultid}{\codep@tmp@thmanchor}%
-  \ifx\codep@tmp@thmanchor\@empty%
-    \expandafter\ifx%
-        \csname codep@anchor@\codep@tmp@parentkey\endcsname\relax%
+  \edef\codep@tmp@thmanchor{%
+    \expandafter\ifx\csname codep@anchor@\codep@tmp@parentkey\endcsname\relax%
+      \noexpand\@empty%
     \else%
-      \edef\codep@tmp@thmanchor{%
-        \csname codep@anchor@\codep@tmp@parentkey\endcsname}%
-    \fi%
-  \fi%
+      \csname codep@anchor@\codep@tmp@parentkey\endcsname%
+    \fi}%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \ifx\codep@tmp@thmanchor\@empty\else%
     \expandafter\xdef%
@@ -1337,6 +1334,18 @@
 \newcommand*{\codep@suppresscmd}[1]{%
   \pretocmd{#1}{\global\advance\codep@suppressdepth by 1\relax}{}{}%
   \apptocmd{#1}{\global\advance\codep@suppressdepth by -1\relax}{}{}%
+}%
+
+%% @utility
+% \codep@withsuppression{tokens}
+%   Execute tokens with codep@suppressdepth incremented, then
+%   decremented.  Suppression is balanced by construction.
+%   \global\advance is required: caller may be inside a group
+%   (e.g., \AfterEndEnvironment callbacks).
+\def\codep@withsuppression#1{%
+  \global\advance\codep@suppressdepth\@ne%
+  #1%
+  \global\advance\codep@suppressdepth\m@ne%
 }%
 
 % \codep@installsuppress

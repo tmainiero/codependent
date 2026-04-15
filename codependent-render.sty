@@ -485,9 +485,16 @@
 % \codep@render@thm@afterend{envname}
 %   Block/margin style: flush after the theorem env fully closes.
 %   Inline style: already flushed in preparebackref, so no-op.
+%   Below-style emission wraps the flush in \codep@withsuppression
+%   to prevent the emitted text from triggering para/begin and
+%   creating a spurious paragraph atom between theorems.
 \def\codep@render@thm@afterend#1{%
   \ifx\codep@backrefstyle\codep@const@inline\else
-    \codep@flushbackref
+    \ifx\codep@backrefstyle\codep@const@below
+      \codep@withsuppression{\codep@flushbackref}%
+    \else
+      \codep@flushbackref
+    \fi
   \fi
 }%
 
