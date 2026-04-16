@@ -74,6 +74,14 @@ for FILE in "${FILES[@]}"; do
     warn "$FILE: missing TEST-PACKAGES header"
   fi
 
+  # 9. ALL-BACKREFS-LINKED requires at least one BACKREF-TARGETS (link correctness)
+  if grep -q '^%% TEST-PDF-ALL-BACKREFS-LINKED:' "$FILE"; then
+    TARGETS_COUNT=$(grep -cP '^%% TEST-PDF-BACKREF-TARGETS:' "$FILE" || true)
+    if [ "$TARGETS_COUNT" -lt 1 ]; then
+      warn "$FILE: has ALL-BACKREFS-LINKED but no BACKREF-TARGETS (link correctness unchecked)"
+    fi
+  fi
+
 done
 
 echo >&2
