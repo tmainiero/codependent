@@ -1,0 +1,18 @@
+# Canonical locations of machine-read project docs.
+# Lint scripts and test tools read this to avoid hardcoded paths.
+# When a doc moves, update ONE line here instead of sweeping the tree.
+
+[docs]
+behavior              = "docs/BEHAVIOR.md"
+conventions           = "docs/CONVENTIONS.md"
+design                = "docs/DESIGN.md"
+history               = "docs/HISTORY.md"
+credits               = "docs/CREDITS.md"
+implementation        = "docs/IMPLEMENTATION_PICKUP.md"
+phase3_spec           = "docs/PHASE3_SPEC.md"
+traceability_baseline = ".traceability-baseline"
+
+[tests]
+# Files listed in this baseline are exempted from the TEST-BEHAVIOR rule —
+# grandfather for pre-rule tests while they get backfilled with behavior IDs.
+behavior_baseline = ".test-behavior-baseline"

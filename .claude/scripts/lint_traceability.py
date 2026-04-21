@@ -21,22 +21,38 @@ Usage:
   python3 lint_traceability.py --update-baseline       # regenerate baseline from current state
 """
 
+import glob
+import json
 import os
 import re
 import sys
 from typing import Dict, List, Optional, Set, Tuple
 
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    import tomli as tomllib  # type: ignore
+
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants (paths resolved via .claude/paths.toml)
 # ---------------------------------------------------------------------------
 
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-BEHAVIOR_MD = os.path.join(PROJ_ROOT, "docs/BEHAVIOR.md")
-BASELINE_FILE = os.path.join(PROJ_ROOT, ".traceability-baseline")
+
+with open(os.path.join(PROJ_ROOT, ".claude", "paths.toml"), "rb") as _f:
+    _PATHS = tomllib.load(_f)
+
+BEHAVIOR_MD = os.path.join(PROJ_ROOT, _PATHS["docs"]["behavior"])
+BASELINE_FILE = os.path.join(PROJ_ROOT, _PATHS["docs"]["traceability_baseline"])
+TEST_BEHAVIOR_BASELINE = os.path.join(PROJ_ROOT, _PATHS["tests"]["behavior_baseline"])
 STY_FILES = [
     os.path.join(PROJ_ROOT, "codependent.sty"),
     os.path.join(PROJ_ROOT, "codependent-render.sty"),
+]
+TEST_DIRS = [
+    os.path.join(PROJ_ROOT, "testfiles", "unit"),
+    os.path.join(PROJ_ROOT, "testfiles", "integration"),
 ]
 
 RE_BEHAVIOR_ID = re.compile(r'\[B-([A-Z0-9]+(?:-[A-Z0-9]+)*)\]')
@@ -243,6 +259,89 @@ def parse_sty_file(path: str) -> List[MacroInfo]:
 
 
 # ---------------------------------------------------------------------------
+# Test-behavior linting (.lvt TEST-BEHAVIOR headers)
+# ---------------------------------------------------------------------------
+
+RE_TEST_BEHAVIOR = re.compile(r'^%%\s+TEST-BEHAVIOR:\s*(.+)$')
+RE_TEST_SOURCE_OR_SECTION = re.compile(r'^%%\s+TEST-(?:SOURCE|SECTION):\s*(.+)$')
+# Only flag refs to docs/BEHAVIOR.md in TEST-SOURCE/TEST-SECTION: those should
+# use %% TEST-BEHAVIOR: B-XXX instead of prose section citations.
+# docs/DESIGN.md, docs/CONVENTIONS.md etc. are legitimate source pointers.
+RE_PROSE_DOC_REF = re.compile(r'\bdocs/BEHAVIOR\.md\b')
+
+
+def load_test_behavior_baseline(path: str) -> Set[str]:
+    """Grandfather list of .lvt files (relative to PROJ_ROOT) exempt from the rule."""
+    exempt: Set[str] = set()
+    if not os.path.isfile(path):
+        return exempt
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            exempt.add(line)
+    return exempt
+
+
+def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]]]:
+    """Return (behavior_ids, [(lineno, raw_line_with_prose_docref), ...]).
+
+    Reads the `%%` header block until the first non-header line.
+    """
+    ids: List[str] = []
+    prose_refs: List[Tuple[int, str]] = []
+    if not os.path.isfile(path):
+        return ids, prose_refs
+    with open(path, "r", encoding="utf-8") as f:
+        for lineno, raw in enumerate(f, 1):
+            line = raw.rstrip("\n")
+            if not line.startswith("%%"):
+                stripped = line.strip()
+                if stripped and not stripped.startswith("%"):
+                    break  # end of header
+                continue
+            m = RE_TEST_BEHAVIOR.match(line)
+            if m:
+                for tok in m.group(1).split(","):
+                    tok = tok.strip()
+                    if tok:
+                        ids.append(tok)
+                continue
+            m = RE_TEST_SOURCE_OR_SECTION.match(line)
+            if m and RE_PROSE_DOC_REF.search(m.group(1)):
+                prose_refs.append((lineno, line))
+    return ids, prose_refs
+
+
+def find_lvt_files() -> List[str]:
+    out: List[str] = []
+    for d in TEST_DIRS:
+        for p in sorted(glob.glob(os.path.join(d, "*.lvt"))):
+            out.append(p)
+    return out
+
+
+def check_tests(specs: Dict[str, str]) -> List[str]:
+    """Return error strings. Empty = pass."""
+    errors: List[str] = []
+    exempt = load_test_behavior_baseline(TEST_BEHAVIOR_BASELINE)
+    for lvt in find_lvt_files():
+        rel = os.path.relpath(lvt, PROJ_ROOT)
+        ids, prose_refs = parse_lvt_header(lvt)
+        if rel in exempt:
+            continue
+        if not ids:
+            errors.append(f"{rel}: missing TEST-BEHAVIOR: header (add ≥1 B-* ID from docs/BEHAVIOR.md or add to .test-behavior-baseline)")
+        for bid in ids:
+            if bid not in specs:
+                errors.append(f"{rel}: TEST-BEHAVIOR references unknown ID {bid!r}")
+        for lineno, line in prose_refs:
+            errors.append(f"{rel}:{lineno}: prose docs/*.md ref in TEST-SOURCE/TEST-SECTION header — cite B-* IDs via TEST-BEHAVIOR instead ({line.strip()})")
+    return errors
+
+
+# ---------------------------------------------------------------------------
 # Full check
 # ---------------------------------------------------------------------------
 
@@ -309,6 +408,10 @@ def run_full_check() -> int:
     stale_baseline_macros = [m for m in baseline_macros if m in name_to_macro and name_to_macro[m].is_classified]
     stale_baseline_bids = [b for b in baseline_bids if b in covered_ids]
 
+    # Check 7: Test-to-behavior linkage (.lvt TEST-BEHAVIOR headers)
+    test_errors = check_tests(specs)
+    errors.extend(test_errors)
+
     # Stats
     n_total_macros = len(all_macros)
     n_classified = sum(1 for mi in all_macros if mi.is_classified)
@@ -317,11 +420,26 @@ def run_full_check() -> int:
     n_covered = len(covered_ids)
     n_baseline_bids = len([b for b in uncovered_ids if b in baseline_bids])
 
+    # Test-behavior stats
+    all_lvt = find_lvt_files()
+    test_exempt = load_test_behavior_baseline(TEST_BEHAVIOR_BASELINE)
+    n_tests = len(all_lvt)
+    n_tests_assigned = 0
+    for p in all_lvt:
+        rel = os.path.relpath(p, PROJ_ROOT)
+        if rel in test_exempt:
+            continue
+        tids, _ = parse_lvt_header(p)
+        if tids:
+            n_tests_assigned += 1
+    n_tests_exempt = sum(1 for p in all_lvt if os.path.relpath(p, PROJ_ROOT) in test_exempt)
+
     # Output
     print("=== Behavioral Traceability ===")
     print(f"docs/BEHAVIOR.md: {n_specs} behavioral statements")
     print(f"Macros: {n_total_macros} total, {n_classified} classified, {n_baseline_macros} baselined, {len(unclassified)} unclassified")
     print(f"Coverage: {n_covered}/{n_specs} statements covered ({n_covered/n_specs*100:.0f}%), {n_baseline_bids} baselined")
+    print(f"Tests: {n_tests} total, {n_tests_assigned} with TEST-BEHAVIOR, {n_tests_exempt} baselined")
     print()
 
     if stale_baseline_macros or stale_baseline_bids:
@@ -332,12 +450,23 @@ def run_full_check() -> int:
             print(f"  behavior: {b}")
         print()
 
+    # Ratchet check — runs on every full invocation
+    print("=== Baseline Ratchet ===")
+    ratchet_rc = run_check_ratchet()
+    print()
+
     if errors:
         print(f"ERRORS ({len(errors)}):")
         for e in errors:
             print(f"  {e}")
         print()
-        print(f"RESULT: FAIL ({len(errors)} errors)")
+        if ratchet_rc != 0:
+            print(f"RESULT: FAIL ({len(errors)} traceability errors + ratchet fail)")
+        else:
+            print(f"RESULT: FAIL ({len(errors)} errors)")
+        return 1
+    elif ratchet_rc != 0:
+        print("RESULT: FAIL (ratchet)")
         return 1
     else:
         print("RESULT: PASS")
@@ -382,6 +511,85 @@ def run_changed_file(filepath: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Baseline ratchet
+# ---------------------------------------------------------------------------
+
+BASELINE_SIZES_FILE = os.path.join(PROJ_ROOT, ".claude", "baseline-sizes.json")
+
+# Keys: must match what compute_baseline_sizes() returns
+RATCHET_KEYS = (
+    ".traceability-baseline.unclassified_macros",
+    ".traceability-baseline.uncovered_behaviors",
+    ".test-behavior-baseline",
+)
+
+
+def _count_traceability_baseline_sections(path: str) -> tuple:
+    """Return (n_macros, n_bids) — entry counts in each section."""
+    macros, bids = load_baseline(path)
+    return len(macros), len(bids)
+
+
+def compute_baseline_sizes() -> Dict[str, int]:
+    n_macros, n_bids = _count_traceability_baseline_sections(BASELINE_FILE)
+    exempt = load_test_behavior_baseline(TEST_BEHAVIOR_BASELINE)
+    return {
+        ".traceability-baseline.unclassified_macros": n_macros,
+        ".traceability-baseline.uncovered_behaviors": n_bids,
+        ".test-behavior-baseline": len(exempt),
+    }
+
+
+def load_baseline_sizes() -> Dict[str, int]:
+    if not os.path.isfile(BASELINE_SIZES_FILE):
+        return {}
+    with open(BASELINE_SIZES_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def write_baseline_sizes(sizes: Dict[str, int]) -> None:
+    os.makedirs(os.path.dirname(BASELINE_SIZES_FILE), exist_ok=True)
+    with open(BASELINE_SIZES_FILE, "w", encoding="utf-8") as f:
+        json.dump(sizes, f, indent=2, sort_keys=True)
+        f.write("\n")
+
+
+def run_check_ratchet() -> int:
+    """Check that no baseline has grown. Return 0 = pass, 1 = fail."""
+    recorded = load_baseline_sizes()
+    if not recorded:
+        print("ERROR: .claude/baseline-sizes.json not found — run --update-ratchet first", file=sys.stderr)
+        return 1
+    current = compute_baseline_sizes()
+    errors = []
+    for key in RATCHET_KEYS:
+        cur = current.get(key, 0)
+        rec = recorded.get(key, 0)
+        if cur > rec:
+            errors.append(f"  GREW: {key}: {rec} → {cur} (+{cur - rec})")
+        elif cur < rec:
+            print(f"  shrunk: {key}: {rec} → {cur} (−{rec - cur}) — run --update-ratchet")
+        else:
+            print(f"  ok:     {key}: {cur}")
+    if errors:
+        print("RATCHET FAIL — baselines must only shrink:")
+        for e in errors:
+            print(e)
+        return 1
+    return 0
+
+
+def run_update_ratchet() -> int:
+    """Write current baseline sizes to .claude/baseline-sizes.json."""
+    sizes = compute_baseline_sizes()
+    write_baseline_sizes(sizes)
+    print(f"Ratchet updated → {BASELINE_SIZES_FILE}")
+    for key, val in sorted(sizes.items()):
+        print(f"  {key}: {val}")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Update baseline
 # ---------------------------------------------------------------------------
 
@@ -417,6 +625,12 @@ def main() -> int:
 
     if "--update-baseline" in args:
         return run_update_baseline()
+
+    if "--update-ratchet" in args:
+        return run_update_ratchet()
+
+    if "--check-ratchet" in args:
+        return run_check_ratchet()
 
     if "--changed-file" in args:
         idx = args.index("--changed-file")

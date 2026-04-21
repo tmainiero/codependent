@@ -1,0 +1,18 @@
+# .test-behavior-baseline — grandfather list for the TEST-BEHAVIOR: header rule.
+#
+# Purpose: Every .lvt file must cite at least one B-* behavior ID from
+# docs/BEHAVIOR.md via a %% TEST-BEHAVIOR: header. Files listed here are
+# exempt (grandfathered) from that requirement while they receive backfill.
+#
+# AUDIT: See /tmp/behavior-backfill-audit.md for the heuristic-assignment report.
+#
+# RATCHET: This file must SHRINK over time. The size is enforced by
+# python3 .claude/scripts/lint_traceability.py --check-ratchet (run on every
+# linter invocation). To update the recorded size after a legitimate shrinkage:
+#   python3 .claude/scripts/lint_traceability.py --update-ratchet
+#
+# To graduate a file: add %% TEST-BEHAVIOR: B-XXX-YYY to its header block
+# and remove the line from this file.
+#
+# All 94 tests have been backfilled with TEST-BEHAVIOR headers.
+# This baseline is now empty — every test cites at least one B-* ID.

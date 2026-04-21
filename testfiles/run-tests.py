@@ -67,6 +67,7 @@ METADATA_KEYS = {
     "TEST-WHAT": "what",
     "TEST-SOURCE": "source",
     "TEST-SECTION": "section",
+    "TEST-BEHAVIOR": "behavior_ids",  # comma-separated B-* IDs from docs/BEHAVIOR.md
     "TEST-EXIT": "exit_code",
     "TEST-LOG-NOT": "log_not",  # may repeat
     "TEST-LOG-CONTAINS": "log_contains",  # may repeat
@@ -139,6 +140,7 @@ class Fixture:
     what: str = ""
     source: str = ""
     section: str = ""
+    behavior_ids: list = dataclasses.field(default_factory=list)
     exit_code: int = 0
     log_not: list = dataclasses.field(default_factory=list)
     log_contains: list = dataclasses.field(default_factory=list)
@@ -219,6 +221,8 @@ def parse_fixture(path: Path) -> Fixture:
                     pass
             elif attr == "packages":
                 fix.packages = [p.strip() for p in value.split(",") if p.strip()]
+            elif attr == "behavior_ids":
+                fix.behavior_ids = [b.strip() for b in value.split(",") if b.strip()]
             elif attr == "pins_known_broken":
                 fix.pins_known_broken = value.lower() in ("yes", "true", "1")
             elif attr == "pdf_no_orphan_links":
