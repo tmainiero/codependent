@@ -27,6 +27,7 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,ntheorem,hyperref,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SHARED
 
 \documentclass{article}
 

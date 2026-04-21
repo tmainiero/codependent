@@ -62,6 +62,7 @@
 %% (thm:noether is now 2.5 after the standalone align paragraph shifted the counter)
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.5}
 %% TEST-RERUN: 3
+%% TEST-BEHAVIOR: B-REND-BELOW, B-LINK-CLICKABLE
 %%
 %% Full-stack integration fixture. All codependent options are on,
 %% with backref-style=below (renders backrefs below the theorem body).

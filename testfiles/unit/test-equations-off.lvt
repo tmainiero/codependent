@@ -16,6 +16,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsmath,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EQ-OFF
 %%
 %% With equations=off, numbered equations do not capture the
 %% equation number as backref source. Any \ref inside a standalone

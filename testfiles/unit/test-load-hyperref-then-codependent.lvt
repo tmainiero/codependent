@@ -12,6 +12,7 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-CLICKABLE
 %%
 %% Baseline "happy path" load order regression. hyperref
 %% BEFORE codependent is the recommended order because codependent's

@@ -10,6 +10,7 @@
 %% TEST-CDP-NOT-CONTAINS: {paragraph}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-PARA
 %%
 %% With paragraphs=off, bare paragraphs get no atom numbers, no margin
 %% numbers, no SBL records.  Theorem tracking is unaffected; the first

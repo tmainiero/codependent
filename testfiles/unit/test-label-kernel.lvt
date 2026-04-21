@@ -10,6 +10,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@label{1.1}{thm:foo}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-CORRECT
 %%
 %% Baseline label-wrap regression. A plain \label{thm:foo}
 %% inside a tracked theorem environment must be captured and

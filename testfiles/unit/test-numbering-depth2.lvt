@@ -14,6 +14,7 @@
 %% TEST-RERUN: 2
 %% TEST-PDF-CONTAINS: 1.1.1
 %% TEST-PDF-NOT: 0.0.1
+%% TEST-BEHAVIOR: B-NUM-DEPTH2
 %%
 %% Pins depth=2: atom resets on \subsection, display format becomes
 %% section.subsection.atom. Two subsections under one section, one

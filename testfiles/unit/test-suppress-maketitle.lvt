@@ -14,6 +14,7 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-SUPP-CMDS
 %%
 %% When \maketitle is not suppressed, its internal paragraph gets
 %% numbered as atom 0.1 (before any \section resets the counter).

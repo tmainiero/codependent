@@ -25,6 +25,7 @@
 %%
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-DISP-PROOF
 %%
 %% Places a \label inside an adjacent proof body.  A later theorem
 %% \ref's that label, generating a backref edge where the proof atom

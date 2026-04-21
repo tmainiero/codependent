@@ -32,6 +32,7 @@
 %%
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EQ-TRACK1, B-DISP-EQ
 %%
 %% A theorem with label thm:main is defined first.  Then a numbered
 %% equation references it via \ref{thm:main}.  The equation counter

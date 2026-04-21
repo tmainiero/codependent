@@ -17,6 +17,7 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-SUPP-EXTEND
 %%
 %% \codepsuppresscmd delegates to \codep@suppresscmd, which uses
 %% \pretocmd / \apptocmd to increment/decrement codep@nestlevel

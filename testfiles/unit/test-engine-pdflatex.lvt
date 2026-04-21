@@ -12,6 +12,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SHARED
 %%
 %% Engine matrix: pdflatex baseline. The runner invokes this
 %% fixture specifically under pdflatex (not the default

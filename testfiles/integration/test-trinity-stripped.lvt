@@ -37,6 +37,7 @@
 %% TEST-ATOMS-MIN: 8
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE
 %%
 %% Modelled on a real operator-algebra / category-theory paper that uses:
 %%   - thmtools \declaretheorem with counter sharing (sibling=)

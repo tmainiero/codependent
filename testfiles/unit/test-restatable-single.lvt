@@ -13,6 +13,7 @@
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REST-FIRST, B-REST-NODUP
 %%
 %% Without the §8a.5.a `\ifx\c@theorem\c@atom` guard, the \restate
 %% would re-fire \AtBeginEnvironment{theorem} in a scope where

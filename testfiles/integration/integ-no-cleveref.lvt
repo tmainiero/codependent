@@ -27,6 +27,7 @@
 %% TEST-RERUN: 2
 %% TEST-PDF-LINKS: 2
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
+%% TEST-BEHAVIOR: B-LINK-CLICKABLE
 %% NOTE: TEST-PDF-ALL-BACKREFS-LINKED intentionally NOT enabled here.
 %% The no-cleveref path has a known linking gap: starred proof atoms
 %% (2.2*, 2.3*) and some references via \ref lack hyperlinks.

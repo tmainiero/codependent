@@ -13,6 +13,7 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE
 %%
 %% The paragraph of text between theorem and proof clears
 %% \codep@lasttheorematom, so the proof falls through to the

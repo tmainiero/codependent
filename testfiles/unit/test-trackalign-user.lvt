@@ -15,6 +15,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsmath,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EQ-TRACK2
 %%
 %% \codeptrackalign delegates to \codep@trackalignenv, which installs
 %% AtBeginEnvironment / AtEndEnvironment / AfterEndEnvironment hooks.

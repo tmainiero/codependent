@@ -44,6 +44,7 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EQ-ALL
 
 \documentclass{article}
 

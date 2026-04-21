@@ -12,6 +12,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: tikz-cd,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-SUPP-TRACKED
 %%
 %% REVIEW_E finding #9 companion to test-suppress-tikz-inline.
 %% Since the target user writes category theory with tikzcd

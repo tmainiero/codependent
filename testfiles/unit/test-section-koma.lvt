@@ -12,6 +12,7 @@
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
 %% TEST-PACKAGES: scrbook,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-DEPTH1
 %%
 %% The original v0.1 design wrapped \@startsection. KOMA-Script
 %% replaces \@startsection with \scr@startsection at scrbook.cls

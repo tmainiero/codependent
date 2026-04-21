@@ -11,6 +11,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: tikz,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-SUPP-TRACKED
 %%
 %% REVIEW_E finding #9. The inline form \tikz{...} opens a
 %% group, builds a single-node picture, and closes it, all

@@ -15,6 +15,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@use{1.1}{Hom}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-CONC-NODEF
 %%
 %% The user writes \Hom uses but never marks a definition site with
 %% \Hom*. The .sty must NOT fall back to "first occurrence wins"

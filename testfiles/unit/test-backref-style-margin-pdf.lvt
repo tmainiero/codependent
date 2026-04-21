@@ -17,6 +17,7 @@
 %% TEST-PDF-CONTAINS: Used in
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-BEHAVIOR: B-REND-MARGIN, B-LINK-CLICKABLE
 %%
 %% Two theorems where the second references the first.  With
 %% backref-style=margin, the "Used in 1.2" annotation should appear

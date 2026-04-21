@@ -28,6 +28,7 @@
 %% TEST-PDF-CONTAINS: Used in
 %% TEST-PDF-LINKS: 5
 %% TEST-RERUN: 3
+%% TEST-BEHAVIOR: B-NUM-PARA
 %%
 %% Paragraphs=off integration test.
 %%

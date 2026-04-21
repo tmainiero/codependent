@@ -13,6 +13,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SHARED
 %%
 %% Engine matrix: lualatex. Runs the same minimal theorem
 %% tracking test but under lualatex. Catches regressions

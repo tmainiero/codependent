@@ -12,6 +12,7 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-OFF
 %%
 %% With proofs=off, proof environments only suppress paragraph
 %% numbering; they do not get atom numbers or SBL records.

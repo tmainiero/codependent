@@ -22,6 +22,7 @@
 %% TEST-ATOMS-MIN: 10
 %% TEST-PACKAGES: amsmath,mathtools,amsthm,thmtools,hyperref,cleveref,enumitem,tcolorbox,tikz,tikz-cd,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE
 %%
 %% The "does the whole thing compose?" smoke test. Unit
 %% fixtures pin individual features; this one verifies that

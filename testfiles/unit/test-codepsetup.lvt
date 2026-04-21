@@ -12,6 +12,7 @@
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SHARED
 %%
 %% Exercises every \codepsetup key: backref-style, backref-align,
 %% backref-font, backref-prefix, backref-label, margin-font.

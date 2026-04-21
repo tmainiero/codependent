@@ -10,6 +10,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{proof}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-NONADJ
 %%
 %% With proof-warnings=off, a non-adjacent proof still gets its own
 %% atom number but no warning is emitted in the log.

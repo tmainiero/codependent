@@ -10,6 +10,7 @@
 %% TEST-CDP-LAST-RECORD: \codep@cdp@end{OK}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SHARED
 %%
 %% REVIEW_C finding #7. The .cdp sentinel is the CLI's
 %% indicator that the file is complete and valid. If pdflatex

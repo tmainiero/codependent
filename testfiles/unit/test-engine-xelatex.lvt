@@ -22,6 +22,7 @@
 %%
 %% NOTE: This test is run by invoking the runner with --engine xelatex.
 %% TEST-ENGINE is a documentary header only; the runner selects the
+%% TEST-BEHAVIOR: B-NUM-SHARED
 %% engine globally via the --engine CLI flag.
 %%
 %% If xelatex is not present on PATH, the runner will exit FATAL.

@@ -20,6 +20,7 @@
 %% TEST-AUX-NOT-CONTAINS: \codep@concept{Hom}{2.1}
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REST-CONCEPT
 %%
 %% Section 1 (main) declares the restatable theorem. First firing,
 %% alias intact, normal hook body: \codep@currentatom = 1.1

@@ -12,6 +12,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-DEPTH1
 %%
 %% Baseline: under vanilla article, \section{Foo} must NOT fire the
 %% para/begin hook in numbering mode. Only the body paragraph below

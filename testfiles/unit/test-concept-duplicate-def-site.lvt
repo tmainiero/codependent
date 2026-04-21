@@ -21,6 +21,7 @@
 %%
 %% This fixture is INTENTIONALLY expected to fail compilation.
 %% TEST-EXIT: 1 tells the runner that a nonzero exit is the
+%% TEST-BEHAVIOR: B-CONC-DUPDEF
 %% CORRECT behaviour. TEST-RERUN: 1 because a second pass would
 %% just hit the same error again; we only need one firing to
 %% verify the detection.

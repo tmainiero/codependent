@@ -20,6 +20,7 @@
 %% TEST-AUX-CONTAINS: \codep@conceptref{1.1}{Hom}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-CONC-FWDREF
 %%
 %% This is the baseline forward-reference test. The intro paragraph
 %% is atom 1.1 (first paragraph atom under "Introduction"). The

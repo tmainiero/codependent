@@ -17,6 +17,7 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-ADJ
 %%
 %% Tests three scenarios:
 %% 1. Theorem + adjacent proof -> proof inherits theorem's number (1.1*)

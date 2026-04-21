@@ -14,6 +14,7 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-DEPTH1
 %%
 %% With book class and depth=1, \codep@configuredepth@book activates
 %% the chapter-level path:

@@ -11,6 +11,7 @@
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REND-INLINE
 %%
 %% Passes backref-style=inline as a package option via \usepackage.
 %% Two theorems where the second references the first exercise the

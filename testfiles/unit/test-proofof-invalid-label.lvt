@@ -12,6 +12,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EDGE-BADLABEL
 %%
 %% When \codepproofof references a label that does not exist,
 %% the package emits a warning via \PackageWarning but does not

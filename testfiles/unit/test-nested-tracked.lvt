@@ -16,6 +16,7 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-NESTED, B-EDGE-NESTED
 %%
 %% Regression test for BLOCKER #2: when a tracked environment (corollary)
 %% is nested inside another tracked environment (theorem), the inner

@@ -14,6 +14,7 @@
 %% TEST-AUX-CONTAINS: \codep@concept{Hom}{2.1}
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REST-CONCEPT
 %%
 %% The intro section 1 uses restatable* (starred = non-primary)
 %% to show a teaser of the theorem. Inside the teaser body,

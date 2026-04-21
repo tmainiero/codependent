@@ -14,6 +14,7 @@
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN
 %%
 %% Verifies that hyperref + codependent coexist without errors and
 %% that atoms are recorded correctly.  The actual hyperlink

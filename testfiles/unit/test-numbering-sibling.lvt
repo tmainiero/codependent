@@ -17,6 +17,7 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: thmtools,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-SEQ, B-NUM-RESET
 %%
 %% Pins sibling counter-sharing: thmtools' sibling=theorem makes
 %% corollary and definition share theorem's counter register.

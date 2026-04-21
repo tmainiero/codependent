@@ -11,6 +11,7 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-CLICKABLE
 %%
 %% This is the canonical regression for REVIEW_E's BLOCKER finding 2:
 %% the original codependent.sty (v0.1) only patched \@setref, which cleveref

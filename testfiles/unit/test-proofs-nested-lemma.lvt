@@ -12,6 +12,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{lemma}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-INNER
 %%
 %% A lemma inside an adjacent proof is not inside another tracked env
 %% (proofs use nestlevel for paragraph suppression, not trackedlevel),

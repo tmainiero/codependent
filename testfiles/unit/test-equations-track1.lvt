@@ -16,6 +16,7 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EQ-TRACK1
 %%
 %% A theorem (atom 1.1) is followed by a standalone numbered equation
 %% that references the theorem.  The equation number (1) is captured
