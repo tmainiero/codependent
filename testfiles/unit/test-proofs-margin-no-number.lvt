@@ -1,7 +1,7 @@
 %% TEST-NAME: test-proofs-margin-no-number
 %% TEST-WHAT: Adjacent proof tracked in .cdp but does NOT create its own atom
 %%            record; with margin style, no starred margin number appears.
-%% TEST-SOURCE: DESIGN.md §Proof adjacency, codependent.sty §6 proof@adjacent
+%% TEST-SOURCE: docs/DESIGN.md §Proof adjacency, codependent.sty §6 proof@adjacent
 %% TEST-SECTION: codependent.sty §6
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

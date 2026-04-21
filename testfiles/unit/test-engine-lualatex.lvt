@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify codependent.sty compiles cleanly and tracks one theorem
 %%            under the lualatex engine. Catches any \directlua
 %%            primitives or engine-specific csname hash paths.
-%% TEST-SOURCE: DESIGN.md §Compatibility "Engine matrix"
-%% TEST-SECTION: DESIGN.md §Compatibility
+%% TEST-SOURCE: docs/DESIGN.md §Compatibility "Engine matrix"
+%% TEST-SECTION: docs/DESIGN.md §Compatibility
 %% TEST-EXIT: 0
 %% TEST-ENGINE: lualatex
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

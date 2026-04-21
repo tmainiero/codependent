@@ -1,8 +1,8 @@
 %% TEST-NAME: test-section-article
 %% TEST-WHAT: Verify \section{Foo} heading paragraph is NOT numbered as an
 %%            atom under the standard article class (baseline).
-%% TEST-SOURCE: DESIGN.md §Paragraph numbering, §Section 8a.6 sectioning
-%% TEST-SECTION: DESIGN.md §Paragraph numbering "Sectioning heading suppression"
+%% TEST-SOURCE: docs/DESIGN.md §Paragraph numbering, §Section 8a.6 sectioning
+%% TEST-SECTION: docs/DESIGN.md §Paragraph numbering "Sectioning heading suppression"
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

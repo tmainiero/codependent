@@ -1,8 +1,8 @@
 %% TEST-NAME: test-label-kernel
 %% TEST-WHAT: Verify a plain \label{key} inside a tracked atom produces
 %%            a \codep@cdp@label{<num>}{key} record in the sidecar.
-%% TEST-SOURCE: DESIGN.md §9a "Label wrap" emission site
-%% TEST-SECTION: DESIGN.md §9a Emission points (label wrap)
+%% TEST-SOURCE: docs/DESIGN.md §9a "Label wrap" emission site
+%% TEST-SECTION: docs/DESIGN.md §9a Emission points (label wrap)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

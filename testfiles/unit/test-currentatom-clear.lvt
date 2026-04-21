@@ -5,7 +5,7 @@
 %%            footnote) where \codep@currentatom must be \@empty.
 %% TEST-SOURCE: REVIEW_A finding 3 (LIVE DEFECT in current codependent.sty),
 %%              REVIEW_C #4 (MAJOR), REVIEW_E reaffirmation
-%% TEST-SECTION: DESIGN.md §8a.5 currentatom state management
+%% TEST-SECTION: docs/DESIGN.md §8a.5 currentatom state management
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

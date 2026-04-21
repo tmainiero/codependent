@@ -6,9 +6,9 @@
 %%            Backrefs should work, be hyperlinked, and no cleveref-related
 %%            error or "Undefined control sequence" should appear.
 %%            Stack: amsmath + amsthm + hyperref + codependent (no cleveref).
-%% TEST-SOURCE: DESIGN.md §8a.7 patch-site selection;
+%% TEST-SOURCE: docs/DESIGN.md §8a.7 patch-site selection;
 %%              codependent.sty \codep@installatomrefpatch (l.1142-1186)
-%% TEST-SECTION: DESIGN.md §8a (integration surface — no-cleveref path)
+%% TEST-SECTION: docs/DESIGN.md §8a (integration surface — no-cleveref path)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: \\cref@getlabel|\\cref |\\Cref

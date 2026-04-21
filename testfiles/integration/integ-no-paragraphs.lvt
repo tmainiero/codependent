@@ -3,8 +3,8 @@
 %%            equation tracking and theorem backrefs still work when
 %%            paragraph atoms are disabled. No bare-paragraph atoms
 %%            must appear in the .cdp file.
-%% TEST-SOURCE: DESIGN.md §3 (paragraphs option), §8a-§9a (integration)
-%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%% TEST-SOURCE: docs/DESIGN.md §3 (paragraphs option), §8a-§9a (integration)
+%% TEST-SECTION: docs/DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

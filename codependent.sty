@@ -711,7 +711,7 @@
 %   thmtools' thm-restate.sty calls \theorem / \endtheorem
 %   directly (bypassing \begin{theorem}).
 %
-%   Timing note (DESIGN.md §8a.5.0): the cmd/before hook fires
+%   Timing note (docs/DESIGN.md §8a.5.0): the cmd/before hook fires
 %   BEFORE amsthm's \refstepcounter{theorem}, so \theatom at
 %   begin-time is the PREVIOUS atom's number.  The queuebackref
 %   call is therefore in the end hook, where the env body has
@@ -1527,7 +1527,7 @@
 %% Portions of this section are derived from dpmac.tex by Dmitri
 %% Pavlov (Copyright 2017, 2018 Dmitri Pavlov, distributed under
 %% GNU GPL version 3).  The derivative is also distributed under
-%% GNU GPL version 3.  See CREDITS.md for the provenance table.
+%% GNU GPL version 3.  See docs/CREDITS.md for the provenance table.
 %%
 
 %% --- Section 8a.0: Reference interception (three-site design) ---
@@ -1594,7 +1594,7 @@
 %   on \codep@currentatom (in-atom sentinel: empty = not inside
 %   a tracked atom, so no write) and on \if@filesw so --draftmode
 %   / -no-aux compiles work.  The src field is normally read from
-%   \theatom at write time per DESIGN.md §8a.5.0.  However, when
+%   \theatom at write time per docs/DESIGN.md §8a.5.0.  However, when
 %   \codep@sourceatom is non-empty (adjacent proofs), it overrides
 %   \theatom to emit starred atom numbers (e.g. "2.1*").
 %
@@ -2327,7 +2327,7 @@
 %% --- Section 9a label wrap (cleveref-aware) ---
 %% Installed at begindocument/before so we capture \label BEFORE
 %% cleveref's \AtBeginDocument wrapper installs around us (see
-%% DESIGN.md §9a "Label wrap" double-wrap explanation).
+%% docs/DESIGN.md §9a "Label wrap" double-wrap explanation).
 \AddToHook{begindocument/before}[codependent/sbl/labelwrap]{%
   \let\codep@orig@label\label
   \@ifpackageloaded{cleveref}{%

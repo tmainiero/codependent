@@ -4,9 +4,9 @@
 %%            mathtools, hyperref, cleveref, thmtools, enumitem, tcolorbox,
 %%            tikz, tikz-cd). Single-document smoke test that
 %%            integration paths compose without conflict.
-%% TEST-SOURCE: DESIGN.md §8a.0, §8a.5, §8a.5.a, §8a.6, §9a, §9a User API;
+%% TEST-SOURCE: docs/DESIGN.md §8a.0, §8a.5, §8a.5.a, §8a.6, §9a, §9a User API;
 %%              REVIEW_E all BLOCKERs and MAJORs composed
-%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%% TEST-SECTION: docs/DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning(?!.*Nested tracked environment)

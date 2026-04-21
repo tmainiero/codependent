@@ -8,8 +8,8 @@
 %%            At pass 2, the def atom's "Used in" list includes
 %%            the intro atom (forward-reference resolves backward
 %%            via the concept map).
-%% TEST-SOURCE: DESIGN.md §8a.9 Concept-aware forward references
-%% TEST-SECTION: DESIGN.md §8a.9
+%% TEST-SOURCE: docs/DESIGN.md §8a.9 Concept-aware forward references
+%% TEST-SECTION: docs/DESIGN.md §8a.9
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

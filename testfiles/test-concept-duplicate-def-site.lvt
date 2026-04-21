@@ -3,8 +3,8 @@
 %%            a PackageError at the SECOND firing, halting the build
 %%            with a nonzero exit code. The error message names both
 %%            offending atom numbers so the author can locate them.
-%% TEST-SOURCE: DESIGN.md §8a.9 Error handling (duplicate def site)
-%% TEST-SECTION: DESIGN.md §8a.9
+%% TEST-SOURCE: docs/DESIGN.md §8a.9 Error handling (duplicate def site)
+%% TEST-SECTION: docs/DESIGN.md §8a.9
 %% TEST-EXIT: 1
 %% TEST-LOG-CONTAINS: Package codependent Error.*defined at atoms
 %% TEST-PACKAGES: amsthm,codependent

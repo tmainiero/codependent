@@ -1,8 +1,8 @@
 %% TEST-NAME: test-proofs-paragraph-breaks-adjacency
 %% TEST-WHAT: A paragraph between theorem and proof breaks adjacency;
 %%            the proof gets its own standalone atom number.
-%% TEST-SOURCE: DESIGN.md §Proof adjacency
-%% TEST-SECTION: DESIGN.md §8a
+%% TEST-SOURCE: docs/DESIGN.md §Proof adjacency
+%% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-CONTAINS: Proof not adjacent to a tracked

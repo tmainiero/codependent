@@ -3,7 +3,7 @@
 %%            equation number as backref source.  The equation counter
 %%            steps at \begin{equation}, so \theequation is correct at
 %%            \ref time.  Anchormap entry is also written for hyperlinks.
-%% TEST-SOURCE: DESIGN.md §Equations as backref sources (Track 1)
+%% TEST-SOURCE: docs/DESIGN.md §Equations as backref sources (Track 1)
 %% TEST-SECTION: codependent.sty \codep@trackeqenv
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

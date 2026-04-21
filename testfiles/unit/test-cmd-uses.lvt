@@ -3,8 +3,8 @@
 %%            emits one \codep@cdp@use record per invocation INSIDE
 %%            an atom, and ZERO use records when invoked outside any
 %%            atom (e.g., in section titles).
-%% TEST-SOURCE: DESIGN.md §9a User API "Side effects at invocation time"
-%% TEST-SECTION: DESIGN.md §9a
+%% TEST-SOURCE: docs/DESIGN.md §9a User API "Side effects at invocation time"
+%% TEST-SECTION: docs/DESIGN.md §9a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

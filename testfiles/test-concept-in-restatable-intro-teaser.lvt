@@ -3,9 +3,9 @@
 %%            non-primary) in the intro, then restatable (primary)
 %%            in the main body. The def site for \Hom* MUST be the
 %%            main-body atom, NEVER the intro teaser.
-%% TEST-SOURCE: DESIGN.md §8a.5.a save/clear/restore, §8a.9
+%% TEST-SOURCE: docs/DESIGN.md §8a.5.a save/clear/restore, §8a.9
 %%              Interaction with restatable
-%% TEST-SECTION: DESIGN.md §8a.5.a, §8a.9
+%% TEST-SECTION: docs/DESIGN.md §8a.5.a, §8a.9
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

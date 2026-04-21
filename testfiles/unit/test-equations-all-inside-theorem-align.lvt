@@ -3,7 +3,7 @@
 %%            produces Track 2 equation-sourced atomref records (not
 %%            falling through to the theorem atom).  The theorem itself
 %%            is also a backref target when referenced from outside.
-%% TEST-SOURCE: DESIGN.md §Equation backref tracking, equations=all
+%% TEST-SOURCE: docs/DESIGN.md §Equation backref tracking, equations=all
 %% TEST-SECTION: codependent.sty \codep@eqshouldtrack, \codep@trackalignenv
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

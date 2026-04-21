@@ -3,7 +3,7 @@
 %%            line only).  Start and end counters are equal, so the key
 %%            is equation:1, not a range.  A \ref inside the body is
 %%            attributed to equation:1.  No range key is written.
-%% TEST-SOURCE: DESIGN.md §Equations as backref sources (Track 2)
+%% TEST-SOURCE: docs/DESIGN.md §Equations as backref sources (Track 2)
 %% TEST-SECTION: codependent.sty \codep@trackalignenv
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

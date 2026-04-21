@@ -1,8 +1,8 @@
 %% TEST-NAME: test-numbering-depth3
 %% TEST-WHAT: depth=3 option produces section.subsection.subsubsection.atom
 %%            display numbers (e.g. "1.1.2.1") under the article class.
-%% TEST-SOURCE: DESIGN.md §Numbering "Depth"
-%% TEST-SECTION: DESIGN.md §Numbering, codependent.sty lines 200-204
+%% TEST-SOURCE: docs/DESIGN.md §Numbering "Depth"
+%% TEST-SECTION: docs/DESIGN.md §Numbering, codependent.sty lines 200-204
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

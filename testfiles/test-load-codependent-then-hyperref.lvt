@@ -3,8 +3,8 @@
 %%            AtEndPreamble hooks and \DeclareHookRule ordering in
 %%            Section 8a.7 guarantee codependent's patches fire AFTER
 %%            hyperref has wrapped the kernel dispatchers.
-%% TEST-SOURCE: REVIEW_C #3, DESIGN.md §Load order, §8a.7 hook install
-%% TEST-SECTION: DESIGN.md §Load order, §8a.7 Hook rules
+%% TEST-SOURCE: REVIEW_C #3, docs/DESIGN.md §Load order, §8a.7 hook install
+%% TEST-SECTION: docs/DESIGN.md §Load order, §8a.7 Hook rules
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

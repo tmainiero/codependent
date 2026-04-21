@@ -3,7 +3,7 @@
 % and "definition*" (the starred variant amsthm creates automatically).
 % Starred environments should receive atom numbers just like unstarred.
 %
-% Design reference: DESIGN.md "Starred environments" --
+% Design reference: docs/DESIGN.md "Starred environments" --
 % \codeptrack{definition} auto-registers both definition and definition*
 
 \documentclass{article}

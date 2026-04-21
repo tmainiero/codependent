@@ -6,7 +6,7 @@
 %% TEST-SOURCE: Bug report: sibling envs displayed wrong format
 %%              (e.g. 3.4 instead of 3.0.3) because \the<env> was
 %%              not re-aliased to \theatom in the \codeptrack loop.
-%% TEST-SECTION: DESIGN.md §Numbering, codependent.sty \codeptrack loop
+%% TEST-SECTION: docs/DESIGN.md §Numbering, codependent.sty \codeptrack loop
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

@@ -3,7 +3,7 @@
 %%            outside a theorem uses the parenthesized equation number
 %%            as the backref source.  Inside a theorem, falls through
 %%            to the theorem's atom number.  Also tests align env.
-%% TEST-SOURCE: DESIGN.md §Equation backref tracking
+%% TEST-SOURCE: docs/DESIGN.md §Equation backref tracking
 %% TEST-SECTION: codependent.sty \codep@trackeqenv / \codep@eqsource
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

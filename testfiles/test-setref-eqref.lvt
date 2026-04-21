@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify amsmath's \eqref{eq:A} produces a \codep@atomref
 %%            edge. \eqref is implemented as \textup{(\ref{...})} in
 %%            amsmath, so it routes through the kernel \@setref patch.
-%% TEST-SOURCE: DESIGN.md §8a.0 coverage table (eqref row)
-%% TEST-SECTION: DESIGN.md §8a.0 Reference interception
+%% TEST-SOURCE: docs/DESIGN.md §8a.0 coverage table (eqref row)
+%% TEST-SECTION: docs/DESIGN.md §8a.0 Reference interception
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

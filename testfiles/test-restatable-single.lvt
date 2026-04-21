@@ -4,7 +4,7 @@
 %%            misattribute backref edges to the wrong (previous) atom.
 %% TEST-SOURCE: REVIEW_E #1 (BLOCKER), REVIEW_E Section R deep-dive,
 %%              REVIEW_F J2 (verified)
-%% TEST-SECTION: DESIGN.md §8a.5.a Detecting restated theorem environments
+%% TEST-SECTION: docs/DESIGN.md §8a.5.a Detecting restated theorem environments
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

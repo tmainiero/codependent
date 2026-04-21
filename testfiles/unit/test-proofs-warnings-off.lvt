@@ -1,8 +1,8 @@
 %% TEST-NAME: test-proofs-warnings-off
 %% TEST-WHAT: proof-warnings=off suppresses the "Proof not adjacent"
 %%            warning for non-adjacent proofs.
-%% TEST-SOURCE: DESIGN.md §Options, proof-warnings
-%% TEST-SECTION: DESIGN.md §Options
+%% TEST-SOURCE: docs/DESIGN.md §Options, proof-warnings
+%% TEST-SECTION: docs/DESIGN.md §Options
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: Package codependent Warning
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

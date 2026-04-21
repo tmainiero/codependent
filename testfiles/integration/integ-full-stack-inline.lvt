@@ -6,8 +6,8 @@
 %%            Verifies: inline-style backrefs, paragraph numbering, equation
 %%            tracking (Track 1 and Track 2), proof attribution,
 %%            concept tracking, tikz-cd coexistence, and hyperlinks.
-%% TEST-SOURCE: DESIGN.md §8a-§9a; CONVENTIONS.md full-stack policy
-%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%% TEST-SOURCE: docs/DESIGN.md §8a-§9a; docs/CONVENTIONS.md full-stack policy
+%% TEST-SECTION: docs/DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

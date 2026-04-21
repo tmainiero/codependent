@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify hyperref loaded BEFORE codependent works cleanly (the
 %%            recommended load order); backref edges and the .cdp end
 %%            marker both land.
-%% TEST-SOURCE: DESIGN.md §Load order "Recommended order"
-%% TEST-SECTION: DESIGN.md §Load order
+%% TEST-SOURCE: docs/DESIGN.md §Load order "Recommended order"
+%% TEST-SECTION: docs/DESIGN.md §Load order
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

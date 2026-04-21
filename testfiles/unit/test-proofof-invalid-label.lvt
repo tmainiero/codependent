@@ -1,7 +1,7 @@
 %% TEST-NAME: test-proofof-invalid-label
 %% TEST-WHAT: \codepproofof with a nonexistent label produces a warning
 %%            (not a crash); compilation succeeds.
-%% TEST-SOURCE: DESIGN.md §Proof attribution, codependent.sty §10 \codepproofof
+%% TEST-SOURCE: docs/DESIGN.md §Proof attribution, codependent.sty §10 \codepproofof
 %% TEST-SECTION: codependent.sty §10
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: Undefined control sequence

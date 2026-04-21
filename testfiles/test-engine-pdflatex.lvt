@@ -1,8 +1,8 @@
 %% TEST-NAME: test-engine-pdflatex
 %% TEST-WHAT: Verify codependent.sty compiles cleanly and tracks one theorem
 %%            under the pdflatex engine.
-%% TEST-SOURCE: DESIGN.md §Compatibility "Engine matrix"
-%% TEST-SECTION: DESIGN.md §Compatibility
+%% TEST-SOURCE: docs/DESIGN.md §Compatibility "Engine matrix"
+%% TEST-SECTION: docs/DESIGN.md §Compatibility
 %% TEST-EXIT: 0
 %% TEST-ENGINE: pdflatex
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

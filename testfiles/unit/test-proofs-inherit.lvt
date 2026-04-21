@@ -1,8 +1,8 @@
 %% TEST-NAME: test-proofs-inherit
 %% TEST-WHAT: Adjacent proofs inherit theorem atom number with star suffix;
 %%            non-adjacent proofs get independent atom numbers.
-%% TEST-SOURCE: DESIGN.md Proof adjacency, Pavlov-style numbering
-%% TEST-SECTION: DESIGN.md §Proof environments
+%% TEST-SOURCE: docs/DESIGN.md Proof adjacency, Pavlov-style numbering
+%% TEST-SECTION: docs/DESIGN.md §Proof environments
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

@@ -3,7 +3,7 @@
 %%            parenthesized equation number as backref source, NOT
 %%            the theorem atom number.  Standalone equations also
 %%            use the equation number.
-%% TEST-SOURCE: DESIGN.md §Equation backref tracking
+%% TEST-SOURCE: docs/DESIGN.md §Equation backref tracking
 %% TEST-SECTION: codependent.sty equations option
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

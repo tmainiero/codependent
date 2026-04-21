@@ -210,3 +210,13 @@ python3 .claude/scripts/lint_traceability.py --update-baseline  # regenerate
 
 The linter runs automatically via PostToolUse (on .sty edits) and
 PreCommit hooks.
+
+## Build output location
+
+Manual LaTeX compiles MUST route output into `texbuild/` (aux/log/intermediates) and `pdf-out/` (PDFs). This matches the project `.latexmkrc` and the user's vimtex config.
+
+- **latexmk** (preferred): plain `latexmk foo.tex` — `.latexmkrc` handles the dirs.
+- **pdflatex direct**: `pdflatex -output-directory=texbuild foo.tex`, then `mv texbuild/foo.pdf pdf-out/`.
+- **If artifacts end up in the repo root anyway**: run `scripts/clean-build.sh` to relocate them (or `--purge` to delete).
+
+`texbuild/` and `pdf-out/` are gitignored. The test runner uses tempdirs and is unaffected.

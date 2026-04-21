@@ -3,7 +3,7 @@
 %%            clickable \hyperlink commands and atoms get
 %%            \hypertarget anchors.  Without hyperref, plain text
 %%            fallback is used (no errors).
-%% TEST-SOURCE: DESIGN.md hyperref integration requirement
+%% TEST-SOURCE: docs/DESIGN.md hyperref integration requirement
 %% TEST-SECTION: codependent.sty \codep@brhyper, \codep@mktarget
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

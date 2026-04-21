@@ -2,7 +2,7 @@
 %% TEST-WHAT: A label placed inside an adjacent proof body becomes a backref
 %%            target; a later theorem referencing that label generates an
 %%            atomref record with the proof's atom key as the target.
-%% TEST-SOURCE: DESIGN.md §Proof adjacency, §Back-reference graph
+%% TEST-SOURCE: docs/DESIGN.md §Proof adjacency, §Back-reference graph
 %% TEST-SECTION: codependent.sty §6, §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

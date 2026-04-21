@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify \codepnewcommand{\Hom}[2]{...} emits the expected
 %%            \codep@cdp@cmddef records (kind=newcommand, arity, src)
 %%            and that the defined \Hom command works in the body.
-%% TEST-SOURCE: DESIGN.md §9a User API: \codepnewcommand
-%% TEST-SECTION: DESIGN.md §9a User API
+%% TEST-SOURCE: docs/DESIGN.md §9a User API: \codepnewcommand
+%% TEST-SECTION: docs/DESIGN.md §9a User API
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify \codeptag{kind}{value} emits a flat
 %%            \codep@cdp@tag record carrying the current atom number,
 %%            kind, and value, with no visible typeset effect.
-%% TEST-SOURCE: DESIGN.md §9a User API: \codeptag
-%% TEST-SECTION: DESIGN.md §9a
+%% TEST-SOURCE: docs/DESIGN.md §9a User API: \codeptag
+%% TEST-SECTION: docs/DESIGN.md §9a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

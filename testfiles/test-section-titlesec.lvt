@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify \section{Foo} heading paragraph is NOT numbered as
 %%            an atom under article + titlesec, which replaces
 %%            \@startsection at load time.
-%% TEST-SOURCE: REVIEW_E #5 (BLOCKER), DESIGN.md §8a.6 sectioning
-%% TEST-SECTION: DESIGN.md §Paragraph numbering, sectioning suppression
+%% TEST-SOURCE: REVIEW_E #5 (BLOCKER), docs/DESIGN.md §8a.6 sectioning
+%% TEST-SECTION: docs/DESIGN.md §Paragraph numbering, sectioning suppression
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

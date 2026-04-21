@@ -1,8 +1,8 @@
 %% TEST-NAME: test-proofs-backref-star
 %% TEST-WHAT: Cross-references from inside adjacent proofs produce starred
 %%            atom numbers in aux records (e.g. codep@atomref{1.1*}{...}).
-%% TEST-SOURCE: DESIGN.md §Proof adjacency, §Back-reference graph
-%% TEST-SECTION: DESIGN.md §8a
+%% TEST-SOURCE: docs/DESIGN.md §Proof adjacency, §Back-reference graph
+%% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

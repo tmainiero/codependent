@@ -4,7 +4,7 @@
 %%            \codep@atomref source key must carry its type prefix
 %%            (theorem:, definition:, paragraph:); bare unprefixed
 %%            numbers must never appear.
-%% TEST-SOURCE: DESIGN.md §8a type-prefixed keys, test_gap_analysis.md Gap #1
+%% TEST-SOURCE: docs/DESIGN.md §8a type-prefixed keys, test_gap_analysis.md Gap #1
 %% TEST-SECTION: codependent.sty \codep@writeatomref@do, \codep@dedupwrite
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

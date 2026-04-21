@@ -4,7 +4,7 @@
 %%            env gets an SBL atom entry; the inner env is suppressed
 %%            with a warning.  A counter gap is expected and acceptable.
 %% TEST-SOURCE: BLOCKER #2 (nested tracked envs produce spurious atoms)
-%% TEST-SECTION: DESIGN.md §Theorem environment numbering
+%% TEST-SECTION: docs/DESIGN.md §Theorem environment numbering
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-CONTAINS: Nested tracked environment

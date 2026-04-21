@@ -4,8 +4,8 @@
 %%            PackageWarning at \AtEndDocument, but does NOT halt
 %%            the build. The concept's backrefs are disabled; no
 %%            \codep@cdp@def record is emitted for Hom.
-%% TEST-SOURCE: DESIGN.md §8a.9 Error handling (missing def site)
-%% TEST-SECTION: DESIGN.md §8a.9
+%% TEST-SOURCE: docs/DESIGN.md §8a.9 Error handling (missing def site)
+%% TEST-SECTION: docs/DESIGN.md §8a.9
 %% TEST-EXIT: 0
 %% TEST-LOG-CONTAINS: Package codependent Warning.*no.*definition site
 %% TEST-LOG-NOT: Undefined control sequence

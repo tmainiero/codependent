@@ -15,8 +15,8 @@
 %%            the core tracking path.  The proof adjacency code path is also
 %%            unaffected: ntheorem defines a proof environment internally.
 %%
-%% TEST-SOURCE: codependent.sty Section 6 (\codep@hooktheorem), DESIGN.md §8a
-%% TEST-SECTION: DESIGN.md §8a (integration)
+%% TEST-SOURCE: codependent.sty Section 6 (\codep@hooktheorem), docs/DESIGN.md §8a
+%% TEST-SECTION: docs/DESIGN.md §8a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Error

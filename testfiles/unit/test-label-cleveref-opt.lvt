@@ -3,7 +3,7 @@
 %%            is correctly wrapped and emits \codep@cdp@label{<num>}{thm:foo}
 %%            with the CLEAN key (no square-bracket type prefix).
 %% TEST-SOURCE: REVIEW_E #4 (MAJOR), REVIEW_F J3 (verified)
-%% TEST-SECTION: DESIGN.md §9a "Label wrap: cleveref optional argument"
+%% TEST-SECTION: docs/DESIGN.md §9a "Label wrap: cleveref optional argument"
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

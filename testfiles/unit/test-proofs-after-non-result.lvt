@@ -2,7 +2,7 @@
 %% TEST-WHAT: A proof immediately after a tracked definition inherits the
 %%            definition's atom number (current behavior: all tracked envs
 %%            set the adjacency flag, no result-vs-definition distinction).
-%% TEST-SOURCE: DESIGN.md §Proof adjacency, codependent.sty §6 line 582
+%% TEST-SOURCE: docs/DESIGN.md §Proof adjacency, codependent.sty §6 line 582
 %% TEST-SECTION: codependent.sty §6
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

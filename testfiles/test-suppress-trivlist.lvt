@@ -2,7 +2,7 @@
 %% TEST-WHAT: Verify paragraphs inside trivlist-based environments
 %%            (center, flushleft, verbatim) are NOT numbered as atoms.
 %% TEST-SOURCE: REVIEW_E #7 (MAJOR), REVIEW_F J4 (verified)
-%% TEST-SECTION: DESIGN.md §8a.6 trivlist suppression, §Paragraph numbering
+%% TEST-SECTION: docs/DESIGN.md §8a.6 trivlist suppression, §Paragraph numbering
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

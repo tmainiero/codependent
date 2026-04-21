@@ -2,7 +2,7 @@
 %% TEST-WHAT: Verify a tcolorbox environment does NOT contribute atom
 %%            numbers for the paragraphs inside its body.
 %% TEST-SOURCE: REVIEW_E #13 (MINOR)
-%% TEST-SECTION: DESIGN.md §8a.6 suppression list / tcolorbox integration
+%% TEST-SECTION: docs/DESIGN.md §8a.6 suppression list / tcolorbox integration
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

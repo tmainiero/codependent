@@ -3,8 +3,8 @@
 %%            Verifies that inline/below "Used in" lines are suppressed,
 %%            that \codepappendix produces a "Dependency Index" section,
 %%            and that index entries appear for atoms with backrefs.
-%% TEST-SOURCE: DESIGN.md §8a.6.g; CONVENTIONS.md
-%% TEST-SECTION: DESIGN.md §8a.6.g (appendix mode)
+%% TEST-SOURCE: docs/DESIGN.md §8a.6.g; docs/CONVENTIONS.md
+%% TEST-SECTION: docs/DESIGN.md §8a.6.g (appendix mode)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

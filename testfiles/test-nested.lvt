@@ -3,7 +3,7 @@
 % environment does NOT advance the atom counter.  The inner
 % environment is part of the outer atom.
 %
-% Design reference: DESIGN.md "Nested tracked environments" --
+% Design reference: docs/DESIGN.md "Nested tracked environments" --
 % if \codep@nestlevel > 0 when a tracked env opens, the counter
 % is NOT advanced.  One definition containing an example gets
 % exactly one atom number, not two.

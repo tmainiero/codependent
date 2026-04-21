@@ -1,8 +1,8 @@
 %% TEST-NAME: test-proofs-multiple-adjacent
 %% TEST-WHAT: Multiple theorems with adjacent proofs in sequence; each
 %%            proof inherits the correct theorem's atom number.
-%% TEST-SOURCE: DESIGN.md §Proof adjacency
-%% TEST-SECTION: DESIGN.md §8a
+%% TEST-SOURCE: docs/DESIGN.md §Proof adjacency
+%% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Proof not adjacent

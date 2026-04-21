@@ -1,8 +1,8 @@
 %% TEST-NAME: test-setref-autoref
 %% TEST-WHAT: Verify \autoref{thm:A} produces a \codep@atomref edge via
 %%            the hyperref \HyRef@autosetref patch site (NOT \@setref).
-%% TEST-SOURCE: REVIEW_E #2 (BLOCKER), DESIGN.md §8a.0 patch site 3
-%% TEST-SECTION: DESIGN.md §8a.0 Reference interception
+%% TEST-SOURCE: REVIEW_E #2 (BLOCKER), docs/DESIGN.md §8a.0 patch site 3
+%% TEST-SECTION: docs/DESIGN.md §8a.0 Reference interception
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

@@ -4,7 +4,7 @@
 %%            (no active atom, no equation source).  \ref inside an
 %%            equation within a theorem falls through to the theorem
 %%            atom number.
-%% TEST-SOURCE: DESIGN.md §Options
+%% TEST-SOURCE: docs/DESIGN.md §Options
 %% TEST-SECTION: codependent.sty equations option
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

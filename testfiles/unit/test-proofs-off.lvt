@@ -1,8 +1,8 @@
 %% TEST-NAME: test-proofs-off
 %% TEST-WHAT: proofs=off disables all proof tracking; no atom numbers,
 %%            no SBL records, no adjacency detection.
-%% TEST-SOURCE: DESIGN.md §Proof environments
-%% TEST-SECTION: DESIGN.md §Options
+%% TEST-SOURCE: docs/DESIGN.md §Proof environments
+%% TEST-SECTION: docs/DESIGN.md §Options
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Proof not adjacent

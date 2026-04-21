@@ -2,7 +2,7 @@
 %% TEST-WHAT: Verify an inline \tikz{\node ...;} call does NOT inject
 %%            an atom number into the surrounding paragraph flow.
 %% TEST-SOURCE: REVIEW_E #9 (MINOR)
-%% TEST-SECTION: DESIGN.md §8a.6 inline tikz suppression
+%% TEST-SECTION: docs/DESIGN.md §8a.6 inline tikz suppression
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

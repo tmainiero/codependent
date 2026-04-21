@@ -81,8 +81,8 @@ Each fixture is a `.lvt` file with two layers:
 |---|---|---|
 | `TEST-NAME` | 1 | matches the filename without `.lvt` |
 | `TEST-WHAT` | 1 | one-sentence "what is being tested" |
-| `TEST-SOURCE` | 1 | which REVIEW finding or DESIGN.md section motivated this test |
-| `TEST-SECTION` | 1 | DESIGN.md cross-reference |
+| `TEST-SOURCE` | 1 | which REVIEW finding or docs/DESIGN.md section motivated this test |
+| `TEST-SECTION` | 1 | docs/DESIGN.md cross-reference |
 | `TEST-EXIT` | 1 | expected `pdflatex` exit code (almost always `0`) |
 | `TEST-LOG-NOT` | * | regex pattern that must NOT appear in `.log` |
 | `TEST-LOG-CONTAINS` | * | regex pattern that MUST appear in `.log` |
@@ -105,7 +105,7 @@ Repeating keys may appear multiple times in the header.
 %% TEST-NAME: test-setref-cleveref
 %% TEST-WHAT: Verify \cref{thm:A} produces a backref edge in .cdp.
 %% TEST-SOURCE: REVIEW_E #2 (BLOCKER)
-%% TEST-SECTION: DESIGN.md §8a.0
+%% TEST-SECTION: docs/DESIGN.md §8a.0
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error
 %% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
@@ -143,7 +143,7 @@ the system `pdflatex`/`lualatex` at startup and prints a
 notice.
 
 This is a **one-time exception** documented in
-`tools/codependent/HISTORY.md`. Future runs (post-implementation,
+`tools/codependent/docs/HISTORY.md`. Future runs (post-implementation,
 after the Nix flake is updated) should go through `nix develop`.
 
 ## Categories
@@ -219,8 +219,8 @@ engines (pdflatex, lualatex, xelatex).
 
 ## Cross-references
 
-- **Living spec**: `tools/codependent/DESIGN.md`
-- **Project history**: `tools/codependent/HISTORY.md`
+- **Living spec**: `tools/codependent/docs/DESIGN.md`
+- **Project history**: `tools/codependent/docs/HISTORY.md`
 - **Audit trail**: `tools/codependent-cli/reviews/` (six rounds)
 - **Transferable lessons**: see `MEMORY.md` for the pointer
   to `lessons_latex_package_evolution.md` in user-global

@@ -12,3 +12,9 @@ texput.*
 # Stale copies — use TEXINPUTS to find canonical codependent.sty
 testfiles/compiled-examples/codependent.sty
 build/
+texbuild/
+pdf-out/
+
+# Ephemeral agent state (findings, comms, candidate claims)
+.claude/agent_memory/
+.claude/comms/

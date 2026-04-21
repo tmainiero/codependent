@@ -1,8 +1,8 @@
 %% TEST-NAME: test-paragraphs-off
 %% TEST-WHAT: paragraphs=off disables bare-paragraph atom tracking;
 %%            theorems are still numbered normally.
-%% TEST-SOURCE: DESIGN.md §Options
-%% TEST-SECTION: DESIGN.md §Options
+%% TEST-SOURCE: docs/DESIGN.md §Options
+%% TEST-SECTION: docs/DESIGN.md §Options
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

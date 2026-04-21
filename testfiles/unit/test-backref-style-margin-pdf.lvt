@@ -2,7 +2,7 @@
 %% TEST-WHAT: Verify that backref-style=margin renders "Used in" text
 %%            in the PDF and that the backrefs are clickable hyperlinks.
 %%            Extends test-backref-style-margin with PDF-level assertions.
-%% TEST-SOURCE: DESIGN.md §Rendering, §Backref styles
+%% TEST-SOURCE: docs/DESIGN.md §Rendering, §Backref styles
 %% TEST-SECTION: codependent-render.sty \codep@rendermargin
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

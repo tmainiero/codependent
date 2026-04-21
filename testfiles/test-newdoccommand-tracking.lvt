@@ -3,8 +3,8 @@
 %%            the expected \codep@cdp@cmddef records (kind=NewDocumentCommand,
 %%            argspec, src) and that the defined \Cite command works with
 %%            xparse-style argument variants (star, optional, mandatory).
-%% TEST-SOURCE: DESIGN.md §9a User API: \codepNewDocumentCommand
-%% TEST-SECTION: DESIGN.md §9a User API
+%% TEST-SOURCE: docs/DESIGN.md §9a User API: \codepNewDocumentCommand
+%% TEST-SECTION: docs/DESIGN.md §9a User API
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

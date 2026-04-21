@@ -2,7 +2,7 @@
 %% TEST-WHAT: codependent works with \documentclass{book} and depth=1,
 %%            producing chapter.atom numbering (e.g. "1.1", "2.1").
 %%            The atom counter resets at each \chapter boundary.
-%% TEST-SOURCE: DESIGN.md §Numbering "Depth", codependent.sty \codep@configuredepth@book
+%% TEST-SOURCE: docs/DESIGN.md §Numbering "Depth", codependent.sty \codep@configuredepth@book
 %% TEST-SECTION: codependent.sty §Depth (book-class path, \codep@configuredepth@book)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

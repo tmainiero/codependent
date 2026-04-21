@@ -5,9 +5,9 @@ lint_traceability.py -- Behavioral traceability linter for codependent.
 ENFORCES:
   1. Every macro definition must be classified: @behavior, @implements, or @utility.
      Unclassified macros are ERRORs unless listed in .traceability-baseline.
-  2. Every BEHAVIOR.md [B-XXX] statement must have at least one @behavior tag.
+  2. Every docs/BEHAVIOR.md [B-XXX] statement must have at least one @behavior tag.
      Uncovered statements are ERRORs unless listed in .traceability-baseline.
-  3. Every @behavior tag must reference a real BEHAVIOR.md ID.
+  3. Every @behavior tag must reference a real docs/BEHAVIOR.md ID.
   4. Every @implements must reference a macro with @behavior tags.
   5. No macro has BOTH @behavior and @implements.
 
@@ -32,7 +32,7 @@ from typing import Dict, List, Optional, Set, Tuple
 # ---------------------------------------------------------------------------
 
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-BEHAVIOR_MD = os.path.join(PROJ_ROOT, "BEHAVIOR.md")
+BEHAVIOR_MD = os.path.join(PROJ_ROOT, "docs/BEHAVIOR.md")
 BASELINE_FILE = os.path.join(PROJ_ROOT, ".traceability-baseline")
 STY_FILES = [
     os.path.join(PROJ_ROOT, "codependent.sty"),
@@ -98,11 +98,11 @@ def write_baseline(path: str, unclassified: Set[str], uncovered: Set[str]) -> No
 
 
 # ---------------------------------------------------------------------------
-# BEHAVIOR.md parser
+# docs/BEHAVIOR.md parser
 # ---------------------------------------------------------------------------
 
 def parse_behavior_md(path: str) -> Dict[str, str]:
-    """Parse BEHAVIOR.md, return {id: description} for every [B-XXX-YYY] tag."""
+    """Parse docs/BEHAVIOR.md, return {id: description} for every [B-XXX-YYY] tag."""
     specs: Dict[str, str] = {}
     if not os.path.isfile(path):
         print(f"WARNING: {path} not found", file=sys.stderr)
@@ -264,7 +264,7 @@ def run_full_check() -> int:
 
     errors: List[str] = []
 
-    # Check 1: Every @behavior tag references a real BEHAVIOR.md ID
+    # Check 1: Every @behavior tag references a real docs/BEHAVIOR.md ID
     for mi in all_macros:
         for bid in mi.behavior_ids:
             if bid not in specs:
@@ -319,7 +319,7 @@ def run_full_check() -> int:
 
     # Output
     print("=== Behavioral Traceability ===")
-    print(f"BEHAVIOR.md: {n_specs} behavioral statements")
+    print(f"docs/BEHAVIOR.md: {n_specs} behavioral statements")
     print(f"Macros: {n_total_macros} total, {n_classified} classified, {n_baseline_macros} baselined, {len(unclassified)} unclassified")
     print(f"Coverage: {n_covered}/{n_specs} statements covered ({n_covered/n_specs*100:.0f}%), {n_baseline_bids} baselined")
     print()
@@ -367,7 +367,7 @@ def run_changed_file(filepath: str) -> int:
     if affected_ids:
         specs = parse_behavior_md(BEHAVIOR_MD)
         print(f"Edit touches code implementing: {', '.join(sorted(affected_ids))}")
-        print("  — verify BEHAVIOR.md still matches.")
+        print("  — verify docs/BEHAVIOR.md still matches.")
 
     # Check for unclassified macros in the edited file
     baseline_macros, _ = load_baseline(BASELINE_FILE)

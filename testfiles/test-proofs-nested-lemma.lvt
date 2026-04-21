@@ -2,8 +2,8 @@
 %% TEST-WHAT: A lemma inside a proof gets its own atom number; the proof
 %%            inherits the theorem number; the lemma is independent because
 %%            proofs are not tracked envs (only nestlevel, not trackedlevel).
-%% TEST-SOURCE: DESIGN.md §Proof environments, §Tracked env hooks
-%% TEST-SECTION: DESIGN.md §8a
+%% TEST-SOURCE: docs/DESIGN.md §Proof environments, §Tracked env hooks
+%% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

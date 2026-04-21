@@ -6,8 +6,8 @@
 %%            display math inside theorems, heavy \cref cross-referencing,
 %%            cross-section backrefs, concept-tracked macros, and hyperref.
 %% TEST-SOURCE: sty-theorems-ta.sty (Geiko–Mainiero–Moore three-avatars
-%%              monograph); DESIGN.md §8a.0–§9a (integration surface)
-%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%%              monograph); docs/DESIGN.md §8a.0–§9a (integration surface)
+%% TEST-SECTION: docs/DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}

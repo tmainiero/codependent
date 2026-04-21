@@ -3,7 +3,7 @@
 %%            backref source.  Two numbered lines produce a single
 %%            range source (2--3), not per-line numbers.  The equation
 %%            env before the align sets the counter to 1.
-%% TEST-SOURCE: DESIGN.md §Equations as backref sources
+%% TEST-SOURCE: docs/DESIGN.md §Equations as backref sources
 %% TEST-SECTION: codependent.sty \codep@trackalignenv
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

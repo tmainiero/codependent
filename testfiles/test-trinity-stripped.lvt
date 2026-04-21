@@ -7,9 +7,9 @@
 %%            sharing theorem environments, \codeptag, and concept tracking
 %%            with def-site / use-site / forward-reference resolution.
 %% TEST-SOURCE: Three-avatars monograph (Geiko–Mainiero–Moore);
-%%              DESIGN.md §8a.0–§9a (integration surface);
+%%              docs/DESIGN.md §8a.0–§9a (integration surface);
 %%              REVIEW_E all BLOCKERs composed
-%% TEST-SECTION: DESIGN.md §8a-§9a (integration)
+%% TEST-SECTION: docs/DESIGN.md §8a-§9a (integration)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

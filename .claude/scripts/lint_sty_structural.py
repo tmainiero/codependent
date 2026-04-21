@@ -3,7 +3,7 @@
 lint_sty_structural.py — Structural TeX linter for .sty files.
 
 Parses .sty files with brace-depth tracking to enforce code conventions
-defined in CONVENTIONS.md.  Uses brace-depth tracking (not a full TeX
+defined in docs/CONVENTIONS.md.  Uses brace-depth tracking (not a full TeX
 parser) to identify macro body boundaries.
 
 Checks:

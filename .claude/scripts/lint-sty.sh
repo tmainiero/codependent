@@ -56,7 +56,7 @@ for FILE in "${FILES[@]}"; do
     grep -Pn '\\usepackage' "$FILE" | grep -v '^\s*%' | head -5 >&2
   fi
 
-  # 5. Line length > 100 (hard limit from CONVENTIONS.md)
+  # 5. Line length > 100 (hard limit from docs/CONVENTIONS.md)
   LONG_LINES=$(awk 'length > 100 && !/^\s*%/' "$FILE" | wc -l)
   if [ "$LONG_LINES" -gt 0 ]; then
     warn "$FILE: $LONG_LINES lines exceed 100 characters"

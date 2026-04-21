@@ -2,7 +2,7 @@
 %% TEST-WHAT: Verify that \codepsetup accepts all rendering configuration
 %%            keys without error, and that a document with backrefs still
 %%            compiles correctly after changing every key.
-%% TEST-SOURCE: DESIGN.md \codepsetup key-value API
+%% TEST-SOURCE: docs/DESIGN.md \codepsetup key-value API
 %% TEST-SECTION: codependent.sty §Options, §Rendering
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

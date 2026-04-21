@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify \ref*{thm:A} produces a \codep@atomref edge via
 %%            the hyperref \HyRef@@StarSetRef patch site (NOT \@setref,
 %%            because \ref* uses the saved \real@setref copy).
-%% TEST-SOURCE: REVIEW_E #2 (BLOCKER), REVIEW_E #3, DESIGN.md §8a.0 patch site 3
-%% TEST-SECTION: DESIGN.md §8a.0 Reference interception
+%% TEST-SOURCE: REVIEW_E #2 (BLOCKER), REVIEW_E #3, docs/DESIGN.md §8a.0 patch site 3
+%% TEST-SECTION: docs/DESIGN.md §8a.0 Reference interception
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

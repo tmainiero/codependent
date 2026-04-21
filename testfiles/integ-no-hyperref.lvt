@@ -4,9 +4,9 @@
 %%            errors or missing-anchor warnings are emitted, and the package
 %%            does not crash without \hyperlink / \hypertarget.  Uses only
 %%            amsmath + amsthm + codependent (no hyperref, no cleveref).
-%% TEST-SOURCE: DESIGN.md §8a (hyperref optional), §9a; codependent.sty
+%% TEST-SOURCE: docs/DESIGN.md §8a (hyperref optional), §9a; codependent.sty
 %%              AtBeginDocument hyperref-detection guard (l.2430-2459)
-%% TEST-SECTION: DESIGN.md §8a (integration surface — no-hyperref path)
+%% TEST-SECTION: docs/DESIGN.md §8a (integration surface — no-hyperref path)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: \\hypertarget|\\hyperlink|\\@setref.*undefined

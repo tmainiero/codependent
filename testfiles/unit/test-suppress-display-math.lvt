@@ -2,7 +2,7 @@
 %% TEST-WHAT: Verify display math environments (equation, align, etc.)
 %%            do NOT produce spurious atom margin numbers.
 %% TEST-SOURCE: Pickup doc bug #2 (display equations get margin numbers)
-%% TEST-SECTION: DESIGN.md §8a.6 suppression
+%% TEST-SECTION: docs/DESIGN.md §8a.6 suppression
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning

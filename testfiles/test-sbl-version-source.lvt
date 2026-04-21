@@ -2,8 +2,8 @@
 %% TEST-WHAT: Verify the first two records of the .cdp sidecar are
 %%            \codep@cdp@version{1} and \codep@cdp@source{<jobname>.tex},
 %%            written from the begindocument/before hook.
-%% TEST-SOURCE: DESIGN.md §9a "Open timing", §9a "Record format"
-%% TEST-SECTION: DESIGN.md §9a Semantic sidecar (.cdp) writer
+%% TEST-SOURCE: docs/DESIGN.md §9a "Open timing", §9a "Record format"
+%% TEST-SECTION: docs/DESIGN.md §9a Semantic sidecar (.cdp) writer
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
