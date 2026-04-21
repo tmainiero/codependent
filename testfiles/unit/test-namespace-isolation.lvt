@@ -60,7 +60,7 @@
 %%
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-SHARED
+%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-NO-ORPHAN
 %%
 %% This test exercises the CRITICAL namespace isolation property of
 %% the backref graph.  All atom types share the same counter (reset

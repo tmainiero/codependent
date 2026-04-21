@@ -11,7 +11,7 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-LINK-CLICKABLE
+%% TEST-BEHAVIOR: B-PASS-ONE
 %%
 %% Baseline regression for the kernel \@setref patch site. Plain
 %% \ref goes through latex.ltx's \@setref, which is the simplest

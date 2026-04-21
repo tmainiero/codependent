@@ -12,7 +12,7 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@label{1.1}{[theorem]thm:foo}
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-LINK-CLICKABLE
+
 %%
 %% REVIEW_E finding #4 MAJOR. cleveref's \label accepts an
 %% optional [type] argument (cleveref.sty lines 66-97). A

@@ -14,7 +14,7 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{0.
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-ZERO-REF
+
 %%
 %% With backrefs=none the bool codep@backrefs is false, so the
 %% conditional at line 2511 does NOT load codependent-render.sty.

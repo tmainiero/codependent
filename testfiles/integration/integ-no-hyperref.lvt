@@ -23,7 +23,7 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-ZERO-REF
+%% TEST-BEHAVIOR: B-REND-INLINE
 %%
 %% Without hyperref the package must:
 %%   (1) not define or call \hyperlink / \hypertarget

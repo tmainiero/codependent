@@ -12,7 +12,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-SHARED
+%% (no TEST-BEHAVIOR: .cdp header records (version/source) have no matching B-* ID)
 %%
 %% Pins the .cdp header protocol. The writer opens at
 %% begindocument/before (NOT \AtBeginDocument, per REVIEW_C #5,

@@ -12,7 +12,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@tag{1.1}{type}{Cat}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-SHARED
+
 %%
 %% \codeptag is the user-facing semantic-tagging command.
 %% It writes one \codep@cdp@tag record per call, scoped to
