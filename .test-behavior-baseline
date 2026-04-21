@@ -15,4 +15,5 @@
 # and remove the line from this file.
 #
 # All 94 tests have been backfilled with TEST-BEHAVIOR headers.
-# This baseline is now empty — every test cites at least one B-* ID.
+# One test demoted by adversarial audit D (sidecar-only assertion, no B-* covers it yet):
+testfiles/unit/test-label-kernel.lvt

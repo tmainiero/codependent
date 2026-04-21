@@ -1,5 +1,5 @@
 {
-  ".test-behavior-baseline": 0,
+  ".test-behavior-baseline": 1,
   ".traceability-baseline.unclassified_macros": 160,
   ".traceability-baseline.uncovered_behaviors": 56
 }
