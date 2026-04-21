@@ -32,6 +32,10 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 - `docs/CONVENTIONS.md` — coding conventions (including traceability tagging)
 - `testfiles/run-tests.py` — custom test runner (28 assertion types)
 - `.traceability-baseline` — pre-rewrite unclassified macros/uncovered behaviors (shrinks to zero)
+- `.test-behavior-baseline` — 14 tests grandfathered from `TEST-BEHAVIOR:` rule (shrinks to zero)
+- `.claude/paths.toml` — single source of truth for machine-read doc paths; consult before hardcoding
+- `.claude/baseline-sizes.json` — baseline ratchet; linter fails if any baseline grows
+- `.latexmkrc` + `scripts/clean-build.sh` — build artifacts route to `texbuild/` + `pdf-out/`
 
 ## Rules
 
@@ -44,6 +48,9 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 - **Every `@behavior` tag must reference a real `docs/BEHAVIOR.md` ID**
 - Use `\PackageError{codependent}` / `\PackageWarning{codependent}`, never raw TeX errors
 - Credit Pavlov's dpmac (GPLv3) — see `docs/CREDITS.md`
+- **Every new `.lvt` test must have `TEST-BEHAVIOR: B-X[, B-Y]` header** citing real IDs from `docs/BEHAVIOR.md` (enforced by `lint_traceability.py`). Grandfathered tests live in `.test-behavior-baseline`.
+- Baselines are monotonically shrinking — `lint_traceability.py` fails if any grew. To lock in a legitimate shrinkage: `--update-ratchet`. Do NOT `--update-ratchet` to unblock a growth.
+- **Manual LaTeX compiles**: use `latexmk` (reads `.latexmkrc`) or `pdflatex -output-directory=texbuild`; never leave build artifacts in the repo root. If they accumulate, run `scripts/clean-build.sh`.
 
 ## Testing policy
 
