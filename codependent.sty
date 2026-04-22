@@ -571,7 +571,10 @@
 
 %% @behavior B-NUM-EQINDEP
 % \codep@recordlabelowner{label}
-%   Write the legacy label-type ownership record for label.
+%   Write the legacy label-type ownership record for label, and
+%   (W03-P03) populate the in-memory label->entity binding table +
+%   emit the \codep@lblentity aux record.  Same replay guard covers
+%   both.
 \def\codep@recordlabelowner#1{%
   \if@filesw%
     \ifnum\codep@replaydepth>0\relax%
@@ -589,6 +592,17 @@
           \codep@eq@lbltype@pending}%
         \protected@write\@auxout{}{%
           \string\codep@lbltype{#1}{\codep@eq@lbltype@pending}}%
+      \fi%
+      % W03-P03: in-memory label->entity binding + cross-run aux record.
+      % Skip if no owning atom-key is resolvable at this point (e.g.,
+      % \label outside any tracked env, or equation label before the
+      % equation's atom-key is materialised).
+      \codep@getcurrentatomkey\codep@tmp@lblentity%
+      \ifx\codep@tmp@lblentity\@empty\else%
+        \expandafter\gdef\csname codep@lblentity@#1\endcsname{%
+          \codep@tmp@lblentity}%
+        \protected@write\@auxout{}{%
+          \string\codep@lblentity{#1}{\codep@tmp@lblentity}}%
       \fi%
     \fi%
   \fi%
