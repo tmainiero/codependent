@@ -13,7 +13,9 @@
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
 %% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:source}
 %% TEST-PDF-CONTAINS: Used in
-%% --- Exactly one "Used in" line for the source theorem:
+%% --- Exactly one "Used in 1.2" line for theorem:1.1, auto-flush suppressed:
+%% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
+%% --- Original assertion:
 %% --- one from \codepbackrefs inside body, auto-flush suppressed.
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2

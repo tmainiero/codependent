@@ -11,6 +11,8 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
+%% --- PDF assertion: original site emits "Used in 1.2", replay does NOT:
+%% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-REND-INLINE, B-REST-FIRST, B-REST-NODUP

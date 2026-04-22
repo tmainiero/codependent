@@ -14,6 +14,8 @@
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
 %% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:src}
 %% TEST-PDF-CONTAINS: Used in
+%% --- Exactly one "Used in 1.2" in marginpar, theorem auto-flush suppressed:
+%% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-REND-INLINE
