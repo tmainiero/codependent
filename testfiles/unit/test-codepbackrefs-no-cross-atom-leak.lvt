@@ -1,0 +1,55 @@
+%% TEST-NAME: test-codepbackrefs-no-cross-atom-leak
+%% TEST-WHAT: Two-theorem cross-atom flag isolation: theorem A calls
+%%            \codepbackrefs; theorem B does not. Theorem A emits via
+%%            \codepbackrefs; theorem B emits via its own auto-flush.
+%%            No cross-suppression between atom keys.
+%% TEST-SOURCE: wave3-plan-v11.md P01(A2) flag-suppresses-auto contract
+%% TEST-SECTION: codependent.sty §per-atom flag isolation
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.3}{thm:A}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.3}{thm:B}
+%% TEST-PDF-CONTAINS: Used in 1.3
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REND-INLINE
+%%
+%% Sub-case 2: theorem A (1.1) calls \codepbackrefs; theorem B (1.2)
+%% does not. Theorem C (1.3) refs BOTH thm:A and thm:B. Both A and B
+%% accumulate exactly one "Used in 1.3" line each:
+%%   - A: emitted at \codepbackrefs call site; A's auto-flush skipped.
+%%   - B: emitted by B's auto-flush (its flag never set).
+%% The per-atom keying ensures setting flag on A does not suppress B.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}\label{thm:A}
+  Theorem A; emits backrefs at the call site.
+  \codepbackrefs
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B; no call-site emission, relies on auto-flush.
+\end{theorem}
+
+\begin{theorem}
+  Theorem C, citing both~\ref{thm:A} and~\ref{thm:B}.
+\end{theorem}
+
+\END
+\end{document}

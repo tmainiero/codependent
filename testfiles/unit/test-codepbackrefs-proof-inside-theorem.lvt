@@ -1,0 +1,57 @@
+%% TEST-NAME: test-codepbackrefs-proof-inside-theorem
+%% TEST-WHAT: Proof-inside-theorem dual-emit: theorem body calls
+%%            \codepbackrefs, AND inner proof body also calls
+%%            \codepbackrefs. Distinct atom keys → distinct flags;
+%%            both emit. No cross-suppression.
+%% TEST-SOURCE: wave3-plan-v11.md P01(A2) flag-suppresses-auto contract
+%% TEST-SECTION: codependent.sty §per-atom flag isolation (thm vs proof)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Proof not adjacent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@label{1.1}{prf:inside}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:src}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{prf:inside}
+%% TEST-PDF-CONTAINS: Used in
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REND-INLINE, B-PROOF-ADJ
+%%
+%% Sub-case 3: theorem 1.1 (label thm:src) body calls \codepbackrefs;
+%% its adjacent proof 1.1* (label prf:inside) body also calls
+%% \codepbackrefs. Theorem 1.2 refs BOTH thm:src and prf:inside.
+%% At pass 2: both theorem and proof emit at their respective call
+%% sites; auto-flushes for both skipped by their per-atom flags.
+%% Theorem key ≠ proof key, so no cross-atom suppression.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}\label{thm:src}
+  Source theorem with call-site backref emission.
+  \codepbackrefs
+\end{theorem}
+
+\begin{proof}
+  Key proof step.\label{prf:inside}
+  \codepbackrefs
+\end{proof}
+
+\begin{theorem}
+  Second theorem referencing Theorem~\ref{thm:src} and the
+  proof step~\ref{prf:inside}.
+\end{theorem}
+
+\END
+\end{document}

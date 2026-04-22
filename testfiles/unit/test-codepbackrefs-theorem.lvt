@@ -1,0 +1,48 @@
+%% TEST-NAME: test-codepbackrefs-theorem
+%% TEST-WHAT: \codepbackrefs called inside a theorem body emits the
+%%            theorem's "Used in ..." refs at the call site, and the
+%%            auto-flush at end-of-theorem is suppressed (exactly one
+%%            "Used in" line emitted, not two).
+%% TEST-SOURCE: wave3-plan-v11.md P01(A2) call-site contract
+%% TEST-SECTION: codependent.sty §\codepbackrefs
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:source}
+%% TEST-PDF-CONTAINS: Used in
+%% --- Exactly one "Used in" line for the source theorem:
+%% --- one from \codepbackrefs inside body, auto-flush suppressed.
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REND-INLINE
+%%
+%% Theorem 1.1 includes \codepbackrefs in its body; theorem 1.2 refs
+%% thm:source. At pass 2 the edge is known, and \codepbackrefs emits
+%% "Used in 1.2" at the call site. The per-atom flag suppresses the
+%% auto-flush at end-of-theorem, so only one "Used in" line renders.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}\label{thm:source}
+  Short. \codepbackrefs
+\end{theorem}
+
+\begin{theorem}
+  Second theorem referencing Theorem~\ref{thm:source}.
+\end{theorem}
+
+\END
+\end{document}

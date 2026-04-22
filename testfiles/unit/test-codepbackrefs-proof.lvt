@@ -1,0 +1,56 @@
+%% TEST-NAME: test-codepbackrefs-proof
+%% TEST-WHAT: \codepbackrefs called inside a proof body emits the PROOF
+%%            atom's refs (not the parent theorem's), and the proof
+%%            auto-flush at \AfterEndEnvironment{proof} is suppressed.
+%% TEST-SOURCE: wave3-plan-v11.md P01(A2) call-site contract
+%% TEST-SECTION: codependent.sty §\codepbackrefs, §\codep@hookproof@afterend
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-EXPECT-PACKAGE-WARNING: Proof not adjacent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{proof}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.4}{theorem}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{prf:target}
+%% TEST-PDF-CONTAINS: Used in
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REND-INLINE, B-PROOF-NONADJ
+%%
+%% Uses a NON-ADJACENT proof (separated from thm:src by an
+%% intervening paragraph atom) so the proof materializes with its
+%% OWN atom number (proof:1.3 — 1.2 is the paragraph between), which
+%% makes \label{prf:target} inside the proof body resolve to the
+%% proof's display number. Theorem 1.4 refs prf:target. At pass 2,
+%% \codepbackrefs emits "Used in 1.4" at the call site; auto-flush
+%% is suppressed via \codep@manuallyemitted@proof:1.3.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Proof as target}
+
+\begin{theorem}\label{thm:src}
+  Source theorem.
+\end{theorem}
+
+An intervening paragraph breaks adjacency so the proof materializes
+as its own atom.
+
+\begin{proof}
+  Step.\label{prf:target} \codepbackrefs
+\end{proof}
+
+\begin{theorem}
+  By~\ref{prf:target}, done.
+\end{theorem}
+
+\END
+\end{document}

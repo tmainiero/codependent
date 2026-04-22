@@ -1,0 +1,50 @@
+%% TEST-NAME: test-codepbackrefs-marginpar
+%% TEST-WHAT: \marginpar{\codepbackrefs} inside a theorem body emits the
+%%            THEOREM's refs (not a new atom): marginpar content
+%%            expands in the current group, so \codep@getcurrentatomkey
+%%            still returns the theorem's key. Auto-flush at theorem
+%%            end is suppressed by the per-atom flag.
+%% TEST-SOURCE: wave3-plan-v11.md P01(A2) call-site contract (marginpar)
+%% TEST-SECTION: codependent.sty §\codepbackrefs
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:src}
+%% TEST-PDF-CONTAINS: Used in
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REND-INLINE
+%%
+%% Theorem 1.1 has \marginpar{\codepbackrefs} in its body. The marginpar
+%% content expands in the theorem's group, so \codepbackrefs sees
+%% owner-id = theorem 1.1 and sets the flag on the theorem's atom-key.
+%% Theorem 1.2 refs thm:src; at pass 2 the marginpar emits "Used in 1.2",
+%% theorem auto-flush skipped by flag. Wire format records exactly one
+%% refs emission for thm:src.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}\label{thm:src}
+  Source theorem with margin backref emission.
+  \marginpar{\codepbackrefs}
+\end{theorem}
+
+\begin{theorem}
+  Second theorem referencing Theorem~\ref{thm:src}.
+\end{theorem}
+
+\END
+\end{document}

@@ -1,0 +1,38 @@
+%% TEST-NAME: test-backref-style-below-errors
+%% TEST-WHAT: \codepsetup{backref-style=below} in v2.0 raises a package
+%%            error pointing users to \codepbackrefs. The runner drops
+%%            -halt-on-error for this fixture (TEST-EXPECT-PACKAGE-ERROR
+%%            opt-out per A1), letting compilation continue and the
+%%            error message to land in the .log.
+%% TEST-SOURCE: wave3-plan-v11.md P01(A2) migration-error contract
+%% TEST-SECTION: codependent.sty §Options (backref-style)
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: backref-style=below\|margin removed in v2\.0
+%% TEST-LOG-CONTAINS: Package codependent Error
+%% TEST-LOG-CONTAINS: \\codepbackrefs
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-PDF-NOT: Used in
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-REND-INLINE
+%%
+%% Setting backref-style=below via \codepsetup triggers the migration
+%% error. The regex matches the error detail line. No render assertions
+%% — compilation aborts (from user perspective) but the runner collects
+%% the log so the directive can match.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\codepsetup{backref-style=below}
+
+\begin{document}
+\START
+\begin{theorem}
+  A theorem.
+\end{theorem}
+\END
+\end{document}

@@ -1,0 +1,50 @@
+%% TEST-NAME: test-codepbackrefs-restatable-replay
+%% TEST-WHAT: restatable replay regression: \codepbackrefs in a restatable
+%%            theorem body emits ONCE (at the original site). The replay
+%%            via \thmMain* does NOT emit a second time — replay-depth
+%%            guard protects the flag SET branch.
+%% TEST-SOURCE: wave3-plan-v11.md P01(A2) replay-regression contract
+%% TEST-SECTION: codependent.sty §\codepbackrefs (\codep@replaydepth guard)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
+%% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REND-INLINE, B-REST-FIRST, B-REST-NODUP
+%%
+%% \restatable{theorem} in the main body wraps \codepbackrefs inside
+%% its body. First occurrence is the primary (atom 1.1), fires at the
+%% normal call site. Later, \thmMain* in the appendix replays the
+%% body, but \codep@replaydepth > 0, so \codepbackrefs is a no-op
+%% (no flag set, no emission). The restate MUST NOT add a duplicate
+%% atom record (§8a.5.a guard), and MUST NOT re-flush.
+
+\documentclass{article}
+\usepackage{thmtools}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Main}
+
+\begin{restatable}{theorem}{thmMain}\label{thm:main}
+  Statement. \codepbackrefs
+\end{restatable}
+
+A paragraph referring to Theorem~\ref{thm:main} (atom 1.2).
+
+\section{Appendix}
+
+Restate: \thmMain*
+
+\END
+\end{document}
