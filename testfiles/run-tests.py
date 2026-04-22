@@ -678,6 +678,36 @@ def _links_overlapping_line(
 
 
 # ----------------------------------------------------------------------
+# Appendix entry helpers
+# ----------------------------------------------------------------------
+
+
+def _parse_appendix_entry_spec(spec: str) -> tuple[str, str, str | None] | None:
+    """Parse '<atom-key> = <display-number> [<printed-kind>]'.
+
+    Returns (atom_key, display_number, printed_kind) or None on parse error.
+    """
+    if "=" not in spec:
+        return None
+    atom_key, rest = spec.split("=", 1)
+    atom_key = atom_key.strip()
+    rest = rest.strip()
+    parts = rest.split(None, 1)
+    if not parts:
+        return None
+    display_number = parts[0]
+    printed_kind = parts[1].strip() if len(parts) > 1 else None
+    return atom_key, display_number, printed_kind
+
+
+def _count_appendix_entries_in_pdf(link_data: "PdfLinkObjects") -> int:
+    """Count named destinations matching the codep-appendix: namespace."""
+    return sum(
+        1 for d in link_data.destinations if d.startswith("codep-appendix:")
+    )
+
+
+# ----------------------------------------------------------------------
 # Run a single fixture
 # ----------------------------------------------------------------------
 
@@ -1225,6 +1255,96 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                 result.failures.append(
                     f"expected package error matching {pat!r} not found in log"
                 )
+
+        # 16. Appendix entry assertions (TEST-PDF-APPENDIX-ENTRY /
+        #     TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY).
+        has_appendix_checks = (
+            fix.pdf_appendix_entry or fix.pdf_appendix_entry_text_only
+        )
+        if has_appendix_checks:
+            appendix_specs = fix.pdf_appendix_entry or fix.pdf_appendix_entry_text_only
+            need_dest_check = bool(fix.pdf_appendix_entry)
+            pdf_file = tmp_path / f"{fix.name}.pdf"
+
+            if not pdf_file.exists():
+                result.failures.append(
+                    "appendix assertions present but no PDF was produced"
+                )
+            else:
+                # For destination-check variant, we need qpdf.
+                link_data = None
+                if need_dest_check:
+                    if PDF_QPDF_TOOL is None:
+                        result.failures.append(
+                            "TEST-PDF-APPENDIX-ENTRY requires qpdf "
+                            "(not on PATH). Run inside 'nix develop'."
+                        )
+                    else:
+                        link_data = _extract_pdf_link_objects(pdf_file)
+                        if link_data is None:
+                            result.failures.append(
+                                "appendix dest check: qpdf extraction failed"
+                            )
+
+                # For text checks we need stext.
+                stext_xml = None
+                if PDF_STEXT_TOOL is None:
+                    result.failures.append(
+                        "appendix text assertions require mutool "
+                        "(not on PATH). Run inside 'nix develop'."
+                    )
+                else:
+                    stext_xml = _extract_pdf_stext(pdf_file)
+                    if stext_xml is None:
+                        result.failures.append(
+                            "appendix stext extraction failed"
+                        )
+
+                # Per-entry assertions.
+                for spec in appendix_specs:
+                    parsed = _parse_appendix_entry_spec(spec)
+                    if parsed is None:
+                        result.failures.append(
+                            f"malformed appendix entry spec: {spec!r}"
+                        )
+                        continue
+                    atom_key, display_number, printed_kind = parsed
+                    dest_name = f"codep-appendix:{atom_key}"
+
+                    if need_dest_check and link_data is not None:
+                        if dest_name not in link_data.destinations:
+                            result.failures.append(
+                                f"appendix named dest {dest_name!r} not found in PDF"
+                            )
+
+                    if stext_xml is not None:
+                        if display_number not in stext_xml:
+                            result.failures.append(
+                                f"appendix entry {atom_key!r}: display number "
+                                f"{display_number!r} not found in PDF text"
+                            )
+                        if printed_kind and printed_kind not in stext_xml:
+                            result.failures.append(
+                                f"appendix entry {atom_key!r}: printed kind "
+                                f"{printed_kind!r} not found in PDF text"
+                            )
+
+                # Enumeration guard: directive count vs. appendix entry count.
+                if not fix.appendix_enum_waiver:
+                    n_dirs = len(appendix_specs)
+                    if need_dest_check and link_data is not None:
+                        n_entries = _count_appendix_entries_in_pdf(link_data)
+                        if n_entries != n_dirs:
+                            result.failures.append(
+                                f"appendix enumeration mismatch: {n_dirs} directive(s) "
+                                f"but {n_entries} codep-appendix: destination(s) in PDF "
+                                f"(declare TEST-APPENDIX-ENUM-WAIVER to suppress)"
+                            )
+                    elif not need_dest_check and stext_xml is not None:
+                        # TEXT-ONLY variant: we can only warn (no dest count).
+                        # Guard is informational: remind the author to use a waiver
+                        # if the appendix section cannot be independently counted.
+                        pass
 
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name
