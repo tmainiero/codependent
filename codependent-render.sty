@@ -95,7 +95,7 @@
     % or a comma-joined ref list.  \@ifundefined cannot
     % distinguish \@empty from real data (collapsebr always
     % defines the csname), so use \ifx against \@empty instead.
-    \expandafter\ifx\csname codep@br@#1\endcsname\@empty
+    \expandafter\ifx\csname codep@br@#1\endcsname\@empty%
       % No refs to this target (collapsed to \@empty): skip.
     \else
       \ifbool{codep@appendix}{}{%
@@ -143,7 +143,7 @@
 %   Reads font/prefix/label from \codepsetup configuration.
 %% @implements \codep@renderbackref
 \newcommand*{\codep@formatusedin}[1]{%
-  {\normalfont\codep@backreffont
+  {\normalfont\codep@backreffont%
    \codep@applycolor{\codep@backrefprefix\codep@backreflabel\space#1.}}}
 % \codep@applycolor{text}
 %   Wrap text in \textcolor if backref-color is set and a
@@ -151,7 +151,7 @@
 %   to plain text if \textcolor is unavailable.
 %% @implements \codep@renderbackref
 \newcommand*{\codep@applycolor}[1]{%
-  \ifx\codep@backrefcolor\@empty
+  \ifx\codep@backrefcolor\@empty%
     #1%
   \else
     \@ifundefined{textcolor}{#1}{\textcolor{\codep@backrefcolor}{#1}}%
@@ -174,14 +174,14 @@
 \def\codep@emitmarginbackref#1{%
   \vbox{%
     \hbox to \linewidth{%
-      \hfil
+      \hfil%
       \smash{%
         \rlap{%
           #1%
         }%
       }%
     }%
-    \vskip\smallskipamount
+    \vskip\smallskipamount%
   }%
 }%
 
@@ -191,11 +191,11 @@
 %   Used for margin backref-style on theorem atoms (non-paragraph).
 %% @behavior B-REND-MARGIN
 \newcommand*{\codep@rendermargin}[1]{%
-  \nobreak
+  \nobreak%
   \codep@emitmarginbackref{%
-    \kern0.5em
-    {\codep@backreffont\codep@backrefprefix
-     \codep@backreflabel\space
+    \kern0.5em%
+    {\codep@backreffont\codep@backrefprefix%
+     \codep@backreflabel\space%
      \codep@truncatereflist{#1}.}%
   }%
 }
@@ -209,17 +209,17 @@
 %% @behavior B-REND-INLINE
 %% @behavior B-REND-MARGIN
 \newcommand*{\codep@renderbackref}[1]{%
-  \ifx\codep@backrefstyle\codep@const@below
+  \ifx\codep@backrefstyle\codep@const@below%
     % Below style: separate line after the atom.
-    \ifx\codep@backrefalign\codep@const@right
-      \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill
+    \ifx\codep@backrefalign\codep@const@right%
+      \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill%
       \quad\codep@formatusedin{#1}%
     \else
-      \leavevmode\unskip\par\nobreak
-      \codep@formatusedin{#1}\hfill\null
+      \leavevmode\unskip\par\nobreak%
+      \codep@formatusedin{#1}\hfill\null%
     \fi
     \par\addvspace{\medskipamount}%
-  \else\ifx\codep@backrefstyle\codep@const@inline
+  \else\ifx\codep@backrefstyle\codep@const@inline%
     % Inline style: same line as content, flows with text.
     % Flush happens from cmd/end#1/before (hmode, before endmark).
     % After display math the hlist is empty (\lastnodetype=-1);
@@ -236,22 +236,22 @@
     % in the env body.
     \def\codep@inline@arg{#1}%
     \toks@{%
-      \ifvmode
-        \noindent
+      \ifvmode%
+        \noindent%
       \else
-        \ifnum\lastnodetype<\z@
+        \ifnum\lastnodetype<\z@%
           % Hmode but the horizontal list is empty (typical after
           % display math).  A \parindent-width indent box may or
           % may not be present; neutralise it by ending the
           % current paragraph and starting fresh with \noindent.
-          \par\nobreak\noindent
+          \par\nobreak\noindent%
         \else
           \unskip\hspace{0.5em}%
         \fi
       \fi
       \expandafter\codep@formatusedin\expandafter{\codep@inline@arg}%
     }%
-    \the\toks@
+    \the\toks@%
   \else
     % Margin style: emit in right margin.
     \codep@rendermargin{#1}%
@@ -265,27 +265,27 @@
 %   Respects backref-style and backref-align configuration.
 %% @behavior B-DISP-PARA
 \newcommand*{\codep@renderbackref@para}[1]{%
-  \nobreak
-  \ifx\codep@backrefstyle\codep@const@below
+  \nobreak%
+  \ifx\codep@backrefstyle\codep@const@below%
     % Below style
     \vbox{%
       \hbox to \linewidth{%
-        \ifx\codep@backrefalign\codep@const@right
+        \ifx\codep@backrefalign\codep@const@right%
           \hfil\codep@formatusedin{#1}%
         \else
-          \codep@formatusedin{#1}\hfil
+          \codep@formatusedin{#1}\hfil%
         \fi
       }%
-      \vskip\medskipamount
+      \vskip\medskipamount%
     }%
-  \else\ifx\codep@backrefstyle\codep@const@inline
+  \else\ifx\codep@backrefstyle\codep@const@inline%
     % Inline style for paragraphs: falls back to block-like rendering
     % (no clean way to inline at paragraph end).  Compact spacing.
     \vbox{%
       \hbox to \linewidth{%
         \hfil\codep@formatusedin{#1}%
       }%
-      \vskip\smallskipamount
+      \vskip\smallskipamount%
     }%
   \else
     % Margin style: emit in the right margin (past \linewidth).
@@ -294,9 +294,9 @@
     % para hooks bypass \everypar).  Long reflists are handled
     % by \codep@truncatereflist instead of line-wrapping.
     \codep@emitmarginbackref{%
-      \kern0.5em
-      {\codep@backreffont\codep@backrefprefix
-       \codep@backreflabel\space
+      \kern0.5em%
+      {\codep@backreffont\codep@backrefprefix%
+       \codep@backreflabel\space%
        \codep@truncatereflist{#1}.}%
     }%
   \fi\fi
@@ -328,7 +328,7 @@
     \expandafter\def\expandafter\codep@tmp@pendingsnap\expandafter{%
       \the\codep@pendingbr}%
     \ifx\codep@tmp@pendingsnap\@empty\else
-      \@endparpenalty\@M
+      \@endparpenalty\@M%
     \fi
   \fi
 }%
@@ -347,7 +347,7 @@
     \the\codep@pendingbr}%
   \codep@pendingbr={}%
   \ifx\codep@tmp@brsnap\@empty\else
-    \global\let\codep@deferredbr\codep@tmp@brsnap
+    \global\let\codep@deferredbr\codep@tmp@brsnap%
   \fi
 }%
 
@@ -363,7 +363,7 @@
     \vadjust pre{%
       \codep@renderbackref@para{\codep@deferredbr}%
     }%
-    \global\let\codep@deferredbr\@empty
+    \global\let\codep@deferredbr\@empty%
   \fi
 }%
 
@@ -384,16 +384,16 @@
   \ifbool{codep@appendix}{%
     \section*{Dependency Index}%
     \begingroup
-      \small
+      \small%
       \def\codep@appendix@lastsec{}%
-      \count@=\z@
-      \loop
-        \ifnum\count@<\codep@atomcount
+      \count@=\z@%
+      \loop%
+        \ifnum\count@<\codep@atomcount%
         \advance\count@ by 1\relax
         % Check for section change and emit header if needed.
         \edef\codep@appendix@thissec{%
           \csname codep@atom@sec@\the\count@\endcsname}%
-        \ifx\codep@appendix@thissec\codep@appendix@lastsec
+        \ifx\codep@appendix@thissec\codep@appendix@lastsec%
         \else
           \ifx\codep@appendix@thissec\@empty\else
             \edef\codep@appendix@thistitle{%
@@ -405,13 +405,13 @@
                 {\codep@appendix@thistitle}%
             \fi
           \fi
-          \let\codep@appendix@lastsec
-            \codep@appendix@thissec
+          \let\codep@appendix@lastsec%
+            \codep@appendix@thissec%
         \fi
-        \expandafter\expandafter\expandafter
-          \codep@appendix@emit
-          \csname codep@atom@\the\count@\endcsname
-      \repeat
+        \expandafter\expandafter\expandafter%
+          \codep@appendix@emit%
+          \csname codep@atom@\the\count@\endcsname%
+      \repeat%
     \endgroup
   }{%
     \PackageWarning{codependent}{%
@@ -438,16 +438,16 @@
 % \codep@appendixsection{number}{title}
 %% @implements \codepappendix
 \newcommand*{\codep@appendixsection}[2]{%
-  \par\medskip\noindent
-  \textbf{#1\quad #2}\par
+  \par\medskip\noindent%
+  \textbf{#1\quad #2}\par%
 }
 
 % \codep@appendixentry{atomnumber}{atomname}{reflist}
 %% @implements \codepappendix
 \newcommand*{\codep@appendixentry}[3]{%
-  \par\noindent
+  \par\noindent%
   \hspace{1.5em}%
-  #1\quad #2\quad\dotfill\quad
+  #1\quad #2\quad\dotfill\quad%
   \begin{minipage}[t]{0.45\linewidth}%
     \raggedright #3%
   \end{minipage}%
@@ -501,9 +501,9 @@
 %% @implements \codep@hooktheorem
 \def\codep@render@thm@preparebackref#1{%
   \codep@queuebackref{\codep@outeratom}%
-  \codep@preventorphan
-  \ifx\codep@backrefstyle\codep@const@inline
-    \codep@flushbackref
+  \codep@preventorphan%
+  \ifx\codep@backrefstyle\codep@const@inline%
+    \codep@flushbackref%
   \fi
 }%
 
@@ -516,10 +516,10 @@
 %% @implements \codep@hooktheorem
 \def\codep@render@thm@afterend#1{%
   \ifx\codep@backrefstyle\codep@const@inline\else
-    \ifx\codep@backrefstyle\codep@const@below
+    \ifx\codep@backrefstyle\codep@const@below%
       \codep@withsuppression{\codep@flushbackref}%
     \else
-      \codep@flushbackref
+      \codep@flushbackref%
     \fi
   \fi
 }%
@@ -529,10 +529,10 @@
 %   Block/margin: apply orphan prevention.
 %% @implements \codep@hookproof
 \def\codep@render@proof@end{%
-  \ifx\codep@backrefstyle\codep@const@inline
-    \codep@flushbackref
+  \ifx\codep@backrefstyle\codep@const@inline%
+    \codep@flushbackref%
   \else
-    \codep@preventorphan
+    \codep@preventorphan%
   \fi
 }%
 
@@ -541,8 +541,8 @@
 %% @implements \codep@hookproof
 \def\codep@render@proof@afterend{%
   \ifbool{codep@proofsnumbered}{%
-    \ifx\codep@backrefstyle\codep@const@inline\else
-      \codep@flushbackref
+    \ifx\codep@backrefstyle\codep@const@inline\else%
+      \codep@flushbackref%
     \fi
   }{}%
 }%
@@ -559,14 +559,14 @@
 %   Emit the deferred backref from the previous paragraph, if any.
 %% @behavior B-DISP-PARA
 \def\codep@render@para@emitdeferred{%
-  \codep@parahook@emitdeferred
+  \codep@parahook@emitdeferred%
 }%
 
 % \codep@render@paraend@snapshot
 %   Snapshot pending backref data for deferred emission.
 %% @behavior B-DISP-PARA
 \def\codep@render@paraend@snapshot{%
-  \codep@parendhook@snapshot
+  \codep@parendhook@snapshot%
 }%
 
 % \codep@render@enddocument@flush
@@ -575,7 +575,7 @@
 \def\codep@render@enddocument@flush{%
   \ifx\codep@deferredbr\@empty\else
     \codep@renderbackref@para{\codep@deferredbr}%
-    \global\let\codep@deferredbr\@empty
+    \global\let\codep@deferredbr\@empty%
   \fi
 }%
 
