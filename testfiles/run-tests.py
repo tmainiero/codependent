@@ -698,6 +698,11 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
     t0 = time.time()
     result = TestResult(fixture=fix, passed=False)
 
+    if fix.parse_error:
+        result.failures.append(f"parse error: {fix.parse_error}")
+        result.duration_ms = int((time.time() - t0) * 1000)
+        return result
+
     if not STY_FILE.exists():
         result.skipped = True
         result.skip_reason = (
@@ -723,14 +728,14 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
             shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
 
         # Run the engine `rerun` times to populate .aux + .cdp.
+        # When a fixture declares TEST-EXPECT-PACKAGE-ERROR, we must observe
+        # post-error behavior; -halt-on-error would abort before that.
         run_log = []
         for pass_num in range(1, fix.rerun + 1):
-            cmd = [
-                str(engine_bin),
-                "-interaction=nonstopmode",
-                "-halt-on-error",
-                f"{fix.name}.tex",
-            ]
+            cmd = [str(engine_bin), "-interaction=nonstopmode"]
+            if not fix.expect_package_error:
+                cmd.append("-halt-on-error")
+            cmd.append(f"{fix.name}.tex")
             try:
                 proc = subprocess.run(
                     cmd,
@@ -1202,6 +1207,24 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
                                             f"Lines found: "
                                             f"{'; '.join(summaries)}"
                                         )
+
+        # 14. Package warning assertions (TEST-EXPECT-PACKAGE-WARNING).
+        for pat in fix.expect_package_warning:
+            if not re.search(
+                rf"Package codependent Warning:.*?{pat}", log_text, re.DOTALL
+            ):
+                result.failures.append(
+                    f"expected package warning matching {pat!r} not found in log"
+                )
+
+        # 15. Package error assertions (TEST-EXPECT-PACKAGE-ERROR).
+        for pat in fix.expect_package_error:
+            if not re.search(
+                rf"Package codependent Error:.*?{pat}", log_text, re.DOTALL
+            ):
+                result.failures.append(
+                    f"expected package error matching {pat!r} not found in log"
+                )
 
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name
