@@ -891,6 +891,12 @@
   \codep@ctxpeekid\codep@thisatomid%
   \codep@hooktheorem@record{#1}%
   \codep@hooktheorem@preparebackref{#1}%
+  % W03-P03: capture entitymeta for this just-closed theorem-rail
+  % entity.  \codep@tmp@num is set by \codep@hooktheorem@record above
+  % (via \codep@splitprefix on \codep@outeratom).  Kind is hardcoded
+  % "theorem" (the category); print-kind is the actual env-name.
+  \codep@captureentitymeta{\codep@outeratom}{theorem}%
+    {\codep@tmp@num}{#1}{}%
   \codep@ctxpop{#1}%
   \global\advance\codep@trackeddepth by -1\relax%
   \global\advance\codep@suppressdepth by -1\relax%
@@ -1167,6 +1173,11 @@
       \global\let\codep@pendingresultid\@empty%
       \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
       \xdef\codep@proofend@pendingclear{\codep@tmp@proofkey}%
+      % W03-P03: capture entitymeta for this just-closed proof.
+      % Display extracted via \codep@splitprefix (sets \codep@tmp@num).
+      \expandafter\codep@splitprefix\codep@tmp@proofkey\@nil%
+      \codep@captureentitymeta{\codep@tmp@proofkey}{proof}%
+        {\codep@tmp@num}{proof}{}%
       \codep@proofstaterestore{\codep@thisproofid}%
     \fi%
   }{}%
@@ -1611,6 +1622,10 @@
     \string\codep@cdp@meta{\theatom}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
   \codep@registeratom{\codep@tmp@parakey}{paragraph}%
+  % W03-P03: capture entitymeta for this paragraph atom.  Paragraph
+  % atom-keys don't mutate after open, so open-time capture is safe.
+  \codep@captureentitymeta{\codep@tmp@parakey}{paragraph}%
+    {\theatom}{paragraph}{}%
   \codep@render@para@emit{\codep@tmp@parakey}{\theatom}%
 }%
 
@@ -1762,12 +1777,52 @@
   \expandafter\gdef\csname codep@renderlist@#1@payload\endcsname{#3}}
 
 % Accumulator for entitymeta emission at enddoc.  Each tracked-env
-% open site appends one token-sequence describing its atom; the
+% close site appends one token-sequence describing its atom; the
 % enddoc drain walks the list in order and emits one aux record
 % per entry.  See \codep@captureentitymeta and
-% \codep@p03@enddoc@drain.
+% \codep@entitymeta@emit.
 %% @utility
 \gdef\codep@entitymetaacc{}
+
+% \codep@captureentitymeta{key}{kind}{display}{print-kind}{parent-key}
+%   Record one entity's metadata to the enddoc accumulator.
+%   Uses a \do-list pattern (each entry is one \do{a}{b}{c}{d}{e}
+%   expansion) so the emit walker can \let\do\<handler> and simply
+%   expand the accumulator.
+%
+%   Replay-guarded: skipped during \restatable replay so restated
+%   envs don't duplicate their entry.  Defensive; in normal code
+%   path the theorem-end/proof-end hooks don't fire during replay
+%   anyway.
+%% @utility
+\def\codep@captureentitymeta#1#2#3#4#5{%
+  \ifnum\codep@replaydepth>0\relax%
+  \else%
+    \g@addto@macro\codep@entitymetaacc{\do{#1}{#2}{#3}{#4}{#5}}%
+  \fi%
+}%
+
+% \codep@entitymeta@emit@one{key}{kind}{display}{print-kind}{parent-key}
+%   Per-entry handler for the emit walker.  Writes one
+%   \codep@entitymeta aux record.
+%% @utility
+\def\codep@entitymeta@emit@one#1#2#3#4#5{%
+  \protected@write\@auxout{}{%
+    \string\codep@entitymeta{#1}{#2}{#3}{#4}{#5}}%
+}%
+
+% \codep@entitymeta@emit
+%   Walk \codep@entitymetaacc and emit one aux record per entry.
+%   Called from \codep@enddoc@drain@p03 at enddoc time (commit 7).
+%% @utility
+\def\codep@entitymeta@emit{%
+  \if@filesw%
+    \begingroup%
+      \let\do\codep@entitymeta@emit@one%
+      \codep@entitymetaacc%
+    \endgroup%
+  \fi%
+}%
 
 % In-memory pending-ref accumulator for same-run forward-ref
 % resolution (ref issued to a yet-unknown label).  Per-label
