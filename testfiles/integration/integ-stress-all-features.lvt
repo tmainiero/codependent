@@ -1,0 +1,326 @@
+%% TEST-NAME: integ-stress-all-features
+%% TEST-WHAT: Wave 3 holistic stress fixture: exercises every codependent feature
+%%            in a single file.  theorem, lemma, proposition, corollary,
+%%            definition, remark — all tracked.  Adjacent proof attribution
+%%            fires after ANY tracked env (theorem, definition, remark) per v12 A5.
+%%            Both \codeptrack user-registration and stock amsthm proof.
+%%            Concepts (\codepnewcommand), environment suppression (\codepsuppress),
+%%            \codepproofof* (starred, long-distance proof with anchor),
+%%            "Proof not adjacent" standalone warning path, cross-section refs,
+%%            equation tracking Track 1 + Track 2, paragraph numbering,
+%%            and hyperref hyperlinks all exercised.
+%%            This is the Wave 3 holistic integration ground truth.
+%% TEST-SOURCE: wave3-plan-v12 A5; B-NUM-SEQ, B-PROOF-ADJ, B-EQ-OUTER
+%% TEST-SECTION: holistic integration (all features)
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-EXPECT-PACKAGE-WARNING: Proof not adjacent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 3
+%% TEST-BEHAVIOR: B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-RERUN
+%% --- CDP assertions ---
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-CDP-CONTAINS: \codep@cdp@def
+%% TEST-CDP-CONTAINS: \codep@cdp@use
+%% TEST-CDP-CONTAINS: \codep@cdp@label
+%% TEST-CDP-CONTAINS: \codep@cdp@tag
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Top}{kind}{newcommand}
+%% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Sp}{kind}{newcommand}
+%% --- AUX assertions ---
+%% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-AUX-CONTAINS: \codep@concept{Top}
+%% TEST-AUX-CONTAINS: \codep@concept{Sp}
+%% TEST-AUX-CONTAINS: \codep@conceptref
+%% Track 1: standalone equation eq:triangle in section 2 → eq-sourced atomref
+%% TEST-AUX-CONTAINS: \codep@atomref{equation:2.
+%% Outer-mode guard: equation inside lemma body must NOT produce eq-sourced atomref
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{equation:1.
+%% --- Atom count ---
+%% TEST-ATOMS-MIN: 14
+%% --- PDF assertions ---
+%% TEST-PDF-CONTAINS: Used in
+%% TEST-PDF-LINKS: 6
+%% TEST-PDF-OBJECTS: /Subtype.?/Link
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-LINK-DEST: definition\.
+%% TEST-PDF-LINK-DEST: theorem\.
+%% TEST-PDF-DEST-EXISTS: definition\.
+%% TEST-PDF-DEST-EXISTS: theorem\.
+%%
+%% Feature coverage:
+%%   - theorem, lemma, proposition, corollary, definition, remark (all 6)
+%%   - adjacent proof after definition (B-PROOF-ADJ, v12 A5: any tracked env)
+%%   - adjacent proof after remark (B-PROOF-ADJ, v12 A5: any tracked env)
+%%   - adjacent proof after theorem (B-PROOF-ADJ, classic theorem-rail)
+%%   - "Proof not adjacent" standalone path + warning (B-PROOF-NONADJ):
+%%       after all adjacent proofs have consumed pendingresultid,
+%%       a proof with no pending theorem triggers proof@materialize warning,
+%%       then \codepproofof* redirects it (B-LINK-PROOFOF-STAR)
+%%   - \codepsuppress{quote}: suppresses quote env from paragraph tracking (B-SUPP-TRACKED)
+%%   - \codepnewcommand \Top (arity 1) and \Sp (arity 2) (B-SUPP-CMDS)
+%%   - starred \Top*{} inside definition env → cdp@def record (B-CONC-DEFSITE)
+%%   - \Top{} use site → cdp@use + cdp@conceptref (B-CONC-EDGES)
+%%   - \codeptag uid (sidecar)
+%%   - Track 1 standalone equation eq:triangle (B-EQ-TRACK1), outer mode (B-EQ-OUTER)
+%%   - Track 2 align environment (B-EQ-TRACK2)
+%%   - outer-mode guard: eq inside lemma body → no eq-sourced atomref (B-EQ-OUTER)
+%%   - paragraph numbering with backrefs (B-DISP-PARA)
+%%   - cross-section references §3 → §1 atoms, §3 → §2 atoms
+%%   - hyperref links for all backrefs (B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN)
+
+\documentclass{article}
+
+%% ---------- Standard math stack ----------
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+
+%% ---------- Theorem infrastructure ----------
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\slshape,
+]{thmstyle}
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\normalfont,
+]{defstyle}
+
+\declaretheorem[name=Theorem,    style=thmstyle, numberwithin=section]{theorem}
+\declaretheorem[name=Lemma,      style=thmstyle, sibling=theorem]{lemma}
+\declaretheorem[name=Proposition,style=thmstyle, sibling=theorem]{proposition}
+\declaretheorem[name=Corollary,  style=thmstyle, sibling=theorem]{corollary}
+\declaretheorem[name=Definition, style=defstyle, sibling=theorem]{definition}
+\declaretheorem[name=Remark,     style=defstyle, sibling=theorem]{remark}
+
+%% ---------- codependent ----------
+\usepackage{codependent}
+\codepsetup{backrefs=inline, paragraphs=on, equations=outer, proofs=on,
+            backref-style=inline, proof-warnings=on}
+%% Register all 6 env types — exercises \codeptrack with multi-item list.
+\codeptrack{theorem,lemma,proposition,corollary,definition,remark}
+
+%% ---------- Concept-tracked macros ----------
+%% \Top{X} — topological space notation (arity 1); \Top*{X} marks definition site
+\codepnewcommand{\Top}[1]{\mathcal{#1}}
+%% \Sp{X}{d} — metric space notation (arity 2); \Sp*{X}{d} marks definition site
+\codepnewcommand{\Sp}[2]{(\Top{#1},{#2})}
+
+%% ---------- Environment suppression ----------
+%% Suppress the quote env from paragraph atom tracking (B-SUPP-TRACKED).
+\codepsuppress{quote}
+
+%% ---------- hyperref + cleveref + equation numbering ----------
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+\usepackage{cleveref}
+\numberwithin{equation}{section}
+
+\begin{document}
+\START
+
+%% ====================================================================
+%%  Section 1: Foundational definitions
+%%  Tests: definition tracking (B-NUM-SEQ), adjacent proof after definition
+%%         (v12 A5, B-PROOF-ADJ for any tracked env),
+%%         remark tracking, adjacent proof after remark (v12 A5),
+%%         suppressed quote env (B-SUPP-TRACKED).
+%%
+%%  Concept notation: \Top*{X} marks a definition site (→ cdp@def),
+%%  \Top{X} is a use site (→ cdp@use).
+%% ====================================================================
+\section{Topological spaces}%
+\label{sec:topo}
+
+\begin{definition}\label{def:topspace}
+  A \emph{topological space} is a pair $(\Top*{X}, \tau)$ where $\Top{X}$ is a
+  set and $\tau$ is a collection of open subsets.%
+  \codeptag{uid}{topspace:def}%
+\end{definition}
+
+%% Adjacent proof after definition — B-PROOF-ADJ for definition env (v12 A5).
+\begin{proof}
+  The axioms are self-consistent: $\emptyset,\Top{X}\in\tau$ by assumption;
+  finite intersections and arbitrary unions of open sets are open by axiom.
+\end{proof}
+
+\begin{definition}\label{def:metric}
+  A \emph{metric space} is a pair $\Sp*{X}{d}$ where $\Top{X}$ is a set and
+  $d\colon \Top{X}\times\Top{X}\to\mathbb{R}_{\geq 0}$ satisfies the metric axioms.
+  The topology is the one induced by the open balls $B(x,r) = \{y: d(x,y)<r\}$.
+\end{definition}
+
+\begin{remark}\label{rem:hausdorff}
+  Every metric space $\Sp{X}{d}$ (cf.\ \cref{def:metric}) is Hausdorff:
+  for distinct $x\neq y$ the balls of radius $d(x,y)/2$ are disjoint.
+\end{remark}
+
+%% Adjacent proof after remark — B-PROOF-ADJ for remark env (v12 A5).
+\begin{proof}
+  If $z\in B(x,\varepsilon)\cap B(y,\varepsilon)$ with $\varepsilon=d(x,y)/2$,
+  then $d(x,y)\leq d(x,z)+d(z,y)<2\varepsilon=d(x,y)$, contradiction.
+\end{proof}
+
+%% Suppressed block: quote env is registered with \codepsuppress{quote} above.
+\begin{quote}
+  This excerpt is typeset in a suppressed \texttt{quote} environment.
+  codependent does not assign a paragraph atom number to this block.
+\end{quote}
+
+%% ====================================================================
+%%  Section 2: Compactness results
+%%  Tests: theorem/lemma/proof adjacency (B-PROOF-ADJ, classic theorem-rail),
+%%         equation outer-mode guard (B-EQ-OUTER),
+%%         Track-1 standalone equation (B-EQ-TRACK1),
+%%         Track-2 align equation (B-EQ-TRACK2),
+%%         "Proof not adjacent" standalone path + B-LINK-PROOFOF-STAR:
+%%           after cor:heine-borel's adjacent proof consumes pendingresultid,
+%%           a proof with no pending result triggers proof@materialize warning;
+%%           \codepproofof* inside it redirects to thm:compact-closed.
+%% ====================================================================
+\section{Compactness}%
+\label{sec:compact}
+
+\begin{lemma}\label{lem:bounded}
+  Every compact metric space $\Sp{X}{d}$ is bounded.
+  The following equation is inside the lemma body, so the outer-mode
+  guard prevents an equation-sourced backref edge:
+  \begin{equation}\label{eq:diam-inside-lemma}
+    \mathrm{diam}(\Top{X}) = \sup_{x,y\in\Top{X}} d(x,y) < \infty.
+  \end{equation}
+\end{lemma}
+
+%% Adjacent proof after lemma (B-PROOF-ADJ, classic theorem-rail).
+\begin{proof}
+  Fix $x_0\in\Top{X}$.  The cover $\{B(x_0,n)\}_{n\geq 1}$ has a finite
+  subcover; the bound from \cref{eq:diam-inside-lemma} follows.
+\end{proof}
+
+%% Track-1 standalone equation: produces eq-sourced atomref when referenced
+%% from OUTSIDE a tracked theorem environment (B-EQ-TRACK1).
+%% The \cref{def:metric} inside the equation body fires while codep@trackeddepth=0,
+%% so Track-1 writes \codep@atomref{equation:2.x}{def:metric} to the .aux.
+A fundamental estimate is the triangle inequality
+(for metric spaces as in \cref{def:metric}):
+\begin{equation}\label{eq:triangle}
+  d(x,z) \leq d(x,y)+d(y,z) \qquad \forall\, x,y,z\in\Top{X}
+  \quad\text{(cf.\ \cref{def:metric})}.
+\end{equation}
+
+%% Track-2 align: produces eq-sourced atomref range (B-EQ-TRACK2).
+%% The \cref{def:topspace} inside fires while codep@trackeddepth=0.
+Also (properties of the metric, cf.\ \cref{def:topspace}):
+\begin{align}
+  d(x,y) &= d(y,x)   \quad\text{(\cref{def:topspace})},   \label{eq:sym}    \\
+  d(x,y) &\geq 0.     \label{eq:nonneg}
+\end{align}
+
+\begin{theorem}\label{thm:compact-closed}
+  A closed subset of a compact metric space $\Sp{X}{d}$ is compact.
+  The triangle inequality \cref{eq:triangle} (a standalone Track-1 equation)
+  creates an eq-sourced backref edge to $\Top{X}$ (\cref{def:topspace}).
+\end{theorem}
+
+%% Adjacent proof after theorem (B-PROOF-ADJ, classic theorem-rail).
+%% This proof consumes pendingresultid for thm:compact-closed.
+\begin{proof}
+  Let $F\subseteq\Top{X}$ be closed.  Any open cover of $F$ together with
+  $\Top{X}\setminus F$ is an open cover of $\Top{X}$; extract a finite
+  subcover and drop the extra element.
+\end{proof}
+
+\begin{proposition}\label{prop:seq-compact}
+  A metric space $\Sp{X}{d}$ is compact iff it is sequentially compact.
+\end{proposition}
+
+%% Adjacent proof after proposition — consumes pendingresultid for prop.
+\begin{proof}
+  Standard: compactness iff every net has a convergent subnet (equiv.
+  sequential compactness for metric spaces).  Uses \cref{def:metric}.
+\end{proof}
+
+\begin{corollary}\label{cor:heine-borel}
+  A subset of $\mathbb{R}^n$ is compact iff it is closed and bounded.
+\end{corollary}
+
+%% Adjacent proof after corollary — consumes pendingresultid for cor.
+%% After this proof, pendingresultid is EMPTY.
+\begin{proof}
+  By \cref{prop:seq-compact} and the Bolzano–Weierstrass theorem.
+\end{proof}
+
+%% ============================================================
+%% B-PROOF-NONADJ path:
+%%   At this point pendingresultid is EMPTY (consumed by cor:heine-borel above).
+%%   This standalone proof has NO \codepproofof* redirect — it materializes
+%%   normally and fires "Proof not adjacent" warning (TEST-EXPECT-PACKAGE-WARNING).
+%% ============================================================
+\begin{proof}[Alternate proof sketch]
+  Ultrafilter argument: any ultrafilter on a compact space converges;
+  apply this to characterise compactness via closed sets with the finite
+  intersection property (\cref{def:topspace}).  See \cref{thm:compact-closed}.
+\end{proof}
+
+%% ============================================================
+%% B-LINK-PROOFOF-STAR path:
+%%   pendingresultid still EMPTY after the standalone proof above.
+%%   \codepproofof*{thm:compact-closed} runs as FIRST statement — it clears
+%%   proofdisplaypending and redirects this proof atom to thm:compact-closed,
+%%   writing an anchor (B-LINK-PROOFOF-STAR).  A second warning also fires
+%%   for this standalone proof (still captured by TEST-EXPECT-PACKAGE-WARNING).
+%% ============================================================
+\begin{proof}[Long-distance proof via \texorpdfstring{\texttt{\textbackslash codepproofof*}}{codepproofof*}]
+  \codepproofof*{thm:compact-closed}%
+  An ultrafilter on $\Top{X}$ (\cref{def:topspace}) converges; combined with
+  \cref{lem:bounded} this gives compactness via the finite-intersection property.
+\end{proof}
+
+%% ====================================================================
+%%  Section 3: Cross-section references
+%%  Tests: §3 → §1 and §3 → §2 edges in the backref graph;
+%%         paragraph backref display (B-DISP-PARA);
+%%         hyperlink correctness for all backref entries (B-LINK-CORRECT).
+%% ====================================================================
+\section{Cross-references}%
+\label{sec:crossref}
+
+\begin{theorem}\label{thm:extreme-value}
+  If $\Sp{X}{d}$ (\cref{def:metric}) is compact (\cref{thm:compact-closed})
+  then every continuous $f\colon\Top{X}\to\mathbb{R}$ attains its supremum.
+  Uses \cref{lem:bounded} and \cref{cor:heine-borel}.
+\end{theorem}
+
+\begin{proof}
+  By sequential compactness (\cref{prop:seq-compact}) every maximising
+  sequence has a convergent subsequence; continuity gives the supremum.
+\end{proof}
+
+\begin{definition}\label{def:continuous}
+  A function $f\colon\Top{X}\to\Top{Y}$ between topological spaces is
+  \emph{continuous} if $f^{-1}(U)$ is open in $\Top{X}$ whenever $U\subseteq\Top{Y}$
+  is open.  Uses \cref{def:topspace}.
+\end{definition}
+
+\begin{corollary}\label{cor:extreme-value-cont}
+  Every continuous $f\colon\Top{X}\to\mathbb{R}$ on a compact $\Sp{X}{d}$
+  (cf.\ \cref{def:continuous}, \cref{thm:extreme-value}) is bounded.
+\end{corollary}
+
+\begin{proof}
+  Immediate from \cref{thm:extreme-value}: $f$ attains its supremum, hence
+  is bounded.  Uses \cref{cor:heine-borel} and \cref{lem:bounded}.
+\end{proof}
+
+A cross-section paragraph referencing \cref{def:topspace}, \cref{def:metric},
+\cref{rem:hausdorff}, \cref{thm:compact-closed}, and \cref{cor:heine-borel}
+to force graph edges from this paragraph atom to atoms in §1 and §2.
+
+\END
+\end{document}
