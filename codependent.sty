@@ -289,9 +289,42 @@
 \newtoks\codep@proofneststack
 \codep@proofneststack={}
 
-% Deferred proof-binding marker.
+% Deferred proof-binding marker.  Non-empty when a proof-binding
+% declaration (e.g., \codepproofin — planned future API) was made
+% but the proof environment has not yet begun to consume it.
+% Cleared at every \let\@empty site; the sibling slots below
+% carry the contextual details needed by the overwrite and
+% unsettled-slot warnings.
 %% @utility
 \newcommand*{\codep@pendingproofbind}{}
+
+% Sibling capture slots for the pending proof-binding.  Populated
+% alongside \codep@pendingproofbind whenever a binding is
+% declared; used by \codep@pendingproofbind@checkoverwrite and by
+% \codep@enddoc@drain@proofs when warning about an unsettled
+% slot.  Kept empty when \codep@pendingproofbind is empty.
+%% @utility
+\newcommand*{\codep@pendingproofbind@line}{}
+%% @utility
+\newcommand*{\codep@pendingproofbind@label}{}
+
+% \codep@pendingproofbind@checkoverwrite
+%   Called immediately before any site that \let\@empty-clears
+%   \codep@pendingproofbind outside the save/restore pair.  If
+%   the slot is non-empty at check time, emits one
+%   \PackageWarning + \codep@subsystem@recordfailed{proofof} and
+%   clears the sibling slots; the caller then performs its own
+%   \let\@empty on the main slot.  Safe to call when the slot is
+%   already empty (no-op).
+%% @utility
+\def\codep@pendingproofbind@checkoverwrite{%
+  \ifx\codep@pendingproofbind\@empty\else%
+    \codep@subsystem@recordfailed{proofof}%
+    \PackageWarning{codependent}{proof-bind slot overwritten -- previous binding to '\codep@pendingproofbind@label' at input line \codep@pendingproofbind@line\space was lost}%
+    \global\let\codep@pendingproofbind@line\@empty%
+    \global\let\codep@pendingproofbind@label\@empty%
+  \fi%
+}%
 
 % Saved atom number for the outermost tracked env.  When nesting
 % occurs, \theatom at end-time reflects the LAST \refstepcounter
@@ -1096,6 +1129,7 @@
 \def\codep@proofstaterestore#1{%
   \expandafter\ifx\csname codep@savedproofid@#1\endcsname\relax%
     \global\let\codep@currentproofid\@empty%
+    \codep@pendingproofbind@checkoverwrite%
     \global\let\codep@pendingproofbind\@empty%
     \global\codep@proofdisplaypendingfalse%
   \else%
@@ -1141,6 +1175,7 @@
         \xdef\codep@currentproofid{\codep@thisproofid}%
         \codep@ctxpush{\codep@currentproofid}{proof}%
         \global\advance\codep@suppressdepth by 1\relax%
+        \codep@pendingproofbind@checkoverwrite%
         \let\codep@pendingproofbind\@empty%
         \codep@proof@standalone%
         \ifx\codep@pendingresultid\@empty\else%
@@ -1153,6 +1188,7 @@
       \xdef\codep@currentproofid{\codep@thisproofid}%
       \codep@ctxpush{\codep@currentproofid}{proof}%
       \global\advance\codep@suppressdepth by 1\relax%
+      \codep@pendingproofbind@checkoverwrite%
       \let\codep@pendingproofbind\@empty%
       \codep@proof@standalone%
     \fi%
@@ -3114,11 +3150,21 @@
 \def\codep@enddoc@drain@p03{%
   \codep@refpending@drain%
 }%
+% drain@proofs — consume any still-pending proof-binding slot.
+% If \codep@pendingproofbind is non-empty at enddoc the binding
+% was declared but the proof environment that should have
+% consumed it never appeared.  Record the failure and warn with
+% the captured context; then clear the slot so an aborted run
+% does not persist stale state (runtime-only, no aux impact).
 %% @utility
 \def\codep@enddoc@drain@proofs{%
-  % P04 commit 4 populates this slot: consume pending proof-bind
-  % single-slot; warn on overwritten slot (binding declared but
-  % target never appeared).  No-op in commit 2 skeleton.
+  \ifx\codep@pendingproofbind\@empty\else%
+    \codep@subsystem@recordfailed{proofof}%
+    \PackageWarning{codependent}{proof-bind slot non-empty at \string\end{document} -- target '\codep@pendingproofbind@label' (declared at input line \codep@pendingproofbind@line) never resolved}%
+    \global\let\codep@pendingproofbind\@empty%
+    \global\let\codep@pendingproofbind@line\@empty%
+    \global\let\codep@pendingproofbind@label\@empty%
+  \fi%
 }%
 %% @utility
 \def\codep@enddoc@drain@renderlist{%
