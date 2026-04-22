@@ -337,10 +337,18 @@
 % \codep@render@thm@preparebackref{envname}
 %   Queue backrefs for the outermost atom and auto-flush inline.
 %   Callable at cmd/end#1/before inside the tracked env body.
+%   If the user already invoked \codepbackrefs inside this atom
+%   (per-atom \codep@manuallyemitted@<key> flag set), the auto-flush
+%   is suppressed to avoid a duplicate "Used in" line.  The flag
+%   is undefined later by \codep@manuallyemitted@end@outer@clear
+%   at cmd/end#1/after time.
 %% @implements \codep@hooktheorem
 \def\codep@render@thm@preparebackref#1{%
-  \codep@queuebackref{\codep@outeratom}%
-  \codep@flushbackref%
+  \ifcsname codep@manuallyemitted@\codep@outeratom\endcsname%
+  \else%
+    \codep@queuebackref{\codep@outeratom}%
+    \codep@flushbackref%
+  \fi%
 }%
 
 % \codep@render@thm@afterend{envname}
@@ -352,10 +360,18 @@
 
 % \codep@render@proof@end
 %   Flush the pending backref before the proof env closes
-%   (hmode, before QED).
+%   (hmode, before QED).  Suppressed if the user already invoked
+%   \codepbackrefs inside this proof atom (per-atom
+%   \codep@manuallyemitted@<key> flag set).  Atom key derived from
+%   \codep@currentproofid, which is still valid at this call site
+%   (\codep@hookproof@end runs the restore AFTER this hook).
 %% @implements \codep@hookproof
 \def\codep@render@proof@end{%
-  \codep@flushbackref%
+  \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+  \ifcsname codep@manuallyemitted@\codep@tmp@proofkey\endcsname%
+  \else%
+    \codep@flushbackref%
+  \fi%
 }%
 
 % \codep@render@proof@afterend
@@ -371,6 +387,20 @@
 \def\codep@render@para@emit#1#2{%
   \codep@emitmargin{#2}%
   \codep@queuebackref{#1}%
+}%
+
+% \codep@render@manual@emit{atomkey}
+%   Wired implementation of the manual-emit shim called by the
+%   public \codepbackrefs macro.  Queues backrefs for atomkey and
+%   immediately flushes them inline at the call site.  The
+%   \codep@manuallyemitted@<key> flag is set by \codepbackrefs
+%   BEFORE this call, so the env-end auto-flush check
+%   (\codep@render@thm@preparebackref / \codep@render@proof@end)
+%   sees the flag and suppresses the duplicate emission.
+%% @implements \codepbackrefs
+\def\codep@render@manual@emit#1{%
+  \codep@queuebackref{#1}%
+  \codep@flushbackref%
 }%
 
 \endinput

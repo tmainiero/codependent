@@ -231,6 +231,16 @@
 %% @utility
 \newcommand*{\codep@outeratom}{}
 
+% Pending-clear stashes for the per-atom \codep@manuallyemitted@<key>
+% flag.  Populated at the source hook site (where the atom key is
+% still resolvable), consumed at the *post-env* hook site (after the
+% ctx stack pop).  See Section 6 (\codep@hooktheorem orchestrator)
+% and Section 6 (\codep@hookproof@afterend).
+%% @utility
+\newcommand*{\codep@endenv@pendingclear}{}
+%% @utility
+\newcommand*{\codep@proofend@pendingclear}{}
+
 % Flag: true when \codeptrack has been called.
 \newbool{codep@tracked}
 \boolfalse{codep@tracked}
@@ -328,6 +338,20 @@
 \def\codep@render@proof@afterend{}%
 %% @utility
 \def\codep@render@para@emit#1#2{}%
+%% @utility
+\def\codep@render@manual@emit#1{}%
+
+% \codep@manuallyemitted@clear@key{atomkey}
+%   Globally undefine \codep@manuallyemitted@<atomkey>.  The csname
+%   form must use \@undefined (not \relax) so that subsequent
+%   \ifcsname tests at auto-flush sites correctly return false.
+%   Mirrors the undef idioms in \codep@ctxpop and
+%   \codep@proofstaterestore.
+%% @utility
+\def\codep@manuallyemitted@clear@key#1{%
+  \global\expandafter\let%
+    \csname codep@manuallyemitted@#1\endcsname\@undefined%
+}%
 
 %% ===================================================================
 %% Section 4a: Runtime helpers
@@ -844,6 +868,11 @@
 %% @behavior B-PROOF-ADJ
 % \codep@hooktheorem@end@outer{envname}
 %   Outermost theorem end: serialize and arm proof adjacency.
+%   Stashes the just-closed atom's prefixed key in
+%   \codep@endenv@pendingclear so the cmd/end#1/after hook can
+%   undefine the per-atom \codep@manuallyemitted@<key> flag once
+%   the env's group has fully closed (atom-key no longer
+%   resolvable from the ctx stack at that point).
 \def\codep@hooktheorem@end@outer#1{%
   \codep@ctxpeekid\codep@thisatomid%
   \codep@hooktheorem@record{#1}%
@@ -852,6 +881,7 @@
   \global\advance\codep@trackeddepth by -1\relax%
   \global\advance\codep@suppressdepth by -1\relax%
   \xdef\codep@pendingresultid{\codep@thisatomid}%
+  \xdef\codep@endenv@pendingclear{\codep@outeratom}%
 }%
 
 %% @behavior B-NUM-NESTED
@@ -887,7 +917,31 @@
   \codep@render@thm@afterend{#1}%
 }
 
-% Thin orchestrator: wire the named helpers into the four hook points.
+% \codep@manuallyemitted@end@outer@clear
+%   cmd/end#1/after hook body for tracked theorem-like envs.
+%   Consumes \codep@endenv@pendingclear (populated at
+%   \codep@hooktheorem@end@outer time) and undefines the
+%   corresponding per-atom flag so the next outer atom of the
+%   same env starts with a clean slate.  Inert during replay
+%   (the stash is only populated in the non-replay branch, so
+%   the replay guard is belt+suspenders) and inert at inner-env
+%   end (the stash is only populated for the OUTER env's
+%   \codep@hooktheorem@end@outer path, never inner).
+%% @utility
+\def\codep@manuallyemitted@end@outer@clear{%
+  \ifnum\codep@replaydepth=0\relax%
+    \ifx\codep@endenv@pendingclear\@empty\else%
+      \codep@manuallyemitted@clear@key{\codep@endenv@pendingclear}%
+      \global\let\codep@endenv@pendingclear\@empty%
+    \fi%
+  \fi%
+}%
+
+% Thin orchestrator: wire the named helpers into the five hook points.
+% Fifth hook (cmd/end#1/after) clears any per-atom
+% \codep@manuallyemitted@<key> flag set by an inline
+% \codepbackrefs call inside the env body; see the
+% \codep@manuallyemitted@end@outer@clear helper above.
 %% @behavior B-NUM-SEQ
 %% @behavior B-PROOF-ADJ
 \newcommand*{\codep@hooktheorem}[1]{%
@@ -895,6 +949,7 @@
   \AddToHook{cmd/#1/after}{\codep@hooktheorem@after{#1}}%
   \AddToHook{cmd/end#1/before}{\codep@hooktheorem@end{#1}}%
   \AfterEndEnvironment{#1}{\codep@hooktheorem@afterend{#1}}%
+  \AddToHook{cmd/end#1/after}{\codep@manuallyemitted@end@outer@clear}%
 }
 
 % \codep@hookproof
@@ -1077,6 +1132,13 @@
 %% @behavior B-PROOF-NONADJ
 % \codep@hookproof@end
 %   Finalize and unwind the current proof environment.
+%   Stashes the current proof's prefixed key in
+%   \codep@proofend@pendingclear BEFORE \codep@proofstaterestore
+%   overwrites \codep@currentproofid, so \codep@hookproof@afterend
+%   can later undefine the corresponding per-atom
+%   \codep@manuallyemitted@<key> flag.  Per-rail decision (v12 A4):
+%   the proof rail stays on three hooks; the flag clear lives in
+%   the existing afterend body, NOT a new cmd/endproof/after hook.
 \newcommand*{\codep@hookproof@end}{%
   \ifbool{codep@proofsnumbered}{%
     \codep@ctxpeekkind\codep@tmp@ctxkind%
@@ -1089,6 +1151,8 @@
       \codep@render@proof@end%
       \codep@ctxpop{proof}%
       \global\let\codep@pendingresultid\@empty%
+      \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+      \xdef\codep@proofend@pendingclear{\codep@tmp@proofkey}%
       \codep@proofstaterestore{\codep@thisproofid}%
     \fi%
   }{}%
@@ -1100,8 +1164,18 @@
 %   Post-env hook body.  Inline flush already happened in
 %   \codep@hookproof@end; retained as a hook point so the proof
 %   orchestrator body stays stable across future rendering variants.
+%   Also consumes \codep@proofend@pendingclear to undefine the
+%   per-atom \codep@manuallyemitted@<key> flag for the proof that
+%   just closed (v12 A4: the proof-side flag clear lives here, NOT
+%   in a new cmd/endproof/after hook).
 \newcommand*{\codep@hookproof@afterend}{%
   \codep@render@proof@afterend%
+  \ifnum\codep@replaydepth=0\relax%
+    \ifx\codep@proofend@pendingclear\@empty\else%
+      \codep@manuallyemitted@clear@key{\codep@proofend@pendingclear}%
+      \global\let\codep@proofend@pendingclear\@empty%
+    \fi%
+  \fi%
 }%
 
 %% ===================================================================
@@ -2293,10 +2367,20 @@
 %% @behavior B-NUM-PARA
 % \codep@installparendhook
 %   Install the para/end paragraph finalization hook.
+%   Defensive flag clear: if a user invoked \codepbackrefs inside
+%   the paragraph body, the per-atom \codep@manuallyemitted@<key>
+%   flag was set; clear it here BEFORE the ctxpop drops the
+%   paragraph atom from the ctx stack.  Empty-key branch is the
+%   natural replay guard (\codep@getcurrentatomkey returns
+%   \@empty during replay via \codep@getcurrentownerid).
 \newcommand*{\codep@installparendhook}{%
   \AddToHook{para/end}{%
     \ifbool{codep@tracked}{%
       \ifcodep@paragraphopen%
+        \codep@getcurrentatomkey\codep@tmp@parakey%
+        \ifx\codep@tmp@parakey\@empty\else%
+          \codep@manuallyemitted@clear@key{\codep@tmp@parakey}%
+        \fi%
         \codep@ctxpop{paragraph}%
         \global\codep@paragraphopenfalse%
       \fi%
@@ -2705,6 +2789,35 @@
     \codep@cdpwrite@atom{%
       \string\codep@cdp@tag%
       {\codep@tmp@tagatom}{#1}{#2}}%
+  \fi%
+}%
+
+% \codepbackrefs
+%   User-driven backref emission point.  Resolves the active source
+%   atom's key, sets the per-atom
+%   \codep@manuallyemitted@<key> flag (so the env-end auto-flush
+%   skips a duplicate emission), and routes through the rendering
+%   layer's manual-emit hook to queue + flush the "Used in ..." line
+%   at the call site.  Outside any tracked atom: emits a package
+%   warning and produces no output.  Complete no-op during
+%   restatable replay (replay guard wraps the entire body).
+%
+%   The flag is cleared at env-end / proof-afterend / para-end hook
+%   sites (see \codep@manuallyemitted@end@outer@clear,
+%   \codep@hookproof@afterend, \codep@installparendhook).
+%% @behavior B-REND-INLINE
+\newcommand*{\codepbackrefs}{%
+  \ifnum\codep@replaydepth=0\relax%
+    \codep@getcurrentatomkey\codep@tmp@manualkey%
+    \ifx\codep@tmp@manualkey\@empty%
+      \PackageWarning{codependent}{%
+        \string\codepbackrefs\space called outside any tracked atom%
+        \space--- no refs emitted}%
+    \else%
+      \expandafter\xdef%
+        \csname codep@manuallyemitted@\codep@tmp@manualkey\endcsname{1}%
+      \codep@render@manual@emit{\codep@tmp@manualkey}%
+    \fi%
   \fi%
 }%
 
