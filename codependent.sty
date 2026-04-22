@@ -599,7 +599,11 @@
       % equation's atom-key is materialised).
       \codep@getcurrentatomkey\codep@tmp@lblentity%
       \ifx\codep@tmp@lblentity\@empty\else%
-        \expandafter\gdef\csname codep@lblentity@#1\endcsname{%
+        % \xdef (not \gdef) so the csname stores the expanded
+        % atom-key string, not a reference to \codep@tmp@lblentity
+        % whose binding is local to this \codep@recordlabelowner
+        % call and is undefined outside.
+        \expandafter\xdef\csname codep@lblentity@#1\endcsname{%
           \codep@tmp@lblentity}%
         \protected@write\@auxout{}{%
           \string\codep@lblentity{#1}{\codep@tmp@lblentity}}%
@@ -1784,21 +1788,53 @@
 %% @utility
 \gdef\codep@entitymetaacc{}
 
+% \codep@entitymeta@mark is the accumulator's entry marker.
+% \protected so it does NOT expand under \xdef/\edef — keeps
+% each stored entry literal across subsequent accumulator
+% updates.  At emit time \codep@entitymeta@emit \let's this to
+% \codep@entitymeta@emit@one so expanding the accumulator fires
+% the aux-write handler once per entry.
+%% @utility
+\protected\def\codep@entitymeta@mark#1#2#3#4#5{}%
+
 % \codep@captureentitymeta{key}{kind}{display}{print-kind}{parent-key}
-%   Record one entity's metadata to the enddoc accumulator.
-%   Uses a \do-list pattern (each entry is one \do{a}{b}{c}{d}{e}
-%   expansion) so the emit walker can \let\do\<handler> and simply
-%   expand the accumulator.
+%   Record one entity's metadata for both same-run consumption
+%   and cross-run persistence.  Two side effects:
+%     1. Eagerly call \codep@entitymeta@active to populate the
+%        in-memory \codep@entity@<key>@{kind,display,print,parent}
+%        csnames.  This makes same-run consumers (notably
+%        \codep@proofof@resolve during forward-ref drain) see the
+%        entity before enddoc.
+%     2. Append a \do-list entry to \codep@entitymetaacc for the
+%        enddoc aux-write drain (cross-run replay).  The emit
+%        walker binds \do to a handler and expands the accumulator.
 %
 %   Replay-guarded: skipped during \restatable replay so restated
 %   envs don't duplicate their entry.  Defensive; in normal code
 %   path the theorem-end/proof-end hooks don't fire during replay
 %   anyway.
+%
+%   Invariant on arg #4 (print-kind): for rails whose env-name is
+%   fixed (proof, paragraph) callers pass the literal kind string;
+%   for the theorem rail callers pass the actual env-name (which
+%   may be lemma, corollary, etc.).  Consumers rendering the
+%   printed kind should therefore read #4 directly and not assume
+%   #4 == #2.
 %% @utility
 \def\codep@captureentitymeta#1#2#3#4#5{%
   \ifnum\codep@replaydepth>0\relax%
   \else%
-    \g@addto@macro\codep@entitymetaacc{\do{#1}{#2}{#3}{#4}{#5}}%
+    \codep@entitymeta@active{#1}{#2}{#3}{#4}{#5}%
+    % \xdef forces full arg expansion so the accumulator stores
+    % final string values (e.g., "proof:1.2") rather than the
+    % caller's \codep@tmp@* temp macros, whose bindings may have
+    % moved on by enddoc-drain time.  The entry marker
+    % \codep@entitymeta@mark is \protected so previously-stored
+    % entries survive the re-expansion of \codep@entitymetaacc
+    % that \xdef performs on each append.
+    \xdef\codep@entitymetaacc{%
+      \codep@entitymetaacc%
+      \codep@entitymeta@mark{#1}{#2}{#3}{#4}{#5}}%
   \fi%
 }%
 
@@ -1813,24 +1849,99 @@
 
 % \codep@entitymeta@emit
 %   Walk \codep@entitymetaacc and emit one aux record per entry.
-%   Called from \codep@enddoc@drain@p03 at enddoc time (commit 7).
+%   Called from \codep@refpending@drain at enddoc time (commit 7).
 %% @utility
 \def\codep@entitymeta@emit{%
   \if@filesw%
     \begingroup%
-      \let\do\codep@entitymeta@emit@one%
+      \let\codep@entitymeta@mark\codep@entitymeta@emit@one%
       \codep@entitymetaacc%
     \endgroup%
   \fi%
 }%
 
-% In-memory pending-ref accumulator for same-run forward-ref
-% resolution (ref issued to a yet-unknown label).  Per-label
-% token lists live in \codep@refpending@<label> csnames; the
-% global \codep@refpending list holds tokens for labels that
-% never get assigned (drained at enddoc with warnings).
+% Label-key set for the pending forward-ref list.  Each entry is
+% \do{label}; per-label token lists live in the separate
+% \codep@refpending@<label> csname family.  Appended to (per label)
+% by \codep@defer@proofof at proofof-time when the referenced label
+% has not yet been seen; walked by \codep@refpending@drain at
+% enddoc to replay deferred resolutions against the now-complete
+% label->entity binding.
 %% @utility
-\gdef\codep@refpending{}
+\gdef\codep@refpendinglabels{}
+
+% \codep@defer@proofof{proofid}{label}{anchormode}
+%   Queue a deferred \codepproofof resolution against <label>.  The
+%   proof-id is expanded NOW so the drain has the originating
+%   proof's atom-id even if \codep@currentproofid has moved on by
+%   drain time.  Label + anchormode are preserved verbatim.
+%
+%   Replay-guarded: skipped during \restatable replay.  Deferrals
+%   are a pass-1 mechanism; replay should not duplicate queued
+%   tokens (the originating proofof call would have already been
+%   processed or deferred in the non-replay pass).
+%% @utility
+\def\codep@defer@proofof#1#2#3{%
+  \ifnum\codep@replaydepth>0\relax%
+  \else%
+    \@ifundefined{codep@refpending@#2}{%
+      \expandafter\xdef\csname codep@refpending@#2\endcsname{%
+        \noexpand\codep@proofof@resolve%
+          {#1}{\unexpanded{#2}}{\unexpanded{#3}}}%
+      \g@addto@macro\codep@refpendinglabels{\do{#2}}%
+    }{%
+      \edef\codep@tmp@proofpending{%
+        \noexpand\codep@proofof@resolve%
+          {#1}{\unexpanded{#2}}{\unexpanded{#3}}}%
+      \expandafter\g@addto@macro%
+        \csname codep@refpending@#2\endcsname%
+        \expandafter{\codep@tmp@proofpending}%
+    }%
+  \fi%
+}%
+
+% \codep@drainrefpending{label}
+%   Replay any deferred-resolution tokens queued against this label.
+%   Called from \codep@refpending@drain.  No-op if no tokens queued.
+%   Clears the per-label csname after execution so a second drain
+%   pass (defensive) would be a no-op.
+%% @utility
+\def\codep@drainrefpending#1{%
+  \@ifundefined{codep@refpending@#1}{}{%
+    \csname codep@refpending@#1\endcsname%
+    \global\expandafter\let%
+      \csname codep@refpending@#1\endcsname\@undefined%
+  }%
+}%
+
+% \codep@refpending@drain
+%   P03's single enddoc-drain call-site.  Plan v11 lists this macro
+%   inside \codep@enddoc@orchestrator (P04's work); P04 will remove
+%   the temporary \AtEndDocument registration below and call this
+%   from the orchestrator body.
+%
+%   Two responsibilities, in order:
+%     1. Emit the entitymeta accumulator to the .aux so cross-run
+%        readers can repopulate the in-memory entity bindings at
+%        next-run begindoc time.
+%     2. Drain any pending \codepproofof forward-refs whose target
+%        labels are now known (same-run late-resolution); remaining
+%        truly-unknown labels warn inside \codep@proofof@resolve.
+%% @behavior B-PASS-ONE
+%% @behavior B-PROOF-SEP
+\def\codep@refpending@drain{%
+  \codep@entitymeta@emit%
+  \begingroup%
+    \let\do\codep@drainrefpending%
+    \codep@refpendinglabels%
+  \endgroup%
+}%
+
+% Temporary enddoc registration — kept until P04's orchestrator
+% lands and consolidates all enddocument hooks into
+% \codep@enddoc@orchestrator.  P04 will replace this registration
+% with a call-site inside the orchestrator body per plan v11.
+\AtEndDocument{\codep@refpending@drain}
 
 % \codep@writeatomref{target}
 %   Shared aux-write helper called by all patch sites.  Guards
@@ -2978,33 +3089,82 @@
   \@ifstar{\codep@proofof@star}{\codep@proofof@plain}}
 \def\codep@proofof@plain#1{\codep@proofof@do{#1}{}}
 \def\codep@proofof@star#1{\codep@proofof@do{#1}{anchor}}
+% \codep@proofof@do{label}{anchormode}
+%   Entry dispatcher for \codepproofof.  Try resolution paths in
+%   order:
+%     1. Legacy \codep@lblnum@<label> (aux-round-trip value,
+%        stable across passes once the label has been seen once).
+%     2. Same-run in-memory \codep@lblentity@<label> ->
+%        \codep@entity@<atom-key>@display (active as soon as the
+%        referenced entity finishes, so backward refs and same-run
+%        forward refs whose target has already closed resolve now).
+%     3. Defer via \codep@defer@proofof when neither is available.
+%        The deferred token sequence is drained at enddoc by
+%        \codep@refpending@drain against the now-complete binding.
 \def\codep@proofof@do#1#2{%
   \ifbool{codep@proofsnumbered}{%
     \ifx\codep@currentproofid\@empty\else%
       \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax%
-        \PackageWarning{codependent}{\string\codepproofof: unknown label '#1'.\space%
-          The label may not exist or may not have been processed yet}%
-      \else%
-        \edef\codep@tmp@proofkey{proof:\csname codep@lblnum@#1\endcsname}%
-        \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
-        \global\codep@proofdisplaypendingfalse%
-        \global\let\codep@pendingproofbind\@empty%
-        \codep@cdpwrite@atom{%
-          \string\codep@cdp@proof{%
-            \csname codep@lblnum@#1\endcsname*}}%
-        \def\codep@tmp@anchormode{#2}%
-        \ifx\codep@tmp@anchormode\@empty\else%
-          \codep@writeanchormap{\codep@tmp@proofkey}%
-          \@ifpackageloaded{hyperref}{%
-            \expandafter\xdef%
-              \csname codep@anchor@\codep@tmp@proofkey\endcsname%
-              {\@currentHref}%
-          }{}%
+        \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax%
+          \codep@defer@proofof{\codep@currentproofid}{#1}{#2}%
+        \else%
+          \codep@proofof@resolve{\codep@currentproofid}{#1}{#2}%
         \fi%
-        \codep@render@queuebackref{\codep@tmp@proofkey}%
+      \else%
+        \codep@proofof@resolve{\codep@currentproofid}{#1}{#2}%
       \fi%
     \fi%
   }{}%
+}%
+
+% \codep@proofof@resolve{proofid}{label}{anchormode}
+%   Perform the proof<->target binding once the label is resolvable.
+%   Called directly from \codep@proofof@do when the label is known
+%   at proofof-time; called indirectly at enddoc drain time via the
+%   deferred token sequence stored by \codep@defer@proofof.
+%
+%   Looks up the display number via the same cascade as
+%   \codep@proofof@do (lblnum first, then lblentity->entity@display).
+%   If still unresolved at this point the label truly never
+%   existed; emit the same unknown-label warning the pre-P03
+%   dispatcher used to emit synchronously.
+%% @behavior B-PROOF-SEP
+\def\codep@proofof@resolve#1#2#3{%
+  \let\codep@tmp@proofdisp\@empty%
+  \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax%
+    \expandafter\ifx\csname codep@lblentity@#2\endcsname\relax\else%
+      \edef\codep@tmp@proofentity{\csname codep@lblentity@#2\endcsname}%
+      \edef\codep@tmp@proofdispcs{%
+        codep@entity@\codep@tmp@proofentity @display}%
+      \expandafter\ifx\csname\codep@tmp@proofdispcs\endcsname\relax\else%
+        \edef\codep@tmp@proofdisp{%
+          \csname\codep@tmp@proofdispcs\endcsname}%
+      \fi%
+    \fi%
+  \else%
+    \edef\codep@tmp@proofdisp{\csname codep@lblnum@#2\endcsname}%
+  \fi%
+  \ifx\codep@tmp@proofdisp\@empty%
+    \PackageWarning{codependent}{\string\codepproofof: unknown label '#2'.\space%
+      The label may not exist or may not have been processed yet}%
+  \else%
+    \edef\codep@tmp@proofkey{proof:\codep@tmp@proofdisp}%
+    \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
+    \global\codep@proofdisplaypendingfalse%
+    \global\let\codep@pendingproofbind\@empty%
+    \codep@cdpwrite@atom{%
+      \string\codep@cdp@proof{\codep@tmp@proofdisp*}}%
+    \def\codep@tmp@anchormode{#3}%
+    \ifx\codep@tmp@anchormode\@empty\else%
+      \codep@writeanchormap{\codep@tmp@proofkey}%
+      \@ifpackageloaded{hyperref}{%
+        \expandafter\xdef%
+          \csname codep@anchor@\codep@tmp@proofkey\endcsname%
+          {\@currentHref}%
+      }{}%
+    \fi%
+    \codep@render@queuebackref{\codep@tmp@proofkey}%
+  \fi%
 }%
 
 % \codepnewcommand{\cmd}[arity]{body}
