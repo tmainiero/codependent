@@ -1,0 +1,58 @@
+%% TEST-NAME: test-aux-record-roundtrip
+%% TEST-WHAT: The four W03-P03 .aux record types (\codep@lblentity,
+%%            \codep@entitymeta, \codep@keymap, \codep@renderlist)
+%%            are written at enddoc and round-trip to the next pass.
+%%            This fixture asserts presence of the concrete records
+%%            produced by a minimal tracked-env mix (theorem + proof
+%%            + paragraph).  Keymap and renderlist are wire-format
+%%            stubs (no emitters yet — P05 owns renderlist, P07 owns
+%%            keymap), so this fixture asserts only that \codep@lblentity
+%%            and \codep@entitymeta records exist in the aux.
+%% TEST-SOURCE: .claude/comms/wave3-plan-v11.md §P03 (item 2,
+%%              "New .aux record types")
+%% TEST-SECTION: docs/DESIGN.md §8a (proof envs), §9a (paragraph atoms)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:a}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{p:aside}{paragraph:
+%% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:1.1}{theorem}{1.1}{theorem}{}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.1}{proof}{1.1}{proof}{}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PASS-ONE
+%%
+%% Roundtrip scenario: a small mix of tracked entities produces
+%% one \codep@lblentity per \label-in-tracked-env and one
+%% \codep@entitymeta per closed tracked entity.  Both record types
+%% must survive the enddoc aux write so next-run begindoc can
+%% repopulate the in-memory binding before the body processes any
+%% tracked envs.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Roundtrip}
+
+\begin{theorem}\label{thm:a}
+  A tracked theorem; produces theorem:1.1 atom.
+\end{theorem}
+
+\begin{proof}
+  Adjacent proof; produces the proof atom and, at enddoc, one
+  entitymeta aux record keyed on the proof's prefixed key.
+\end{proof}
+
+A tracked paragraph follows, labelled for binding.%
+\label{p:aside}
+One more sentence so the paragraph atom has material.
+
+\END
+\end{document}

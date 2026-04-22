@@ -1,0 +1,61 @@
+%% TEST-NAME: test-forward-proofof
+%% TEST-WHAT: \codepproofof fires BEFORE the referenced label is
+%%            assigned, but resolves in the same run via the
+%%            enddoc drain against the now-complete in-memory
+%%            label->entity binding.  Exercises W03-P03 same-run
+%%            forward-ref settlement (no cross-run dependency).
+%% TEST-SOURCE: .claude/comms/wave3-plan-v11.md §P03 (item 5,
+%%              "Forward-ref settlement in same run")
+%% TEST-SECTION: docs/DESIGN.md §8a (proof environments)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: codepproofof:.*unknown label
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:target}{theorem:1.2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:earlier}{theorem:1.1}
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-SEP
+%% TEST-BEHAVIOR: B-PASS-ONE
+%%
+%% Forward-ref scenario: the \codepproofof call happens textually
+%% BEFORE the \label it references.  Under pre-P03 code this would
+%% warn "unknown label 'thm:target'" and not emit a binding until a
+%% second pass.  Under P03 the deferred call is replayed from the
+%% enddoc drain, so even on a cold first compile the proof binds to
+%% the theorem's starred key.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Forward-ref scenario}
+
+% Proof fires \codepproofof FIRST (forward-ref to thm:target
+% which is declared below).  Pre-P03 this would warn and skip
+% the binding.  P03 defers via \codep@defer@proofof and replays
+% at enddoc.
+\begin{theorem}\label{thm:earlier}
+  Statement that appears before the target.
+\end{theorem}
+
+\begin{proof}[Proof of later target]
+  \codepproofof{thm:target}%
+  Body of the forward-ref proof.
+\end{proof}
+
+% Label assignment happens AFTER the \codepproofof call above.
+\begin{theorem}\label{thm:target}
+  The target theorem, declared after its proof.
+\end{theorem}
+
+\END
+\end{document}

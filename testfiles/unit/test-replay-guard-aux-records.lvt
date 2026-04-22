@@ -1,0 +1,53 @@
+%% TEST-NAME: test-replay-guard-aux-records
+%% TEST-WHAT: \restatable-replay must not duplicate P03 aux records.
+%%            A labelled restatable theorem with a restate site
+%%            produces exactly ONE \codep@lblentity and ONE
+%%            \codep@entitymeta record for the theorem atom,
+%%            regardless of how many times the body is replayed.
+%% TEST-SOURCE: .claude/comms/wave3-plan-v11.md §P03 (item 4,
+%%              "Replay guards")
+%% TEST-SECTION: codependent.sty §\codep@captureentitymeta (replay guard)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-COUNT: \codep@lblentity{thm:restate} = 1
+%% TEST-AUX-COUNT: \codep@entitymeta{theorem:1.1}{theorem} = 1
+%% TEST-PACKAGES: thmtools,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REST-NODUP
+%% TEST-BEHAVIOR: B-PASS-ONE
+%%
+%% Replay-guard scenario: \restatable wraps the theorem body; the
+%% first occurrence runs with \codep@replaydepth=0 (normal) and
+%% captures entitymeta + emits lblentity.  The restate via \thmR*
+%% runs with \codep@replaydepth>0, and both \codep@recordlabelowner
+%% and \codep@captureentitymeta short-circuit on the replay guard,
+%% so no second record is written.  The TEST-AUX-COUNT assertions
+%% pin this to exactly one each.
+
+\documentclass{article}
+\usepackage{thmtools}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Main body}
+
+\begin{restatable}{theorem}{thmR}\label{thm:restate}
+  The restatable theorem; its body runs once here normally and
+  again below inside the restate site (under replay-depth guard).
+\end{restatable}
+
+A paragraph follows so the theorem closes at a known atom.
+
+\section{Restate site}
+
+\thmR*
+
+\END
+\end{document}

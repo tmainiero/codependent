@@ -1757,13 +1757,17 @@
 
 %% @behavior B-PASS-ONE
 % \codep@entitymeta@active{key}{kind}{display}{print-kind}{parent-key}
-%   Populate per-entity metadata csnames from an aux record.
-%   Four csnames for O(1) field access (kind/display/print/parent).
+%   Populate per-entity metadata csnames.  Four csnames for O(1)
+%   field access (kind/display/print/parent).  \xdef (not \gdef)
+%   so synchronous same-run callers passing \codep@tmp@num or
+%   \theatom as the display arg get the expanded value stored,
+%   not a dangling reference to the local temp.  Safe on aux-
+%   replay too — args arriving from aux are literal string tokens.
 \def\codep@entitymeta@active#1#2#3#4#5{%
-  \expandafter\gdef\csname codep@entity@#1@kind\endcsname{#2}%
-  \expandafter\gdef\csname codep@entity@#1@display\endcsname{#3}%
-  \expandafter\gdef\csname codep@entity@#1@print\endcsname{#4}%
-  \expandafter\gdef\csname codep@entity@#1@parent\endcsname{#5}}
+  \expandafter\xdef\csname codep@entity@#1@kind\endcsname{#2}%
+  \expandafter\xdef\csname codep@entity@#1@display\endcsname{#3}%
+  \expandafter\xdef\csname codep@entity@#1@print\endcsname{#4}%
+  \expandafter\xdef\csname codep@entity@#1@parent\endcsname{#5}}
 
 %% @behavior B-PASS-ONE
 % \codep@keymap@active{old-key}{new-key}
