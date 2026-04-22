@@ -45,7 +45,10 @@ for FILE in "${FILES[@]}"; do
   fi
 
   # 4. Minimum 4 assertions (excluding metadata headers)
-  ASSERT_COUNT=$(grep -cP '^%% TEST-(EXIT|LOG-NOT|LOG-CONTAINS|CDP-CONTAINS|CDP-NOT-CONTAINS|CDP-COUNT|CDP-LAST-RECORD|AUX-CONTAINS|AUX-NOT-CONTAINS|ATOMS-MIN|PDF-CONTAINS|PDF-NOT|PDF-LINKS|PDF-STEXT|PDF-STEXT-NOT|PDF-OBJECTS|PDF-OBJECTS-NOT|PDF-LINK-DEST|PDF-LINK-DEST-NOT|PDF-LINK-COUNT|PDF-DEST-EXISTS|PDF-DEST-NOT-EXISTS|PDF-LINK-RECT|PDF-NO-ORPHAN-LINKS|PDF-ALL-BACKREFS-LINKED|PDF-BACKREF-TARGETS):' "$FILE" || true)
+  # Includes the four W03-P01-A1 directive families:
+  #   EXPECT-PACKAGE-WARNING, EXPECT-PACKAGE-ERROR,
+  #   PDF-APPENDIX-ENTRY, PDF-APPENDIX-ENTRY-TEXT-ONLY
+  ASSERT_COUNT=$(grep -cP '^%% TEST-(EXIT|LOG-NOT|LOG-CONTAINS|CDP-CONTAINS|CDP-NOT-CONTAINS|CDP-COUNT|CDP-LAST-RECORD|AUX-CONTAINS|AUX-NOT-CONTAINS|ATOMS-MIN|PDF-CONTAINS|PDF-NOT|PDF-LINKS|PDF-STEXT|PDF-STEXT-NOT|PDF-OBJECTS|PDF-OBJECTS-NOT|PDF-LINK-DEST|PDF-LINK-DEST-NOT|PDF-LINK-COUNT|PDF-DEST-EXISTS|PDF-DEST-NOT-EXISTS|PDF-LINK-RECT|PDF-NO-ORPHAN-LINKS|PDF-ALL-BACKREFS-LINKED|PDF-BACKREF-TARGETS|EXPECT-PACKAGE-WARNING|EXPECT-PACKAGE-ERROR|PDF-APPENDIX-ENTRY|PDF-APPENDIX-ENTRY-TEXT-ONLY):' "$FILE" || true)
   if [ "$ASSERT_COUNT" -lt 4 ]; then
     err "$FILE: only $ASSERT_COUNT assertions (minimum 4)"
   fi
@@ -79,6 +82,16 @@ for FILE in "${FILES[@]}"; do
     TARGETS_COUNT=$(grep -cP '^%% TEST-PDF-BACKREF-TARGETS:' "$FILE" || true)
     if [ "$TARGETS_COUNT" -lt 1 ]; then
       warn "$FILE: has ALL-BACKREFS-LINKED but no BACKREF-TARGETS (link correctness unchecked)"
+    fi
+  fi
+
+  # 10. Rerun-header rule: if TEST-PASS-COUNT-* is declared, TEST-RERUN must
+  #     be present (multi-pass fixtures require an explicit pass count header).
+  #     P01(B) registers the PASS-COUNT-* directives in the runner; this linter
+  #     rule is self-contained and works by string-pattern recognition.
+  if grep -qP '^%% TEST-PASS-COUNT-(COLD|WARM|WARM-CHANGED):' "$FILE"; then
+    if ! grep -q '^%% TEST-RERUN:' "$FILE"; then
+      err "$FILE: declares TEST-PASS-COUNT-* but missing TEST-RERUN header"
     fi
   fi
 
