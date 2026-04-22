@@ -617,19 +617,19 @@
   \@ifundefined{@removefromreset}{%
     % Manual: rewrite \cl@parent without #1.
     \begingroup
-      \expandafter\let\expandafter\codep@resetlist
+      \expandafter\let\expandafter\codep@resetlist%
         \csname cl@#2\endcsname%
-      \expandafter\global\expandafter\let
+      \expandafter\global\expandafter\let%
         \csname cl@#2\endcsname\@empty%
       \def\@elt##1{%
         \def\codep@cur{##1}%
         \def\codep@tgt{#1}%
         \ifx\codep@cur\codep@tgt\else
-          \expandafter\g@addto@macro
+          \expandafter\g@addto@macro%
             \csname cl@#2\endcsname{\@elt{##1}}%
         \fi
       }%
-      \codep@resetlist
+      \codep@resetlist%
     \endgroup
   }{%
     \@removefromreset{#1}{#2}%
@@ -649,12 +649,12 @@
   \@ifundefined{c@\codep@basecounter}{}{%
     \setcounter{atom}{\value{\codep@basecounter}}%
     % Alias: \c@<basecounter> -> \c@atom.
-    \expandafter\let\csname c@\codep@basecounter\endcsname\c@atom
+    \expandafter\let\csname c@\codep@basecounter\endcsname\c@atom%
   }%
-  \codep@configuredepth
+  \codep@configuredepth%
   % Sync base counter display format with atom display format.
   \@ifundefined{c@\codep@basecounter}{}{%
-    \expandafter\let\csname the\codep@basecounter\endcsname\theatom
+    \expandafter\let\csname the\codep@basecounter\endcsname\theatom%
   }%
 }
 
@@ -674,9 +674,9 @@
     }%
   }%
   \@ifundefined{chapter}{%
-    \codep@configuredepth@article
+    \codep@configuredepth@article%
   }{%
-    \codep@configuredepth@book
+    \codep@configuredepth@book%
   }%
 }
 
@@ -1250,10 +1250,10 @@
 %   \@empty and write \codep@atomref{src}{tgt} to the .aux
 %   file.  Otherwise skip (already written this run).
 \def\codep@dedupwrite#1#2{%
-  \expandafter\ifx
+  \expandafter\ifx%
       \csname codep@arw@#1@#2\endcsname\relax
-    \global\expandafter\let
-      \csname codep@arw@#1@#2\endcsname\@empty
+    \global\expandafter\let%
+      \csname codep@arw@#1@#2\endcsname\@empty%
     \protected@write\@auxout{}{%
       \string\codep@atomref{#1}{#2}}%
   \fi
@@ -1333,9 +1333,9 @@
   \else
     % Check if counter advanced (at least one numbered line).
     \ifnum\c@equation>\codep@eq@startcount\relax
-      \codep@flusheqrange@numbered
+      \codep@flusheqrange@numbered%
     \else
-      \codep@flusheqrange@fallback
+      \codep@flusheqrange@fallback%
     \fi
     \global\codep@eqpending={}%
     \global\codep@eqpendingcount=0\relax
@@ -1442,7 +1442,7 @@
 %% @implements \codep@checktocsection
 \newcommand*{\codep@capturesectitle}{%
   \ifbool{codep@appendix}{%
-    \let\codep@orig@addcontentsline\addcontentsline
+    \let\codep@orig@addcontentsline\addcontentsline%
     \renewcommand{\addcontentsline}[3]{%
       \codep@orig@addcontentsline{##1}{##2}{##3}%
       \codep@checktocsection{##1}{##2}{##3}%
@@ -1458,9 +1458,9 @@
 %% @behavior B-REND-APPENDIX
 \def\codep@checktocsection#1#2#3{%
   \def\codep@tmp@tocfile{#1}\def\codep@tmp@toctype{toc}%
-  \ifx\codep@tmp@tocfile\codep@tmp@toctype
+  \ifx\codep@tmp@tocfile\codep@tmp@toctype%
     \def\codep@tmp@tocfile{#2}\def\codep@tmp@toctype{section}%
-    \ifx\codep@tmp@tocfile\codep@tmp@toctype
+    \ifx\codep@tmp@tocfile\codep@tmp@toctype%
       \codep@extractsectitle{#3}%
     \fi
   \fi
@@ -1472,15 +1472,15 @@
 %% @implements \codep@checktocsection
 \def\codep@extractsectitle#1{%
   \begingroup
-    \let\protect\@empty
+    \let\protect\@empty%
     \def\numberline##1{}%
     \edef\codep@tmp@expanded{#1}%
-    \global\let\codep@tmp@result\codep@tmp@expanded
+    \global\let\codep@tmp@result\codep@tmp@expanded%
   \endgroup
   \xdef\codep@cursecnum{\thesection}%
-  \global\let\codep@cursectitle\codep@tmp@result
+  \global\let\codep@cursectitle\codep@tmp@result%
   \global\expandafter\let%
-    \csname codep@sectitle@\thesection\endcsname\codep@tmp@result
+    \csname codep@sectitle@\thesection\endcsname\codep@tmp@result%
 }%
 
 % Auto-suppress enumitem \newlist environments.
@@ -1744,7 +1744,7 @@
   %% ---- Patch 1: kernel \@setref ----
   %% Covers \ref, \eqref, \pageref (via \@pagesetref
   %% delegation), \vref, \Vref, \vpageref, \nameref.
-  \let\codep@orig@setref\@setref
+  \let\codep@orig@setref\@setref%
   \def\@setref##1##2##3{%
     \codep@orig@setref{##1}{##2}{##3}%
     \codep@writeatomref{##3}%
@@ -1752,7 +1752,7 @@
   %% ---- Patch 2: cleveref \cref@getlabel ----
   %% Covers every cleveref family command.
   \@ifpackageloaded{cleveref}{%
-    \let\codep@orig@crefgetlabel\cref@getlabel
+    \let\codep@orig@crefgetlabel\cref@getlabel%
     \def\cref@getlabel##1##2{%
       \codep@orig@crefgetlabel{##1}{##2}%
       \codep@writeatomref{##1}%
@@ -1763,14 +1763,14 @@
   %% \HyRef@@StarSetRef covers \ref* and \Ref.
   \@ifpackageloaded{hyperref}{%
     \@ifundefined{HyRef@autosetref}{}{%
-      \let\codep@orig@HyRefautosetref\HyRef@autosetref
+      \let\codep@orig@HyRefautosetref\HyRef@autosetref%
       \def\HyRef@autosetref##1##2##3{%
         \codep@orig@HyRefautosetref{##1}{##2}{##3}%
         \codep@writeatomref{##2}%
       }%
     }%
     \@ifundefined{HyRef@@StarSetRef}{}{%
-      \let\codep@orig@HyRefStarSetRef\HyRef@@StarSetRef
+      \let\codep@orig@HyRefStarSetRef\HyRef@@StarSetRef%
       \def\HyRef@@StarSetRef##1##2##3{%
         \codep@orig@HyRefStarSetRef{##1}{##2}{##3}%
         \codep@writeatomref{##2}%
@@ -1792,7 +1792,7 @@
 %% @behavior B-EDGE-PROOF-ANY
 \def\codep@recordbr#1#2{%
   \global\advance\codep@brid by 1\relax
-  \expandafter\xdef
+  \expandafter\xdef%
     \csname codep@brq@\the\codep@brid\endcsname{%
       \noexpand\codep@processbr{#2}{#1}%
     }%
@@ -1804,14 +1804,14 @@
 %% @behavior B-DISP-THM
 \def\codep@flushbrqueue{%
   \begingroup
-    \count@=\z@
-    \loop
-      \ifnum\count@<\codep@brid
+    \count@=\z@%
+    \loop%
+      \ifnum\count@<\codep@brid%
         \advance\count@ by 1\relax
         \csname codep@brq@\the\count@\endcsname
-        \global\expandafter\let
+        \global\expandafter\let%
           \csname codep@brq@\the\count@\endcsname\relax
-    \repeat
+    \repeat%
   \endgroup
 }
 
@@ -1875,27 +1875,27 @@
     % Dedup against previous append for this target.
     \edef\codep@tmp@last{%
       \csname codep@brlast@\codep@tmp@tgt\endcsname}%
-    \ifx\codep@tmp@last\codep@tmp@src
+    \ifx\codep@tmp@last\codep@tmp@src%
       % Consecutive duplicate: skip.
     \else
-      \global\expandafter\let
-        \csname codep@brlast@\codep@tmp@tgt\endcsname
-        \codep@tmp@src
+      \global\expandafter\let%
+        \csname codep@brlast@\codep@tmp@tgt\endcsname%
+        \codep@tmp@src%
       % Append a new linked-list node.
-      \expandafter\ifx
+      \expandafter\ifx%
           \csname codep@brcount@\codep@tmp@tgt\endcsname\relax
-        \global\expandafter\def
+        \global\expandafter\def%
           \csname codep@brcount@\codep@tmp@tgt\endcsname{0}%
       \fi
       \edef\codep@tmp@k{%
         \csname codep@brcount@\codep@tmp@tgt\endcsname}%
       \count@=\codep@tmp@k\relax
       \advance\count@ by 1\relax
-      \expandafter\xdef
+      \expandafter\xdef%
         \csname codep@brcount@\codep@tmp@tgt\endcsname
         {\the\count@}%
-      \expandafter\xdef
-        \csname
+      \expandafter\xdef%
+        \csname%
           codep@brnode@\codep@tmp@tgt @\the\count@%
         \endcsname
         {\codep@tmp@src}%
@@ -1922,7 +1922,7 @@
         :\csname codep@lblnum@#1\endcsname}%
     \fi
     \edef\codep@tmp@src{#2}%
-    \codep@appendbr@core
+    \codep@appendbr@core%
   \fi
 }
 
@@ -1934,7 +1934,7 @@
 \def\codep@appendbr#1#2{%
   \edef\codep@tmp@tgt{#1}%
   \edef\codep@tmp@src{#2}%
-  \codep@appendbr@core
+  \codep@appendbr@core%
 }
 
 % \codep@collapsebr — moved to codependent-render.sty.
@@ -2055,7 +2055,7 @@
 \def\codep@extractanchor#1#2{%
   \codep@ifcrefkey{#1}{}{%
     \codep@ifdatakey{#1}{}{%
-      \expandafter\codep@extractanchor@ii
+      \expandafter\codep@extractanchor@ii%
         \expandafter{\codep@grab4th#2{}{}{}{}\@nil}{#1}%
     }%
   }%
@@ -2072,12 +2072,12 @@
       % Build prefixed key from type map if available.
       \expandafter\ifx\csname codep@ltype@#2\endcsname\relax
         % No type record: store under bare number (equation labels).
-        \expandafter\xdef
+        \expandafter\xdef%
           \csname codep@anchor@\codep@tmp@num\endcsname{#1}%
       \else
         \edef\codep@tmp@prefixed{%
           \csname codep@ltype@#2\endcsname:\codep@tmp@num}%
-        \expandafter\xdef
+        \expandafter\xdef%
           \csname codep@anchor@\codep@tmp@prefixed\endcsname{#1}%
       \fi
     \fi
@@ -2087,21 +2087,21 @@
 %   True iff the label key ends in "@data" (thm-restate internal).
 %   These contain \setcounter calls, not display numbers.
 \def\codep@ifdatakey#1{%
-  \codep@isdatafalse
+  \codep@isdatafalse%
   \def\codep@ifdatakey@probe##1@data##2\@nil{%
     \def\codep@tmp@datasuffix{##2}%
     \ifx\codep@tmp@datasuffix\@empty\else
       \def\codep@tmp@datasentinel{@data}%
-      \ifx\codep@tmp@datasuffix\codep@tmp@datasentinel
-        \codep@isdatatrue
+      \ifx\codep@tmp@datasuffix\codep@tmp@datasentinel%
+        \codep@isdatatrue%
       \fi
     \fi
   }%
-  \codep@ifdatakey@probe#1@data\@nil
-  \ifcodep@isdata
-    \expandafter\@firstoftwo
+  \codep@ifdatakey@probe#1@data\@nil%
+  \ifcodep@isdata%
+    \expandafter\@firstoftwo%
   \else
-    \expandafter\@secondoftwo
+    \expandafter\@secondoftwo%
   \fi
 }
 
@@ -2112,7 +2112,7 @@
 
 %% @behavior B-PASS-ONE
 \def\codep@installnewlabel{%
-  \let\codep@orig@newlabel\newlabel
+  \let\codep@orig@newlabel\newlabel%
   \def\newlabel##1##2{%
     \codep@orig@newlabel{##1}{##2}%
     \codep@extractlblnum{##1}{##2}%
@@ -2122,12 +2122,12 @@
   % installs it in \AtBeginDocument and it races with our
   % override, so we override it too.
   \@ifundefined{newlabelxx}{}{%
-    \let\codep@orig@newlabelxx\newlabelxx
+    \let\codep@orig@newlabelxx\newlabelxx%
     \def\newlabelxx##1##2##3##4##5##6{%
-      \codep@orig@newlabelxx
+      \codep@orig@newlabelxx%
         {##1}{##2}{##3}{##4}{##5}{##6}%
       % ##2 is already the display number for the 6-arg form.
-      \expandafter\gdef
+      \expandafter\gdef%
         \csname codep@lblnum@##1\endcsname{##2}%
       % ##5 is the hyperref anchor name; store reverse mapping
       % using prefixed key if type is known.
@@ -2135,12 +2135,12 @@
         \def\codep@tmp@anchorval{##5}%
         \ifx\codep@tmp@anchorval\@empty\else
           \expandafter\ifx\csname codep@ltype@##1\endcsname\relax
-            \expandafter\xdef
+            \expandafter\xdef%
               \csname codep@anchor@##2\endcsname{##5}%
           \else
             \edef\codep@tmp@prefixed{%
               \csname codep@ltype@##1\endcsname:##2}%
-            \expandafter\xdef
+            \expandafter\xdef%
               \csname codep@anchor@\codep@tmp@prefixed\endcsname{##5}%
           \fi
         \fi
@@ -2158,7 +2158,7 @@
   \codep@ifcrefkey{#1}{%
     % @cref-suffixed: skip silently.
   }{%
-    \expandafter\codep@extractlblnum@ii
+    \expandafter\codep@extractlblnum@ii%
       \expandafter{\codep@grabfirst#2\@nil}{#1}%
   }%
 }
@@ -2176,23 +2176,23 @@
 %   splits "<key>@cref\@nil" on the FIRST occurrence of "@cref";
 %   the key ends in @cref iff the tail is exactly "@cref".
 \def\codep@ifcrefkey#1{%
-  \codep@iscreffalse
+  \codep@iscreffalse%
   \def\codep@ifcrefkey@probe##1@cref##2\@nil{%
     \def\codep@tmp@crefsuffix{##2}%
-    \ifx\codep@tmp@crefsuffix\@empty
+    \ifx\codep@tmp@crefsuffix\@empty%
       % No @cref in the key at all; the probe's own trailing
       % @cref absorbed the split -> NOT a cref key.
     \else
-      \ifx\codep@tmp@crefsuffix\codep@ifcrefsentinel
-        \codep@iscreftrue
+      \ifx\codep@tmp@crefsuffix\codep@ifcrefsentinel%
+        \codep@iscreftrue%
       \fi
     \fi
   }%
-  \codep@ifcrefkey@probe#1@cref\@nil
-  \ifcodep@iscref
-    \expandafter\@firstoftwo
+  \codep@ifcrefkey@probe#1@cref\@nil%
+  \ifcodep@iscref%
+    \expandafter\@firstoftwo%
   \else
-    \expandafter\@secondoftwo
+    \expandafter\@secondoftwo%
   \fi
 }
 
@@ -2230,7 +2230,7 @@
 %   Populate the concept def-site map.  Per J3, silently
 %   overwrite on duplicate aux records (stale prior-run).
 \def\codep@concept@active#1#2{%
-  \expandafter\gdef
+  \expandafter\gdef%
     \csname codep@conceptdef@#1\endcsname{#2}%
 }
 
@@ -2424,7 +2424,7 @@
   \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
   \ifx\codep@tmp@labeldisplay\@empty\else%
     \codep@cdpwrite@atom{%
-      \string\codep@cdp@label
+      \string\codep@cdp@label%
         {\codep@tmp@labeldisplay}{#2}}%
   \fi%
   \codep@recordlabelowner{#2}%
@@ -2434,7 +2434,7 @@
   \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
   \ifx\codep@tmp@labeldisplay\@empty\else%
     \codep@cdpwrite@atom{%
-      \string\codep@cdp@label
+      \string\codep@cdp@label%
         {\codep@tmp@labeldisplay}{#1}}%
   \fi%
   \codep@recordlabelowner{#1}%
@@ -2559,18 +2559,18 @@
     \@ifundefined{codep@conceptdef@##1}{%
       \ifbool{codep@conceptwarnings}{%
         \PackageWarning{codependent}{%
-          \expandafter\string\csname ##1\endcsname\space
-          used but no starred definition site found;\MessageBreak
+          \expandafter\string\csname ##1\endcsname\space%
+          used but no starred definition site found;\MessageBreak%
           backrefs for this concept are disabled}%
       }{%
         \PackageInfo{codependent}{%
-          \expandafter\string\csname ##1\endcsname\space
-          used but no starred definition site found
+          \expandafter\string\csname ##1\endcsname\space%
+          used but no starred definition site found%
           (conceptwarnings=off)}%
       }%
     }{}%
   }%
-  \codep@conceptnames
+  \codep@conceptnames%
 }
 
 %% --- Section 9a.10: Shared wrapper-pipeline helper ---
@@ -2593,28 +2593,28 @@
 %   5. Emit three deferred .cdp cmddef records: kind, key2/val2, src.
 \def\codep@definetrackedcmd#1#2#3#4#5{%
   % 2. Save the original definition.
-  \expandafter\let
+  \expandafter\let%
     \csname codep@body@#1\endcsname#2%
   % 3. Define star/nostar dispatch targets.
-  \expandafter\edef
+  \expandafter\edef%
     \csname codep@star@#1\endcsname{%
       \noexpand\codep@emit@def{#1}%
-      \expandafter\noexpand
+      \expandafter\noexpand%
         \csname codep@body@#1\endcsname}%
-  \expandafter\edef
+  \expandafter\edef%
     \csname codep@nostar@#1\endcsname{%
       \noexpand\codep@emit@use{#1}%
-      \expandafter\noexpand
+      \expandafter\noexpand%
         \csname codep@body@#1\endcsname}%
   % 4. Redefine the command with star dispatch via \@ifstar.
   %    \protected\edef makes the wrapper robust so it survives
   %    expansion in moving arguments (\section titles, captions,
   %    .aux writes) without premature \@ifstar expansion.
   \protected\edef#2{%
-    \noexpand\@ifstar
-      \expandafter\noexpand
+    \noexpand\@ifstar%
+      \expandafter\noexpand%
         \csname codep@star@#1\endcsname
-      \expandafter\noexpand
+      \expandafter\noexpand%
         \csname codep@nostar@#1\endcsname}%
   % 5. Emit global declaration records (deferred: the .cdp
   %    stream may not be open yet during the preamble).
@@ -2631,7 +2631,7 @@
       \string\codep@cdp@cmddef{#1}%
       {src}{\jobname.tex:\the\inputlineno:1}}%
   }%
-  \codep@tmp@rec
+  \codep@tmp@rec%
 }
 
 \AtEndDocument{%
@@ -2663,23 +2663,23 @@
   \ifbool{codep@tracked}{%
     \PackageError{codependent}%
       {\string\codeptrack\space called twice}%
-      {Call \string\codeptrack\space only once, after all
+      {Call \string\codeptrack\space only once, after all%
        theorem declarations.}%
   }{}%
   \booltrue{codep@tracked}%
   % Auto-detect the base counter from the first environment name.
-  \codep@extractfirst#1,\@nil
+  \codep@extractfirst#1,\@nil%
   % Check that the base counter exists (i.e. \newtheorem was called).
   \@ifundefined{c@\codep@basecounter}{%
     \PackageError{codependent}%
       {Counter '\codep@basecounter' undefined -- %
-       \string\codeptrack\space called before
+       \string\codeptrack\space called before%
        \string\newtheorem}%
-      {Declare all theorem environments with
-       \string\newtheorem\space before calling
+      {Declare all theorem environments with%
+       \string\newtheorem\space before calling%
        \string\codeptrack.}%
   }{}%
-  \codep@setupcounter
+  \codep@setupcounter%
   % Hook each listed environment and its starred variant.
   % Note: \expandafter ensures the env name is fully expanded
   % before \codep@hooktheorem captures it in \AddToHook
@@ -2695,40 +2695,40 @@
       % register.  This re-let ensures every tracked env's
       % counter is \c@atom, regardless of declaration order.
       \expandafter\@ifundefined\expandafter{%
-        \expandafter c@\codep@tmp@envname
+        \expandafter c@\codep@tmp@envname%
       }{}{%
-        \expandafter\let\csname c@\codep@tmp@envname\endcsname\c@atom
+        \expandafter\let\csname c@\codep@tmp@envname\endcsname\c@atom%
         % Also alias the display macro \the<env> to \theatom.
         % When thmtools declares an env with sibling=<base>, it
         % snapshots \the<base> at declaration time.  If codependent
         % later rewires \the<base> to \theatom, the sibling's
         % display macro still has the old format.  This re-let
         % ensures every tracked env uses the atom display format.
-        \expandafter\let\csname the\codep@tmp@envname\endcsname\theatom
+        \expandafter\let\csname the\codep@tmp@envname\endcsname\theatom%
       }%
-      \expandafter\codep@hooktheorem
+      \expandafter\codep@hooktheorem%
         \expandafter{\codep@tmp@envname}%
       % Auto-register starred variant (amsthm creates foo*).
       \edef\codep@starred{\codep@tmp@envname*}%
       \expandafter\@ifundefined\expandafter{%
-        \codep@starred
+        \codep@starred%
       }{}{%
-        \expandafter\codep@hooktheorem
+        \expandafter\codep@hooktheorem%
           \expandafter{\codep@starred}%
       }%
     \fi
   }%
-  \codep@hookproof
+  \codep@hookproof%
   % Install suppression and paragraph hooks.
-  \codep@installsuppress
-  \codep@suppresssectioning
+  \codep@installsuppress%
+  \codep@suppresssectioning%
   % Defer section title capture to begindocument/end so that
   % hyperref's \addcontentsline redefinition has already run.
   \AddToHook{begindocument/end}[codependent/sectitle]{%
     \codep@capturesectitle}%
-  \codep@suppresscommands
-  \codep@installparahook
-  \codep@installparendhook
+  \codep@suppresscommands%
+  \codep@installparahook%
+  \codep@installparendhook%
 }
 
 % \codeptag{kind}{value}
@@ -2888,8 +2888,8 @@
 %% @behavior B-REND-APPENDIX
 \newcommand*{\codepappendix}{%
   \PackageWarning{codependent}{%
-    \string\codepappendix\space requires the rendering layer
-    (codependent-render.sty), which is not loaded when
+    \string\codepappendix\space requires the rendering layer%
+    (codependent-render.sty), which is not loaded when%
     backrefs=none}%
 }
 
