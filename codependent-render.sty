@@ -30,6 +30,7 @@
 % Deferred backref: data saved at para/end, emitted at the
 % next para/begin.  Avoids mode-change error (para/end must
 % stay in horizontal mode; \codep@renderbackref needs \par).
+%% @utility
 \gdef\codep@deferredbr{}
 
 % String constants for \ifx comparisons in rendering macros.
@@ -60,6 +61,7 @@
       \noexpand\codep@brhyper{#1}}%
   \fi%
 }%
+%% @implements \codep@queuebackref
 \def\codep@collapsebr#1{%
   \begingroup%
     \def\codep@tmp@acc{}%
@@ -84,6 +86,7 @@
 %   (§8a.3), which walks the per-target linked-list nodes built
 %   from \codep@atomref aux records.  Collapse is idempotent, so
 %   calling it unconditionally is fine.
+%% @behavior B-DISP-THM
 \newcommand*{\codep@queuebackref}[1]{%
   \ifbool{codep@backrefs}{%
     \global\codep@pendingbr={}%
@@ -114,6 +117,7 @@
 %   the \par inside \codep@renderbackref cannot re-enter
 %   flushbackref with the same data (para/end → flushbackref
 %   → renderbackref → \par → para/end → flushbackref loop).
+%% @behavior B-DISP-THM
 \newcommand*{\codep@flushbackref}{%
   \ifbool{codep@backrefs}{%
     \ifbool{codep@appendix}{}{%
@@ -137,6 +141,7 @@
 %   paragraph path (\vadjust pre in \codep@installparahook)
 %   call this, so overriding it changes ALL rendering.
 %   Reads font/prefix/label from \codepsetup configuration.
+%% @implements \codep@renderbackref
 \newcommand*{\codep@formatusedin}[1]{%
   {\normalfont\codep@backreffont
    \codep@applycolor{\codep@backrefprefix\codep@backreflabel\space#1.}}}
@@ -144,6 +149,7 @@
 %   Wrap text in \textcolor if backref-color is set and a
 %   color package (xcolor or color) is loaded.  Falls back
 %   to plain text if \textcolor is unavailable.
+%% @implements \codep@renderbackref
 \newcommand*{\codep@applycolor}[1]{%
   \ifx\codep@backrefcolor\@empty
     #1%
@@ -156,6 +162,7 @@
 %   entries, truncate and append "...".  Currently a pass-through
 %   stub; proper comma-counting can be added later without changing
 %   the rendering contract.
+%% @implements \codep@rendermargin
 \newcommand*{\codep@truncatereflist}[1]{#1}
 
 % \codep@emitmarginbackref{content}
@@ -163,6 +170,7 @@
 %   and the margin branch of \codep@renderbackref@para.
 %   Wraps content in \vbox{\hbox to \linewidth{\hfil\smash{\rlap{...}}}}
 %   so it projects past \linewidth without disturbing vertical spacing.
+%% @implements \codep@rendermargin
 \def\codep@emitmarginbackref#1{%
   \vbox{%
     \hbox to \linewidth{%
@@ -181,6 +189,7 @@
 %   Render "Used in X, Y." in the right margin (past \linewidth).
 %   Uses \rlap so it does not conflict with atom numbers in the left margin.
 %   Used for margin backref-style on theorem atoms (non-paragraph).
+%% @behavior B-REND-MARGIN
 \newcommand*{\codep@rendermargin}[1]{%
   \nobreak
   \codep@emitmarginbackref{%
@@ -195,6 +204,10 @@
 %   Render "Used in X, Y." at the end of the current atom.
 %   Used for theorem/definition/lemma atoms (non-paragraph).
 %   Respects backref-style and backref-align configuration.
+%% @behavior B-DISP-THM
+%% @behavior B-REND-BELOW
+%% @behavior B-REND-INLINE
+%% @behavior B-REND-MARGIN
 \newcommand*{\codep@renderbackref}[1]{%
   \ifx\codep@backrefstyle\codep@const@below
     % Below style: separate line after the atom.
@@ -250,6 +263,7 @@
 %   mode).  Used for paragraph atoms via the deferred-backref
 %   mechanism.  Calls \codep@formatusedin for the text.
 %   Respects backref-style and backref-align configuration.
+%% @behavior B-DISP-PARA
 \newcommand*{\codep@renderbackref@para}[1]{%
   \nobreak
   \ifx\codep@backrefstyle\codep@const@below
@@ -290,6 +304,7 @@
 
 % \codep@emitmargin{number}
 %   Typeset a superscript atom number in the left margin.
+%% @behavior B-NUM-PARA
 \newcommand*{\codep@emitmargin}[1]{%
   \leavevmode%
   \smash{%
@@ -307,6 +322,7 @@
 %   so it is automatically restored after \endgroup.
 %   No-op when the backref style is inline (inline flushes
 %   in hmode, before the env closes).
+%% @behavior B-LINK-NO-ORPHAN
 \def\codep@preventorphan{%
   \ifx\codep@backrefstyle\codep@const@inline\else
     \expandafter\def\expandafter\codep@tmp@pendingsnap\expandafter{%
@@ -325,6 +341,7 @@
 %   Snapshot pending backref data into \codep@deferredbr.
 %   Clears the pendingbr register.  Called from the para/end
 %   hook when inline backrefs are active and not in appendix mode.
+%% @behavior B-DISP-PARA
 \def\codep@parendhook@snapshot{%
   \expandafter\def\expandafter\codep@tmp@brsnap\expandafter{%
     \the\codep@pendingbr}%
@@ -340,6 +357,7 @@
 %   current paragraph's first line (end of previous output box)
 %   without a horizontal-mode change.  Clears the register after
 %   emission.  Called from \codep@installparahook.
+%% @behavior B-DISP-PARA
 \def\codep@parahook@emitdeferred{%
   \ifx\codep@deferredbr\@empty\else
     \vadjust pre{%
@@ -361,6 +379,7 @@
 %   \codep@appendixsection) when the section number changes
 %   between consecutive atoms, using titles captured from
 %   \addcontentsline during the document body.
+%% @behavior B-REND-APPENDIX
 \renewcommand*{\codepappendix}{%
   \ifbool{codep@appendix}{%
     \section*{Dependency Index}%
@@ -405,6 +424,7 @@
 %   Collapse back-refs for the prefixed atom key and emit an
 %   appendix entry if any back-references exist.  The display
 %   number is derived via the query API (\codep@graph@getdisplay).
+%% @implements \codepappendix
 \def\codep@appendix@emit#1#2{%
   \codep@collapsebr{#1}%
   \expandafter\ifx\csname codep@br@#1\endcsname\@empty\else
@@ -416,12 +436,14 @@
 
 % Appendix rendering helpers.
 % \codep@appendixsection{number}{title}
+%% @implements \codepappendix
 \newcommand*{\codep@appendixsection}[2]{%
   \par\medskip\noindent
   \textbf{#1\quad #2}\par
 }
 
 % \codep@appendixentry{atomnumber}{atomname}{reflist}
+%% @implements \codepappendix
 \newcommand*{\codep@appendixentry}[3]{%
   \par\noindent
   \hspace{1.5em}%
@@ -440,6 +462,7 @@
 % Default (no hyperref): render display form via query API.
 % With hyperref: render display form wrapped in \hyperlink to the
 % anchor retrieved via \codep@graph@getanchor.
+%% @behavior B-LINK-CLICKABLE
 \renewcommand*{\codep@brhyper}[1]{%
   \codep@graph@getdisplay{#1}{\codep@tmp@brdisplay}%
   \codep@tmp@brdisplay%
@@ -467,6 +490,7 @@
 
 % \codep@render@queuebackref{atomkey}
 %   Queue back-references for the given atom key.
+%% @implements \codep@queuebackref
 \def\codep@render@queuebackref#1{%
   \codep@queuebackref{#1}%
 }%
@@ -474,6 +498,7 @@
 % \codep@render@thm@preparebackref{envname}
 %   Queue backrefs for the outermost atom, apply orphan prevention,
 %   and flush inline style immediately (block/margin defer).
+%% @implements \codep@hooktheorem
 \def\codep@render@thm@preparebackref#1{%
   \codep@queuebackref{\codep@outeratom}%
   \codep@preventorphan
@@ -488,6 +513,7 @@
 %   Below-style emission wraps the flush in \codep@withsuppression
 %   to prevent the emitted text from triggering para/begin and
 %   creating a spurious paragraph atom between theorems.
+%% @implements \codep@hooktheorem
 \def\codep@render@thm@afterend#1{%
   \ifx\codep@backrefstyle\codep@const@inline\else
     \ifx\codep@backrefstyle\codep@const@below
@@ -501,6 +527,7 @@
 % \codep@render@proof@end
 %   Inline style: flush before proof env closes (hmode, before QED).
 %   Block/margin: apply orphan prevention.
+%% @implements \codep@hookproof
 \def\codep@render@proof@end{%
   \ifx\codep@backrefstyle\codep@const@inline
     \codep@flushbackref
@@ -511,6 +538,7 @@
 
 % \codep@render@proof@afterend
 %   Block/margin style: flush after proof env closes (vmode, after QED).
+%% @implements \codep@hookproof
 \def\codep@render@proof@afterend{%
   \ifbool{codep@proofsnumbered}{%
     \ifx\codep@backrefstyle\codep@const@inline\else
@@ -521,6 +549,7 @@
 
 % \codep@render@para@emit{prefixedkey}{displaynum}
 %   Emit margin label and queue backref for a paragraph atom.
+%% @behavior B-DISP-PARA
 \def\codep@render@para@emit#1#2{%
   \codep@emitmargin{#2}%
   \codep@queuebackref{#1}%
@@ -528,18 +557,21 @@
 
 % \codep@render@para@emitdeferred
 %   Emit the deferred backref from the previous paragraph, if any.
+%% @behavior B-DISP-PARA
 \def\codep@render@para@emitdeferred{%
   \codep@parahook@emitdeferred
 }%
 
 % \codep@render@paraend@snapshot
 %   Snapshot pending backref data for deferred emission.
+%% @behavior B-DISP-PARA
 \def\codep@render@paraend@snapshot{%
   \codep@parendhook@snapshot
 }%
 
 % \codep@render@enddocument@flush
 %   Flush any deferred backref from the final paragraph.
+%% @behavior B-REND-APPENDIX
 \def\codep@render@enddocument@flush{%
   \ifx\codep@deferredbr\@empty\else
     \codep@renderbackref@para{\codep@deferredbr}%

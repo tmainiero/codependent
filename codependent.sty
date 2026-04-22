@@ -16,9 +16,11 @@
 %% ===================================================================
 
 % Depth: how many sectioning levels in the atom display number.
+%% @utility
 \newcommand*{\codep@depth}{1}
 
 % Back-references: inline (default), appendix, or none.
+%% @utility
 \newcommand*{\codep@backrefmode}{inline}
 \newbool{codep@backrefs}
 \booltrue{codep@backrefs}
@@ -44,25 +46,41 @@
 \booltrue{codep@paragraphs}
 
 % Equation tracking mode: outer (default), all, off.
+%% @utility
 \newcommand*{\codep@equationmode}{outer}
 
 % Rendering configuration (backref style, alignment, fonts).
+%% @utility
 \newcommand*{\codep@backrefstyle}{inline}
+%% @utility
 \newcommand*{\codep@backrefalign}{right}
 % Margin truncation: max refs shown in margin mode before "...".
+%% @utility
 \newcommand*{\codep@backrefmarginmax}{5}
 % String constants for \ifx comparisons in rendering macros.
+%% @utility
 \def\codep@const@below{below}
+%% @utility
 \def\codep@const@inline{inline}
+%% @utility
 \def\codep@const@margin{margin}
+%% @utility
 \def\codep@const@right{right}
+%% @utility
 \def\codep@const@off{off}
+%% @utility
 \def\codep@const@outer{outer}
+%% @utility
 \def\codep@const@all{all}
+%% @utility
 \newcommand*{\codep@backreffont}{\scriptsize\sffamily}
+%% @utility
 \newcommand*{\codep@backrefcolor}{}
+%% @utility
 \newcommand*{\codep@backrefprefix}{}
+%% @utility
 \newcommand*{\codep@backreflabel}{Used in}
+%% @utility
 \newcommand*{\codep@marginfont}{\scriptsize}
 
 \pgfkeys{%
@@ -126,6 +144,7 @@
 }
 
 % Collect all options and forward to pgfkeys.
+%% @utility
 \def\codep@rawopts{}%
 \DeclareOption*{%
   \ifx\codep@rawopts\@empty
@@ -136,6 +155,7 @@
 }%
 \ProcessOptions\relax
 \ifx\codep@rawopts\@empty\else
+%% @utility
   \edef\codep@tmp@opts{%
     \noexpand\pgfkeys{/codep/.cd,\codep@rawopts}%
   }%
@@ -143,6 +163,7 @@
 \fi
 
 % \codepsetup{key=value,...}  Configure codependent in preamble or body.
+%% @utility
 \newcommand*{\codepsetup}[1]{\pgfkeys{/codep/.cd,#1}}
 
 %% ===================================================================
@@ -150,6 +171,7 @@
 %% ===================================================================
 
 % Base counter name: auto-detected from the first env in \codeptrack.
+%% @utility
 \newcommand*{\codep@basecounter}{}
 
 % Monotone internal source-atom IDs (a1, a2, ...).
@@ -204,6 +226,7 @@
 % occurs, \theatom at end-time reflects the LAST \refstepcounter
 % (the inner env), not the outermost.  This macro captures the
 % correct value after the outermost env's \refstepcounter fires.
+%% @utility
 \newcommand*{\codep@outeratom}{}
 
 % Flag: true when \codeptrack has been called.
@@ -226,6 +249,7 @@
 \newcommand*{\codep@eqfallbacksourceid}{}
 
 % Track 1: current equation atom (set at \ref time for single-number envs).
+%% @utility
 \newcommand*{\codep@eqatom}{}
 
 % Track 2: pending ref targets for multi-number envs.
@@ -239,6 +263,7 @@
 \codep@eq@startcount=0\relax
 
 % Track 2: dedicated anchor name for the block.
+%% @utility
 \newcommand*{\codep@eq@anchor}{}
 
 % Track 2 flag: distinguishes Track 1 vs Track 2 envs.
@@ -254,6 +279,7 @@
 % that deferred \label calls (amsmath fires them after environment end)
 % can still record the correct type.  Cleared in \codep@writelbltype
 % after use, and globally cleared at environment end as a safety net.
+%% @utility
 \newcommand*{\codep@eq@lbltype@pending}{}
 
 % Accumulated appendix data (token register).
@@ -270,7 +296,9 @@
 % Updated by the \addcontentsline hook when a toc/section entry
 % is written.  Stored per-atom at registration time so that
 % \codepappendix can emit section headers.
+%% @utility
 \newcommand*{\codep@cursecnum}{}%
+%% @utility
 \newcommand*{\codep@cursectitle}{}%
 
 % Sidecar (.cdp) stream state (§9a).
@@ -279,20 +307,30 @@
 
 % Deferred sbl writes: preamble cmddef records accumulate here
 % and flush once the .cdp stream opens at begindocument/before.
+%% @utility
 \def\codep@cdp@deferred{}
 
 %% --- Rendering hook points (no-op defaults) ---
 %% These are redefined to their live implementations after all
 %% rendering code is loaded (see "Rendering hook activation" below).
 %% When tracking runs without a rendering layer, these are inert.
+%% @utility
 \def\codep@render@queuebackref#1{}%
+%% @utility
 \def\codep@render@thm@preparebackref#1{}%
+%% @utility
 \def\codep@render@thm@afterend#1{}%
+%% @utility
 \def\codep@render@proof@end{}%
+%% @utility
 \def\codep@render@proof@afterend{}%
+%% @utility
 \def\codep@render@para@emit#1#2{}%
+%% @utility
 \def\codep@render@para@emitdeferred{}%
+%% @utility
 \def\codep@render@paraend@snapshot{}%
+%% @utility
 \def\codep@render@enddocument@flush{}%
 
 %% ===================================================================
@@ -574,6 +612,7 @@
 
 % \codep@removefromreset{counter}{parent}
 %   Remove counter from parent's reset list.
+%% @utility
 \newcommand*{\codep@removefromreset}[2]{%
   \@ifundefined{@removefromreset}{%
     % Manual: rewrite \cl@parent without #1.
@@ -601,6 +640,7 @@
 %   Create the atom counter and wire it to the base counter
 %   (auto-detected from the first env in \codeptrack).
 %   Called by \codeptrack.
+%% @behavior B-NUM-SHARED
 \newcommand*{\codep@setupcounter}{%
   \newcounter{atom}%
   % Copy current base counter value (if it exists).
@@ -621,6 +661,8 @@
 % \codep@configuredepth
 %   Set up counter resets and display format based on depth option
 %   and document class.
+%% @behavior B-NUM-DEPTH1
+%% @behavior B-NUM-DEPTH2
 \newcommand*{\codep@configuredepth}{%
   % Remove base counter from any existing reset parent.
   \@ifundefined{c@\codep@basecounter}{}{%
@@ -639,6 +681,7 @@
 }
 
 % Article-class depth configuration.
+%% @implements \codep@configuredepth
 \newcommand*{\codep@configuredepth@article}{%
   \ifcase\codep@depth\relax
     % 0: invalid
@@ -663,6 +706,7 @@
 }
 
 % Book/report-class depth configuration.
+%% @implements \codep@configuredepth
 \newcommand*{\codep@configuredepth@book}{%
   \ifcase\codep@depth\relax
     % 0: invalid
@@ -690,6 +734,7 @@
 %   Append one entry to the count-indexed atom array.
 %   num  -- the atom number token (e.g. \codep@outeratom or \theatom)
 %   kind -- the atom type string (e.g. {#1}, proof, paragraph)
+%% @behavior B-REND-APPENDIX
 \def\codep@registeratom#1#2{%
   \global\advance\codep@atomcount by 1\relax
   \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
@@ -800,6 +845,7 @@
 %   Queue backrefs, apply orphan prevention, flush inline style.
 %   Block/margin styles flush later in \AfterEndEnvironment.
 %   Delegates to the rendering hook point.
+%% @implements \codep@hooktheorem
 \def\codep@hooktheorem@preparebackref#1{%
   \codep@render@thm@preparebackref{#1}%
 }%
@@ -853,11 +899,14 @@
 %   Anti-orphan: \codep@preventorphan (called in
 %   \codep@hooktheorem@preparebackref) ensures \endtrivlist
 %   cannot introduce a page break before the "Used in" line.
+%% @implements \codep@hooktheorem
 \def\codep@hooktheorem@afterend#1{%
   \codep@render@thm@afterend{#1}%
 }
 
 % Thin orchestrator: wire the named helpers into the four hook points.
+%% @behavior B-NUM-SEQ
+%% @behavior B-PROOF-ADJ
 \newcommand*{\codep@hooktheorem}[1]{%
   \AddToHook{cmd/#1/before}{\codep@hooktheorem@begin{#1}}%
   \AddToHook{cmd/#1/after}{\codep@hooktheorem@after{#1}}%
@@ -1317,6 +1366,7 @@
 
 % \codep@installsuppress
 %   Hook suppression for standard environments.
+%% @behavior B-SUPP-TRACKED
 \newcommand*{\codep@installsuppress}{%
   \codep@suppressenv{enumerate}%
   \codep@suppressenv{itemize}%
@@ -1389,6 +1439,7 @@
 %   entry is written, extract the title (stripping \numberline)
 %   and store it in \codep@cursecnum / \codep@cursectitle.
 %   Only active in appendix mode.
+%% @implements \codep@checktocsection
 \newcommand*{\codep@capturesectitle}{%
   \ifbool{codep@appendix}{%
     \let\codep@orig@addcontentsline\addcontentsline
@@ -1404,6 +1455,7 @@
 %   (guaranteed correct since \refstepcounter has already run)
 %   and strips \numberline from the entry via controlled \edef
 %   to recover the bare title text.
+%% @behavior B-REND-APPENDIX
 \def\codep@checktocsection#1#2#3{%
   \def\codep@tmp@tocfile{#1}\def\codep@tmp@toctype{toc}%
   \ifx\codep@tmp@tocfile\codep@tmp@toctype
@@ -1417,6 +1469,7 @@
 %   Extract the bare title from a TOC entry by redefining
 %   \numberline to absorb its argument and \edef-expanding
 %   the entry with \protect neutralised.
+%% @implements \codep@checktocsection
 \def\codep@extractsectitle#1{%
   \begingroup
     \let\protect\@empty
@@ -1463,6 +1516,7 @@
 %   etoolbox patching unreliable.  Captions appear only
 %   inside figure/table environments, which are already
 %   suppressed at the env level.
+%% @implements \codep@installsuppress
 \newcommand*{\codep@suppresscommands}{%
   \codep@suppresscmd{\footnote}%
   \codep@suppresscmd{\parbox}%
@@ -1552,6 +1606,7 @@
 
 % Active definition for \codep@lbltype: populates the label type
 % lookup table from aux records.
+%% @implements \codep@installnewlabel
 \def\codep@lbltype@active#1#2{%
   \expandafter\gdef\csname codep@ltype@#1\endcsname{#2}}
 
@@ -1563,6 +1618,7 @@
 % table from aux records.  Defined at package load time (outside any
 % macro) so # works; activated in begindocument/before BEFORE the aux
 % read, so equation range anchors are not silently discarded.
+%% @implements \codep@hooktheorem
 \def\codep@anchormap@active#1#2{%
   \expandafter\gdef\csname codep@anchor@#1\endcsname{#2}}
 
@@ -1570,6 +1626,7 @@
 %   Write an atom→anchor aux record.  No-op by default; activated
 %   at \AtBeginDocument when hyperref is loaded, so the write only
 %   happens when \@currentHref is meaningful.
+%% @implements \codep@hooktheorem
 \newcommand*{\codep@writeanchormap}[1]{}
 
 % Pass-1 safety for concept-tracking aux records (§9a User API).
@@ -1581,12 +1638,14 @@
 % Concept pending-list: deferred resolveconcept calls for
 % forward refs whose def record has not yet been read.
 % Flushed at begindocument/end after the full aux read.
+%% @utility
 \gdef\codep@conceptpending{}
 
 % Concept name list: each concept whose \codep@emit@use
 % fires at least once appends \do{name} here.  The
 % \codep@conceptwarnscan at \AtEndDocument walks this list
 % to detect concepts with uses but no def site.
+%% @utility
 \def\codep@conceptnames{}
 
 % \codep@writeatomref{target}
@@ -1612,10 +1671,12 @@
 %   Normal (non-equation) aux-write path.  Extracted from the
 %   original \codep@writeatomref body so equation branches can
 %   fall through to it.
+%% @implements \codep@writeatomref
 \def\codep@writeatomref@do#1{%
   \codep@writerefevent{#1}%
 }%
 
+%% @behavior B-PASS-ONE
 \def\codep@writeatomref#1{%
   % (a) Skip during amsmath measuring pass.
   \@ifundefined{ifmeasuring@}%
@@ -1626,6 +1687,7 @@
 % \codep@writeatomref@tracktwo{target}
 %   Track 2 (align/gather multiline) path: defer the ref
 %   to the pending list for later flush by \codep@flusheqrange.
+%% @implements \codep@writeatomref
 \def\codep@writeatomref@tracktwo#1{%
   \codep@eqshouldtrack%
   \ifx\codep@eqatom\@empty%
@@ -1640,6 +1702,7 @@
 % \codep@writeatomref@trackone{target}
 %   Track 1 (single equation) path: record the ref directly
 %   with the parenthesized equation number.
+%% @implements \codep@writeatomref
 \def\codep@writeatomref@trackone#1{%
   \codep@eqshouldtrack%
   \ifx\codep@eqatom\@empty%
@@ -1656,6 +1719,7 @@
   \fi%
 }%
 
+%% @implements \codep@writeatomref
 \def\codep@writeatomref@body#1{%
   \ifbool{codep@inequation}{%
     \ifbool{codep@eqmultiline}{%
@@ -1675,6 +1739,7 @@
 %   dispatchers.  Patching at this point wraps the OUTERMOST
 %   live definition, preserving every prior hook (hyperlink
 %   emission, cref formatting).
+%% @behavior B-EDGE-PROOF-ANY
 \def\codep@installatomrefpatch{%
   %% ---- Patch 1: kernel \@setref ----
   %% Covers \ref, \eqref, \pageref (via \@pagesetref
@@ -1724,6 +1789,7 @@
 
 % \codep@recordbr{src}{tgt}
 %   Enqueue a processbackref call.  O(1) per append.
+%% @behavior B-EDGE-PROOF-ANY
 \def\codep@recordbr#1#2{%
   \global\advance\codep@brid by 1\relax
   \expandafter\xdef
@@ -1735,6 +1801,7 @@
 % \codep@flushbrqueue
 %   Walk the linked list once, O(N) total.  Called from the
 %   begindocument/end hook (Section 8a.7).
+%% @behavior B-DISP-THM
 \def\codep@flushbrqueue{%
   \begingroup
     \count@=\z@
@@ -1759,6 +1826,7 @@
 %% emitted between atoms).  Belt-and-braces: the \@setref patch
 %% already skips the write when \codep@currentatom is empty.
 
+%% @implements \codep@installatomrefpatch
 \def\codep@atomref@active#1#2{%
   \edef\codep@tmp@src{#1}%
   \ifx\codep@tmp@src\@empty\else
@@ -2042,6 +2110,7 @@
 % Flag used only inside \codep@ifdatakey (separate from \ifcodep@iscref).
 \newif\ifcodep@isdata
 
+%% @behavior B-PASS-ONE
 \def\codep@installnewlabel{%
   \let\codep@orig@newlabel\newlabel
   \def\newlabel##1##2{%
@@ -2816,6 +2885,7 @@
 % \codepappendix — fallback definition when rendering is not loaded.
 %   The live implementation is in codependent-render.sty and
 %   overrides this with \renewcommand.
+%% @behavior B-REND-APPENDIX
 \newcommand*{\codepappendix}{%
   \PackageWarning{codependent}{%
     \string\codepappendix\space requires the rendering layer
@@ -2841,6 +2911,7 @@
 % Default (no rendering): bare pass-through.  Redefined by
 % codependent-render.sty to format via \codep@displayfromkey
 % and (with hyperref) wrap in \hyperlink.
+%% @behavior B-LINK-CLICKABLE
 \newcommand*{\codep@brhyper}[1]{#1}
 
 % Hyperref detection: activate atom→anchor aux record WRITING.
