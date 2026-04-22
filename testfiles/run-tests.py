@@ -1390,60 +1390,91 @@ def discover_fixtures(unit: bool, integration: bool, real_world: bool, pattern: 
 # ----------------------------------------------------------------------
 
 
-def summarize(results: list[TestResult], engine: str, verbose: bool) -> int:
+def _extract_brief_diagnostic(failures: list[str]) -> tuple[list[str], int]:
+    """Extract first 10 non-blank lines from failure diagnostics.
+    Returns (lines, suppressed_count) where suppressed_count is remaining non-blank lines.
+    """
+    all_lines = []
+    for f in failures:
+        all_lines.extend(f.split("\n"))
+    non_blank = [line for line in all_lines if line.strip()]
+    first_10 = non_blank[:10]
+    suppressed = len(non_blank) - len(first_10)
+    return first_10, suppressed
+
+
+def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool = False) -> int:
     total = len(results)
     passed = sum(1 for r in results if r.passed and not r.skipped)
     failed = sum(1 for r in results if not r.passed and not r.skipped)
     skipped = sum(1 for r in results if r.skipped)
     pinned_broken = sum(1 for r in results if r.fixture.pins_known_broken and not r.passed)
 
-    print()
-    print("=" * 72)
-    print(f"codependent.sty test runner — engine: {engine}")
-    print("=" * 72)
-
-    # By-category breakdown.
-    by_dir = defaultdict(lambda: [0, 0, 0])  # passed, failed, skipped
-    for r in results:
-        category = r.fixture.path.parent.name
-        if r.skipped:
-            by_dir[category][2] += 1
-        elif r.passed:
-            by_dir[category][0] += 1
-        else:
-            by_dir[category][1] += 1
-
-    print()
-    print("By category:")
-    for cat, (p, f, s) in sorted(by_dir.items()):
-        print(f"  {cat:20s}  pass={p:3d}  fail={f:3d}  skip={s:3d}")
-
-    # Failed tests detail.
-    if failed > 0:
+    if brief:
+        print("=" * 72)
+        print(f"codependent.sty test runner — engine: {engine}")
+        print("=" * 72)
         print()
-        print("FAILED tests:")
-        print("-" * 72)
-        for r in results:
-            if r.skipped or r.passed:
-                continue
-            marker = " (PINS-KNOWN-BROKEN)" if r.fixture.pins_known_broken else ""
-            print(f"  {r.fixture.name}{marker}")
-            print(f"    source: {r.fixture.source}")
-            print(f"    what: {r.fixture.what}")
-            for fail in r.failures:
-                print(f"    FAIL: {fail}")
-            if r.log_excerpt and verbose:
-                print("    log tail:")
-                print(textwrap.indent(r.log_excerpt, "      "))
-        print("-" * 72)
-
-    # Skipped tests (typically: codependent.sty not yet implemented).
-    if skipped > 0:
-        print()
-        print(f"SKIPPED ({skipped}):")
+        # Brief output: FAIL/SKIP lines only
         for r in results:
             if r.skipped:
-                print(f"  {r.fixture.name}: {r.skip_reason}")
+                print(f"{r.fixture.name} SKIP: {r.skip_reason}")
+            elif not r.passed:
+                print(f"{r.fixture.name} FAIL")
+                diagnostic, suppressed = _extract_brief_diagnostic(r.failures)
+                for line in diagnostic:
+                    print(f"  {line}")
+                if suppressed > 0:
+                    print(f"  ... [{suppressed} more lines of diagnostic suppressed; re-run without --brief for full output]")
+                print()
+    else:
+        print()
+        print("=" * 72)
+        print(f"codependent.sty test runner — engine: {engine}")
+        print("=" * 72)
+
+        # By-category breakdown.
+        by_dir = defaultdict(lambda: [0, 0, 0])  # passed, failed, skipped
+        for r in results:
+            category = r.fixture.path.parent.name
+            if r.skipped:
+                by_dir[category][2] += 1
+            elif r.passed:
+                by_dir[category][0] += 1
+            else:
+                by_dir[category][1] += 1
+
+        print()
+        print("By category:")
+        for cat, (p, f, s) in sorted(by_dir.items()):
+            print(f"  {cat:20s}  pass={p:3d}  fail={f:3d}  skip={s:3d}")
+
+        # Failed tests detail.
+        if failed > 0:
+            print()
+            print("FAILED tests:")
+            print("-" * 72)
+            for r in results:
+                if r.skipped or r.passed:
+                    continue
+                marker = " (PINS-KNOWN-BROKEN)" if r.fixture.pins_known_broken else ""
+                print(f"  {r.fixture.name}{marker}")
+                print(f"    source: {r.fixture.source}")
+                print(f"    what: {r.fixture.what}")
+                for fail in r.failures:
+                    print(f"    FAIL: {fail}")
+                if r.log_excerpt and verbose:
+                    print("    log tail:")
+                    print(textwrap.indent(r.log_excerpt, "      "))
+            print("-" * 72)
+
+        # Skipped tests (typically: codependent.sty not yet implemented).
+        if skipped > 0:
+            print()
+            print(f"SKIPPED ({skipped}):")
+            for r in results:
+                if r.skipped:
+                    print(f"  {r.fixture.name}: {r.skip_reason}")
 
     print()
     print("=" * 72)
@@ -1489,6 +1520,7 @@ def main():
     )
     parser.add_argument("--keep-temp", action="store_true", help="copy temp dirs to testfiles/tmp/<name>/ for inspection")
     parser.add_argument("--verbose", "-v", action="store_true", help="show pass-by-pass output and log tails")
+    parser.add_argument("--brief", action="store_true", help="emit only failing/skipped fixtures (no PASS lines); ~80%% token savings for agent sessions")
     parser.add_argument("--unit-only", action="store_true", help="only run unit fixtures")
     parser.add_argument("--integration-only", action="store_true", help="only run integration fixtures")
     parser.add_argument("--real-world", action="store_true", help="include real-world arxiv-corpus fixtures")
@@ -1558,19 +1590,21 @@ def main():
     # Run.
     results = []
     for fix in fixtures:
-        sys.stderr.write(f"  {fix.name} ...")
-        sys.stderr.flush()
+        if not args.brief:
+            sys.stderr.write(f"  {fix.name} ...")
+            sys.stderr.flush()
         result = run_fixture(fix, engine_bin, args.keep_temp, args.verbose)
-        if result.skipped:
-            sys.stderr.write(" SKIP\n")
-        elif result.passed:
-            sys.stderr.write(f" PASS ({result.duration_ms}ms)\n")
-        else:
-            marker = " [PINS-KNOWN-BROKEN]" if fix.pins_known_broken else ""
-            sys.stderr.write(f" FAIL{marker} ({result.duration_ms}ms)\n")
+        if not args.brief:
+            if result.skipped:
+                sys.stderr.write(" SKIP\n")
+            elif result.passed:
+                sys.stderr.write(f" PASS ({result.duration_ms}ms)\n")
+            else:
+                marker = " [PINS-KNOWN-BROKEN]" if fix.pins_known_broken else ""
+                sys.stderr.write(f" FAIL{marker} ({result.duration_ms}ms)\n")
         results.append(result)
 
-    return summarize(results, args.engine, args.verbose)
+    return summarize(results, args.engine, args.verbose, args.brief)
 
 
 if __name__ == "__main__":
