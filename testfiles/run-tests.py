@@ -100,6 +100,13 @@ METADATA_KEYS = {
     # Backref hyperlink verification (require both mutool and qpdf)
     "TEST-PDF-ALL-BACKREFS-LINKED": "pdf_all_backrefs_linked",  # boolean; every Used-in entry must be a hyperlink
     "TEST-PDF-BACKREF-TARGETS": "pdf_backref_targets",  # may repeat; "<atom-dest> = <dest1>, <dest2>, ..."
+    # Package error/warning assertions
+    "TEST-EXPECT-PACKAGE-WARNING": "expect_package_warning",  # may repeat; regex on "Package codependent Warning:" line
+    "TEST-EXPECT-PACKAGE-ERROR": "expect_package_error",      # may repeat; regex on "Package codependent Error:" line; also drops -halt-on-error
+    # Appendix entry assertions (require appendix mode, P05)
+    "TEST-PDF-APPENDIX-ENTRY": "pdf_appendix_entry",           # may repeat; "<atom-key> = <display-number> [<printed-kind>]"; requires hyperref + named dest
+    "TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY": "pdf_appendix_entry_text_only",  # may repeat; same format; text-only (no dest check)
+    "TEST-APPENDIX-ENUM-WAIVER": "appendix_enum_waiver",       # reason string; suppresses enumeration-count guard
 }
 
 REPEATING_KEYS = {
@@ -113,6 +120,8 @@ REPEATING_KEYS = {
     "pdf_dest_exists", "pdf_dest_not_exists",
     "pdf_link_rect",
     "pdf_backref_targets",
+    "expect_package_warning", "expect_package_error",
+    "pdf_appendix_entry", "pdf_appendix_entry_text_only",
 }
 
 # No-op definitions for l3build regression-test markers.  l3build provides
@@ -172,6 +181,15 @@ class Fixture:
     # Backref hyperlink verification
     pdf_all_backrefs_linked: bool = False
     pdf_backref_targets: list = dataclasses.field(default_factory=list)
+    # Package error/warning assertions
+    expect_package_warning: list = dataclasses.field(default_factory=list)
+    expect_package_error: list = dataclasses.field(default_factory=list)
+    # Appendix entry assertions (P05 appendix mode)
+    pdf_appendix_entry: list = dataclasses.field(default_factory=list)
+    pdf_appendix_entry_text_only: list = dataclasses.field(default_factory=list)
+    appendix_enum_waiver: str = ""
+    # Parse-time error (set by mutual-exclusion guard; causes immediate test failure)
+    parse_error: str = ""
 
 
 def parse_fixture(path: Path) -> Fixture:
@@ -233,6 +251,11 @@ def parse_fixture(path: Path) -> Fixture:
                 getattr(fix, attr).append(value)
             else:
                 setattr(fix, attr, value)
+    if fix.pdf_appendix_entry and fix.pdf_appendix_entry_text_only:
+        fix.parse_error = (
+            "TEST-PDF-APPENDIX-ENTRY and TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY "
+            "are mutually exclusive in the same fixture"
+        )
     return fix
 
 
