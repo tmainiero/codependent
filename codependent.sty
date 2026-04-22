@@ -208,6 +208,16 @@
 \newif\ifcodep@proofdisplaypending
 \codep@proofdisplaypendingfalse
 
+% Flag: abort finalization — set by \codep@enddoc@evaluator@pre when
+% a fatal enddoc state is detected (e.g. unsettled proof-binding slot,
+% or a subsystem counter reporting incomplete work we cannot recover
+% from).  The orchestrator branches on this flag: when true, drains
+% are skipped and \codep@enddoc@halt fires \PackageError.
+% Runtime-only; NOT written to .aux, so a restart-retry begins clean.
+%% @utility
+\newif\ifcodep@abortfinalize
+\codep@abortfinalizefalse
+
 % Pending proof-adjacent result atom ID.
 %% @utility
 \newcommand*{\codep@pendingresultid}{}
@@ -1919,10 +1929,8 @@
 }%
 
 % \codep@refpending@drain
-%   P03's single enddoc-drain call-site.  Plan v11 lists this macro
-%   inside \codep@enddoc@orchestrator (P04's work); P04 will remove
-%   the temporary \AtEndDocument registration below and call this
-%   from the orchestrator body.
+%   P03's enddoc-drain body.  Invoked by \codep@enddoc@orchestrator's
+%   drain@p03 slot (Section 9b); no direct \AtEndDocument here.
 %
 %   Two responsibilities, in order:
 %     1. Emit the entitymeta accumulator to the .aux so cross-run
@@ -1941,11 +1949,10 @@
   \endgroup%
 }%
 
-% Temporary enddoc registration — kept until P04's orchestrator
-% lands and consolidates all enddocument hooks into
-% \codep@enddoc@orchestrator.  P04 will replace this registration
-% with a call-site inside the orchestrator body per plan v11.
-\AtEndDocument{\codep@refpending@drain}
+% P04: \codep@refpending@drain is called from within
+% \codep@enddoc@orchestrator (declared in Section 9b, below).
+% No direct \AtEndDocument registration here — the orchestrator
+% is the single enddocument entry-point.
 
 % \codep@writeatomref{target}
 %   Shared aux-write helper called by all patch sites.  Guards
@@ -2682,15 +2689,18 @@
   \fi
 }
 
-%% --- Section 9a close hook (\AtEndDocument) ---
+%% --- Section 9a close hook: CDP sentinel drain ---
 %% Write the \codep@cdp@end{OK} sentinel and close the stream.
 %% Per REVIEW_C finding #7, the sentinel's presence is the CLI's
-%% test for "complete file".
-\AtEndDocument{%
+%% test for "complete file".  P04: invoked from
+%% \codep@enddoc@orchestrator's drain@sentinel slot (must be LAST
+%% of the drain slots since closing the stream drops later writes).
+%% @utility
+\def\codep@enddoc@drain@sentinel{%
   \ifbool{codep@cdpopen}{%
     \immediate\write\codep@cdpout{%
       \string\codep@cdp@end{OK}}%
-    \immediate\closeout\codep@cdpout
+    \immediate\closeout\codep@cdpout%
     \global\boolfalse{codep@cdpopen}%
   }{}%
 }
@@ -2936,9 +2946,98 @@
   \codep@tmp@rec%
 }
 
-\AtEndDocument{%
-  \codep@conceptwarnscan
-}
+% P04: \codep@conceptwarnscan is called from
+% \codep@enddoc@orchestrator's drain@warnscan slot (Section 9b).
+% No direct \AtEndDocument registration here.
+
+%% ===================================================================
+%% Section 9b: Enddocument orchestrator (v11 R29 closure)
+%% ===================================================================
+%% A single \AddToHook{enddocument} registration that dispatches to
+%% five named drain slots in a fixed order.  The three historical
+%% \AtEndDocument sites (P03 refpending drain, CDP sentinel close,
+%% conceptwarnscan) are consolidated here — each legacy body is
+%% now an explicit drain slot, making the enddocument sequence
+%% trivially inspectable and stable across future changes.
+%%
+%% Two-tier failure evaluator:
+%%   \codep@enddoc@evaluator@pre runs BEFORE drains and may set
+%%   \ifcodep@abortfinalize when it detects fatal pre-drain state
+%%   (e.g. unsettled proof-binding slot).  When aborted, the
+%%   drains are skipped and \codep@enddoc@halt fires \PackageError.
+%%   \codep@enddoc@evaluator@post runs AFTER drains and emits
+%%   \PackageWarning for residual non-fatal state (e.g. subsystem
+%%   counters reporting incomplete work).
+%%
+%% v11 R29 closure: exactly ONE \AddToHook{enddocument} registration
+%% in the entire codebase, enforced by lint_sty_structural.py (P04
+%% A6 extension).
+
+% Evaluator stubs — bodies populated in P04 commit 3 (subsystem
+% counters + fatal/residual detection).  For now the stubs are
+% no-ops so the orchestrator skeleton compiles.
+%% @utility
+\def\codep@enddoc@evaluator@pre{}%
+%% @utility
+\def\codep@enddoc@evaluator@post{}%
+
+% Halt body — fires when the pre-drain evaluator set
+% \ifcodep@abortfinalize.  Body expanded in commit 3.
+%% @utility
+\def\codep@enddoc@halt{}%
+
+% Drain slots — each is a thin wrapper delegating to the macro
+% that historically ran inside an \AtEndDocument block.
+%
+% Order matters: sentinel MUST be last since closing the .cdp
+% stream silently drops any later writes.  warnscan runs after
+% the main drains so subsystem activity is visible to it.
+%
+%% @utility
+\def\codep@enddoc@drain@p03{%
+  \codep@refpending@drain%
+}%
+%% @utility
+\def\codep@enddoc@drain@proofs{%
+  % P04 commit 4 populates this slot: consume pending proof-bind
+  % single-slot; warn on overwritten slot (binding declared but
+  % target never appeared).  No-op in commit 2 skeleton.
+}%
+%% @utility
+\def\codep@enddoc@drain@renderlist{%
+  % P05 populates this slot with the renderlist snapshot emit.
+  % No-op in commit 2 skeleton.
+}%
+%% @utility
+\def\codep@enddoc@drain@warnscan{%
+  \codep@conceptwarnscan%
+}%
+% \codep@enddoc@drain@sentinel is defined in Section 9a next to
+% the CDP-stream machinery (must stay near \codep@cdpout).
+
+% Orchestrator body — the single enddocument entry-point.
+% Consolidates the three historical \AtEndDocument registrations
+% into a fixed-order drain pipeline with a two-tier failure
+% evaluator.  No behavior ID yet — this is infrastructure; the
+% user-visible behaviors (error-on-fatal, warn-on-residual) are
+% asserted via the evaluator bodies populated in commit 3.
+%% @utility
+\def\codep@enddoc@orchestrator{%
+  \codep@enddoc@evaluator@pre%
+  \ifcodep@abortfinalize%
+    \codep@enddoc@halt%
+  \else%
+    \codep@enddoc@drain@p03%
+    \codep@enddoc@drain@proofs%
+    \codep@enddoc@drain@renderlist%
+    \codep@enddoc@drain@warnscan%
+    \codep@enddoc@drain@sentinel%
+  \fi%
+  \codep@enddoc@evaluator@post%
+}%
+
+% Single registration — enforced by lint_sty_structural.py.
+\AddToHook{enddocument}{\codep@enddoc@orchestrator}
 
 %% ===================================================================
 %% Section 10: User-facing API
