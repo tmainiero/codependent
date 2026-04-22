@@ -218,6 +218,65 @@
 \newif\ifcodep@abortfinalize
 \codep@abortfinalizefalse
 
+% Subsystem counter registry — walked by the two-tier evaluator.
+% Each subsystem tracks a (total, failed) pair: `total` increments
+% every time a tracked operation is attempted at non-replay time;
+% `failed` increments when an operation cannot complete.  The
+% orchestrator's pre-drain evaluator flips \codep@abortfinalizetrue
+% when any registered subsystem has failed==total && total>0 (i.e.
+% EVERY operation failed — drains would emit only stale records).
+% The post-drain evaluator emits \PackageWarning per subsystem with
+% 0<failed<total (partial success).
+%% @utility
+\newcommand*{\codep@subsystems@list}{}
+
+% \codep@subsystem@init{name}
+%   Declare a subsystem counter pair and register it on the
+%   subsystems list.  Called four times at package load (see
+%   Section 9b).
+%% @utility
+\def\codep@subsystem@init#1{%
+  \expandafter\newcount\csname codep@subsys@#1@total\endcsname%
+  \csname codep@subsys@#1@total\endcsname=0\relax%
+  \expandafter\newcount\csname codep@subsys@#1@failed\endcsname%
+  \csname codep@subsys@#1@failed\endcsname=0\relax%
+  \g@addto@macro\codep@subsystems@list{\do{#1}}%
+}%
+
+% \codep@subsystem@recordtotal{name}
+%   Increment the total-attempts counter for subsystem <name>.
+%   Guarded on \codep@replaydepth so restatable theorems do not
+%   double-count.  This guard is authoritative — callsites
+%   should NOT double-wrap in a replay-depth check.
+%% @utility
+\def\codep@subsystem@recordtotal#1{%
+  \ifnum\codep@replaydepth=0\relax%
+    \global\advance\csname codep@subsys@#1@total\endcsname by 1\relax%
+  \fi%
+}%
+
+% \codep@subsystem@recordfailed{name}
+%   Increment the failed-operations counter for subsystem <name>.
+%   Same replay guard as recordtotal.
+%% @utility
+\def\codep@subsystem@recordfailed#1{%
+  \ifnum\codep@replaydepth=0\relax%
+    \global\advance\csname codep@subsys@#1@failed\endcsname by 1\relax%
+  \fi%
+}%
+
+% Four subsystem registrations.  `proofof` tracks \codepproofof
+% resolution attempts (recordfailed on slot-overwrite + unsettled
+% slot at enddoc).  `atomref` tracks \codep@writerefevent calls.
+% `label-bind` tracks \codep@recordlabelowner calls.  `backref-render`
+% tracks render-layer preparebackref calls (no-op count when render
+% layer is absent, since the no-op stub in codependent.sty:342
+% does not increment).
+\codep@subsystem@init{proofof}%
+\codep@subsystem@init{atomref}%
+\codep@subsystem@init{label-bind}%
+\codep@subsystem@init{backref-render}%
+
 % Pending proof-adjacent result atom ID.
 %% @utility
 \newcommand*{\codep@pendingresultid}{}
@@ -589,6 +648,7 @@
   \if@filesw%
     \ifnum\codep@replaydepth>0\relax%
     \else%
+      \codep@subsystem@recordtotal{label-bind}%
       \ifx\codep@eq@lbltype@pending\@empty%
         \codep@getcurrentatomkind\codep@tmp@labelkind%
         \ifx\codep@tmp@labelkind\@empty\else%
@@ -630,6 +690,7 @@
   \if@filesw%
     \codep@getcurrentatomkey\codep@tmp@srcatom%
     \ifx\codep@tmp@srcatom\@empty\else%
+      \codep@subsystem@recordtotal{atomref}%
       \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
     \fi%
   \fi%
@@ -2973,18 +3034,74 @@
 %% in the entire codebase, enforced by lint_sty_structural.py (P04
 %% A6 extension).
 
-% Evaluator stubs — bodies populated in P04 commit 3 (subsystem
-% counters + fatal/residual detection).  For now the stubs are
-% no-ops so the orchestrator skeleton compiles.
+% Pre-drain evaluator — walks the subsystems list and flips
+% \codep@abortfinalizetrue when any registered subsystem has
+% failed==total && total>0 (i.e. EVERY tracked operation failed,
+% so the drains would emit only stale records).  Wraps the walk
+% in \begingroup so the \let\do... does not escape.
+%% @behavior B-ERROR-ENDDOC
+\def\codep@enddoc@evaluator@pre{%
+  \begingroup%
+    \let\do\codep@subsystem@check@fatal%
+    \codep@subsystems@list%
+  \endgroup%
+}%
+
+% Per-subsystem fatal check invoked by \do-walking
+% \codep@subsystems@list.  Fatal when failed==total && total>0.
 %% @utility
-\def\codep@enddoc@evaluator@pre{}%
-%% @utility
-\def\codep@enddoc@evaluator@post{}%
+\def\codep@subsystem@check@fatal#1{%
+  \ifnum\csname codep@subsys@#1@total\endcsname>0\relax%
+    \ifnum\csname codep@subsys@#1@failed\endcsname=%
+          \csname codep@subsys@#1@total\endcsname%
+      \global\codep@abortfinalizetrue%
+    \fi%
+  \fi%
+}%
 
 % Halt body — fires when the pre-drain evaluator set
-% \ifcodep@abortfinalize.  Body expanded in commit 3.
+% \codep@abortfinalizetrue.  Drains are skipped to prevent
+% emitting stale aux records; instead a PackageError names the
+% condition and directs the user to preceding warnings for
+% per-subsystem context.
+%% @behavior B-ERROR-ENDDOC
+\def\codep@enddoc@halt{%
+  \PackageError{codependent}%
+    {all operations in at least one subsystem failed; refusing to finalize output -- aux/cdp drains skipped to avoid stale records}%
+    {Inspect preceding \string\PackageWarning\space lines for per-subsystem context.}%
+}%
+
+% Post-drain evaluator — warn-only; runs AFTER drains complete
+% and emits one \PackageWarning per subsystem with
+% 0<failed<total (partial-success residual).  Skipped entirely
+% if the pre-drain evaluator aborted (already warned at halt
+% time).  The failed==total case cannot occur here since it
+% would have halted pre-drain.
+%% @behavior B-WARN-ENDDOC
+\def\codep@enddoc@evaluator@post{%
+  \ifcodep@abortfinalize\else%
+    \begingroup%
+      \let\do\codep@subsystem@check@partial%
+      \codep@subsystems@list%
+    \endgroup%
+  \fi%
+}%
+
+% Per-subsystem partial-success check invoked by \do-walking
+% \codep@subsystems@list.  Emits \PackageWarning when the
+% subsystem saw partial failures (some but not all operations).
 %% @utility
-\def\codep@enddoc@halt{}%
+\def\codep@subsystem@check@partial#1{%
+  \ifnum\csname codep@subsys@#1@failed\endcsname>0\relax%
+    \ifnum\csname codep@subsys@#1@failed\endcsname<%
+          \csname codep@subsys@#1@total\endcsname%
+      \PackageWarning{codependent}{%
+        \the\csname codep@subsys@#1@failed\endcsname\space of\space%
+        \the\csname codep@subsys@#1@total\endcsname\space#1%
+        \space operations failed -- rendering with partial results}%
+    \fi%
+  \fi%
+}%
 
 % Drain slots — each is a thin wrapper delegating to the macro
 % that historically ran inside an \AtEndDocument block.
@@ -3206,6 +3323,7 @@
 %        \codep@refpending@drain against the now-complete binding.
 \def\codep@proofof@do#1#2{%
   \ifbool{codep@proofsnumbered}{%
+    \codep@subsystem@recordtotal{proofof}%
     \ifx\codep@currentproofid\@empty\else%
       \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax%
         \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax%

@@ -344,6 +344,7 @@
 %   at cmd/end#1/after time.
 %% @implements \codep@hooktheorem
 \def\codep@render@thm@preparebackref#1{%
+  \codep@subsystem@recordtotal{backref-render}%
   \ifcsname codep@manuallyemitted@\codep@outeratom\endcsname%
   \else%
     \codep@queuebackref{\codep@outeratom}%

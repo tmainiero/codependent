@@ -293,6 +293,15 @@ Paragraph numbers are suppressed inside:
 - [B-PASS-RERUN] "Rerun needed" = labels changed; standard LaTeX `Label(s) may have changed` warning.
 - [B-PASS-THREE] Three runs needed when labels are newly created (first run establishes labels, second reads them, third stabilizes backrefs).
 
+### 5.1 End-of-document finalization
+
+At `\end{document}` a single orchestrator evaluates per-subsystem
+operation counters (`proofof`, `atomref`, `label-bind`, `backref-render`)
+and dispatches to a fixed-order drain pipeline.
+
+- [B-ERROR-ENDDOC] **Fatal finalization error:** when every operation in at least one subsystem failed (failed-count equals total-count and total-count > 0), the orchestrator skips all drains and emits `\PackageError`; the `.aux` and `.cdp` files are NOT updated with stale records, so a subsequent retry sees a clean prior run.
+- [B-WARN-ENDDOC] **Partial-failure warning:** when some but not all operations in a subsystem failed (0 < failed < total), drains run normally and the orchestrator emits one `\PackageWarning` per affected subsystem naming the failed/total count.
+
 ---
 
 ## 6. Edge Cases and Expected Behavior
