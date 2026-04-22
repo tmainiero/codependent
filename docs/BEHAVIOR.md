@@ -30,14 +30,14 @@ Load **after** the theorem backend (amsthm/ntheorem) and **after** all
 | `paragraphs` | `on`, `off` | `on` | Whether bare paragraphs get atom numbers |
 | `equations` | `outer`, `all`, `off` | `outer` | Equation backref tracking mode |
 | `conceptwarnings` | `on`, `off` | `on` | Warn on missing `\cmd*` def sites |
-| `backref-style` | `inline`, `below`, `margin` | `inline` | Rendering style for "Used in" |
-| `backref-align` | `left`, `right` | `right` | Alignment of "Used in" in below mode |
+| `backref-style` | `inline` | `inline` | Rendering style for "Used in" |
 | `backref-font` | any font command | `\scriptsize\sffamily` | Font for "Used in" text |
 | `backref-color` | color name | (none) | Color for "Used in" text (requires xcolor) |
 | `backref-prefix` | text | (empty) | Text before "Used in" |
 | `backref-label` | text | `Used in` | Label text before the ref list |
-| `backref-margin-max` | integer | `5` | Max refs in margin mode before truncation |
 | `margin-font` | any font command | `\scriptsize` | Font for margin atom numbers |
+
+**Note**: `backref-style=below` and `backref-style=margin` were removed in v2.0. To place backreferences in custom positions, use `\codepbackrefs` in a custom `\newtheoremstyle` endmark (see `docs/COOKBOOK.md`).
 
 ### 2.2 \codeptrack
 
