@@ -24,14 +24,8 @@
 %% Rendering state
 %% ===================================================================
 
-% Pending back-reference text (flushed at para/end or env end).
+% Pending back-reference text (flushed at env end or by \codepbackrefs).
 \newtoks\codep@pendingbr
-
-% Deferred backref: data saved at para/end, emitted at the
-% next para/begin.  Avoids mode-change error (para/end must
-% stay in horizontal mode; \codep@renderbackref needs \par).
-%% @utility
-\gdef\codep@deferredbr{}
 
 % String constants for \ifx comparisons in rendering macros.
 % Defined in codependent.sty (Section 3 options); available here
@@ -157,149 +151,44 @@
     \@ifundefined{textcolor}{#1}{\textcolor{\codep@backrefcolor}{#1}}%
   \fi}
 
-% \codep@truncatereflist{reflist}
-%   If reflist has more than \codep@backrefmarginmax comma-separated
-%   entries, truncate and append "...".  Currently a pass-through
-%   stub; proper comma-counting can be added later without changing
-%   the rendering contract.
-%% @implements \codep@rendermargin
-\newcommand*{\codep@truncatereflist}[1]{#1}
-
-% \codep@emitmarginbackref{content}
-%   Shared right-margin emission kernel used by \codep@rendermargin
-%   and the margin branch of \codep@renderbackref@para.
-%   Wraps content in \vbox{\hbox to \linewidth{\hfil\smash{\rlap{...}}}}
-%   so it projects past \linewidth without disturbing vertical spacing.
-%% @implements \codep@rendermargin
-\def\codep@emitmarginbackref#1{%
-  \vbox{%
-    \hbox to \linewidth{%
-      \hfil%
-      \smash{%
-        \rlap{%
-          #1%
-        }%
-      }%
-    }%
-    \vskip\smallskipamount%
-  }%
-}%
-
-% \codep@rendermargin{reflist}
-%   Render "Used in X, Y." in the right margin (past \linewidth).
-%   Uses \rlap so it does not conflict with atom numbers in the left margin.
-%   Used for margin backref-style on theorem atoms (non-paragraph).
-%% @behavior B-REND-MARGIN
-\newcommand*{\codep@rendermargin}[1]{%
-  \nobreak%
-  \codep@emitmarginbackref{%
-    \kern0.5em%
-    {\codep@backreffont\codep@backrefprefix%
-     \codep@backreflabel\space%
-     \codep@truncatereflist{#1}.}%
-  }%
-}
-
 % \codep@renderbackref{reflist}
-%   Render "Used in X, Y." at the end of the current atom.
-%   Used for theorem/definition/lemma atoms (non-paragraph).
-%   Respects backref-style and backref-align configuration.
+%   Render "Used in X, Y." inline at the end of the current atom.
+%   Used for theorem/definition/lemma atoms (non-paragraph).  Flush
+%   happens from cmd/end#1/before (hmode, before endmark) or from
+%   \codepbackrefs (user-driven placement).
 %% @behavior B-DISP-THM
-%% @behavior B-REND-BELOW
 %% @behavior B-REND-INLINE
-%% @behavior B-REND-MARGIN
 \newcommand*{\codep@renderbackref}[1]{%
-  \ifx\codep@backrefstyle\codep@const@below%
-    % Below style: separate line after the atom.
-    \ifx\codep@backrefalign\codep@const@right%
-      \leavevmode\unskip\penalty9999 \hbox{}\nobreak\hfill%
-      \quad\codep@formatusedin{#1}%
+  % After display math the hlist is empty (\lastnodetype=-1);
+  % after text/inline-math it holds character/math nodes.
+  % Add the 0.5em gap only when there is preceding content,
+  % so "Used in" sits flush-left when it falls on its own line.
+  %
+  % The cmd/end#1/before hook evaluates conditionals during
+  % hook expansion, NOT at typesetting time.  Mode tests
+  % (\ifvmode, \lastnodetype) return wrong values during hook
+  % expansion.  We defer the spacing conditional to typesetting
+  % time via \toks@: TeX inserts the tokens unexpanded, and the
+  % \ifvmode / \lastnodetype checks fire when TeX processes them
+  % in the env body.
+  \def\codep@inline@arg{#1}%
+  \toks@{%
+    \ifvmode%
+      \noindent%
     \else
-      \leavevmode\unskip\par\nobreak%
-      \codep@formatusedin{#1}\hfill\null%
-    \fi
-    \par\addvspace{\medskipamount}%
-  \else\ifx\codep@backrefstyle\codep@const@inline%
-    % Inline style: same line as content, flows with text.
-    % Flush happens from cmd/end#1/before (hmode, before endmark).
-    % After display math the hlist is empty (\lastnodetype=-1);
-    % after text/inline-math it holds character/math nodes.
-    % Add the 0.5em gap only when there is preceding content,
-    % so "Used in" sits flush-left when it falls on its own line.
-    %
-    % The cmd/end#1/before hook evaluates conditionals during
-    % hook expansion, NOT at typesetting time.  Mode tests
-    % (\ifvmode, \lastnodetype) return wrong values during hook
-    % expansion.  We defer the spacing conditional to typesetting
-    % time via \toks@: TeX inserts the tokens unexpanded, and the
-    % \ifvmode / \lastnodetype checks fire when TeX processes them
-    % in the env body.
-    \def\codep@inline@arg{#1}%
-    \toks@{%
-      \ifvmode%
-        \noindent%
+      \ifnum\lastnodetype<\z@%
+        % Hmode but the horizontal list is empty (typical after
+        % display math).  A \parindent-width indent box may or
+        % may not be present; neutralise it by ending the
+        % current paragraph and starting fresh with \noindent.
+        \par\nobreak\noindent%
       \else
-        \ifnum\lastnodetype<\z@%
-          % Hmode but the horizontal list is empty (typical after
-          % display math).  A \parindent-width indent box may or
-          % may not be present; neutralise it by ending the
-          % current paragraph and starting fresh with \noindent.
-          \par\nobreak\noindent%
-        \else
-          \unskip\hspace{0.5em}%
-        \fi
+        \unskip\hspace{0.5em}%
       \fi
-      \expandafter\codep@formatusedin\expandafter{\codep@inline@arg}%
-    }%
-    \the\toks@%
-  \else
-    % Margin style: emit in right margin.
-    \codep@rendermargin{#1}%
-  \fi\fi
-}
-
-% \codep@renderbackref@para{reflist}
-%   Render "Used in" inside a \vadjust pre context (vertical
-%   mode).  Used for paragraph atoms via the deferred-backref
-%   mechanism.  Calls \codep@formatusedin for the text.
-%   Respects backref-style and backref-align configuration.
-%% @behavior B-DISP-PARA
-\newcommand*{\codep@renderbackref@para}[1]{%
-  \nobreak%
-  \ifx\codep@backrefstyle\codep@const@below%
-    % Below style
-    \vbox{%
-      \hbox to \linewidth{%
-        \ifx\codep@backrefalign\codep@const@right%
-          \hfil\codep@formatusedin{#1}%
-        \else
-          \codep@formatusedin{#1}\hfil%
-        \fi
-      }%
-      \vskip\medskipamount%
-    }%
-  \else\ifx\codep@backrefstyle\codep@const@inline%
-    % Inline style for paragraphs: falls back to block-like rendering
-    % (no clean way to inline at paragraph end).  Compact spacing.
-    \vbox{%
-      \hbox to \linewidth{%
-        \hfil\codep@formatusedin{#1}%
-      }%
-      \vskip\smallskipamount%
-    }%
-  \else
-    % Margin style: emit in the right margin (past \linewidth).
-    % Uses \rlap without \vtop — paragraph mode inside a box
-    % here triggers the para/begin hook recursively (LaTeX 2022+
-    % para hooks bypass \everypar).  Long reflists are handled
-    % by \codep@truncatereflist instead of line-wrapping.
-    \codep@emitmarginbackref{%
-      \kern0.5em%
-      {\codep@backreffont\codep@backrefprefix%
-       \codep@backreflabel\space%
-       \codep@truncatereflist{#1}.}%
-    }%
-  \fi\fi
+    \fi
+    \expandafter\codep@formatusedin\expandafter{\codep@inline@arg}%
+  }%
+  \the\toks@%
 }
 
 % \codep@emitmargin{number}
@@ -313,59 +202,6 @@
     }%
   }%
 }
-
-% \codep@preventorphan
-%   Prevent page breaks between an atom body and its "Used in"
-%   line for block/margin styles.  Sets \@endparpenalty to \@M
-%   (10000 = \nobreak) when the pending backref register is
-%   non-empty.  The assignment is LOCAL to the current group,
-%   so it is automatically restored after \endgroup.
-%   No-op when the backref style is inline (inline flushes
-%   in hmode, before the env closes).
-%% @behavior B-LINK-NO-ORPHAN
-\def\codep@preventorphan{%
-  \ifx\codep@backrefstyle\codep@const@inline\else
-    \expandafter\def\expandafter\codep@tmp@pendingsnap\expandafter{%
-      \the\codep@pendingbr}%
-    \ifx\codep@tmp@pendingsnap\@empty\else
-      \@endparpenalty\@M%
-    \fi
-  \fi
-}%
-
-%% ===================================================================
-%% Deferred backref helpers
-%% ===================================================================
-
-% \codep@parendhook@snapshot
-%   Snapshot pending backref data into \codep@deferredbr.
-%   Clears the pendingbr register.  Called from the para/end
-%   hook when inline backrefs are active and not in appendix mode.
-%% @behavior B-DISP-PARA
-\def\codep@parendhook@snapshot{%
-  \expandafter\def\expandafter\codep@tmp@brsnap\expandafter{%
-    \the\codep@pendingbr}%
-  \codep@pendingbr={}%
-  \ifx\codep@tmp@brsnap\@empty\else
-    \global\let\codep@deferredbr\codep@tmp@brsnap%
-  \fi
-}%
-
-% \codep@parahook@emitdeferred
-%   Emit the deferred backref from the previous paragraph, if any.
-%   Uses \vadjust pre to inject the "Used in X." line above the
-%   current paragraph's first line (end of previous output box)
-%   without a horizontal-mode change.  Clears the register after
-%   emission.  Called from \codep@installparahook.
-%% @behavior B-DISP-PARA
-\def\codep@parahook@emitdeferred{%
-  \ifx\codep@deferredbr\@empty\else
-    \vadjust pre{%
-      \codep@renderbackref@para{\codep@deferredbr}%
-    }%
-    \global\let\codep@deferredbr\@empty%
-  \fi
-}%
 
 %% ===================================================================
 %% Appendix rendering
@@ -461,8 +297,11 @@
 % Receives a prefixed key (e.g. theorem:2.1, equation:3.1, proof:2.1).
 % Default (no hyperref): render display form via query API.
 % With hyperref: render display form wrapped in \hyperlink to the
-% anchor retrieved via \codep@graph@getanchor.
+% anchor retrieved via \codep@graph@getanchor.  Empty-anchor branch
+% (:313) renders plain text instead of a dangling \hyperlink,
+% guaranteeing every emitted link resolves to a valid destination.
 %% @behavior B-LINK-CLICKABLE
+%% @behavior B-LINK-NO-ORPHAN
 \renewcommand*{\codep@brhyper}[1]{%
   \codep@graph@getdisplay{#1}{\codep@tmp@brdisplay}%
   \codep@tmp@brdisplay%
@@ -496,56 +335,35 @@
 }%
 
 % \codep@render@thm@preparebackref{envname}
-%   Queue backrefs for the outermost atom, apply orphan prevention,
-%   and flush inline style immediately (block/margin defer).
+%   Queue backrefs for the outermost atom and auto-flush inline.
+%   Callable at cmd/end#1/before inside the tracked env body.
 %% @implements \codep@hooktheorem
 \def\codep@render@thm@preparebackref#1{%
   \codep@queuebackref{\codep@outeratom}%
-  \codep@preventorphan%
-  \ifx\codep@backrefstyle\codep@const@inline%
-    \codep@flushbackref%
-  \fi
+  \codep@flushbackref%
 }%
 
 % \codep@render@thm@afterend{envname}
-%   Block/margin style: flush after the theorem env fully closes.
-%   Inline style: already flushed in preparebackref, so no-op.
-%   Below-style emission wraps the flush in \codep@withsuppression
-%   to prevent the emitted text from triggering para/begin and
-%   creating a spurious paragraph atom between theorems.
+%   Post-env hook.  Inline was already flushed in preparebackref,
+%   so this is a no-op.  Retained as a hook point so the theorem
+%   orchestrator body stays stable across future rendering variants.
 %% @implements \codep@hooktheorem
-\def\codep@render@thm@afterend#1{%
-  \ifx\codep@backrefstyle\codep@const@inline\else
-    \ifx\codep@backrefstyle\codep@const@below%
-      \codep@withsuppression{\codep@flushbackref}%
-    \else
-      \codep@flushbackref%
-    \fi
-  \fi
-}%
+\def\codep@render@thm@afterend#1{}%
 
 % \codep@render@proof@end
-%   Inline style: flush before proof env closes (hmode, before QED).
-%   Block/margin: apply orphan prevention.
+%   Flush the pending backref before the proof env closes
+%   (hmode, before QED).
 %% @implements \codep@hookproof
 \def\codep@render@proof@end{%
-  \ifx\codep@backrefstyle\codep@const@inline%
-    \codep@flushbackref%
-  \else
-    \codep@preventorphan%
-  \fi
+  \codep@flushbackref%
 }%
 
 % \codep@render@proof@afterend
-%   Block/margin style: flush after proof env closes (vmode, after QED).
+%   Post-env hook.  Inline was already flushed in proof@end,
+%   so this is a no-op.  Retained as a hook point so the proof
+%   orchestrator body stays stable across future rendering variants.
 %% @implements \codep@hookproof
-\def\codep@render@proof@afterend{%
-  \ifbool{codep@proofsnumbered}{%
-    \ifx\codep@backrefstyle\codep@const@inline\else%
-      \codep@flushbackref%
-    \fi
-  }{}%
-}%
+\def\codep@render@proof@afterend{}%
 
 % \codep@render@para@emit{prefixedkey}{displaynum}
 %   Emit margin label and queue backref for a paragraph atom.
@@ -553,30 +371,6 @@
 \def\codep@render@para@emit#1#2{%
   \codep@emitmargin{#2}%
   \codep@queuebackref{#1}%
-}%
-
-% \codep@render@para@emitdeferred
-%   Emit the deferred backref from the previous paragraph, if any.
-%% @behavior B-DISP-PARA
-\def\codep@render@para@emitdeferred{%
-  \codep@parahook@emitdeferred%
-}%
-
-% \codep@render@paraend@snapshot
-%   Snapshot pending backref data for deferred emission.
-%% @behavior B-DISP-PARA
-\def\codep@render@paraend@snapshot{%
-  \codep@parendhook@snapshot%
-}%
-
-% \codep@render@enddocument@flush
-%   Flush any deferred backref from the final paragraph.
-%% @behavior B-REND-APPENDIX
-\def\codep@render@enddocument@flush{%
-  \ifx\codep@deferredbr\@empty\else
-    \codep@renderbackref@para{\codep@deferredbr}%
-    \global\let\codep@deferredbr\@empty%
-  \fi
 }%
 
 \endinput

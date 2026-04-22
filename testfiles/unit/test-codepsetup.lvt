@@ -14,8 +14,8 @@
 %% TEST-RERUN: 2
 
 %%
-%% Exercises every \codepsetup key: backref-style, backref-align,
-%% backref-font, backref-prefix, backref-label, margin-font.
+%% Exercises every \codepsetup key: backref-style, backref-font,
+%% backref-prefix, backref-label, margin-font.
 %% The document contains two theorems where the second references
 %% the first, so the "Used in" line actually renders.
 
@@ -27,7 +27,6 @@
 
 % Exercise every key via \codepsetup.
 \codepsetup{backref-style=inline}
-\codepsetup{backref-align=left}
 \codepsetup{backref-font=\footnotesize\ttfamily}
 \codepsetup{backref-prefix=$\triangleright$\;}
 \codepsetup{backref-label=Referenced by}

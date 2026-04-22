@@ -49,23 +49,12 @@
 %% @utility
 \newcommand*{\codep@equationmode}{outer}
 
-% Rendering configuration (backref style, alignment, fonts).
+% Rendering configuration (backref style, fonts).
 %% @utility
 \newcommand*{\codep@backrefstyle}{inline}
-%% @utility
-\newcommand*{\codep@backrefalign}{right}
-% Margin truncation: max refs shown in margin mode before "...".
-%% @utility
-\newcommand*{\codep@backrefmarginmax}{5}
 % String constants for \ifx comparisons in rendering macros.
 %% @utility
-\def\codep@const@below{below}
-%% @utility
 \def\codep@const@inline{inline}
-%% @utility
-\def\codep@const@margin{margin}
-%% @utility
-\def\codep@const@right{right}
 %% @utility
 \def\codep@const@off{off}
 %% @utility
@@ -127,15 +116,28 @@
   equations/off/.code = {\def\codep@equationmode{off}},%
   equations/.default = outer,%
   backref-style/.is choice,%
-  backref-style/below/.code = {\renewcommand*{\codep@backrefstyle}{below}},%
+  backref-style/below/.code = {%
+    \PackageError{codependent}{%
+      backref-style=below|margin removed in v2.0 --- use %
+      \string\codepbackrefs\space in a custom %
+      \string\newtheoremstyle\space endmark %
+      (see docs/COOKBOOK.md)}{%
+      The below and margin render styles were replaced by %
+      \string\codepbackrefs, a user-driven hook that places the %
+      backref wherever the theorem style prefers.}%
+  },%
   backref-style/inline/.code = {\renewcommand*{\codep@backrefstyle}{inline}},%
-  backref-style/margin/.code = {\renewcommand*{\codep@backrefstyle}{margin}},%
+  backref-style/margin/.code = {%
+    \PackageError{codependent}{%
+      backref-style=below|margin removed in v2.0 --- use %
+      \string\codepbackrefs\space in a custom %
+      \string\newtheoremstyle\space endmark %
+      (see docs/COOKBOOK.md)}{%
+      The below and margin render styles were replaced by %
+      \string\codepbackrefs, a user-driven hook that places the %
+      backref wherever the theorem style prefers.}%
+  },%
   backref-style/.default = inline,%
-  backref-margin-max/.store in = \codep@backrefmarginmax,%
-  backref-align/.is choice,%
-  backref-align/left/.code = {\renewcommand*{\codep@backrefalign}{left}},%
-  backref-align/right/.code = {\renewcommand*{\codep@backrefalign}{right}},%
-  backref-align/.default = right,%
   backref-font/.store in = \codep@backreffont,%
   backref-color/.store in = \codep@backrefcolor,%
   backref-prefix/.store in = \codep@backrefprefix,%
@@ -326,12 +328,6 @@
 \def\codep@render@proof@afterend{}%
 %% @utility
 \def\codep@render@para@emit#1#2{}%
-%% @utility
-\def\codep@render@para@emitdeferred{}%
-%% @utility
-\def\codep@render@paraend@snapshot{}%
-%% @utility
-\def\codep@render@enddocument@flush{}%
 
 %% ===================================================================
 %% Section 4a: Runtime helpers
@@ -544,11 +540,6 @@
 %   Finalise the current paragraph atom, if any.
 \def\codep@closeparagraphifopen{%
   \ifcodep@paragraphopen%
-    \ifbool{codep@tracked}{%
-      \ifbool{codep@backrefs}{%
-        \ifbool{codep@appendix}{}{\codep@render@paraend@snapshot}%
-      }{}%
-    }{}%
     \codep@ctxpop{paragraph}%
     \global\codep@paragraphopenfalse%
   \fi%
@@ -882,23 +873,15 @@
 }%
 
 % \codep@hooktheorem@afterend{envname}
-%   After-end-environment body: block/margin backref flush.
-%   Timing depends on backref-style:
-%   - inline: flushed EARLY in cmd/end#1/before (inside the env
-%     body, in hmode, before amsthm's \popQED/endmark mechanism)
-%     so "Used in" flows on the same line as content.
-%   - block/margin: flush AFTER the env fully closes
-%     (\AfterEndEnvironment, vmode) so "Used in" renders after
-%     endmarks and QED symbols.
-%   For restatable re-fires (which call \theorem/\endtheorem
-%   directly, bypassing \begin/\end), neither hook fires —
-%   correct, since the restate guard already skipped backref
-%   queueing in the cmd/end hook above.
-%   Inline style: already flushed in cmd/end#1/before (above),
-%   so this is a no-op for inline.
-%   Anti-orphan: \codep@preventorphan (called in
-%   \codep@hooktheorem@preparebackref) ensures \endtrivlist
-%   cannot introduce a page break before the "Used in" line.
+%   After-end-environment hook body.  Inline backrefs are flushed
+%   EARLY in cmd/end#1/before (inside the env body, in hmode, before
+%   amsthm's \popQED/endmark mechanism) so "Used in" flows on the
+%   same line as content; this post-env hook is a no-op for that
+%   path.  For restatable re-fires (which call \theorem/\endtheorem
+%   directly, bypassing \begin/\end), neither hook fires — correct,
+%   since the restate guard already skipped backref queueing in the
+%   cmd/end hook above.  Retained as a hook point so the theorem
+%   orchestrator body stays stable across future rendering variants.
 %% @implements \codep@hooktheorem
 \def\codep@hooktheorem@afterend#1{%
   \codep@render@thm@afterend{#1}%
@@ -1113,10 +1096,10 @@
 }%
 
 %% @behavior B-REND-INLINE
-%% @behavior B-REND-BELOW
-%% @behavior B-REND-MARGIN
 % \codep@hookproof@afterend
-%   Block/margin style: flush after env closes (vmode, after QED).
+%   Post-env hook body.  Inline flush already happened in
+%   \codep@hookproof@end; retained as a hook point so the proof
+%   orchestrator body stays stable across future rendering variants.
 \newcommand*{\codep@hookproof@afterend}{%
   \codep@render@proof@afterend%
 }%
@@ -1550,7 +1533,6 @@
 \newcommand*{\codep@installparahook}{%
   \AddToHook{para/begin}{%
     \ifbool{codep@tracked}{%
-      \codep@render@para@emitdeferred%
       \global\let\codep@pendingresultid\@empty%
       \ifcodep@proofdisplaypending%
         \codep@ctxpeekkind\codep@tmp@ctxkind%
@@ -2308,16 +2290,6 @@
 %%            codependent-render.sty; tracking hooks remain here)
 %% ===================================================================
 
-% \codep@installparendhook
-%   Install the para/end hook for flushing back-refs.
-%   Per §8a.5, clears \codep@currentatom after the flush so
-%   that any \ref firing between paragraphs is not attributed
-%   to the just-closed atom.
-%   Instead of calling \codep@flushbackref (which does \par
-%   via \codep@renderbackref), we snapshot the pending br data into
-%   \codep@deferredbr and clear the register.  The deferred
-%   data is emitted at the NEXT para/begin, before the new
-%   atom's margin number.
 %% @behavior B-NUM-PARA
 % \codep@installparendhook
 %   Install the para/end paragraph finalization hook.
@@ -2325,9 +2297,6 @@
   \AddToHook{para/end}{%
     \ifbool{codep@tracked}{%
       \ifcodep@paragraphopen%
-        \ifbool{codep@backrefs}{%
-          \ifbool{codep@appendix}{}{\codep@render@paraend@snapshot}%
-        }{}%
         \codep@ctxpop{paragraph}%
         \global\codep@paragraphopenfalse%
       \fi%
@@ -2636,13 +2605,6 @@
 
 \AtEndDocument{%
   \codep@conceptwarnscan
-}
-
-% Flush any deferred backref from the last paragraph.
-% Without this, a backref on the final paragraph is lost because
-% there is no subsequent para/begin to emit it.
-\AtEndDocument{%
-  \codep@render@enddocument@flush
 }
 
 %% ===================================================================

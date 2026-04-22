@@ -178,9 +178,9 @@ displays "Used in A" in the PDF.
 | Mode | Where it appears | Layout |
 |---|---|---|
 | [B-REND-INLINE] `inline` (default) | End of the atom body, same line as content | `...text. Used in 2.1, 3.4.` |
-| [B-REND-BELOW] `below` | Separate line after the atom | Right- or left-aligned per `backref-align` |
-| [B-REND-MARGIN] `margin` | Right margin | Small text past line width |
 | [B-REND-APPENDIX] `appendix` | Collected in dependency index | Via `\codepappendix` |
+
+`backref-style=below` and `backref-style=margin` were removed in v2.0.  Use `\codepbackrefs` inside a custom `\newtheoremstyle` endmark to place the backref wherever the theorem style prefers; see `docs/COOKBOOK.md`.
 
 - [B-DEDUP] **Deduplication:** Multiple `\ref`s from the same source to the same target produce one backref entry.
 
