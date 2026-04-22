@@ -1704,6 +1704,65 @@
 %% @utility
 \def\codep@conceptnames{}
 
+% --- W03-P03: label->entity binding + new .aux record types ---
+% Four new aux-record directives written alongside the existing
+% \codep@lbltype / \codep@atomref families.  Pass-1 safety
+% providecommands; active definitions installed alongside the
+% existing codependent/backref/install hook.
+\providecommand*{\codep@lblentity}[2]{}
+\providecommand*{\codep@entitymeta}[5]{}
+\providecommand*{\codep@keymap}[2]{}
+\providecommand*{\codep@renderlist}[3]{}
+
+%% @behavior B-PASS-ONE
+% \codep@lblentity@active{label}{atom-key}
+%   Populate the in-memory label->entity binding table from an
+%   aux record.  Cross-run side; same-run populate happens
+%   synchronously at \codep@recordlabelowner time.
+\def\codep@lblentity@active#1#2{%
+  \expandafter\gdef\csname codep@lblentity@#1\endcsname{#2}}
+
+%% @behavior B-PASS-ONE
+% \codep@entitymeta@active{key}{kind}{display}{print-kind}{parent-key}
+%   Populate per-entity metadata csnames from an aux record.
+%   Four csnames for O(1) field access (kind/display/print/parent).
+\def\codep@entitymeta@active#1#2#3#4#5{%
+  \expandafter\gdef\csname codep@entity@#1@kind\endcsname{#2}%
+  \expandafter\gdef\csname codep@entity@#1@display\endcsname{#3}%
+  \expandafter\gdef\csname codep@entity@#1@print\endcsname{#4}%
+  \expandafter\gdef\csname codep@entity@#1@parent\endcsname{#5}}
+
+%% @behavior B-PASS-ONE
+% \codep@keymap@active{old-key}{new-key}
+%   Reserved for atom-key rename stability across passes.
+%   P05 consumer; P03 pins the wire format only.
+\def\codep@keymap@active#1#2{%
+  \expandafter\gdef\csname codep@keymap@#1\endcsname{#2}}
+
+%% @behavior B-PASS-ONE
+% \codep@renderlist@active{key}{style}{payload}
+%   Reserved for frozen appendix/margin render output.  P05
+%   consumer; P03 pins the wire format only.
+\def\codep@renderlist@active#1#2#3{%
+  \expandafter\gdef\csname codep@renderlist@#1@style\endcsname{#2}%
+  \expandafter\gdef\csname codep@renderlist@#1@payload\endcsname{#3}}
+
+% Accumulator for entitymeta emission at enddoc.  Each tracked-env
+% open site appends one token-sequence describing its atom; the
+% enddoc drain walks the list in order and emits one aux record
+% per entry.  See \codep@captureentitymeta and
+% \codep@p03@enddoc@drain.
+%% @utility
+\gdef\codep@entitymetaacc{}
+
+% In-memory pending-ref accumulator for same-run forward-ref
+% resolution (ref issued to a yet-unknown label).  Per-label
+% token lists live in \codep@refpending@<label> csnames; the
+% global \codep@refpending list holds tokens for labels that
+% never get assigned (drained at enddoc with warnings).
+%% @utility
+\gdef\codep@refpending{}
+
 % \codep@writeatomref{target}
 %   Shared aux-write helper called by all patch sites.  Guards
 %   on \codep@currentatom (in-atom sentinel: empty = not inside
@@ -2269,6 +2328,12 @@
   % Swap the providecommand no-ops for the active callbacks.
   \let\codep@atomref\codep@atomref@active
   \let\codep@lbltype\codep@lbltype@active
+  % Activate P03 in-memory/aux binding readers BEFORE the aux read
+  % so cross-run binding + entity metadata records are captured.
+  \let\codep@lblentity\codep@lblentity@active
+  \let\codep@entitymeta\codep@entitymeta@active
+  \let\codep@keymap\codep@keymap@active
+  \let\codep@renderlist\codep@renderlist@active
   % Activate anchormap BEFORE aux read so equation range anchors
   % like \codep@anchormap{equation:4.4--4.5}{codep.eq.3} are not discarded.
   \@ifpackageloaded{hyperref}{%
