@@ -46,6 +46,8 @@
 %%
 %% PDF-level assertions: verify "Used in" text appears and links are correct
 %% TEST-PDF-CONTAINS: Used in
+%% --- Verify \codepbackrefs in thm:with-eq (2.4) emits exactly once, no duplicate:
+%% TEST-PDF-STEXT-NOT: Used in 2\.4[^0-9].*Used in 2\.4
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
 %%
@@ -368,6 +370,7 @@ By \cref{def:enrichment}, we have
 \begin{equation}\label{eq:inside-thm}
   f = g \quad\text{by \cref{lem:adjunction}}.
 \end{equation}
+\codepbackrefs
 \end{theorem}
 
 %% ====================================================================

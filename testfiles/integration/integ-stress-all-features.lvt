@@ -42,6 +42,8 @@
 %% TEST-ATOMS-MIN: 14
 %% --- PDF assertions ---
 %% TEST-PDF-CONTAINS: Used in
+%% --- Verify \codepbackrefs in cor:extreme-value-cont (3.3) emits exactly once, no duplicate:
+%% TEST-PDF-STEXT-NOT: Used in 3\.3[^0-9].*Used in 3\.3
 %% TEST-PDF-LINKS: 6
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
@@ -310,7 +312,8 @@ Also (properties of the metric, cf.\ \cref{def:topspace}):
 
 \begin{corollary}\label{cor:extreme-value-cont}
   Every continuous $f\colon\Top{X}\to\mathbb{R}$ on a compact $\Sp{X}{d}$
-  (cf.\ \cref{def:continuous}, \cref{thm:extreme-value}) is bounded.
+  (cf.\ \cref{def:continuous}, \cref{thm:extreme-value}) is bounded.%
+  \codepbackrefs
 \end{corollary}
 
 \begin{proof}
