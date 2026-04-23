@@ -20,7 +20,9 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@cmddef{GrpOp}{arity}{2}
 %% TEST-AUX-CONTAINS: \codep@atomref
 %% TEST-AUX-CONTAINS: \codep@concept{GrpOp}
+%% TEST-AUX-CONTAINS: \codep@renderlist{definition:1.1}{inline}{1.2, 1.3, 1.4*, 2.1, 2.2}
 %% TEST-AUX-NOT-CONTAINS: \codep@tmp@rlpayload
+%% TEST-AUX-NOT-CONTAINS: \codep@rendered@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,codependent
 %% TEST-RERUN: 2

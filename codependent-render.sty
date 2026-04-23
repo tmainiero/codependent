@@ -128,8 +128,8 @@
       % so cache must be cleared outside replay depth to allow
       % fresh collapse on next \codep@queuebackref call.
       \ifnum\codep@replaydepth=0\relax%
-        \global\expandafter\let\csname codep@rendered@#1\endcsname\relax%
-        \global\expandafter\let\csname codep@rlflag@#1\endcsname\relax%
+        \global\expandafter\let\csname codep@rendered@#1\endcsname\@undefined%
+        \global\expandafter\let\csname codep@rlflag@#1\endcsname\@undefined%
       \fi%
     \else
       % P05a Moment 1: freeze the collapsed payload into
