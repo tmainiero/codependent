@@ -13,7 +13,8 @@
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
 %% TEST-BEHAVIOR: B-ERROR-ENDDOC
-%% TEST-PDF-NOT: Using\|Codependent
+%% TEST-PDF-NOT: Used in
+%% TEST-PDF-NOT: Codependent
 %%
 %% Synthetically set the proofof subsystem counters to trigger a fatal
 %% state: total=1, failed=1 (all operations failed). The pre-drain
