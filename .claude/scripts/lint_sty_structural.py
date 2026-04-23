@@ -459,6 +459,112 @@ def lint_file(filename: str) -> List[Issue]:
 
 
 # ---------------------------------------------------------------------------
+# Cross-file check: enddocument hook inventory (v12 A6 / v11 R29)
+# ---------------------------------------------------------------------------
+
+# Match \AddToHook{enddocument}{ or \AtEndDocument{ on one line.
+_ENDDOC_HOOK_RE = re.compile(
+    r'\\(?:AddToHook\s*\{\s*enddocument\s*\}|AtEndDocument)\s*\{'
+)
+
+
+def _extract_brace_body(content: str, start: int) -> Optional[str]:
+    """Return the substring inside {...} starting at the opening brace position.
+
+    Returns None if braces are unbalanced (shouldn't happen on valid input).
+    """
+    assert content[start] == '{'
+    depth = 1
+    i = start + 1
+    while i < len(content) and depth > 0:
+        c = content[i]
+        if c == '\\' and i + 1 < len(content):
+            # skip next char (escaped); handles \{ \} \\ inside body
+            i += 2
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return content[start + 1:i]
+        i += 1
+    return None
+
+
+def check_enddoc_hook_inventory(filenames: List[str]) -> List[Issue]:
+    """Enforce v12 A6 / v11 R29: exactly one enddocument hook registration
+    across codependent.sty + codependent-render.sty combined; its body must
+    invoke \\codep@enddoc@orchestrator."""
+    registrations: List[Tuple[str, int, str]] = []  # (basename, lineno, body)
+
+    for fn in filenames:
+        basename = os.path.basename(fn)
+        try:
+            with open(fn, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+        except FileNotFoundError:
+            continue
+
+        # Build a line-offset index for lineno reporting.
+        line_starts = [0]
+        for i, c in enumerate(content):
+            if c == '\n':
+                line_starts.append(i + 1)
+
+        for m in _ENDDOC_HOOK_RE.finditer(content):
+            # Skip if this occurrence is inside a comment.  Find the start of
+            # its line; if an unescaped % precedes the match on the same line,
+            # treat as comment.
+            line_start = content.rfind('\n', 0, m.start()) + 1
+            pre = content[line_start:m.start()]
+            # Strip escaped % before checking for comment marker.
+            stripped = re.sub(r'\\%', '', pre)
+            if '%' in stripped:
+                continue
+
+            open_brace = m.end() - 1  # position of the { captured in the regex
+            body = _extract_brace_body(content, open_brace)
+            if body is None:
+                body = "<unbalanced-braces>"
+            # 1-indexed line number of the match.
+            lineno = 1
+            for idx, ls in enumerate(line_starts):
+                if ls > m.start():
+                    lineno = idx  # previous was last <= m.start()
+                    break
+            else:
+                lineno = len(line_starts)
+            registrations.append((basename, lineno, body))
+
+    issues: List[Issue] = []
+    if len(registrations) == 0:
+        issues.append(Issue(
+            "<cross-file>", 0, None, "ERROR",
+            "enddocument hook inventory: 0 registrations found; "
+            "expected exactly 1 (\\AddToHook{enddocument}{...} invoking "
+            "\\codep@enddoc@orchestrator)"))
+    elif len(registrations) > 1:
+        sites = ", ".join(f"{b}:{ln}" for b, ln, _ in registrations)
+        issues.append(Issue(
+            "<cross-file>", 0, None, "ERROR",
+            f"enddocument hook inventory: {len(registrations)} registrations "
+            f"found ({sites}); expected exactly 1"))
+    else:
+        basename, lineno, body = registrations[0]
+        if "\\codep@enddoc@orchestrator" not in body:
+            issues.append(Issue(
+                basename, lineno, None, "ERROR",
+                "enddocument hook body does not invoke "
+                "\\codep@enddoc@orchestrator; per v12 A6 the single "
+                "enddocument registration must delegate to the orchestrator"))
+    return issues
+
+
+
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -476,6 +582,9 @@ def main() -> int:
     all_issues: List[Issue] = []
     for fn in filenames:
         all_issues.extend(lint_file(fn))
+
+    # Cross-file check: enddocument hook inventory (v12 A6).
+    all_issues.extend(check_enddoc_hook_inventory(filenames))
 
     all_issues.sort(key=lambda iss: (iss.filename, iss.line_start))
 
