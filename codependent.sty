@@ -1996,10 +1996,11 @@
 \def\codep@renderlist@emit@one#1#2{%
   \ifcsname codep@rlflag@#1\endcsname%
     \ifcsname codep@rendered@#1\endcsname%
-      \expandafter\let\expandafter\codep@tmp@rlpayload%
-        \csname codep@rendered@#1\endcsname%
       \immediate\write\@auxout{%
-        \string\codep@renderlist{#1}{inline}{\unexpanded\expandafter{\codep@tmp@rlpayload}}}%
+        \string\codep@renderlist{#1}{inline}{%
+          \expandafter\expandafter\expandafter\unexpanded%
+          \expandafter\expandafter\expandafter{%
+            \csname codep@rendered@#1\endcsname}}}%
     \fi%
   \fi%
 }%

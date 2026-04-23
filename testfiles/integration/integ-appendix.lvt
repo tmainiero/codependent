@@ -12,6 +12,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@atom
 %% TEST-CDP-CONTAINS: \codep@cdp@label
 %% TEST-AUX-CONTAINS: \codep@atomref
+%% TEST-AUX-NOT-CONTAINS: \codep@tmp@rlpayload
 %% No inline/below "Used in" lines should appear in theorem bodies
 %% TEST-PDF-NOT: Used in
 %% The appendix dependency index must appear in the PDF
