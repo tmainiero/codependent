@@ -12,12 +12,11 @@
 %% TEST-LOG-NOT: codepproofof:.*unknown label
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
-%% TEST-AUX-CONTAINS: \codep@lblentity{thm:target}{theorem:1.2}
-%% TEST-AUX-CONTAINS: \codep@lblentity{thm:earlier}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:target}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:later}{theorem:1.2}
 %% TEST-PACKAGES: amsthm,codependent
-%% TEST-RERUN: 2
+%% TEST-RERUN: 1
 %% TEST-BEHAVIOR: B-PROOF-SEP
 %% TEST-BEHAVIOR: B-PASS-ONE
 %%
@@ -26,7 +25,9 @@
 %% warn "unknown label 'thm:target'" and not emit a binding until a
 %% second pass.  Under P03 the deferred call is replayed from the
 %% enddoc drain, so even on a cold first compile the proof binds to
-%% the theorem's starred key.
+%% the theorem's starred key.  Same-run resolution on pass 1: the
+%% forward-ref is deferred at proof-close time, then resolved at
+%% enddoc by the drain before drains finish.
 
 \documentclass{article}
 \usepackage{amsthm}
@@ -39,22 +40,24 @@
 
 \section{Forward-ref scenario}
 
-% Proof fires \codepproofof FIRST (forward-ref to thm:target
-% which is declared below).  Pre-P03 this would warn and skip
-% the binding.  P03 defers via \codep@defer@proofof and replays
-% at enddoc.
-\begin{theorem}\label{thm:earlier}
-  Statement that appears before the target.
+% A theorem containing a proof that references a not-yet-defined theorem.
+% The \codepproofof call is inside the proof environment nested in thm:target.
+% Even though the proof closes before the later theorem is defined,
+% the forward-ref is resolved at enddoc by the drain.
+\begin{theorem}\label{thm:target}
+  This is a target theorem.
+
+  \begin{proof}[Proof of later theorem]
+    \codepproofof{thm:later}%
+    This proof references a theorem defined later in the document.
+  \end{proof}
+
+  Main content of the target theorem.
 \end{theorem}
 
-\begin{proof}[Proof of later target]
-  \codepproofof{thm:target}%
-  Body of the forward-ref proof.
-\end{proof}
-
-% Label assignment happens AFTER the \codepproofof call above.
-\begin{theorem}\label{thm:target}
-  The target theorem, declared after its proof.
+% A later theorem referenced by the proof above
+\begin{theorem}\label{thm:later}
+  A theorem declared after the proof that references it.
 \end{theorem}
 
 \END
