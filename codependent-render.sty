@@ -81,6 +81,7 @@
 %   from \codep@atomref aux records.  Collapse is idempotent, so
 %   calling it unconditionally is fine.
 %% @behavior B-DISP-THM
+%% @behavior B-PASS-ONE
 \newcommand*{\codep@queuebackref}[1]{%
   \ifbool{codep@backrefs}{%
     \global\codep@pendingbr={}%
@@ -92,6 +93,20 @@
     \expandafter\ifx\csname codep@br@#1\endcsname\@empty%
       % No refs to this target (collapsed to \@empty): skip.
     \else
+      % P05a Moment 1: freeze the collapsed payload into
+      % \codep@rendered@<key>.  Fires for both inline and
+      % appendix modes (collapse ran regardless of mode); the
+      % inline-only pendingbr store below is separate.  The
+      % \AtBeginDocument \codep@brhyper swap fires before any
+      % document-body queuebackref, so stored tokens already
+      % reflect the correct rendering variant for this run.
+      % Replay-guarded: restatable replays must not overwrite
+      % the cache with redundant rewrites.
+      \ifnum\codep@replaydepth=\z@%
+        \expandafter\xdef\csname codep@rendered@#1\endcsname{%
+          \expandafter\unexpanded\expandafter{%
+            \csname codep@br@#1\endcsname}}%
+      \fi%
       \ifbool{codep@appendix}{}{%
         % Inline mode: store ref list for flush.
         \global\codep@pendingbr=\expandafter{%
