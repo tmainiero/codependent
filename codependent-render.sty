@@ -321,17 +321,24 @@
 }
 
 % \codep@appendix@emit{prefixedkey}{type}
-%   Collapse back-refs for the prefixed atom key and emit an
-%   appendix entry if any back-references exist.  The display
-%   number is derived via the query API (\codep@graph@getdisplay).
+%   Emit an appendix entry if P05a's frozen render cache has a
+%   populated payload for this atom.  Reads display from the P03
+%   entity active-map (\codep@entity@<key>@display) and payload
+%   from the P05a Moment-1/Moment-3 cache (\codep@rendered@<key>);
+%   no \codep@collapsebr or \codep@graph@getdisplay calls in the
+%   print loop — both cache slots are authoritative by enddoc time.
 %% @implements \codepappendix
 \def\codep@appendix@emit#1#2{%
-  \codep@collapsebr{#1}%
-  \expandafter\ifx\csname codep@br@#1\endcsname\@empty\else
-    \codep@graph@getdisplay{#1}{\codep@tmp@display}%
-    \codep@appendixentry{\codep@tmp@display}{#2}{%
-      \csname codep@br@#1\endcsname}%
-  \fi
+  \ifcsname codep@rendered@#1\endcsname%
+    \expandafter\ifx\csname codep@rendered@#1\endcsname\@empty%
+    \else%
+      \expandafter\let\expandafter\codep@tmp@rlpayload%
+        \csname codep@rendered@#1\endcsname%
+      \expandafter\let\expandafter\codep@tmp@display%
+        \csname codep@entity@#1@display\endcsname%
+      \codep@appendixentry{#1}{\codep@tmp@display}{#2}{\codep@tmp@rlpayload}%
+    \fi%
+  \fi%
 }
 
 % Appendix rendering helpers.
@@ -342,14 +349,23 @@
   \textbf{#1\quad #2}\par%
 }
 
-% \codep@appendixentry{atomnumber}{atomname}{reflist}
+% \codep@appendixentry{key}{atomnumber}{atomname}{reflist}
+%   Call-site hyperref guard: when hyperref is loaded, wrap the
+%   display number in \hypertarget{codep-appendix:<key>}{...} so
+%   inline backrefs from the body can link back to the appendix
+%   entry.  No cached boolean — \@ifpackageloaded is evaluated
+%   each call, robust against hyperref being loaded after
+%   codependent-render.
 %% @implements \codepappendix
-\newcommand*{\codep@appendixentry}[3]{%
+\newcommand*{\codep@appendixentry}[4]{%
   \par\noindent%
   \hspace{1.5em}%
-  #1\quad #2\quad\dotfill\quad%
+  \@ifpackageloaded{hyperref}{%
+    \hypertarget{codep-appendix:#1}{#2}%
+  }{#2}%
+  \quad #3\quad\dotfill\quad%
   \begin{minipage}[t]{0.45\linewidth}%
-    \raggedright #3%
+    \raggedright #4%
   \end{minipage}%
 }
 

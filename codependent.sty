@@ -1886,14 +1886,13 @@
 %% @behavior B-PASS-ONE
 % \codep@renderlist@active{key}{style}{payload}
 %   Hydrate the frozen render payload from aux on begindoc-before.
-%   Three gdefs: the legacy P03 style + payload slots, and the
-%   P05a shorthand \codep@rendered@<key> that Moment-1 populates
-%   synchronously (see \codep@queuebackref).  Keeping both slots
-%   lets legacy consumers keep reading @payload while the W3
-%   appendix reader keys on @rendered directly.
+%   The wire format preserves a style field for forward compat
+%   (currently always "inline"; future render-style switches would
+%   read it), but the only live consumer — the W3 appendix reader
+%   and Moment-2 re-emit path — keys on \codep@rendered@<key>,
+%   which Moment-1 also populates synchronously (see
+%   \codep@queuebackref).
 \def\codep@renderlist@active#1#2#3{%
-  \expandafter\gdef\csname codep@renderlist@#1@style\endcsname{#2}%
-  \expandafter\gdef\csname codep@renderlist@#1@payload\endcsname{#3}%
   \expandafter\gdef\csname codep@rendered@#1\endcsname{#3}}
 
 % Accumulator for entitymeta emission at enddoc.  Each tracked-env
@@ -2426,14 +2425,20 @@
 %% @utility
 % \codep@graph@getdisplay{entity-key}{macro}
 %   Derive the rendered display form from a prefixed key and
-%   store it in #2.
+%   store it in #2 as a self-contained snapshot.  The equation
+%   and proof branches use \edef so \codep@tmp@num resolves at
+%   definition time, not consumer time — critical for callers
+%   that \let or \unexpanded the result macro (e.g. the
+%   collapsebr accumulator, which iterates and mutates
+%   \codep@tmp@num between sibling callbacks).  The theorem
+%   branch already snapshots via \let-meaning.
 %   equation:X → (X)   proof:X → X*   otherwise → X
 \def\codep@graph@getdisplay#1#2{%
   \expandafter\codep@splitprefix#1\@nil%
   \ifx\codep@tmp@type\codep@const@typeequation%
-    \def#2{(\codep@tmp@num)}%
+    \edef#2{(\codep@tmp@num)}%
   \else\ifx\codep@tmp@type\codep@const@typeproof%
-    \def#2{\codep@tmp@num*}%
+    \edef#2{\codep@tmp@num*}%
   \else%
     \let#2\codep@tmp@num%
   \fi\fi%
