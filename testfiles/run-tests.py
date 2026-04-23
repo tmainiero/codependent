@@ -107,6 +107,12 @@ METADATA_KEYS = {
     "TEST-PDF-APPENDIX-ENTRY": "pdf_appendix_entry",           # may repeat; "<atom-key> = <display-number> [<printed-kind>]"; requires hyperref + named dest
     "TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY": "pdf_appendix_entry_text_only",  # may repeat; same format; text-only (no dest check)
     "TEST-APPENDIX-ENUM-WAIVER": "appendix_enum_waiver",       # reason string; suppresses enumeration-count guard
+    # Three-phase pass-count directives (P01-B)
+    "TEST-PASS-COUNT-COLD": "pass_count_cold",      # int; max passes in cold phase
+    "TEST-PASS-COUNT-WARM": "pass_count_warm",      # int; max passes in warm phase
+    "TEST-PASS-COUNT-WARM-CHANGED": "pass_count_warm_changed",  # int; max passes in warm-changed phase
+    "TEST-WARM-MUTATION": "warm_mutation",          # shell command run between warm and warm-changed phases
+    "TEST-STABLE-AT": "stable_at",                  # int; phase-qualifiable; declares pass count + asserts convergence
 }
 
 REPEATING_KEYS = {
@@ -140,6 +146,24 @@ INJECT_L3BUILD_NOOPS = (
     "\\long\\def\\TEST#1#2{}\n"
     "% ---- end l3build no-op injection ----\n"
 )
+
+
+def _load_max_pass_counts() -> dict:
+    """Load MAX_PASS_COUNT ratchet values from baseline-sizes.json."""
+    baseline = PROJECT_ROOT / ".claude" / "baseline-sizes.json"
+    try:
+        data = json.loads(baseline.read_text(encoding="utf-8"))
+        return {
+            "cold": int(data.get("max_pass_count_cold", 2)),
+            "warm": int(data.get("max_pass_count_warm", 1)),
+            "warm_changed": int(data.get("max_pass_count_warm_changed", 2)),
+        }
+    except Exception:
+        return {"cold": 2, "warm": 1, "warm_changed": 2}
+
+
+# Loaded at import time; parse_fixture uses these to hard-error early.
+MAX_PASS_COUNTS: dict = _load_max_pass_counts()
 
 
 @dataclasses.dataclass
@@ -188,6 +212,15 @@ class Fixture:
     pdf_appendix_entry: list = dataclasses.field(default_factory=list)
     pdf_appendix_entry_text_only: list = dataclasses.field(default_factory=list)
     appendix_enum_waiver: str = ""
+    # Three-phase pass-count (P01-B)
+    pass_count_cold: int = 0
+    pass_count_warm: int = 0
+    pass_count_warm_changed: int = 0
+    warm_mutation: str = ""
+    stable_at: int = 0  # unqualified TEST-STABLE-AT; phase-qualified variants live in phase_assertions
+    # Phase-qualified assertion overrides: {"cold": {"log_contains": [...], "stable_at": N, ...}}
+    # Keys match METADATA_KEYS attribute names; non-repeating int fields stored directly.
+    phase_assertions: dict = dataclasses.field(default_factory=dict)
     # Parse-time error (set by mutual-exclusion guard; causes immediate test failure)
     parse_error: str = ""
 
@@ -195,7 +228,10 @@ class Fixture:
 def parse_fixture(path: Path) -> Fixture:
     """Parse the TEST-* header comment metadata from a .lvt file."""
     fix = Fixture(path=path, name=path.stem)
-    header_re = re.compile(r"^%%\s+(TEST-[A-Z-]+):\s*(.*)$")
+    # Optional [phase] qualifier: TEST-FOO[cold]: val or TEST-FOO: val
+    header_re = re.compile(
+        r"^%%\s+(TEST-[A-Z-]+)(?:\[(cold|warm|warm_changed)\])?:\s*(.*)$"
+    )
     with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.rstrip("\n")
@@ -208,10 +244,28 @@ def parse_fixture(path: Path) -> Fixture:
             m = header_re.match(line)
             if not m:
                 continue
-            key, value = m.group(1), m.group(2).strip()
+            key = m.group(1)
+            phase = m.group(2)   # None or "cold" / "warm" / "warm_changed"
+            value = m.group(3).strip()
             attr = METADATA_KEYS.get(key)
             if attr is None:
                 continue
+
+            # Phase-qualified directive: store in phase_assertions dict.
+            if phase is not None:
+                ph = fix.phase_assertions.setdefault(phase, {})
+                if attr in REPEATING_KEYS:
+                    ph.setdefault(attr, []).append(value)
+                elif attr == "stable_at":
+                    try:
+                        ph["stable_at"] = int(value)
+                    except ValueError:
+                        pass
+                else:
+                    ph[attr] = value
+                continue
+
+            # Unqualified directive: existing handling.
             if attr == "exit_code":
                 try:
                     fix.exit_code = int(value)
@@ -237,6 +291,44 @@ def parse_fixture(path: Path) -> Fixture:
                     fix.rerun = int(value)
                 except ValueError:
                     pass
+            elif attr == "pass_count_cold":
+                try:
+                    fix.pass_count_cold = int(value)
+                    if fix.pass_count_cold > MAX_PASS_COUNTS["cold"]:
+                        fix.parse_error = (
+                            f"TEST-PASS-COUNT-COLD: {fix.pass_count_cold} exceeds "
+                            f"max {MAX_PASS_COUNTS['cold']} "
+                            f"(see .claude/baseline-sizes.json max_pass_count_cold)"
+                        )
+                except ValueError:
+                    pass
+            elif attr == "pass_count_warm":
+                try:
+                    fix.pass_count_warm = int(value)
+                    if fix.pass_count_warm > MAX_PASS_COUNTS["warm"]:
+                        fix.parse_error = (
+                            f"TEST-PASS-COUNT-WARM: {fix.pass_count_warm} exceeds "
+                            f"max {MAX_PASS_COUNTS['warm']} "
+                            f"(see .claude/baseline-sizes.json max_pass_count_warm)"
+                        )
+                except ValueError:
+                    pass
+            elif attr == "pass_count_warm_changed":
+                try:
+                    fix.pass_count_warm_changed = int(value)
+                    if fix.pass_count_warm_changed > MAX_PASS_COUNTS["warm_changed"]:
+                        fix.parse_error = (
+                            f"TEST-PASS-COUNT-WARM-CHANGED: {fix.pass_count_warm_changed} "
+                            f"exceeds max {MAX_PASS_COUNTS['warm_changed']} "
+                            f"(see .claude/baseline-sizes.json max_pass_count_warm_changed)"
+                        )
+                except ValueError:
+                    pass
+            elif attr == "stable_at":
+                try:
+                    fix.stable_at = int(value)
+                except ValueError:
+                    pass
             elif attr == "packages":
                 fix.packages = [p.strip() for p in value.split(",") if p.strip()]
             elif attr == "behavior_ids":
@@ -251,10 +343,15 @@ def parse_fixture(path: Path) -> Fixture:
                 getattr(fix, attr).append(value)
             else:
                 setattr(fix, attr, value)
+
     if fix.pdf_appendix_entry and fix.pdf_appendix_entry_text_only:
         fix.parse_error = (
             "TEST-PDF-APPENDIX-ENTRY and TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY "
             "are mutually exclusive in the same fixture"
+        )
+    if fix.pass_count_warm_changed > 0 and not fix.warm_mutation:
+        fix.parse_error = (
+            "TEST-PASS-COUNT-WARM-CHANGED declared but no TEST-WARM-MUTATION command"
         )
     return fix
 
