@@ -16,7 +16,7 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-RESULT, B-EDGE-PROOF-ANY
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE, B-EDGE-PROOF-ANY
 %%
 %% Documents current behavior: \codep@lasttheorematom is set by ANY
 %% tracked environment's end hook (§6 line 582), not just "result"
