@@ -805,13 +805,610 @@ def _count_appendix_entries_in_pdf(link_data: "PdfLinkObjects") -> int:
 
 
 # ----------------------------------------------------------------------
+# Run a single fixture — helpers
+# ----------------------------------------------------------------------
+
+
+def _effective_pass_count(fix: "Fixture", phase: str) -> int:
+    """Return compile pass count for `phase` based on fixture declarations."""
+    if phase == "cold":
+        n = (fix.pass_count_cold
+             or fix.phase_assertions.get("cold", {}).get("stable_at")
+             or fix.stable_at)
+        return n if n > 0 else fix.rerun
+    elif phase == "warm":
+        n = (fix.pass_count_warm
+             or fix.phase_assertions.get("warm", {}).get("stable_at")
+             or fix.stable_at)
+        return n if n > 0 else 1
+    else:  # warm_changed
+        n = (fix.pass_count_warm_changed
+             or fix.phase_assertions.get("warm_changed", {}).get("stable_at")
+             or fix.stable_at)
+        return n if n > 0 else fix.rerun
+
+
+def _effective_fix(fix: "Fixture", phase: str | None) -> "Fixture":
+    """Return a copy of fix with phase_assertions[phase] merged into assertion lists."""
+    if phase is None:
+        return fix
+    pa = fix.phase_assertions.get(phase, {})
+    if not pa:
+        return fix
+    copy = dataclasses.replace(fix)
+    for field_name, values in pa.items():
+        if field_name == "stable_at":
+            continue  # consumed by _effective_pass_count, not a runtime assertion
+        existing = getattr(copy, field_name, None)
+        if isinstance(existing, list):
+            merged = list(existing)
+            merged.extend(values if isinstance(values, list) else [values])
+            setattr(copy, field_name, merged)
+    return copy
+
+
+def _is_multi_phase(fix: "Fixture") -> bool:
+    return (
+        fix.pass_count_cold > 0
+        or fix.pass_count_warm > 0
+        or fix.pass_count_warm_changed > 0
+        or bool(fix.phase_assertions)
+        or bool(fix.warm_mutation)
+    )
+
+
+def _run_phase_compiles(
+    fix: "Fixture",
+    result: "TestResult",
+    engine_bin: Path,
+    tmp_path: Path,
+    verbose: bool,
+    phase: str,
+    n: int,
+) -> int:
+    """Compile `n` passes for `phase`. Appends timeout failures to result. Returns last exit code."""
+    last_exit = 0
+    cmd_base = [str(engine_bin), "-interaction=nonstopmode"]
+    if not fix.expect_package_error:
+        cmd_base.append("-halt-on-error")
+    for pass_num in range(1, n + 1):
+        try:
+            proc = subprocess.run(
+                cmd_base + [f"{fix.name}.tex"],
+                cwd=tmp_path,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            last_exit = proc.returncode
+            if verbose:
+                sys.stderr.write(f"  [{phase}] pass {pass_num}: exit {last_exit}\n")
+        except subprocess.TimeoutExpired:
+            result.failures.append(f"[{phase}] pass {pass_num}: TIMEOUT after 120s")
+            return -1
+    return last_exit
+
+
+def _check_convergence(
+    engine_bin: Path,
+    fix: "Fixture",
+    tmp_path: Path,
+    verbose: bool,
+    phase: str,
+    n: int,
+) -> list:
+    """Run one extra compile pass; compare .aux before/after. Returns failure list."""
+    aux_path = tmp_path / f"{fix.name}.aux"
+    aux_before = aux_path.read_text(encoding="utf-8", errors="replace") if aux_path.exists() else ""
+    cmd_base = [str(engine_bin), "-interaction=nonstopmode"]
+    if not fix.expect_package_error:
+        cmd_base.append("-halt-on-error")
+    try:
+        proc = subprocess.run(
+            cmd_base + [f"{fix.name}.tex"],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if verbose:
+            sys.stderr.write(f"  [{phase}] convergence pass: exit {proc.returncode}\n")
+    except subprocess.TimeoutExpired:
+        return [f"[{phase}] convergence pass: TIMEOUT after 120s"]
+    aux_after = aux_path.read_text(encoding="utf-8", errors="replace") if aux_path.exists() else ""
+    if aux_before != aux_after:
+        return [
+            f"[{phase}] convergence: .aux changed after pass {n + 1} "
+            f"(document not stable at {n} passes)"
+        ]
+    return []
+
+
+def _run_assertions(
+    fix: "Fixture",
+    result: "TestResult",
+    tmp_path: Path,
+    last_exit: int,
+    prefix: str = "",
+) -> None:
+    """Evaluate fix's assertions against current artifacts in tmp_path."""
+    log_file = tmp_path / f"{fix.name}.log"
+    aux_file = tmp_path / f"{fix.name}.aux"
+    sbl_file = tmp_path / f"{fix.name}.cdp"
+
+    log_text = log_file.read_text(encoding="utf-8", errors="replace") if log_file.exists() else ""
+    aux_text = aux_file.read_text(encoding="utf-8", errors="replace") if aux_file.exists() else ""
+    sbl_text = sbl_file.read_text(encoding="utf-8", errors="replace") if sbl_file.exists() else ""
+
+    def fail(msg: str) -> None:
+        result.failures.append(f"{prefix}{msg}")
+
+    # 1. Exit code.
+    if last_exit != fix.exit_code:
+        fail(f"exit code: expected {fix.exit_code}, got {last_exit}")
+        tail = log_text.splitlines()[-30:]
+        result.log_excerpt = "\n".join(tail)
+
+    # 2. log_not patterns.
+    for pat in fix.log_not:
+        if re.search(pat, log_text):
+            fail(f"log matched forbidden pattern: {pat}")
+
+    # 3. log_contains patterns.
+    for pat in fix.log_contains:
+        if not re.search(pat, log_text):
+            fail(f"log missing required pattern: {pat}")
+
+    # 4. CDP assertions.
+    for s in fix.sbl_contains:
+        if s not in sbl_text:
+            fail(f"cdp missing required string: {s}")
+    for s in fix.sbl_not_contains:
+        if s in sbl_text:
+            fail(f"cdp contains forbidden string: {s}")
+
+    # 5. CDP counts: format "<pattern> = <n>".
+    for spec in fix.sbl_count:
+        try:
+            pat, expected = spec.rsplit("=", 1)
+            pat = pat.strip()
+            expected_n = int(expected.strip())
+        except ValueError:
+            fail(f"malformed TEST-CDP-COUNT: {spec}")
+            continue
+        actual = sbl_text.count(pat)
+        if actual != expected_n:
+            fail(f"cdp count for {pat!r}: expected {expected_n}, got {actual}")
+
+    # 6. AUX assertions.
+    for s in fix.aux_contains:
+        if s not in aux_text:
+            fail(f"aux missing required string: {s}")
+    for s in fix.aux_not_contains:
+        if s in aux_text:
+            fail(f"aux contains forbidden string: {s}")
+
+    # 7. atoms_min: count \codep@cdp@atom records.
+    if fix.atoms_min > 0:
+        atom_count = sbl_text.count("\\codep@cdp@atom{")
+        if atom_count < fix.atoms_min:
+            fail(f"atom count: expected >= {fix.atoms_min}, got {atom_count}")
+
+    # 8. sbl_last_record: last NON-EMPTY line of .cdp must contain this string.
+    if fix.sbl_last_record:
+        non_empty_lines = [ln for ln in sbl_text.splitlines() if ln.strip()]
+        if not non_empty_lines:
+            fail(f"cdp last-record check: file is empty, expected {fix.sbl_last_record!r}")
+        elif fix.sbl_last_record not in non_empty_lines[-1]:
+            fail(
+                f"cdp last-record: expected {fix.sbl_last_record!r}, "
+                f"got last non-empty line: {non_empty_lines[-1]!r}"
+            )
+
+    # 9. PDF content assertions.
+    has_pdf_checks = (
+        fix.pdf_contains or fix.pdf_not or fix.pdf_links > 0
+        or fix.pdf_stext or fix.pdf_stext_not
+        or fix.pdf_objects or fix.pdf_objects_not
+        or fix.pdf_link_dest or fix.pdf_link_dest_not
+        or fix.pdf_link_count >= 0
+        or fix.pdf_dest_exists or fix.pdf_dest_not_exists
+        or fix.pdf_link_rect or fix.pdf_no_orphan_links
+        or fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
+    )
+    if has_pdf_checks:
+        pdf_file = tmp_path / f"{fix.name}.pdf"
+        if not pdf_file.exists():
+            fail("pdf assertions present but no PDF was produced")
+        elif PDF_TEXT_TOOL is None and (fix.pdf_contains or fix.pdf_not):
+            fail(
+                "PDF text assertions require mutool or pdftotext "
+                "(not on PATH). Run inside 'nix develop'."
+            )
+        else:
+            if fix.pdf_contains or fix.pdf_not:
+                pdf_text = _extract_pdf_text(pdf_file)
+                if pdf_text is None:
+                    fail(f"pdf text extraction failed (tool: {PDF_TEXT_TOOL})")
+                else:
+                    for s in fix.pdf_contains:
+                        if s not in pdf_text:
+                            fail(f"pdf missing required text: {s!r}")
+                    for s in fix.pdf_not:
+                        if s in pdf_text:
+                            fail(f"pdf contains forbidden text: {s!r}")
+
+            if fix.pdf_links > 0:
+                if PDF_LINK_TOOL is None:
+                    fail(
+                        "PDF link count assertion requires mutool or qpdf "
+                        "(not on PATH). Run inside 'nix develop'."
+                    )
+                else:
+                    link_count = _count_pdf_links(pdf_file)
+                    if link_count is None:
+                        fail(f"pdf link counting failed (tool: {PDF_LINK_TOOL})")
+                    elif link_count < fix.pdf_links:
+                        fail(f"pdf links: expected >= {fix.pdf_links}, got {link_count}")
+
+            # 10. Structured text assertions.
+            if fix.pdf_stext or fix.pdf_stext_not:
+                if PDF_STEXT_TOOL is None:
+                    fail(
+                        "PDF stext assertions require mutool "
+                        "(not on PATH). Run inside 'nix develop'."
+                    )
+                else:
+                    stext_xml = _extract_pdf_stext(pdf_file)
+                    if stext_xml is None:
+                        fail("pdf stext extraction failed")
+                    else:
+                        for pat in fix.pdf_stext:
+                            if not re.search(pat, stext_xml):
+                                fail(f"pdf stext missing pattern: {pat!r}")
+                        for pat in fix.pdf_stext_not:
+                            if re.search(pat, stext_xml):
+                                fail(f"pdf stext matched forbidden pattern: {pat!r}")
+
+            # 11. PDF object assertions.
+            if fix.pdf_objects or fix.pdf_objects_not:
+                if PDF_STEXT_TOOL is None:
+                    sys.stderr.write(
+                        f"  WARN: skipping PDF object checks for {fix.name} "
+                        f"(no mutool on PATH)\n"
+                    )
+                else:
+                    obj_dump = _extract_pdf_objects(pdf_file)
+                    if obj_dump is None:
+                        fail("pdf object extraction failed")
+                    else:
+                        for pat in fix.pdf_objects:
+                            if not re.search(pat, obj_dump):
+                                fail(f"pdf objects missing pattern: {pat!r}")
+                        for pat in fix.pdf_objects_not:
+                            if re.search(pat, obj_dump):
+                                fail(f"pdf objects matched forbidden pattern: {pat!r}")
+
+            # 12. Object-level PDF link verification (qpdf --json=2).
+            has_qpdf_checks = (
+                fix.pdf_link_dest or fix.pdf_link_dest_not
+                or fix.pdf_link_count >= 0
+                or fix.pdf_dest_exists or fix.pdf_dest_not_exists
+                or fix.pdf_link_rect or fix.pdf_no_orphan_links
+            )
+            if has_qpdf_checks:
+                if PDF_QPDF_TOOL is None:
+                    fail(
+                        "PDF link/dest assertions require qpdf "
+                        "(not on PATH). Run inside 'nix develop'."
+                    )
+                else:
+                    link_data = _extract_pdf_link_objects(pdf_file)
+                    if link_data is None:
+                        fail(f"pdf link object extraction failed (tool: {PDF_QPDF_TOOL})")
+                    else:
+                        for pat in fix.pdf_link_dest:
+                            if not any(re.search(pat, lnk.dest) for lnk in link_data.links):
+                                fail(f"pdf link dest missing pattern: {pat!r}")
+                        for pat in fix.pdf_link_dest_not:
+                            for lnk in link_data.links:
+                                if re.search(pat, lnk.dest):
+                                    fail(
+                                        f"pdf link dest matched forbidden "
+                                        f"pattern: {pat!r} (on {lnk.dest!r})"
+                                    )
+                                    break
+                        if fix.pdf_link_count >= 0:
+                            actual = len(link_data.links)
+                            if actual != fix.pdf_link_count:
+                                fail(
+                                    f"pdf link count: expected "
+                                    f"{fix.pdf_link_count}, got {actual}"
+                                )
+                        for pat in fix.pdf_dest_exists:
+                            if not any(re.search(pat, d) for d in link_data.destinations):
+                                fail(f"pdf named dest missing pattern: {pat!r}")
+                        for pat in fix.pdf_dest_not_exists:
+                            for d in link_data.destinations:
+                                if re.search(pat, d):
+                                    fail(
+                                        f"pdf named dest matched forbidden "
+                                        f"pattern: {pat!r} (on {d!r})"
+                                    )
+                                    break
+                        for spec in fix.pdf_link_rect:
+                            parts = spec.split()
+                            if len(parts) != 6:
+                                fail(f"malformed TEST-PDF-LINK-RECT: {spec}")
+                                continue
+                            dest_pat = parts[0]
+                            try:
+                                ex = [float(x) for x in parts[1:5]]
+                                tol = float(parts[5])
+                            except ValueError:
+                                fail(f"malformed TEST-PDF-LINK-RECT coords: {spec}")
+                                continue
+                            matched = False
+                            for lnk in link_data.links:
+                                if not re.search(dest_pat, lnk.dest):
+                                    continue
+                                if len(lnk.rect) == 4:
+                                    diffs = [abs(lnk.rect[i] - ex[i]) for i in range(4)]
+                                    if all(d <= tol for d in diffs):
+                                        matched = True
+                                        break
+                            if not matched:
+                                fail(
+                                    f"pdf link rect: no link matching "
+                                    f"dest={dest_pat!r} with rect ~{ex} (tol={tol})"
+                                )
+                        if fix.pdf_no_orphan_links:
+                            orphans = [
+                                lnk.dest for lnk in link_data.links
+                                if lnk.dest and lnk.dest not in link_data.destinations
+                            ]
+                            if orphans:
+                                unique = sorted(set(orphans))
+                                fail(
+                                    f"pdf orphan links ({len(orphans)}): "
+                                    f"dests not in Names tree: "
+                                    f"{', '.join(unique[:10])}"
+                                )
+
+            # 13. Backref hyperlink verification.
+            has_backref_checks = fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
+            if has_backref_checks:
+                if PDF_STEXT_TOOL is None or PDF_QPDF_TOOL is None:
+                    missing = [
+                        t for t, v in [("mutool", PDF_STEXT_TOOL), ("qpdf", PDF_QPDF_TOOL)]
+                        if v is None
+                    ]
+                    fail(
+                        f"PDF backref assertions require mutool and qpdf "
+                        f"(missing: {', '.join(missing)}). "
+                        f"Run inside 'nix develop'."
+                    )
+                else:
+                    stext_xml = _extract_pdf_stext(pdf_file)
+                    if stext_xml is None:
+                        fail("backref check: stext extraction failed")
+                    else:
+                        backref_lines = _parse_backref_lines_from_stext(stext_xml)
+                        br_link_data = _extract_pdf_link_objects(pdf_file)
+                        if br_link_data is None:
+                            fail("backref check: qpdf extraction failed")
+                        else:
+                            if fix.pdf_all_backrefs_linked:
+                                if not backref_lines:
+                                    fail("all-backrefs-linked: no 'Used in' lines found in PDF")
+                                for bline in backref_lines:
+                                    overlapping = _links_overlapping_line(br_link_data, bline)
+                                    n_entries = len(bline.entries)
+                                    n_links = len(overlapping)
+                                    if n_links < n_entries:
+                                        fail(
+                                            f"all-backrefs-linked: '{bline.text}' has "
+                                            f"{n_entries} entries but only {n_links} covering link(s)"
+                                        )
+                                    for link in overlapping:
+                                        if (
+                                            link.dest
+                                            and link.dest not in br_link_data.destinations
+                                        ):
+                                            fail(
+                                                f"all-backrefs-linked: '{bline.text}' has link "
+                                                f"with dest '{link.dest}' that does not exist "
+                                                f"in PDF named destinations"
+                                            )
+                            for spec in fix.pdf_backref_targets:
+                                if "=" not in spec:
+                                    fail(f"malformed TEST-PDF-BACKREF-TARGETS: {spec}")
+                                    continue
+                                atom_pat, targets_str = spec.split("=", 1)
+                                atom_pat = atom_pat.strip()
+                                expected_dests = [
+                                    d.strip() for d in targets_str.split(",") if d.strip()
+                                ]
+                                matched_line = None
+                                for bline in backref_lines:
+                                    overlapping = _links_overlapping_line(br_link_data, bline)
+                                    link_dests = [lnk.dest for lnk in overlapping]
+                                    if all(
+                                        any(re.search(dp, ld) for ld in link_dests)
+                                        for dp in expected_dests
+                                    ):
+                                        matched_line = bline
+                                        break
+                                if matched_line is None:
+                                    summaries = []
+                                    for bline in backref_lines[:5]:
+                                        ov = _links_overlapping_line(br_link_data, bline)
+                                        summaries.append(
+                                            f"'{bline.text}' -> {[l.dest for l in ov][:4]}"
+                                        )
+                                    fail(
+                                        f"backref-targets: no 'Used in' line found with links "
+                                        f"matching all of {expected_dests} "
+                                        f"(atom pattern: {atom_pat!r}). "
+                                        f"Lines found: {'; '.join(summaries)}"
+                                    )
+
+    # 14. Package warning assertions.
+    for pat in fix.expect_package_warning:
+        if not re.search(rf"Package codependent Warning:.*?{pat}", log_text, re.DOTALL):
+            fail(f"expected package warning matching {pat!r} not found in log")
+
+    # 15. Package error assertions.
+    for pat in fix.expect_package_error:
+        if not re.search(rf"Package codependent Error:.*?{pat}", log_text, re.DOTALL):
+            fail(f"expected package error matching {pat!r} not found in log")
+
+    # 16. Appendix entry assertions.
+    has_appendix_checks = fix.pdf_appendix_entry or fix.pdf_appendix_entry_text_only
+    if has_appendix_checks:
+        appendix_specs = fix.pdf_appendix_entry or fix.pdf_appendix_entry_text_only
+        need_dest_check = bool(fix.pdf_appendix_entry)
+        pdf_file = tmp_path / f"{fix.name}.pdf"
+        if not pdf_file.exists():
+            fail("appendix assertions present but no PDF was produced")
+        else:
+            link_data = None
+            if need_dest_check:
+                if PDF_QPDF_TOOL is None:
+                    fail(
+                        "TEST-PDF-APPENDIX-ENTRY requires qpdf "
+                        "(not on PATH). Run inside 'nix develop'."
+                    )
+                else:
+                    link_data = _extract_pdf_link_objects(pdf_file)
+                    if link_data is None:
+                        fail("appendix dest check: qpdf extraction failed")
+            stext_xml = None
+            if PDF_STEXT_TOOL is None:
+                fail(
+                    "appendix text assertions require mutool "
+                    "(not on PATH). Run inside 'nix develop'."
+                )
+            else:
+                stext_xml = _extract_pdf_stext(pdf_file)
+                if stext_xml is None:
+                    fail("appendix stext extraction failed")
+            for spec in appendix_specs:
+                parsed = _parse_appendix_entry_spec(spec)
+                if parsed is None:
+                    fail(f"malformed appendix entry spec: {spec!r}")
+                    continue
+                atom_key, display_number, printed_kind = parsed
+                dest_name = f"codep-appendix:{atom_key}"
+                if need_dest_check and link_data is not None:
+                    if dest_name not in link_data.destinations:
+                        fail(f"appendix named dest {dest_name!r} not found in PDF")
+                if stext_xml is not None:
+                    if display_number not in stext_xml:
+                        fail(
+                            f"appendix entry {atom_key!r}: display number "
+                            f"{display_number!r} not found in PDF text"
+                        )
+                    if printed_kind and printed_kind not in stext_xml:
+                        fail(
+                            f"appendix entry {atom_key!r}: printed kind "
+                            f"{printed_kind!r} not found in PDF text"
+                        )
+            if not fix.appendix_enum_waiver:
+                n_dirs = len(appendix_specs)
+                if need_dest_check and link_data is not None:
+                    n_entries = _count_appendix_entries_in_pdf(link_data)
+                    if n_entries != n_dirs:
+                        fail(
+                            f"appendix enumeration mismatch: {n_dirs} directive(s) "
+                            f"but {n_entries} codep-appendix: destination(s) in PDF "
+                            f"(declare TEST-APPENDIX-ENUM-WAIVER to suppress)"
+                        )
+                # TEXT-ONLY: informational guard — no dest count available yet
+
+
+# ----------------------------------------------------------------------
+# Multi-phase runner
+# ----------------------------------------------------------------------
+
+
+def _run_multi_phase(
+    fix: "Fixture",
+    result: "TestResult",
+    engine_bin: Path,
+    tmp_path: Path,
+    verbose: bool,
+) -> None:
+    """Execute COLD, WARM, and (if mutation declared) WARM-CHANGED phases."""
+
+    # COLD: tmp dir starts clean (standard TemporaryDirectory setup)
+    cold_n = _effective_pass_count(fix, "cold")
+    last_exit = _run_phase_compiles(fix, result, engine_bin, tmp_path, verbose, "cold", cold_n)
+    if last_exit >= 0:
+        result.failures.extend(
+            _check_convergence(engine_bin, fix, tmp_path, verbose, "cold", cold_n)
+        )
+    _run_assertions(_effective_fix(fix, "cold"), result, tmp_path, last_exit, prefix="[cold] ")
+
+    # WARM: .aux/.cdp intact from COLD
+    warm_n = _effective_pass_count(fix, "warm")
+    last_exit = _run_phase_compiles(fix, result, engine_bin, tmp_path, verbose, "warm", warm_n)
+    if last_exit >= 0:
+        result.failures.extend(
+            _check_convergence(engine_bin, fix, tmp_path, verbose, "warm", warm_n)
+        )
+    _run_assertions(_effective_fix(fix, "warm"), result, tmp_path, last_exit, prefix="[warm] ")
+
+    # WARM-CHANGED: apply mutation, recompile, revert
+    if not fix.warm_mutation:
+        return
+
+    original_content = fix.path.read_text(encoding="utf-8")
+    try:
+        mut_proc = subprocess.run(
+            fix.warm_mutation,
+            shell=True,
+            cwd=str(PROJECT_ROOT),
+            capture_output=True,
+            text=True,
+        )
+        if mut_proc.returncode != 0:
+            result.failures.append(
+                f"[warm_changed] mutation command failed "
+                f"(exit {mut_proc.returncode}): {fix.warm_mutation!r}"
+            )
+            return
+
+        # Re-copy mutated source into temp dir (inject noops again)
+        mutated = fix.path.read_text(encoding="utf-8")
+        (tmp_path / f"{fix.name}.tex").write_text(
+            INJECT_L3BUILD_NOOPS + mutated, encoding="utf-8"
+        )
+
+        wc_n = _effective_pass_count(fix, "warm_changed")
+        last_exit = _run_phase_compiles(
+            fix, result, engine_bin, tmp_path, verbose, "warm_changed", wc_n
+        )
+        if last_exit >= 0:
+            result.failures.extend(
+                _check_convergence(engine_bin, fix, tmp_path, verbose, "warm_changed", wc_n)
+            )
+        _run_assertions(
+            _effective_fix(fix, "warm_changed"), result, tmp_path, last_exit,
+            prefix="[warm_changed] "
+        )
+    finally:
+        fix.path.write_text(original_content, encoding="utf-8")
+
+
+# ----------------------------------------------------------------------
 # Run a single fixture
 # ----------------------------------------------------------------------
 
 
 @dataclasses.dataclass
 class TestResult:
-    fixture: Fixture
+    fixture: "Fixture"
     passed: bool
     skipped: bool = False
     skip_reason: str = ""
@@ -820,7 +1417,7 @@ class TestResult:
     log_excerpt: str = ""
 
 
-def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) -> TestResult:
+def run_fixture(fix: "Fixture", engine_bin: Path, keep_temp: bool, verbose: bool) -> "TestResult":
     """Compile a fixture and verify its assertions."""
     t0 = time.time()
     result = TestResult(fixture=fix, passed=False)
@@ -837,15 +1434,10 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         )
         return result
 
-    # Each fixture runs in its own temp dir so .aux/.cdp files don't collide.
     with tempfile.TemporaryDirectory(prefix=f"codep-test-{fix.name}-") as tmp:
         tmp_path = Path(tmp)
-        # Copy the fixture and the .sty into the temp dir.
-        local_lvt = tmp_path / f"{fix.name}.tex"  # rename to .tex for engine
+        local_lvt = tmp_path / f"{fix.name}.tex"
         shutil.copy(fix.path, local_lvt)
-        # Inject l3build regression-test marker no-ops at the top of the
-        # fixture so \START / \END do not error.  l3build itself provides
-        # these via regression-test.tex; our standalone runner does not.
         content = local_lvt.read_text(encoding="utf-8")
         local_lvt.write_text(INJECT_L3BUILD_NOOPS + content, encoding="utf-8")
         shutil.copy(STY_FILE, tmp_path / "codependent.sty")
@@ -854,594 +1446,30 @@ def run_fixture(fix: Fixture, engine_bin: Path, keep_temp: bool, verbose: bool) 
         if LTXML_FILE.exists():
             shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
 
-        # Run the engine `rerun` times to populate .aux + .cdp.
-        # When a fixture declares TEST-EXPECT-PACKAGE-ERROR, we must observe
-        # post-error behavior; -halt-on-error would abort before that.
-        run_log = []
-        for pass_num in range(1, fix.rerun + 1):
-            cmd = [str(engine_bin), "-interaction=nonstopmode"]
-            if not fix.expect_package_error:
-                cmd.append("-halt-on-error")
-            cmd.append(f"{fix.name}.tex")
-            try:
-                proc = subprocess.run(
-                    cmd,
-                    cwd=tmp_path,
-                    capture_output=True,
-                    text=True,
-                    timeout=120,
-                )
-            except subprocess.TimeoutExpired:
-                result.failures.append(f"pass {pass_num}: TIMEOUT after 120s")
-                result.duration_ms = int((time.time() - t0) * 1000)
-                return result
-            run_log.append(("pass", pass_num, proc.returncode))
-            if verbose:
-                sys.stderr.write(f"  pass {pass_num}: exit {proc.returncode}\n")
-            if proc.returncode != 0 and pass_num == fix.rerun:
-                # Final pass failed; record exit code mismatch later.
-                pass
-
-        # Read artifacts.
-        log_file = tmp_path / f"{fix.name}.log"
-        aux_file = tmp_path / f"{fix.name}.aux"
-        sbl_file = tmp_path / f"{fix.name}.cdp"
-
-        log_text = log_file.read_text(encoding="utf-8", errors="replace") if log_file.exists() else ""
-        aux_text = aux_file.read_text(encoding="utf-8", errors="replace") if aux_file.exists() else ""
-        sbl_text = sbl_file.read_text(encoding="utf-8", errors="replace") if sbl_file.exists() else ""
-
-        # ---- Assertions ----
-
-        # 1. Exit code (use the LAST pass).
-        last_exit = run_log[-1][2] if run_log else -1
-        if last_exit != fix.exit_code:
-            result.failures.append(
-                f"exit code: expected {fix.exit_code}, got {last_exit}"
-            )
-            # Capture last 30 lines of log for the error excerpt.
-            tail = log_text.splitlines()[-30:]
-            result.log_excerpt = "\n".join(tail)
-
-        # 2. log_not patterns.
-        for pat in fix.log_not:
-            if re.search(pat, log_text):
-                result.failures.append(f"log matched forbidden pattern: {pat}")
-
-        # 3. log_contains patterns.
-        for pat in fix.log_contains:
-            if not re.search(pat, log_text):
-                result.failures.append(f"log missing required pattern: {pat}")
-
-        # 4. CDP assertions.
-        for s in fix.sbl_contains:
-            if s not in sbl_text:
-                result.failures.append(f"cdp missing required string: {s}")
-        for s in fix.sbl_not_contains:
-            if s in sbl_text:
-                result.failures.append(f"cdp contains forbidden string: {s}")
-
-        # 5. CDP counts: format "<pattern> = <n>".
-        for spec in fix.sbl_count:
-            try:
-                pat, expected = spec.rsplit("=", 1)
-                pat = pat.strip()
-                expected_n = int(expected.strip())
-            except ValueError:
-                result.failures.append(f"malformed TEST-CDP-COUNT: {spec}")
-                continue
-            actual = sbl_text.count(pat)
-            if actual != expected_n:
-                result.failures.append(
-                    f"cdp count for {pat!r}: expected {expected_n}, got {actual}"
-                )
-
-        # 6. AUX assertions.
-        for s in fix.aux_contains:
-            if s not in aux_text:
-                result.failures.append(f"aux missing required string: {s}")
-        for s in fix.aux_not_contains:
-            if s in aux_text:
-                result.failures.append(f"aux contains forbidden string: {s}")
-
-        # 7. atoms_min: count \codep@cdp@atom records.
-        if fix.atoms_min > 0:
-            atom_count = sbl_text.count("\\codep@cdp@atom{")
-            if atom_count < fix.atoms_min:
-                result.failures.append(
-                    f"atom count: expected >= {fix.atoms_min}, got {atom_count}"
-                )
-
-        # 8. sbl_last_record: the last NON-EMPTY line of .cdp must
-        #    contain the specified string. Stronger than sbl_contains
-        #    because it pins position. Used by test-sbl-end-marker to
-        #    enforce that the sentinel is the file-final record, not
-        #    just present somewhere in the file.
-        if fix.sbl_last_record:
-            non_empty_lines = [
-                line for line in sbl_text.splitlines()
-                if line.strip()
-            ]
-            if not non_empty_lines:
-                result.failures.append(
-                    f"cdp last-record check: file is empty, expected {fix.sbl_last_record!r}"
-                )
-            elif fix.sbl_last_record not in non_empty_lines[-1]:
-                result.failures.append(
-                    f"cdp last-record: expected {fix.sbl_last_record!r}, "
-                    f"got last non-empty line: {non_empty_lines[-1]!r}"
-                )
-
-        # 9. PDF content assertions (TEST-PDF-CONTAINS, TEST-PDF-NOT,
-        #    TEST-PDF-LINKS).  Only run when at least one PDF directive
-        #    is present.  Skipped with a warning when no PDF extraction
-        #    tool is available on PATH.
-        has_pdf_checks = (fix.pdf_contains or fix.pdf_not or fix.pdf_links > 0
-                          or fix.pdf_stext or fix.pdf_stext_not
-                          or fix.pdf_objects or fix.pdf_objects_not
-                          or fix.pdf_link_dest or fix.pdf_link_dest_not
-                          or fix.pdf_link_count >= 0
-                          or fix.pdf_dest_exists or fix.pdf_dest_not_exists
-                          or fix.pdf_link_rect or fix.pdf_no_orphan_links
-                          or fix.pdf_all_backrefs_linked
-                          or fix.pdf_backref_targets)
-        if has_pdf_checks:
-            pdf_file = tmp_path / f"{fix.name}.pdf"
-            if not pdf_file.exists():
-                result.failures.append(
-                    "pdf assertions present but no PDF was produced"
-                )
-            elif PDF_TEXT_TOOL is None and (fix.pdf_contains or fix.pdf_not):
-                result.failures.append(
-                    "PDF text assertions require mutool or pdftotext "
-                    "(not on PATH). Run inside 'nix develop'."
-                )
-            else:
-                # Text-based checks.
-                if fix.pdf_contains or fix.pdf_not:
-                    pdf_text = _extract_pdf_text(pdf_file)
-                    if pdf_text is None:
-                        result.failures.append(
-                            "pdf text extraction failed "
-                            f"(tool: {PDF_TEXT_TOOL})"
-                        )
-                    else:
-                        for s in fix.pdf_contains:
-                            if s not in pdf_text:
-                                result.failures.append(
-                                    f"pdf missing required text: {s!r}"
-                                )
-                        for s in fix.pdf_not:
-                            if s in pdf_text:
-                                result.failures.append(
-                                    f"pdf contains forbidden text: {s!r}"
-                                )
-
-                # Link count check.
-                if fix.pdf_links > 0:
-                    if PDF_LINK_TOOL is None:
-                        result.failures.append(
-                            "PDF link count assertion requires mutool or qpdf "
-                            "(not on PATH). Run inside 'nix develop'."
-                        )
-                    else:
-                        link_count = _count_pdf_links(pdf_file)
-                        if link_count is None:
-                            result.failures.append(
-                                "pdf link counting failed "
-                                f"(tool: {PDF_LINK_TOOL})"
-                            )
-                        elif link_count < fix.pdf_links:
-                            result.failures.append(
-                                f"pdf links: expected >= {fix.pdf_links}, "
-                                f"got {link_count}"
-                            )
-
-                # 10. Structured text assertions (positions, fonts).
-                if fix.pdf_stext or fix.pdf_stext_not:
-                    if PDF_STEXT_TOOL is None:
-                        result.failures.append(
-                            "PDF stext assertions require mutool "
-                            "(not on PATH). Run inside 'nix develop'."
-                        )
-                    else:
-                        stext_xml = _extract_pdf_stext(pdf_file)
-                        if stext_xml is None:
-                            result.failures.append(
-                                "pdf stext extraction failed"
-                            )
-                        else:
-                            for pat in fix.pdf_stext:
-                                if not re.search(pat, stext_xml):
-                                    result.failures.append(
-                                        f"pdf stext missing pattern: {pat!r}"
-                                    )
-                            for pat in fix.pdf_stext_not:
-                                if re.search(pat, stext_xml):
-                                    result.failures.append(
-                                        f"pdf stext matched forbidden pattern: {pat!r}"
-                                    )
-
-                # 11. PDF object assertions (link annotations, destinations).
-                if fix.pdf_objects or fix.pdf_objects_not:
-                    if PDF_STEXT_TOOL is None:
-                        sys.stderr.write(
-                            f"  WARN: skipping PDF object checks for {fix.name} "
-                            f"(no mutool on PATH)\n"
-                        )
-                    else:
-                        obj_dump = _extract_pdf_objects(pdf_file)
-                        if obj_dump is None:
-                            result.failures.append(
-                                "pdf object extraction failed"
-                            )
-                        else:
-                            for pat in fix.pdf_objects:
-                                if not re.search(pat, obj_dump):
-                                    result.failures.append(
-                                        f"pdf objects missing pattern: {pat!r}"
-                                    )
-                            for pat in fix.pdf_objects_not:
-                                if re.search(pat, obj_dump):
-                                    result.failures.append(
-                                        f"pdf objects matched forbidden pattern: {pat!r}"
-                                    )
-
-                # 12. Object-level PDF link verification (qpdf --json=2).
-                has_qpdf_checks = (
-                    fix.pdf_link_dest or fix.pdf_link_dest_not
-                    or fix.pdf_link_count >= 0
-                    or fix.pdf_dest_exists or fix.pdf_dest_not_exists
-                    or fix.pdf_link_rect or fix.pdf_no_orphan_links
-                )
-                if has_qpdf_checks:
-                    if PDF_QPDF_TOOL is None:
-                        result.failures.append(
-                            "PDF link/dest assertions require qpdf "
-                            "(not on PATH). Run inside 'nix develop'."
-                        )
-                    else:
-                        link_data = _extract_pdf_link_objects(pdf_file)
-                        if link_data is None:
-                            result.failures.append(
-                                "pdf link object extraction failed "
-                                f"(tool: {PDF_QPDF_TOOL})"
-                            )
-                        else:
-                            # TEST-PDF-LINK-DEST: regex on link dest names
-                            for pat in fix.pdf_link_dest:
-                                if not any(re.search(pat, lnk.dest) for lnk in link_data.links):
-                                    result.failures.append(
-                                        f"pdf link dest missing pattern: {pat!r}"
-                                    )
-
-                            # TEST-PDF-LINK-DEST-NOT: dest must NOT match
-                            for pat in fix.pdf_link_dest_not:
-                                for lnk in link_data.links:
-                                    if re.search(pat, lnk.dest):
-                                        result.failures.append(
-                                            f"pdf link dest matched forbidden "
-                                            f"pattern: {pat!r} (on {lnk.dest!r})"
-                                        )
-                                        break
-
-                            # TEST-PDF-LINK-COUNT: exact count
-                            if fix.pdf_link_count >= 0:
-                                actual = len(link_data.links)
-                                if actual != fix.pdf_link_count:
-                                    result.failures.append(
-                                        f"pdf link count: expected "
-                                        f"{fix.pdf_link_count}, got {actual}"
-                                    )
-
-                            # TEST-PDF-DEST-EXISTS: regex on named dests
-                            for pat in fix.pdf_dest_exists:
-                                if not any(re.search(pat, d) for d in link_data.destinations):
-                                    result.failures.append(
-                                        f"pdf named dest missing pattern: {pat!r}"
-                                    )
-
-                            # TEST-PDF-DEST-NOT-EXISTS: named dest must NOT match
-                            for pat in fix.pdf_dest_not_exists:
-                                for d in link_data.destinations:
-                                    if re.search(pat, d):
-                                        result.failures.append(
-                                            f"pdf named dest matched forbidden "
-                                            f"pattern: {pat!r} (on {d!r})"
-                                        )
-                                        break
-
-                            # TEST-PDF-LINK-RECT: "<dest> <x1> <y1> <x2> <y2> <tol>"
-                            for spec in fix.pdf_link_rect:
-                                parts = spec.split()
-                                if len(parts) != 6:
-                                    result.failures.append(
-                                        f"malformed TEST-PDF-LINK-RECT: {spec}"
-                                    )
-                                    continue
-                                dest_pat = parts[0]
-                                try:
-                                    ex = [float(x) for x in parts[1:5]]
-                                    tol = float(parts[5])
-                                except ValueError:
-                                    result.failures.append(
-                                        f"malformed TEST-PDF-LINK-RECT coords: {spec}"
-                                    )
-                                    continue
-                                matched = False
-                                for lnk in link_data.links:
-                                    if not re.search(dest_pat, lnk.dest):
-                                        continue
-                                    if len(lnk.rect) == 4:
-                                        diffs = [abs(lnk.rect[i] - ex[i]) for i in range(4)]
-                                        if all(d <= tol for d in diffs):
-                                            matched = True
-                                            break
-                                if not matched:
-                                    result.failures.append(
-                                        f"pdf link rect: no link matching "
-                                        f"dest={dest_pat!r} with rect "
-                                        f"~{ex} (tol={tol})"
-                                    )
-
-                            # TEST-PDF-NO-ORPHAN-LINKS: every link dest
-                            # must resolve to a named destination.
-                            if fix.pdf_no_orphan_links:
-                                orphans = []
-                                for lnk in link_data.links:
-                                    if not lnk.dest:
-                                        continue  # no named dest (page ref)
-                                    if lnk.dest not in link_data.destinations:
-                                        orphans.append(lnk.dest)
-                                if orphans:
-                                    unique = sorted(set(orphans))
-                                    result.failures.append(
-                                        f"pdf orphan links ({len(orphans)}): "
-                                        f"dests not in Names tree: "
-                                        f"{', '.join(unique[:10])}"
-                                    )
-
-                # 13. Backref hyperlink verification (TEST-PDF-ALL-BACKREFS-LINKED,
-                #     TEST-PDF-BACKREF-TARGETS). Requires both mutool (stext) and
-                #     qpdf (link annotations).
-                has_backref_checks = (
-                    fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
-                )
-                if has_backref_checks:
-                    if PDF_STEXT_TOOL is None or PDF_QPDF_TOOL is None:
-                        missing = []
-                        if PDF_STEXT_TOOL is None:
-                            missing.append("mutool")
-                        if PDF_QPDF_TOOL is None:
-                            missing.append("qpdf")
-                        result.failures.append(
-                            f"PDF backref assertions require mutool and qpdf "
-                            f"(missing: {', '.join(missing)}). "
-                            f"Run inside 'nix develop'."
-                        )
-                    else:
-                        # Extract stext for "Used in" line positions.
-                        stext_xml = _extract_pdf_stext(pdf_file)
-                        if stext_xml is None:
-                            result.failures.append(
-                                "backref check: stext extraction failed"
-                            )
-                        else:
-                            backref_lines = _parse_backref_lines_from_stext(
-                                stext_xml
-                            )
-                            # Extract link objects for backref checks.
-                            br_link_data = _extract_pdf_link_objects(pdf_file)
-                            if br_link_data is None:
-                                result.failures.append(
-                                    "backref check: qpdf extraction failed"
-                                )
-                            else:
-                                # TEST-PDF-ALL-BACKREFS-LINKED
-                                if fix.pdf_all_backrefs_linked:
-                                    if not backref_lines:
-                                        result.failures.append(
-                                            "all-backrefs-linked: no 'Used in'"
-                                            " lines found in PDF"
-                                        )
-                                    for bline in backref_lines:
-                                        overlapping = _links_overlapping_line(
-                                            br_link_data, bline
-                                        )
-                                        n_entries = len(bline.entries)
-                                        n_links = len(overlapping)
-                                        if n_links < n_entries:
-                                            result.failures.append(
-                                                f"all-backrefs-linked: "
-                                                f"'{bline.text}' has "
-                                                f"{n_entries} entries but "
-                                                f"only {n_links} covering "
-                                                f"link(s)"
-                                            )
-                                        for link in overlapping:
-                                            if (
-                                                link.dest
-                                                and link.dest
-                                                not in br_link_data.destinations
-                                            ):
-                                                result.failures.append(
-                                                    f"all-backrefs-linked: "
-                                                    f"'{bline.text}' has link with "
-                                                    f"dest '{link.dest}' that does not "
-                                                    f"exist in PDF named destinations"
-                                                )
-
-                                # TEST-PDF-BACKREF-TARGETS
-                                for spec in fix.pdf_backref_targets:
-                                    # Format: "<atom-dest-pattern> = <d1>, <d2>"
-                                    if "=" not in spec:
-                                        result.failures.append(
-                                            f"malformed TEST-PDF-BACKREF-"
-                                            f"TARGETS: {spec}"
-                                        )
-                                        continue
-                                    atom_pat, targets_str = spec.split("=", 1)
-                                    atom_pat = atom_pat.strip()
-                                    expected_dests = [
-                                        d.strip()
-                                        for d in targets_str.split(",")
-                                        if d.strip()
-                                    ]
-                                    # Find the "Used in" line whose overlapping
-                                    # links include destinations matching ALL of
-                                    # expected_dests.  This identifies the correct
-                                    # line without needing the atom's y-position.
-                                    matched_line = None
-                                    for bline in backref_lines:
-                                        overlapping = _links_overlapping_line(
-                                            br_link_data, bline
-                                        )
-                                        link_dests = [
-                                            lnk.dest for lnk in overlapping
-                                        ]
-                                        # Check if all expected dest patterns
-                                        # match some link in this line.
-                                        all_match = True
-                                        for dp in expected_dests:
-                                            if not any(
-                                                re.search(dp, ld)
-                                                for ld in link_dests
-                                            ):
-                                                all_match = False
-                                                break
-                                        if all_match:
-                                            matched_line = bline
-                                            break
-
-                                    if matched_line is None:
-                                        # Try to give a helpful error: show
-                                        # which lines exist and their link dests
-                                        summaries = []
-                                        for bline in backref_lines[:5]:
-                                            ov = _links_overlapping_line(
-                                                br_link_data, bline
-                                            )
-                                            dests = [l.dest for l in ov]
-                                            summaries.append(
-                                                f"'{bline.text}' -> "
-                                                f"{dests[:4]}"
-                                            )
-                                        result.failures.append(
-                                            f"backref-targets: no 'Used in' "
-                                            f"line found with links matching "
-                                            f"all of {expected_dests} "
-                                            f"(atom pattern: {atom_pat!r}). "
-                                            f"Lines found: "
-                                            f"{'; '.join(summaries)}"
-                                        )
-
-        # 14. Package warning assertions (TEST-EXPECT-PACKAGE-WARNING).
-        for pat in fix.expect_package_warning:
-            if not re.search(
-                rf"Package codependent Warning:.*?{pat}", log_text, re.DOTALL
-            ):
-                result.failures.append(
-                    f"expected package warning matching {pat!r} not found in log"
-                )
-
-        # 15. Package error assertions (TEST-EXPECT-PACKAGE-ERROR).
-        for pat in fix.expect_package_error:
-            if not re.search(
-                rf"Package codependent Error:.*?{pat}", log_text, re.DOTALL
-            ):
-                result.failures.append(
-                    f"expected package error matching {pat!r} not found in log"
-                )
-
-        # 16. Appendix entry assertions (TEST-PDF-APPENDIX-ENTRY /
-        #     TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY).
-        has_appendix_checks = (
-            fix.pdf_appendix_entry or fix.pdf_appendix_entry_text_only
-        )
-        if has_appendix_checks:
-            appendix_specs = fix.pdf_appendix_entry or fix.pdf_appendix_entry_text_only
-            need_dest_check = bool(fix.pdf_appendix_entry)
-            pdf_file = tmp_path / f"{fix.name}.pdf"
-
-            if not pdf_file.exists():
-                result.failures.append(
-                    "appendix assertions present but no PDF was produced"
-                )
-            else:
-                # For destination-check variant, we need qpdf.
-                link_data = None
-                if need_dest_check:
-                    if PDF_QPDF_TOOL is None:
-                        result.failures.append(
-                            "TEST-PDF-APPENDIX-ENTRY requires qpdf "
-                            "(not on PATH). Run inside 'nix develop'."
-                        )
-                    else:
-                        link_data = _extract_pdf_link_objects(pdf_file)
-                        if link_data is None:
-                            result.failures.append(
-                                "appendix dest check: qpdf extraction failed"
-                            )
-
-                # For text checks we need stext.
-                stext_xml = None
-                if PDF_STEXT_TOOL is None:
-                    result.failures.append(
-                        "appendix text assertions require mutool "
-                        "(not on PATH). Run inside 'nix develop'."
+        if _is_multi_phase(fix):
+            _run_multi_phase(fix, result, engine_bin, tmp_path, verbose)
+        else:
+            # Single-phase: compile `rerun` times then check assertions once.
+            run_log = []
+            for pass_num in range(1, fix.rerun + 1):
+                cmd = [str(engine_bin), "-interaction=nonstopmode"]
+                if not fix.expect_package_error:
+                    cmd.append("-halt-on-error")
+                cmd.append(f"{fix.name}.tex")
+                try:
+                    proc = subprocess.run(
+                        cmd, cwd=tmp_path, capture_output=True, text=True, timeout=120,
                     )
-                else:
-                    stext_xml = _extract_pdf_stext(pdf_file)
-                    if stext_xml is None:
-                        result.failures.append(
-                            "appendix stext extraction failed"
-                        )
+                except subprocess.TimeoutExpired:
+                    result.failures.append(f"pass {pass_num}: TIMEOUT after 120s")
+                    result.duration_ms = int((time.time() - t0) * 1000)
+                    return result
+                run_log.append(("pass", pass_num, proc.returncode))
+                if verbose:
+                    sys.stderr.write(f"  pass {pass_num}: exit {proc.returncode}\n")
 
-                # Per-entry assertions.
-                for spec in appendix_specs:
-                    parsed = _parse_appendix_entry_spec(spec)
-                    if parsed is None:
-                        result.failures.append(
-                            f"malformed appendix entry spec: {spec!r}"
-                        )
-                        continue
-                    atom_key, display_number, printed_kind = parsed
-                    dest_name = f"codep-appendix:{atom_key}"
-
-                    if need_dest_check and link_data is not None:
-                        if dest_name not in link_data.destinations:
-                            result.failures.append(
-                                f"appendix named dest {dest_name!r} not found in PDF"
-                            )
-
-                    if stext_xml is not None:
-                        if display_number not in stext_xml:
-                            result.failures.append(
-                                f"appendix entry {atom_key!r}: display number "
-                                f"{display_number!r} not found in PDF text"
-                            )
-                        if printed_kind and printed_kind not in stext_xml:
-                            result.failures.append(
-                                f"appendix entry {atom_key!r}: printed kind "
-                                f"{printed_kind!r} not found in PDF text"
-                            )
-
-                # Enumeration guard: directive count vs. appendix entry count.
-                if not fix.appendix_enum_waiver:
-                    n_dirs = len(appendix_specs)
-                    if need_dest_check and link_data is not None:
-                        n_entries = _count_appendix_entries_in_pdf(link_data)
-                        if n_entries != n_dirs:
-                            result.failures.append(
-                                f"appendix enumeration mismatch: {n_dirs} directive(s) "
-                                f"but {n_entries} codep-appendix: destination(s) in PDF "
-                                f"(declare TEST-APPENDIX-ENUM-WAIVER to suppress)"
-                            )
-                    elif not need_dest_check and stext_xml is not None:
-                        # TEXT-ONLY variant: we can only warn (no dest count).
-                        # Guard is informational: remind the author to use a waiver
-                        # if the appendix section cannot be independently counted.
-                        pass
+            last_exit = run_log[-1][2] if run_log else -1
+            _run_assertions(fix, result, tmp_path, last_exit, prefix="")
 
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name
