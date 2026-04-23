@@ -192,8 +192,9 @@ displays "Used in A" in the PDF.
 
 - [B-LINK-CLICKABLE] When hyperref is loaded, every entry in "Used in X, Y" is a clickable link.
 - [B-LINK-CORRECT] Link targets point to the correct atom's location in the PDF.
+- [B-LINK-EFFECTIVE-ANCHOR] For theorem-like atoms, backlink destinations are resolved from the atom's effective anchor. The effective anchor starts at the heading anchor and may be replaced by a same-typed label whose displayed number matches the atom's displayed number.
 - [B-LINK-PROOFOF-STAR] `\codepproofof*` overrides the link target to point to the proof location.
-- [B-LINK-ADJ-PROOF] Adjacent proofs link to the theorem's location (they share its identity).
+- [B-LINK-ADJ-PROOF] Adjacent proofs link to the parent's effective anchor. If a same-typed, same-display in-theorem label overwrites the theorem anchor, the proof follows that overwritten target.
 - [B-LINK-NO-ORPHAN] No orphan links: every link resolves to a valid PDF destination.
 
 ### 3.4 Equation tracking
@@ -284,12 +285,12 @@ Paragraph numbers are suppressed inside:
 
 | Pass | What happens | What the user sees |
 |---|---|---|
-| [B-PASS-ONE] Pass 1 | Atoms numbered, references recorded | Correct numbering; NO "Used in" annotations |
-| [B-PASS-TWO] Pass 2 | Reference graph inverted, backrefs rendered | Full "Used in" annotations with links |
+| [B-PASS-ONE] Pass 1 | Atoms numbered, references recorded, and same-run label-number / effective-anchor state hydrated from `\label` | Correct numbering; NO "Used in" annotations |
+| [B-PASS-TWO] Pass 2 | Reference graph inverted and backrefs rendered from already-final targets/links | Full "Used in" annotations with final links |
 
 - [B-PASS-SINGLE] A single-pass build produces a correctly numbered document without backrefs.
 - [B-PASS-RERUN] "Rerun needed" = labels changed; standard LaTeX `Label(s) may have changed` warning.
-- [B-PASS-THREE] Three runs needed when labels are newly created (first run establishes labels, second reads them, third stabilizes backrefs).
+- [B-PASS-THREE] When the base packages loaded by the document themselves require a third pass (TOC restructuring, makeindex, bibliography staging, etc.), codependent settles within that same pass budget without adding to it. Codependent never increases cold pass count versus the base-package floor.
 
 ### 5.1 End-of-document finalization
 

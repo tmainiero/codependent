@@ -1,8 +1,5 @@
 {
   ".test-behavior-baseline": 14,
-  ".traceability-baseline.unclassified_macros": 43,
-  ".traceability-baseline.uncovered_behaviors": 45,
-  "max_pass_count_cold": 2,
-  "max_pass_count_warm": 1,
-  "max_pass_count_warm_changed": 2
+  ".traceability-baseline.unclassified_macros": 42,
+  ".traceability-baseline.uncovered_behaviors": 44
 }

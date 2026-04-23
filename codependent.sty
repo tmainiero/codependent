@@ -1822,7 +1822,7 @@
 %   Write an atom→anchor aux record.  No-op by default; activated
 %   at \AtBeginDocument when hyperref is loaded, so the write only
 %   happens when \@currentHref is meaningful.
-%% @implements \codep@hooktheorem
+%% @behavior B-PASS-ONE
 \newcommand*{\codep@writeanchormap}[1]{}
 
 % Pass-1 safety for concept-tracking aux records (§9a User API).
@@ -2524,7 +2524,7 @@
     }%
   }%
 }
-%% @behavior B-LINK-CORRECT
+%% @behavior B-LINK-EFFECTIVE-ANCHOR
 % \codep@writeanchoreff{label}{ltype}{display}{anchor}
 %   Write the effective anchor mapping under the normalized target key.
 \def\codep@writeanchoreff#1#2#3#4{%
@@ -2543,6 +2543,7 @@
         \codep@tmp@anchorval}%
   \fi%
 }%
+%% @implements \codep@writeanchoreff
 \def\codep@extractanchor@ii#1#2{%
   % #1 = anchor (4th field or empty), #2 = label key
   \def\codep@tmp@anchorfield{#1}%
