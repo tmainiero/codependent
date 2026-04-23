@@ -11,8 +11,10 @@
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-AUX-COUNT: \codep@lblentity{thm:restate} = 1
-%% TEST-AUX-COUNT: \codep@entitymeta{theorem:1.1}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:restate}{theorem:1.1}
+%% TEST-AUX-NOT-CONTAINS: theorem:1.1}\codep@lblentity{thm:restate}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:1.1}{theorem}
+%% TEST-AUX-NOT-CONTAINS: {theorem}\codep@entitymeta{theorem:1.1}{theorem}
 %% TEST-PACKAGES: thmtools,amsthm,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-REST-NODUP
