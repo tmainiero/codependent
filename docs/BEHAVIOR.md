@@ -223,9 +223,7 @@ displays "Used in A" in the PDF.
 | [B-PROOF-INNER] Proof inside a tracked env | Suppressed (part of outer atom) | N/A |
 | [B-PROOF-OFF] `proofs=off` | No atom number, paragraph suppression only | N/A |
 
-- [B-PROOF-ADJRULE] **Adjacency rule:** Auto-attribution fires only when nothing (no paragraph, no other tracked env) intervenes between a result-type environment and the proof.
-
-- [B-PROOF-RESULT] **Result-type environments** (eligible for auto-attributed proofs): `theorem`, `lemma`, `proposition`, `corollary` (and any registered via `results`).
+- [B-PROOF-ADJRULE] **Adjacency rule:** Auto-attribution fires whenever a tracked environment closes with no intervening paragraph or other tracked environment before the proof opens. Any `\codeptrack`-registered environment is eligible, not just result-type environments like `theorem`, `lemma`, `proposition`, `corollary`.
 
 ### 3.6 Concept tracking
 
