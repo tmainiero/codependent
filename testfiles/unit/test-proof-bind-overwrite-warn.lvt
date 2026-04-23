@@ -11,8 +11,10 @@
 %% TEST-EXIT: 0
 %% TEST-EXPECT-PACKAGE-WARNING: proof-bind slot overwritten
 %% TEST-LOG-NOT: codependent.*Error
+%% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
 %% TEST-BEHAVIOR: B-WARN-ENDDOC
+%% TEST-PDF-CONTAINS: A theorem
 %%
 %% Synthetically populate the proof binding slot before starting a proof.
 %% The proof-begin hook calls \codep@pendingproofbind@checkoverwrite,

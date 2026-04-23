@@ -11,6 +11,7 @@
 %% TEST-EXIT: 1
 %% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
 %% TEST-LOG-NOT: Undefined control sequence
+%% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-AUX-NOT-CONTAINS: codep@renderlist
 %% TEST-AUX-NOT-CONTAINS: codep@entitymeta
 %% TEST-RERUN: 1

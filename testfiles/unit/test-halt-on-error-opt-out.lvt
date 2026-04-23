@@ -10,8 +10,10 @@
 %% TEST-EXIT: 1
 %% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
 %% TEST-LOG-NOT: Undefined control sequence
+%% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
 %% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%% TEST-PDF-NOT: Used in
 %%
 %% Synthetically trigger a fatal orchestrator error. The runner receives
 %% TEST-EXPECT-PACKAGE-ERROR and drops -halt-on-error, allowing the error

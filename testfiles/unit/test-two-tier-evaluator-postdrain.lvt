@@ -9,8 +9,10 @@
 %% TEST-EXIT: 0
 %% TEST-EXPECT-PACKAGE-WARNING: of.*operations failed
 %% TEST-LOG-NOT: codependent.*Error
+%% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
 %% TEST-BEHAVIOR: B-WARN-ENDDOC
+%% TEST-PDF-CONTAINS: A theorem
 %%
 %% Synthetically set the proofof subsystem to partial-fail state:
 %% total=2, failed=1 (some but not all operations failed). The post-drain

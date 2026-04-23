@@ -9,8 +9,11 @@
 %% TEST-SECTION: codependent.sty §enddoc orchestrator, §drain sites
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Package codependent Warning
+%% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-ERROR-ENDDOC, B-WARN-ENDDOC
+%% TEST-PDF-CONTAINS: Main theorem
+%% TEST-PDF-NOT: Error
 %%
 %% A minimal document exercising the orchestrator: theorem with a proof,
 %% a paragraph, and a cross-reference. At end-of-document, all drains

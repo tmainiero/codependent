@@ -10,8 +10,10 @@
 %% TEST-EXIT: 1
 %% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
 %% TEST-LOG-NOT: Undefined control sequence
+%% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
 %% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%% TEST-PDF-NOT: Using\|Codependent
 %%
 %% Synthetically set the proofof subsystem counters to trigger a fatal
 %% state: total=1, failed=1 (all operations failed). The pre-drain
