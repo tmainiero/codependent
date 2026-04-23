@@ -1,0 +1,48 @@
+%% TEST-NAME: test-proof-bind-overwrite-warn
+%% TEST-WHAT: Asserts the single-slot proof-binding overwrite warn
+%%            (commit 102df07). Synthetically populate the pending proof
+%%            binding slot via \makeatletter/\gdef (since \codepproofin
+%%            is not yet implemented). Start a proof, which triggers
+%%            \codep@pendingproofbind@checkoverwrite and emits warning
+%%            'proof-bind slot overwritten -- previous binding'.
+%%            Document still compiles (warn, not error).
+%% TEST-SOURCE: wave3-plan-v11.md P04 proof-binding overwrite contract
+%% TEST-SECTION: codependent.sty §drain@proofs, §proof binding
+%% TEST-EXIT: 0
+%% TEST-EXPECT-PACKAGE-WARNING: proof-bind slot overwritten
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-WARN-ENDDOC
+%%
+%% Synthetically populate the proof binding slot before starting a proof.
+%% The proof-begin hook calls \codep@pendingproofbind@checkoverwrite,
+%% which detects the non-empty slot and emits the overwrite warning.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\makeatletter
+\gdef\codep@pendingproofbind{dummy-label}
+\gdef\codep@pendingproofbind@label{thm:dummy}
+\gdef\codep@pendingproofbind@line{42}
+\makeatother
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}
+  A theorem.
+\end{theorem}
+
+\begin{proof}
+  A proof whose begin-hook triggers the overwrite check.
+\end{proof}
+
+\END
+\end{document}

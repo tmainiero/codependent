@@ -1,0 +1,42 @@
+%% TEST-NAME: test-enddoc-orchestrator
+%% TEST-WHAT: Exercise the single enddoc orchestrator (commit ad0c423):
+%%            one theorem + one proof + one paragraph + one label. Confirm
+%%            at document-end the orchestrator runs every drain (drain@proofs,
+%%            drain@renderlist, drain@warnscan, drain@sentinel, plus
+%%            drain@p03 for forward-ref settlement). Document compiles without
+%%            PackageError/PackageWarning and converges in 2 passes.
+%% TEST-SOURCE: wave3-plan-v11.md P04 orchestrator contract
+%% TEST-SECTION: codependent.sty §enddoc orchestrator, §drain sites
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Package codependent Warning
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-ERROR-ENDDOC, B-WARN-ENDDOC
+%%
+%% A minimal document exercising the orchestrator: theorem with a proof,
+%% a paragraph, and a cross-reference. At end-of-document, all drains
+%% fire and the document converges in 2 passes with no warnings.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}\label{thm:main}
+  Main theorem.
+\end{theorem}
+
+\begin{proof}
+  A proof of the main theorem.
+\end{proof}
+
+This paragraph discusses Theorem~\ref{thm:main}.
+
+\END
+\end{document}

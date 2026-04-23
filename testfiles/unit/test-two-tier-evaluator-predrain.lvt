@@ -1,0 +1,47 @@
+%% TEST-NAME: test-two-tier-evaluator-predrain
+%% TEST-WHAT: Exercise pre-drain fatal state (commit 36b9fca).
+%%            Synthetically populate the proof binding slot and set the
+%%            proofof subsystem counters to all-failed (total=1, failed=1).
+%%            Pre-drain evaluator detects this fatal state (failed==total
+%%            && total>0), sets \codep@abortfinalize, and the orchestrator
+%%            halts with \PackageError.
+%% TEST-SOURCE: wave3-plan-v11.md P04 two-tier evaluator contract
+%% TEST-SECTION: codependent.sty §two-tier evaluator, §pre-drain
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%%
+%% Synthetically set the proofof subsystem counters to trigger a fatal
+%% state: total=1, failed=1 (all operations failed). The pre-drain
+%% evaluator detects this and sets \codep@abortfinalize, which causes
+%% the orchestrator to halt with an error instead of draining.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\makeatletter
+\gdef\codep@pendingproofbind{unresolved-binding}
+\gdef\codep@pendingproofbind@label{thm:unresolved}
+\gdef\codep@pendingproofbind@line{10}
+% Set proofof subsystem to all-failed state
+\codep@subsys@proofof@total=1\relax
+\codep@subsys@proofof@failed=1\relax
+\makeatother
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}
+  A theorem.
+\end{theorem}
+
+\END
+\end{document}

@@ -1,0 +1,41 @@
+%% TEST-NAME: test-halt-on-error-opt-out
+%% TEST-WHAT: Verify that the test runner correctly drops -halt-on-error
+%%            when TEST-EXPECT-PACKAGE-ERROR is specified (v12 A1 closure).
+%%            This is a runner-mechanism regression test: when an error is
+%%            expected, the runner must allow the engine to continue past
+%%            the error site so it can collect the error message from the
+%%            log. The runner should find the error and not prematurely halt.
+%% TEST-SOURCE: wave3-plan-v11.md v12 A1 runner-mechanism contract
+%% TEST-SECTION: testfiles/run-tests.py §TEST-EXPECT-PACKAGE-ERROR opt-out
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%%
+%% Synthetically trigger a fatal orchestrator error. The runner receives
+%% TEST-EXPECT-PACKAGE-ERROR and drops -halt-on-error, allowing the error
+%% to be captured from the log instead of halting immediately.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\makeatletter
+% Trigger fatal state by setting all operations to failed
+\codep@subsys@proofof@total=1\relax
+\codep@subsys@proofof@failed=1\relax
+\makeatother
+
+\begin{document}
+\START
+
+\begin{theorem}
+  A theorem.
+\end{theorem}
+
+\END
+\end{document}

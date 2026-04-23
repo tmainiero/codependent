@@ -1,0 +1,49 @@
+%% TEST-NAME: test-failure-error-prevents-aux-write
+%% TEST-WHAT: Verify that when orchestrator's pre-drain evaluator detects
+%%            fatal state (\codep@abortfinalize), the halt branch executes
+%%            WITHOUT writing stale \codep@renderlist / \codep@entitymeta
+%%            records to the .aux file. This prevents a subsequent rerun
+%%            from seeing corrupted prior state. Exercises the v12 A1
+%%            closure: -halt-on-error opt-out allows error collection via
+%%            TEST-EXPECT-PACKAGE-ERROR.
+%% TEST-SOURCE: wave3-plan-v11.md P04 orchestrator halt contract, v12 A1
+%% TEST-SECTION: codependent.sty §enddoc orchestrator, §halt branch
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-AUX-NOT-CONTAINS: codep@renderlist
+%% TEST-AUX-NOT-CONTAINS: codep@entitymeta
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%%
+%% Synthetically set fatal pre-drain state. Orchestrator detects this,
+%% halts, and does NOT flush renderlist or entitymeta records. The .aux
+%% file shows no evidence of stale drains.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\makeatletter
+\gdef\codep@pendingproofbind{unresolved-binding}
+\gdef\codep@pendingproofbind@label{thm:unresolved}
+\gdef\codep@pendingproofbind@line{30}
+% Set proofof subsystem to all-failed state
+\codep@subsys@proofof@total=1\relax
+\codep@subsys@proofof@failed=1\relax
+\makeatother
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}
+  A theorem.
+\end{theorem}
+
+\END
+\end{document}

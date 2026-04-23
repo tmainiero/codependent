@@ -1,0 +1,43 @@
+%% TEST-NAME: test-two-tier-evaluator-postdrain
+%% TEST-WHAT: Exercise post-drain residual state (commit 36b9fca).
+%%            Synthetically set the proofof subsystem counters to partial-fail
+%%            state (total=2, failed=1). Post-drain evaluator detects this
+%%            (0 < failed < total), emits \PackageWarning naming the failed/total
+%%            count. Document compiles successfully (warn, not error).
+%% TEST-SOURCE: wave3-plan-v11.md P04 two-tier evaluator contract
+%% TEST-SECTION: codependent.sty §two-tier evaluator, §post-drain
+%% TEST-EXIT: 0
+%% TEST-EXPECT-PACKAGE-WARNING: of.*operations failed
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-WARN-ENDDOC
+%%
+%% Synthetically set the proofof subsystem to partial-fail state:
+%% total=2, failed=1 (some but not all operations failed). The post-drain
+%% evaluator detects this partial-success state and emits a warning with
+%% the failed/total count.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\makeatletter
+% Set proofof subsystem to partial-fail state
+\codep@subsys@proofof@total=2\relax
+\codep@subsys@proofof@failed=1\relax
+\makeatother
+
+\begin{document}
+\START
+
+\section{Results}
+
+\begin{theorem}
+  A theorem.
+\end{theorem}
+
+\END
+\end{document}
