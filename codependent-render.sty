@@ -123,12 +123,14 @@
     % (collapsebr always defines the csname), so use \ifx against
     % \@empty instead.
     \expandafter\ifx\csname codep@br@#1\endcsname\@empty%
-      % No refs to this target (collapsed to \@empty): skip.
-      % Do NOT clear \codep@rendered@#1 here — next-pass
-      % convergence is handled by the per-key "touched" flag:
-      % this branch leaves \codep@rlflag@#1 unset, so
-      % \codep@renderlist@emit@all will not re-serialize the
-      % stale cache entry into the .aux on this run.
+      % No refs to this target (collapsed to \@empty): clear cache.
+      % Replay-guarded: atom may re-populate refs in same run,
+      % so cache must be cleared outside replay depth to allow
+      % fresh collapse on next \codep@queuebackref call.
+      \ifnum\codep@replaydepth=0\relax%
+        \global\expandafter\let\csname codep@rendered@#1\endcsname\relax%
+        \global\expandafter\let\csname codep@rlflag@#1\endcsname\relax%
+      \fi%
     \else
       % P05a Moment 1: freeze the collapsed payload into
       % \codep@rendered@<key>, and mark the atom "touched this
