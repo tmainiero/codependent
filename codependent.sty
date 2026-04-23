@@ -2524,29 +2524,46 @@
     }%
   }%
 }
+%% @behavior B-LINK-CORRECT
+% \codep@writeanchoreff{label}{ltype}{display}{anchor}
+%   Write the effective anchor mapping under the normalized target key.
+\def\codep@writeanchoreff#1#2#3#4{%
+  \edef\codep@tmp@anchorltype{#2}%
+  \edef\codep@tmp@anchordisp{#3}%
+  \edef\codep@tmp@anchorval{#4}%
+  \ifx\codep@tmp@anchorltype\@empty%
+    \expandafter\xdef%
+      \csname codep@anchor@\codep@tmp@anchordisp\endcsname{%
+        \codep@tmp@anchorval}%
+  \else%
+    \edef\codep@tmp@prefixed{%
+      \codep@tmp@anchorltype:\codep@tmp@anchordisp}%
+    \expandafter\xdef%
+      \csname codep@anchor@\codep@tmp@prefixed\endcsname{%
+        \codep@tmp@anchorval}%
+  \fi%
+}%
 \def\codep@extractanchor@ii#1#2{%
   % #1 = anchor (4th field or empty), #2 = label key
   \def\codep@tmp@anchorfield{#1}%
-  \ifx\codep@tmp@anchorfield\@empty\else
-    \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax\else
+  \ifx\codep@tmp@anchorfield\@empty\else%
+    \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax\else%
       % Resolve atom number first, then define the anchor mapping
       % using the prefixed key (type:number).
       \protected@edef\codep@tmp@num{%
         \csname codep@lblnum@#2\endcsname}%
       % Build prefixed key from type map if available.
-      \expandafter\ifx\csname codep@ltype@#2\endcsname\relax
-        % No type record: store under bare number (equation labels).
-        \expandafter\xdef%
-          \csname codep@anchor@\codep@tmp@num\endcsname{#1}%
-      \else
-        \edef\codep@tmp@prefixed{%
-          \csname codep@ltype@#2\endcsname:\codep@tmp@num}%
-        \expandafter\xdef%
-          \csname codep@anchor@\codep@tmp@prefixed\endcsname{#1}%
-      \fi
-    \fi
-  \fi
-}
+      \expandafter\ifx\csname codep@ltype@#2\endcsname\relax%
+        \let\codep@tmp@anchorltype\@empty%
+      \else%
+        \edef\codep@tmp@anchorltype{%
+          \csname codep@ltype@#2\endcsname}%
+      \fi%
+      \codep@writeanchoreff{#2}{\codep@tmp@anchorltype}%
+        {\codep@tmp@num}{#1}%
+    \fi%
+  \fi%
+}%
 % \codep@ifdatakey{key}{then}{else}
 %   True iff the label key ends in "@data" (thm-restate internal).
 %   These contain \setcounter calls, not display numbers.
@@ -2597,17 +2614,15 @@
       % using prefixed key if type is known.
       \codep@ifcrefkey{##1}{}{%
         \def\codep@tmp@anchorval{##5}%
-        \ifx\codep@tmp@anchorval\@empty\else
-          \expandafter\ifx\csname codep@ltype@##1\endcsname\relax
-            \expandafter\xdef%
-              \csname codep@anchor@##2\endcsname{##5}%
-          \else
-            \edef\codep@tmp@prefixed{%
-              \csname codep@ltype@##1\endcsname:##2}%
-            \expandafter\xdef%
-              \csname codep@anchor@\codep@tmp@prefixed\endcsname{##5}%
-          \fi
-        \fi
+        \ifx\codep@tmp@anchorval\@empty\else%
+          \expandafter\ifx\csname codep@ltype@##1\endcsname\relax%
+            \let\codep@tmp@anchorltype\@empty%
+          \else%
+            \edef\codep@tmp@anchorltype{%
+              \csname codep@ltype@##1\endcsname}%
+          \fi%
+          \codep@writeanchoreff{##1}{\codep@tmp@anchorltype}{##2}{##5}%
+        \fi%
       }%
     }%
   }%
@@ -2886,10 +2901,35 @@
             {\codep@tmp@labeldisplay}{#1}}%
       \fi%
       \codep@recordlabelowner{#1}%
+      \codep@label@samerun{#1}%
       \codep@orig@label{#1}%
     }%
   }%
 }
+%% @behavior B-PASS-ONE
+% \codep@label@samerun{label}
+%   Replay label-derived same-run anchor hydration from \label-time state.
+\def\codep@label@samerun#1{%
+  \codep@ifcrefkey{#1}{}{%
+    \codep@ifdatakey{#1}{}{%
+      \edef\codep@tmp@labelkey{#1}%
+      \in@{thmt@@}{\codep@tmp@labelkey}%
+      \ifin@\else%
+        \@ifpackageloaded{hyperref}{%
+          \ifx\@currentHref\@empty\else%
+            \expandafter\ifx\csname codep@ltype@#1\endcsname\relax%
+              \let\codep@tmp@labeltype\@empty%
+            \else%
+              \edef\codep@tmp@labeltype{\csname codep@ltype@#1\endcsname}%
+            \fi%
+            \codep@writeanchoreff{#1}{\codep@tmp@labeltype}%
+              {\@currentlabel}{\@currentHref}%
+          \fi%
+        }{}%
+      \fi%
+    }%
+  }%
+}%
 \def\codep@cdp@label@withopt[#1]#2{%
   \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
   \ifx\codep@tmp@labeldisplay\@empty\else%
@@ -2898,6 +2938,7 @@
         {\codep@tmp@labeldisplay}{#2}}%
   \fi%
   \codep@recordlabelowner{#2}%
+  \codep@label@samerun{#2}%
   \codep@orig@label[#1]{#2}%
 }%
 \def\codep@cdp@label@noopt#1{%
@@ -2908,6 +2949,7 @@
         {\codep@tmp@labeldisplay}{#1}}%
   \fi%
   \codep@recordlabelowner{#1}%
+  \codep@label@samerun{#1}%
   \codep@orig@label{#1}%
 }%
 
@@ -3621,7 +3663,8 @@
 \AtBeginDocument{%
   \@ifpackageloaded{hyperref}{%
     \renewcommand*{\codep@writeanchormap}[1]{%
-      \if@filesw
+      \expandafter\xdef\csname codep@anchor@#1\endcsname{\@currentHref}%
+      \if@filesw%
         \protected@write\@auxout{}{%
           \string\codep@anchormap{#1}{\@currentHref}}%
       \fi}%
