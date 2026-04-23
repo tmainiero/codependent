@@ -26,6 +26,10 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,codependent
 %% TEST-RERUN: 2
+%% TEST-PASS-COUNT-COLD: 2
+%% TEST-PASS-COUNT-WARM: 1
+%% TEST-PASS-COUNT-WARM-CHANGED: 2
+%% TEST-WARM-MUTATION: sed -i '1s/$/ [warm-changed]/' testfiles/integration/integ-no-hyperref.lvt
 %% TEST-BEHAVIOR: B-REND-INLINE
 %% Backref list on def:group must cite the proof of cor:unique-inverse
 %% with its own display number (1.4*), not the target's (1.1*).  Locks

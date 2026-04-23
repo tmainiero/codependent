@@ -25,6 +25,10 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
+%% TEST-PASS-COUNT-COLD: 2
+%% TEST-PASS-COUNT-WARM: 1
+%% TEST-PASS-COUNT-WARM-CHANGED: 2
+%% TEST-WARM-MUTATION: sed -i '1s/$/ [warm-changed]/' testfiles/integration/integ-no-cleveref.lvt
 %% TEST-PDF-LINKS: 2
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-BEHAVIOR: B-PASS-ONE

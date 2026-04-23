@@ -2915,6 +2915,7 @@
       \edef\codep@tmp@labelkey{#1}%
       \in@{thmt@@}{\codep@tmp@labelkey}%
       \ifin@\else%
+        \expandafter\xdef\csname codep@lblnum@#1\endcsname{\@currentlabel}%
         \@ifpackageloaded{hyperref}{%
           \ifx\@currentHref\@empty\else%
             \expandafter\ifx\csname codep@ltype@#1\endcsname\relax%
