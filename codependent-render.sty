@@ -44,15 +44,43 @@
 %   first time \codep@queuebackref looks up <num>.
 % Callback for \codep@collapsebr.  Defined at top level to avoid
 % parameter-doubling issues when nested inside other macros.
+%
+% Resolves frozen render tokens for src-key #1 at collapse time
+% (outside the accumulator's \edef) then splices them in.  The
+% pre-Fix-2 form stored \noexpand\codep@brhyper{#1} — a deferred
+% reference to a macro whose body is non-expandable
+% (\codep@graph@getdisplay uses \def/\let, incompatible with \edef).
+% Deferred storage violated the P05a contract "arg 3 carries a
+% literal rendered token string with no deferred macro refs" and
+% left the .aux payload fragile across passes.  Mirrors the
+% hyperref-detection switch built into \codep@brhyper
+% (codependent-render.sty :347 no-hyper, :355 hyper) via call-site
+% \@ifpackageloaded: \codep@anchor@<key> csnames ARE populated
+% from \newlabel's 4th field even without hyperref loaded, so a
+% pure anchor-present check would produce \hyperlink tokens that
+% crash at typeset time when hyperref is absent.
 %% @utility
 \def\codep@collapsebr@cb#1{%
+  \codep@graph@getdisplay{#1}{\codep@tmp@brdisplay}%
+  \@ifpackageloaded{hyperref}{%
+    \codep@graph@getanchor{#1}{\codep@tmp@branchor}%
+    \ifx\codep@tmp@branchor\@empty%
+      \let\codep@tmp@cbentry\codep@tmp@brdisplay%
+    \else%
+      \edef\codep@tmp@cbentry{%
+        \noexpand\hyperlink%
+          {\codep@tmp@branchor}{\codep@tmp@brdisplay}}%
+    \fi%
+  }{%
+    \let\codep@tmp@cbentry\codep@tmp@brdisplay%
+  }%
   \ifx\codep@tmp@acc\@empty%
     \edef\codep@tmp@acc{%
-      \noexpand\codep@brhyper{#1}}%
+      \unexpanded\expandafter{\codep@tmp@cbentry}}%
   \else%
     \edef\codep@tmp@acc{%
       \unexpanded\expandafter{\codep@tmp@acc}, %
-      \noexpand\codep@brhyper{#1}}%
+      \unexpanded\expandafter{\codep@tmp@cbentry}}%
   \fi%
 }%
 %% @implements \codep@queuebackref
@@ -87,36 +115,46 @@
     \global\codep@pendingbr={}%
     \codep@collapsebr{#1}%
     % After collapse, codep@br@#1 is either \@empty (no refs)
-    % or a macro whose body is a comma-joined list of literal
-    % \codep@brhyper{...} tokens (produced by collapsebr@cb's
-    % \edef+\noexpand chain).  \@ifundefined cannot distinguish
-    % \@empty from real data (collapsebr always defines the
-    % csname), so use \ifx against \@empty instead.
+    % or a macro whose body is the comma-joined pre-rendered
+    % token string (display text, or \hyperlink{anchor}{display}
+    % wrappers when hyperref is loaded — produced by
+    % collapsebr@cb's anchor+display lookup at collapse time).
+    % \@ifundefined cannot distinguish \@empty from real data
+    % (collapsebr always defines the csname), so use \ifx against
+    % \@empty instead.
     \expandafter\ifx\csname codep@br@#1\endcsname\@empty%
       % No refs to this target (collapsed to \@empty): skip.
+      % Do NOT clear \codep@rendered@#1 here — next-pass
+      % convergence is handled by the per-key "touched" flag:
+      % this branch leaves \codep@rlflag@#1 unset, so
+      % \codep@renderlist@emit@all will not re-serialize the
+      % stale cache entry into the .aux on this run.
     \else
       % P05a Moment 1: freeze the collapsed payload into
-      % \codep@rendered@<key>.  Fires for both inline and
-      % appendix modes (collapse ran regardless of mode); the
-      % inline-only pendingbr store below is separate.  The
-      % \AtBeginDocument \codep@brhyper swap fires before any
-      % document-body queuebackref, so stored tokens already
-      % reflect the correct rendering variant for this run.
-      % Replay-guarded: restatable replays must not overwrite
-      % the cache with redundant rewrites.
+      % \codep@rendered@<key>, and mark the atom "touched this
+      % run" via \codep@rlflag@<key> so the enddoc walker knows
+      % this cache line is current-run evidence (GPT MAJOR #1
+      % "stale cache clear" — touched-set semantics).
+      % Fires for both inline and appendix modes (collapse ran
+      % regardless of mode); the inline-only pendingbr store
+      % below is separate.  Collapse already resolved anchor and
+      % display at its own call site, so the stored tokens are
+      % literal rendered tokens — no deferred \codep@brhyper
+      % refs.  Replay-guarded: restatable replays must not
+      % overwrite the cache with redundant rewrites.
       %
       % The \expandafter\expandafter\expandafter chain resolves
-      % \codep@br@<key> ONE step (pulling out its body — the
-      % comma-joined \codep@brhyper{...} tokens) before
-      % \unexpanded freezes them.  A single \expandafter would
-      % leave the csname reference itself in the xdef body,
-      % which would defeat the freeze (next-run replay has no
-      % \codep@br@<key> binding).
+      % \codep@br@<key> ONE step (pulling out its rendered-token
+      % body) before \unexpanded freezes them.  A single
+      % \expandafter would leave the csname reference itself in
+      % the xdef body, which would defeat the freeze (next-run
+      % replay has no \codep@br@<key> binding).
       \ifnum\codep@replaydepth=0\relax%
         \expandafter\xdef\csname codep@rendered@#1\endcsname{%
           \expandafter\expandafter\expandafter\unexpanded%
           \expandafter\expandafter\expandafter{%
             \csname codep@br@#1\endcsname}}%
+        \expandafter\gdef\csname codep@rlflag@#1\endcsname{}%
       \fi%
       \ifbool{codep@appendix}{}{%
         % Inline mode: store ref list for flush.

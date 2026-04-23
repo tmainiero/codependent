@@ -1977,20 +1977,31 @@
 }%
 
 % \codep@renderlist@emit@one{atom-key}{atom-kind}
-%   Per-atom handler.  If Moment-1 populated \codep@rendered@<key>
-%   for this atom, write one \codep@renderlist aux record carrying
-%   the frozen payload.  Atom-kind (#2) is ignored — the wire
-%   format's style field is literally "inline"; future render
-%   styles would switch here.  \unexpanded preserves embedded
-%   \codep@brhyper{...} tokens against \protected@write's \edef
-%   pass so the stored payload lands in the .aux verbatim.
-%% @utility
+%   Per-atom handler.  Guarded by the "touched this run" flag
+%   \codep@rlflag@<key>, set by \codep@queuebackref's non-empty
+%   branch at collapse time.  Without the flag, a warmed
+%   \codep@rendered@<key> from aux-replay that was NOT refreshed
+%   this run (because the atom lost its last ref) would be
+%   re-serialized indefinitely — GPT MAJOR #1.  With the flag,
+%   we only emit the record when the current run observed live
+%   refs for this atom; next-pass .aux drops the stale entry and
+%   the cache stabilizes.
+%
+%   Atom-kind (#2) is ignored — the wire format's style field is
+%   literally "inline"; future render styles would switch here.
+%   \unexpanded keeps the payload literal against \write's \edef
+%   pass so the pre-rendered tokens (display text, or \hyperlink
+%   wrappers from Fix 2) land in the .aux verbatim; \immediate
+%   flushes at enddoc drain time, independent of shipout timing.
+%% @implements \codep@renderlist@emit@all
 \def\codep@renderlist@emit@one#1#2{%
-  \ifcsname codep@rendered@#1\endcsname%
-    \expandafter\let\expandafter\codep@tmp@rlpayload%
-      \csname codep@rendered@#1\endcsname%
-    \immediate\write\@auxout{%
-      \string\codep@renderlist{#1}{inline}{\unexpanded\expandafter{\codep@tmp@rlpayload}}}%
+  \ifcsname codep@rlflag@#1\endcsname%
+    \ifcsname codep@rendered@#1\endcsname%
+      \expandafter\let\expandafter\codep@tmp@rlpayload%
+        \csname codep@rendered@#1\endcsname%
+      \immediate\write\@auxout{%
+        \string\codep@renderlist{#1}{inline}{\unexpanded\expandafter{\codep@tmp@rlpayload}}}%
+    \fi%
   \fi%
 }%
 
