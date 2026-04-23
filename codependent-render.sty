@@ -87,9 +87,11 @@
     \global\codep@pendingbr={}%
     \codep@collapsebr{#1}%
     % After collapse, codep@br@#1 is either \@empty (no refs)
-    % or a comma-joined ref list.  \@ifundefined cannot
-    % distinguish \@empty from real data (collapsebr always
-    % defines the csname), so use \ifx against \@empty instead.
+    % or a macro whose body is a comma-joined list of literal
+    % \codep@brhyper{...} tokens (produced by collapsebr@cb's
+    % \edef+\noexpand chain).  \@ifundefined cannot distinguish
+    % \@empty from real data (collapsebr always defines the
+    % csname), so use \ifx against \@empty instead.
     \expandafter\ifx\csname codep@br@#1\endcsname\@empty%
       % No refs to this target (collapsed to \@empty): skip.
     \else
@@ -102,9 +104,18 @@
       % reflect the correct rendering variant for this run.
       % Replay-guarded: restatable replays must not overwrite
       % the cache with redundant rewrites.
-      \ifnum\codep@replaydepth=\z@%
+      %
+      % The \expandafter\expandafter\expandafter chain resolves
+      % \codep@br@<key> ONE step (pulling out its body — the
+      % comma-joined \codep@brhyper{...} tokens) before
+      % \unexpanded freezes them.  A single \expandafter would
+      % leave the csname reference itself in the xdef body,
+      % which would defeat the freeze (next-run replay has no
+      % \codep@br@<key> binding).
+      \ifnum\codep@replaydepth=0\relax%
         \expandafter\xdef\csname codep@rendered@#1\endcsname{%
-          \expandafter\unexpanded\expandafter{%
+          \expandafter\expandafter\expandafter\unexpanded%
+          \expandafter\expandafter\expandafter{%
             \csname codep@br@#1\endcsname}}%
       \fi%
       \ifbool{codep@appendix}{}{%

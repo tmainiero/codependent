@@ -1885,11 +1885,16 @@
 
 %% @behavior B-PASS-ONE
 % \codep@renderlist@active{key}{style}{payload}
-%   Reserved for frozen appendix/margin render output.  P05
-%   consumer; P03 pins the wire format only.
+%   Hydrate the frozen render payload from aux on begindoc-before.
+%   Three gdefs: the legacy P03 style + payload slots, and the
+%   P05a shorthand \codep@rendered@<key> that Moment-1 populates
+%   synchronously (see \codep@queuebackref).  Keeping both slots
+%   lets legacy consumers keep reading @payload while the W3
+%   appendix reader keys on @rendered directly.
 \def\codep@renderlist@active#1#2#3{%
   \expandafter\gdef\csname codep@renderlist@#1@style\endcsname{#2}%
-  \expandafter\gdef\csname codep@renderlist@#1@payload\endcsname{#3}}
+  \expandafter\gdef\csname codep@renderlist@#1@payload\endcsname{#3}%
+  \expandafter\gdef\csname codep@rendered@#1\endcsname{#3}}
 
 % Accumulator for entitymeta emission at enddoc.  Each tracked-env
 % close site appends one token-sequence describing its atom; the
@@ -1967,6 +1972,45 @@
     \begingroup%
       \let\codep@entitymeta@mark\codep@entitymeta@emit@one%
       \codep@entitymetaacc%
+    \endgroup%
+  \fi%
+}%
+
+% \codep@renderlist@emit@one{atom-key}{atom-kind}
+%   Per-atom handler.  If Moment-1 populated \codep@rendered@<key>
+%   for this atom, write one \codep@renderlist aux record carrying
+%   the frozen payload.  Atom-kind (#2) is ignored — the wire
+%   format's style field is literally "inline"; future render
+%   styles would switch here.  \unexpanded preserves embedded
+%   \codep@brhyper{...} tokens against \protected@write's \edef
+%   pass so the stored payload lands in the .aux verbatim.
+%% @utility
+\def\codep@renderlist@emit@one#1#2{%
+  \ifcsname codep@rendered@#1\endcsname%
+    \expandafter\let\expandafter\codep@tmp@rlpayload%
+      \csname codep@rendered@#1\endcsname%
+    \immediate\write\@auxout{%
+      \string\codep@renderlist{#1}{inline}{\unexpanded\expandafter{\codep@tmp@rlpayload}}}%
+  \fi%
+}%
+
+% \codep@renderlist@emit@all
+%   Walk the count-indexed atom array and emit renderlist records
+%   for every atom with a populated Moment-1 cache.  Array entries
+%   expand to {<prefixed-key>}{<kind>}; the triple-\expandafter
+%   chain resolves the csname before emit@one sees its args.
+%% @behavior B-PASS-ONE
+\def\codep@renderlist@emit@all{%
+  \if@filesw%
+    \begingroup%
+      \count@=\z@%
+      \loop%
+        \ifnum\count@<\codep@atomcount%
+        \advance\count@ by 1\relax%
+        \expandafter\expandafter\expandafter%
+          \codep@renderlist@emit@one%
+          \csname codep@atom@\the\count@\endcsname%
+      \repeat%
     \endgroup%
   \fi%
 }%
@@ -3166,10 +3210,12 @@
     \global\let\codep@pendingproofbind@label\@empty%
   \fi%
 }%
-%% @utility
+%% @behavior B-PASS-ONE
 \def\codep@enddoc@drain@renderlist{%
-  % P05 populates this slot with the renderlist snapshot emit.
-  % No-op in commit 2 skeleton.
+  \ifnum\codep@replaydepth>0\relax%
+  \else%
+    \codep@renderlist@emit@all%
+  \fi%
 }%
 %% @utility
 \def\codep@enddoc@drain@warnscan{%
