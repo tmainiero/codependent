@@ -2,9 +2,10 @@
 %% TEST-WHAT: Exercise the single enddoc orchestrator (commit ad0c423):
 %%            one theorem + one proof + one paragraph + one label. Confirm
 %%            at document-end the orchestrator runs every drain (drain@proofs,
-%%            drain@renderlist, drain@warnscan, drain@sentinel, plus
-%%            drain@p03 for forward-ref settlement). Document compiles without
-%%            PackageError/PackageWarning and converges in 2 passes.
+%%            drain@renderlist, drain@p03, drain@warnscan, drain@sentinel).
+%%            Verify each drain's observable side-effect via specific assertions.
+%%            Document compiles without PackageError/PackageWarning and
+%%            converges in 2 passes.
 %% TEST-SOURCE: wave3-plan-v11.md P04 orchestrator contract
 %% TEST-SECTION: codependent.sty §enddoc orchestrator, §drain sites
 %% TEST-EXIT: 0
@@ -14,6 +15,9 @@
 %% TEST-BEHAVIOR: B-ERROR-ENDDOC, B-WARN-ENDDOC
 %% TEST-PDF-CONTAINS: Main theorem
 %% TEST-PDF-NOT: Error
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@entitymeta
+%% TEST-LOG-NOT: proof-bind slot
 %%
 %% A minimal document exercising the orchestrator: theorem with a proof,
 %% a paragraph, and a cross-reference. At end-of-document, all drains
