@@ -45,6 +45,11 @@
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-EQ-ALL
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% PINS: Visible render path unpinned per coverage audit (2026-04-24).
+%% Audit found 0 "Used in" in PDF on stale build; rendering may be fixed.
+%% Pin so a future regression cannot silently pass this fixture.
+%% TEST-PDF-CONTAINS: Used in
 
 \documentclass{article}
 

@@ -34,10 +34,13 @@
 %% TEST-PDF-LINKS: 2
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-BEHAVIOR: B-PASS-ONE
-%% NOTE: TEST-PDF-ALL-BACKREFS-LINKED intentionally NOT enabled here.
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% NOTE: TEST-PDF-ALL-BACKREFS-LINKED not enabled as a green assertion.
 %% The no-cleveref path has a known linking gap: starred proof atoms
 %% (2.2*, 2.3*) and some references via \ref lack hyperlinks.
-%% Enable once the no-cleveref linking path is fixed.
+%% Pinned as known-broken per coverage audit (2026-04-24).
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
 %%
 %% Without cleveref the package must:
 %%   (1) skip the \cref@getlabel patch (it is simply absent)
