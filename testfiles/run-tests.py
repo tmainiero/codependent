@@ -32,6 +32,7 @@ import difflib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -40,6 +41,7 @@ import textwrap
 import time
 from collections import defaultdict
 from pathlib import Path
+from xml.etree import ElementTree
 
 # ----------------------------------------------------------------------
 # Project layout
@@ -104,6 +106,7 @@ METADATA_KEYS = {
     "TEST-PDF-BACKREF-TARGETS": "pdf_backref_targets",  # may repeat; "<atom-dest> = <dest1>, <dest2>, ..."
     "TEST-PDF-BACKREF-ENTRY-TARGET": "pdf_backref_entry_targets",  # may repeat; "<atom_pat> | <entry_text> = <dest_pat>"
     "TEST-PDF-BACKREF-SOURCES-RENDERED": "pdf_backref_sources_rendered",  # boolean; every backref source token must be rendered in PDF
+    "TEST-PDF-VSPACE-BETWEEN": "pdf_vspace_between",  # may repeat; "<anchor1-regex> <anchor2-regex> <max-points>" (use shell-style quoting for spaces)
     # Package error/warning assertions
     "TEST-EXPECT-PACKAGE-WARNING": "expect_package_warning",  # may repeat; regex on "Package codependent Warning:" line
     "TEST-EXPECT-PACKAGE-ERROR": "expect_package_error",      # may repeat; regex on "Package codependent Error:" line; also drops -halt-on-error
@@ -135,6 +138,7 @@ REPEATING_KEYS = {
     "pdf_link_rect",
     "pdf_backref_targets",
     "pdf_backref_entry_targets",
+    "pdf_vspace_between",
     "expect_package_warning", "expect_package_error",
     "pdf_appendix_entry", "pdf_appendix_entry_text_only",
 }
@@ -216,6 +220,7 @@ class Fixture:
     pdf_backref_targets: list = dataclasses.field(default_factory=list)
     pdf_backref_entry_targets: list = dataclasses.field(default_factory=list)
     pdf_backref_sources_rendered: bool = False
+    pdf_vspace_between: list = dataclasses.field(default_factory=list)
     # Package error/warning assertions
     expect_package_warning: list = dataclasses.field(default_factory=list)
     expect_package_error: list = dataclasses.field(default_factory=list)
@@ -455,6 +460,118 @@ def _extract_pdf_stext(pdf_path: Path) -> str | None:
         return proc.stdout if proc.returncode == 0 else None
     except (subprocess.TimeoutExpired, OSError):
         return None
+
+
+@dataclasses.dataclass
+class _StextBlock:
+    page_index: int
+    page_height: float
+    first_line_text: str
+    bbox: list[float]
+
+
+def _parse_bbox(bbox_text: str | None) -> list[float] | None:
+    if not bbox_text:
+        return None
+    try:
+        bbox = [float(part) for part in bbox_text.split()]
+    except ValueError:
+        return None
+    return bbox if len(bbox) == 4 else None
+
+
+def _union_bboxes(bboxes: list[list[float]]) -> list[float] | None:
+    if not bboxes:
+        return None
+    return [
+        min(b[0] for b in bboxes),
+        min(b[1] for b in bboxes),
+        max(b[2] for b in bboxes),
+        max(b[3] for b in bboxes),
+    ]
+
+
+def _parse_stext_blocks(stext_xml: str) -> list[_StextBlock]:
+    """Parse mutool stext XML into document-order blocks with first-line text."""
+    try:
+        root = ElementTree.fromstring(stext_xml)
+    except ElementTree.ParseError:
+        return []
+
+    blocks: list[_StextBlock] = []
+    for page_index, page in enumerate(root.findall(".//page")):
+        try:
+            page_height = float(page.attrib.get("height", "792"))
+        except ValueError:
+            page_height = 792.0
+        for block in page.findall("./block"):
+            line_nodes = block.findall(".//line")
+            if not line_nodes:
+                continue
+            first_line_text = (line_nodes[0].attrib.get("text") or "").strip()
+            if not first_line_text:
+                continue
+            block_bbox = _parse_bbox(block.attrib.get("bbox"))
+            if block_bbox is None:
+                line_bboxes = [
+                    bbox
+                    for bbox in (_parse_bbox(line.attrib.get("bbox")) for line in line_nodes)
+                    if bbox is not None
+                ]
+                block_bbox = _union_bboxes(line_bboxes)
+            if block_bbox is None:
+                continue
+            blocks.append(
+                _StextBlock(
+                    page_index=page_index,
+                    page_height=page_height,
+                    first_line_text=first_line_text,
+                    bbox=block_bbox,
+                )
+            )
+    return blocks
+
+
+def _parse_pdf_vspace_between_spec(spec: str) -> tuple[str, str, float] | None:
+    """Parse TEST-PDF-VSPACE-BETWEEN using shell-style quoting for regexes."""
+    try:
+        parts = shlex.split(spec)
+    except ValueError:
+        return None
+    if len(parts) != 3:
+        return None
+    try:
+        max_points = float(parts[2])
+    except ValueError:
+        return None
+    return parts[0], parts[1], max_points
+
+
+def _measure_pdf_vspace_between(
+    stext_xml: str,
+    anchor1_regex: str,
+    anchor2_regex: str,
+) -> tuple[float | None, str | None]:
+    """Measure vertical gap between two stext blocks matched by first-line regex."""
+    blocks = _parse_stext_blocks(stext_xml)
+    try:
+        anchor1_re = re.compile(anchor1_regex)
+        anchor2_re = re.compile(anchor2_regex)
+    except re.error as exc:
+        return None, f"invalid regex ({exc})"
+
+    block1 = next((block for block in blocks if anchor1_re.search(block.first_line_text)), None)
+    if block1 is None:
+        return None, f"anchor not found: {anchor1_regex}"
+    block2 = next((block for block in blocks if anchor2_re.search(block.first_line_text)), None)
+    if block2 is None:
+        return None, f"anchor not found: {anchor2_regex}"
+
+    if block1.page_index != block2.page_index:
+        return 0.0, None
+
+    gap = max(0.0, block2.bbox[1] - block1.bbox[3])
+    return gap, None
 
 
 def _extract_pdf_objects(pdf_path: Path) -> str | None:
@@ -1485,6 +1602,7 @@ def _run_assertions(
         or fix.pdf_link_rect or fix.pdf_no_orphan_links
         or fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
         or fix.pdf_backref_sources_rendered
+        or fix.pdf_vspace_between
     )
     if has_pdf_checks:
         pdf_file = tmp_path / f"{fix.name}.pdf"
@@ -1537,7 +1655,7 @@ def _run_assertions(
                         fail(f"pdf links: expected >= {fix.pdf_links}, got {link_count}")
 
             # 10. Structured text assertions.
-            if fix.pdf_stext or fix.pdf_stext_not:
+            if fix.pdf_stext or fix.pdf_stext_not or fix.pdf_vspace_between:
                 if PDF_STEXT_TOOL is None:
                     fail(
                         "PDF stext assertions require mutool "
@@ -1554,6 +1672,27 @@ def _run_assertions(
                         for pat in fix.pdf_stext_not:
                             if re.search(pat, stext_xml):
                                 fail(f"pdf stext matched forbidden pattern: {pat!r}")
+                        for spec in fix.pdf_vspace_between:
+                            parsed = _parse_pdf_vspace_between_spec(spec)
+                            if parsed is None:
+                                fail(
+                                    f"malformed TEST-PDF-VSPACE-BETWEEN: {spec!r} "
+                                    "(expected: '<anchor1-regex> <anchor2-regex> <max-points>' "
+                                    "with shell-style quoting for spaces)"
+                                )
+                                continue
+                            anchor1_regex, anchor2_regex, max_points = parsed
+                            gap, err = _measure_pdf_vspace_between(
+                                stext_xml, anchor1_regex, anchor2_regex
+                            )
+                            if err is not None:
+                                fail(f"TEST-PDF-VSPACE-BETWEEN: {err}")
+                            elif gap is not None and gap > max_points:
+                                fail(
+                                    "TEST-PDF-VSPACE-BETWEEN: "
+                                    f"gap {gap:.2f}pt exceeds max {max_points:.2f}pt "
+                                    f"between {anchor1_regex!r} and {anchor2_regex!r}"
+                                )
 
             # 11. PDF object assertions.
             if fix.pdf_objects or fix.pdf_objects_not:

@@ -26,6 +26,8 @@ import json
 import os
 import re
 import sys
+from collections import Counter, defaultdict
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
 try:
@@ -264,35 +266,85 @@ def parse_sty_file(path: str) -> List[MacroInfo]:
 
 RE_TEST_BEHAVIOR = re.compile(r'^%%\s+TEST-BEHAVIOR:\s*(.+)$')
 RE_TEST_SOURCE_OR_SECTION = re.compile(r'^%%\s+TEST-(?:SOURCE|SECTION):\s*(.+)$')
+RE_TEST_HEADER = re.compile(
+    r"^%%\s+(TEST-[A-Z-]+)(?:\[(cold|warm|warm_changed)\])?:\s*(.*)$"
+)
 # Only flag refs to docs/BEHAVIOR.md in TEST-SOURCE/TEST-SECTION: those should
 # use %% TEST-BEHAVIOR: B-XXX instead of prose section citations.
 # docs/DESIGN.md, docs/CONVENTIONS.md etc. are legitimate source pointers.
 RE_PROSE_DOC_REF = re.compile(r'\bdocs/BEHAVIOR\.md\b')
+PDF_ASSERTION_DIRECTIVES = {
+    "TEST-PDF-CONTAINS",
+    "TEST-PDF-NOT",
+    "TEST-PDF-STEXT",
+    "TEST-PDF-STEXT-NOT",
+    "TEST-PDF-LINKS",
+    "TEST-PDF-LINK-DEST",
+    "TEST-PDF-LINK-DEST-NOT",
+    "TEST-PDF-LINK-COUNT",
+    "TEST-PDF-LINK-RECT",
+    "TEST-PDF-DEST-EXISTS",
+    "TEST-PDF-DEST-NOT-EXISTS",
+    "TEST-PDF-BACKREF-TARGETS",
+    "TEST-PDF-BACKREF-ENTRY-TARGET",
+    "TEST-PDF-BACKREF-SOURCES-RENDERED",
+    "TEST-PDF-ALL-BACKREFS-LINKED",
+    "TEST-PDF-NO-ORPHAN-LINKS",
+    "TEST-PDF-APPENDIX-ENTRY",
+    "TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY",
+    "TEST-PDF-OBJECTS",
+    "TEST-PDF-VSPACE-BETWEEN",
+}
+
+
+@dataclass(frozen=True)
+class BehaviorTestClassification:
+    bid: str
+    status: str
+    claimed_by: Tuple[str, ...]
+    visible_by: Tuple[str, ...]
+
+
+def _iter_test_behavior_baseline_entries(path: str) -> List[str]:
+    entries: List[str] = []
+    if not os.path.isfile(path):
+        return entries
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            entry = line.split("#", 1)[0].strip()
+            if entry:
+                entries.append(entry)
+    return entries
 
 
 def load_test_behavior_baseline(path: str) -> Set[str]:
     """Grandfather list of .lvt files (relative to PROJ_ROOT) exempt from the rule."""
-    exempt: Set[str] = set()
-    if not os.path.isfile(path):
-        return exempt
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            exempt.add(line)
-    return exempt
+    return {
+        entry
+        for entry in _iter_test_behavior_baseline_entries(path)
+        if entry.endswith(".lvt")
+    }
 
 
-def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]]]:
-    """Return (behavior_ids, [(lineno, raw_line_with_prose_docref), ...]).
+def load_grandfathered_behavior_ids(path: str) -> Set[str]:
+    """Grandfathered B-IDs for visible-verification enforcement."""
+    return {
+        entry
+        for entry in _iter_test_behavior_baseline_entries(path)
+        if entry.startswith("B-")
+    }
+
+
+def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]], Set[str]]:
+    """Return (behavior_ids, prose_doc_refs, pdf_directive_names).
 
     Reads the `%%` header block until the first non-header line.
     """
     ids: List[str] = []
     prose_refs: List[Tuple[int, str]] = []
+    pdf_directives: Set[str] = set()
     if not os.path.isfile(path):
-        return ids, prose_refs
+        return ids, prose_refs, pdf_directives
     with open(path, "r", encoding="utf-8") as f:
         for lineno, raw in enumerate(f, 1):
             line = raw.rstrip("\n")
@@ -311,7 +363,11 @@ def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]]]:
             m = RE_TEST_SOURCE_OR_SECTION.match(line)
             if m and RE_PROSE_DOC_REF.search(m.group(1)):
                 prose_refs.append((lineno, line))
-    return ids, prose_refs
+                continue
+            m = RE_TEST_HEADER.match(line)
+            if m and m.group(1) in PDF_ASSERTION_DIRECTIVES:
+                pdf_directives.add(m.group(1))
+    return ids, prose_refs, pdf_directives
 
 
 def find_lvt_files() -> List[str]:
@@ -328,7 +384,7 @@ def check_tests(specs: Dict[str, str]) -> List[str]:
     exempt = load_test_behavior_baseline(TEST_BEHAVIOR_BASELINE)
     for lvt in find_lvt_files():
         rel = os.path.relpath(lvt, PROJ_ROOT)
-        ids, prose_refs = parse_lvt_header(lvt)
+        ids, prose_refs, _ = parse_lvt_header(lvt)
         if rel in exempt:
             continue
         if not ids:
@@ -339,6 +395,64 @@ def check_tests(specs: Dict[str, str]) -> List[str]:
         for lineno, line in prose_refs:
             errors.append(f"{rel}:{lineno}: prose docs/*.md ref in TEST-SOURCE/TEST-SECTION header — cite B-* IDs via TEST-BEHAVIOR instead ({line.strip()})")
     return errors
+
+
+def classify_behavior_test_coverage(
+    specs: Dict[str, str]
+) -> Tuple[List[BehaviorTestClassification], Counter, List[str], List[str]]:
+    grandfathered_bids = load_grandfathered_behavior_ids(TEST_BEHAVIOR_BASELINE)
+    claims: Dict[str, List[str]] = defaultdict(list)
+    visible_claims: Dict[str, List[str]] = defaultdict(list)
+
+    for lvt in find_lvt_files():
+        rel = os.path.relpath(lvt, PROJ_ROOT)
+        ids, _prose_refs, pdf_directives = parse_lvt_header(lvt)
+        has_pdf_assertion = bool(pdf_directives)
+        for bid in ids:
+            claims[bid].append(rel)
+            if has_pdf_assertion:
+                visible_claims[bid].append(rel)
+
+    rows: List[BehaviorTestClassification] = []
+    counts: Counter = Counter()
+    errors: List[str] = []
+    stale: List[str] = []
+
+    for bid in sorted(grandfathered_bids):
+        if bid not in specs:
+            errors.append(f".test-behavior-baseline: unknown behavior ID {bid}")
+
+    for bid in sorted(specs):
+        claimed = tuple(sorted(claims.get(bid, [])))
+        visible = tuple(sorted(visible_claims.get(bid, [])))
+
+        if bid in grandfathered_bids:
+            status = "GRANDFATHERED"
+            if visible:
+                stale.append(bid)
+        elif visible:
+            status = "VISIBLE-VERIFIED"
+        elif claimed:
+            status = "CLAIMED-UNVERIFIED"
+            errors.append(
+                f"{bid}: CLAIMED-UNVERIFIED — claimed by {', '.join(claimed)} "
+                f"but no claiming fixture has any TEST-PDF-* directive"
+            )
+        else:
+            status = "UNCLAIMED"
+            errors.append(f"{bid}: UNCLAIMED — no fixture cites this B-ID via TEST-BEHAVIOR")
+
+        counts[status] += 1
+        rows.append(
+            BehaviorTestClassification(
+                bid=bid,
+                status=status,
+                claimed_by=claimed,
+                visible_by=visible,
+            )
+        )
+
+    return rows, counts, errors, stale
 
 
 # ---------------------------------------------------------------------------
@@ -411,6 +525,10 @@ def run_full_check() -> int:
     # Check 7: Test-to-behavior linkage (.lvt TEST-BEHAVIOR headers)
     test_errors = check_tests(specs)
     errors.extend(test_errors)
+    behavior_rows, behavior_counts, behavior_errors, stale_grandfathered_bids = (
+        classify_behavior_test_coverage(specs)
+    )
+    errors.extend(behavior_errors)
 
     # Stats
     n_total_macros = len(all_macros)
@@ -429,7 +547,7 @@ def run_full_check() -> int:
         rel = os.path.relpath(p, PROJ_ROOT)
         if rel in test_exempt:
             continue
-        tids, _ = parse_lvt_header(p)
+        tids, _, _ = parse_lvt_header(p)
         if tids:
             n_tests_assigned += 1
     n_tests_exempt = sum(1 for p in all_lvt if os.path.relpath(p, PROJ_ROOT) in test_exempt)
@@ -442,12 +560,45 @@ def run_full_check() -> int:
     print(f"Tests: {n_tests} total, {n_tests_assigned} with TEST-BEHAVIOR, {n_tests_exempt} baselined")
     print()
 
-    if stale_baseline_macros or stale_baseline_bids:
-        print("STALE BASELINE (remove these — they're now classified/covered):")
+    print("=== Visible Verification Coverage ===")
+    for row in behavior_rows:
+        if row.status == "VISIBLE-VERIFIED":
+            detail = ", ".join(row.visible_by[:2])
+            if len(row.visible_by) > 2:
+                detail += ", ..."
+            print(f"  {row.bid}: {row.status} — visible via {detail}")
+        elif row.status == "GRANDFATHERED":
+            if row.claimed_by:
+                detail = ", ".join(row.claimed_by[:2])
+                if len(row.claimed_by) > 2:
+                    detail += ", ..."
+                print(f"  {row.bid}: {row.status} — claimed without TEST-PDF-* via {detail}")
+            else:
+                print(f"  {row.bid}: {row.status} — no claiming fixtures")
+        elif row.status == "CLAIMED-UNVERIFIED":
+            detail = ", ".join(row.claimed_by[:2])
+            if len(row.claimed_by) > 2:
+                detail += ", ..."
+            print(f"  {row.bid}: {row.status} — claimed without TEST-PDF-* via {detail}")
+        else:
+            print(f"  {row.bid}: {row.status} — no claiming fixtures")
+    print(
+        "Summary: "
+        f"VISIBLE-VERIFIED={behavior_counts['VISIBLE-VERIFIED']}, "
+        f"CLAIMED-UNVERIFIED={behavior_counts['CLAIMED-UNVERIFIED']}, "
+        f"UNCLAIMED={behavior_counts['UNCLAIMED']}, "
+        f"GRANDFATHERED={behavior_counts['GRANDFATHERED']}"
+    )
+    print()
+
+    if stale_baseline_macros or stale_baseline_bids or stale_grandfathered_bids:
+        print("STALE BASELINE (remove these — they're now classified/covered/visible):")
         for m in sorted(stale_baseline_macros):
             print(f"  macro: {m}")
         for b in sorted(stale_baseline_bids):
             print(f"  behavior: {b}")
+        for b in sorted(stale_grandfathered_bids):
+            print(f"  visible-grandfathered behavior: {b}")
         print()
 
     # Ratchet check — runs on every full invocation

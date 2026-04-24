@@ -14,6 +14,12 @@
 # To graduate a file: add %% TEST-BEHAVIOR: B-XXX-YYY to its header block
 # and remove the line from this file.
 #
+# Visible-verification grandfathering:
+# - B-* entries in this file grandfather docs/BEHAVIOR.md IDs that are currently
+#   claimed by TEST-BEHAVIOR headers but have no TEST-PDF-* assertion yet.
+# - Keep one rationale comment per B-* entry and remove the entry once a
+#   claiming fixture gains a PDF-visible assertion.
+#
 # All 94 tests have been backfilled with TEST-BEHAVIOR headers.
 # One test demoted by adversarial audit D (sidecar-only assertion, no B-* covers it yet):
 testfiles/unit/test-label-kernel.lvt
@@ -30,3 +36,16 @@ testfiles/unit/test-sbl-end-marker.lvt
 testfiles/unit/test-sbl-flat-records.lvt
 testfiles/unit/test-sbl-version-source.lvt
 testfiles/unit/test-suppress-trivlist.lvt
+
+# B-CONC-USEDIN: current coverage is .cdp-only on the def-site atom; no PDF row assertion exists yet.
+B-CONC-USEDIN
+# B-CONC-FWDREF: current fixture proves pass-2 settlement through aux/cdp state, not a PDF-visible effect.
+B-CONC-FWDREF
+# B-CONC-NODEF: behavior is a warning + disabled graph edge; current fixture has no PDF-observable assertion.
+B-CONC-NODEF
+# B-CONC-DUPDEF: behavior is a hard package error / halted build before any PDF-visible oracle.
+B-CONC-DUPDEF
+# B-SUPP-BOXES: current suppression coverage is structural/log-based; no PDF spacing/numbering assertion yet.
+B-SUPP-BOXES
+# B-REST-CONCEPT: current restatable concept fixtures assert aux/cdp replay semantics only; no PDF-visible oracle yet.
+B-REST-CONCEPT
