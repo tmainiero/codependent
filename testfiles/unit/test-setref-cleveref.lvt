@@ -12,6 +12,9 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 1
+%% This fixture intentionally inspects the single unresolved forward-ref pass
+%% so the aux edge must come from the front-edge \cref wrapper alone.
+%% TEST-ALLOW-UNDEFINED-REFS: yes
 %% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
 %%
 %% This is the commit-3 regression guard for cleveref. The only pass is

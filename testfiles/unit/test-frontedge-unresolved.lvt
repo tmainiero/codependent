@@ -11,6 +11,9 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 1
+%% This fixture intentionally references a missing label because the test's
+%% point is that front-edge capture still records the edge on the warning path.
+%% TEST-ALLOW-UNDEFINED-REFS: yes
 %% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% The front-edge wrapper fires \codep@frontedge@emit{label} BEFORE

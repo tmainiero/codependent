@@ -117,6 +117,7 @@ METADATA_KEYS = {
     "TEST-PASS-COUNT-WARM-CHANGED": "pass_count_warm_changed",  # int; max passes in warm-changed phase
     "TEST-WARM-MUTATION": "warm_mutation",          # shell command run between warm and warm-changed phases
     "TEST-STABLE-AT": "stable_at",                  # int; phase-qualifiable; declares pass count + asserts convergence
+    "TEST-ALLOW-UNDEFINED-REFS": "allow_undefined_refs",  # boolean; waive universal undefined-ref checks with nearby rationale comment
     # Census instrumentation (SW5c commit 1)
     "TEST-CENSUS": "census",
     "TEST-CENSUS-PASS": "census_pass",
@@ -228,6 +229,7 @@ class Fixture:
     pass_count_warm_changed: int = 0
     warm_mutation: str = ""
     stable_at: int = 0  # unqualified TEST-STABLE-AT; phase-qualified variants live in phase_assertions
+    allow_undefined_refs: bool = False
     census: bool = False
     census_pass: bool = False
     # Phase-qualified assertion overrides: {"cold": {"log_contains": [...], "stable_at": N, ...}}
@@ -353,6 +355,8 @@ def parse_fixture(path: Path) -> Fixture:
                 fix.pdf_all_backrefs_linked = value.lower() in ("yes", "true", "1")
             elif attr == "pdf_backref_sources_rendered":
                 fix.pdf_backref_sources_rendered = value.lower() in ("yes", "true", "1")
+            elif attr == "allow_undefined_refs":
+                fix.allow_undefined_refs = value.lower() in ("yes", "true", "1")
             elif attr in {"census", "census_pass"}:
                 setattr(fix, attr, value.lower() in ("yes", "true", "1", "enabled", "on"))
             elif attr in REPEATING_KEYS:
@@ -1409,6 +1413,21 @@ def _run_assertions(
         if not re.search(pat, log_text):
             fail(f"log missing required pattern: {pat}")
 
+    # 3a. Universal undefined-ref hygiene.
+    if not fix.allow_undefined_refs:
+        if re.search(r"There were undefined references\.", log_text):
+            fail(
+                "undefined references in log "
+                "(set TEST-ALLOW-UNDEFINED-REFS: yes if intentional)"
+            )
+        if re.search(
+            r"cref reference format for label type `[^']+' undefined",
+            log_text,
+        ):
+            fail(
+                "cleveref type undefined — missing \\crefname for some label type"
+            )
+
     # 4. CDP assertions.
     for s in fix.sbl_contains:
         if s not in sbl_text:
@@ -1488,6 +1507,21 @@ def _run_assertions(
                     for s in fix.pdf_not:
                         if s in pdf_text:
                             fail(f"pdf contains forbidden text: {s!r}")
+
+            if not fix.allow_undefined_refs:
+                if PDF_TEXT_TOOL is None:
+                    fail(
+                        "undefined-ref PDF check requires mutool or pdftotext "
+                        "(not on PATH). Run inside 'nix develop'."
+                    )
+                else:
+                    pdf_text = locals().get("pdf_text")
+                    if pdf_text is None:
+                        pdf_text = _extract_pdf_text(pdf_file)
+                    if pdf_text is None:
+                        fail(f"pdf text extraction failed (tool: {PDF_TEXT_TOOL})")
+                    elif re.search(r"(?<![0-9])\?\?(?![0-9])", pdf_text):
+                        fail("?? token in PDF output (undefined ref rendered)")
 
             if fix.pdf_links > 0:
                 if PDF_LINK_TOOL is None:

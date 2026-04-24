@@ -203,6 +203,10 @@
 \usepackage[hypertexnames=false]{hyperref}
 \hypersetup{colorlinks=true,linkcolor=teal,citecolor=darkgray}
 \usepackage{cleveref}
+\crefname{terminology}{terminology}{terminologies}
+\Crefname{terminology}{Terminology}{Terminologies}
+\crefname{question}{question}{questions}
+\Crefname{question}{Question}{Questions}
 
 %% ---------- Concept-tracked macros ----------
 %% Two macros to exercise def-site / use-site tracking.

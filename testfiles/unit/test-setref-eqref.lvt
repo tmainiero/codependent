@@ -12,6 +12,9 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsmath,amsthm,codependent
 %% TEST-RERUN: 1
+%% This fixture intentionally stays on the unresolved forward-ref pass so the
+%% recorded edge proves \eqref capture works without any resolved backend path.
+%% TEST-ALLOW-UNDEFINED-REFS: yes
 %% TEST-BEHAVIOR: B-EQ-TRACK1, B-DISP-EQ, B-FRONTEDGE-CAPTURE
 %%
 %% Single-pass forward ref proves \eqref still captures through the

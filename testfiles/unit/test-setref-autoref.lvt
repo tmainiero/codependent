@@ -12,6 +12,9 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 1
+%% This fixture intentionally inspects the single unresolved forward-ref pass
+%% to prove front-edge capture works before \autoref can resolve the target.
+%% TEST-ALLOW-UNDEFINED-REFS: yes
 %% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
 %%
 %% This is the autoref variant of the commit-3 regression guard. The

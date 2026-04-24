@@ -39,7 +39,7 @@
 \end{theorem}
 
 \begin{theorem}
-  As in \eqref{thm:A} (eqref delegates to \ref, front-edge fires).
+  As in \eqref{thm:A} (eqref delegates to ref; front-edge fires).
 \end{theorem}
 
 \END

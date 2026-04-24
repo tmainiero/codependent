@@ -95,6 +95,18 @@ for FILE in "${FILES[@]}"; do
     fi
   fi
 
+  # 11. Any TEST-ALLOW-UNDEFINED-REFS: yes waiver must have a nearby
+  # documented rationale comment within 3 lines (before or after).
+  while IFS=: read -r LINE_NO _; do
+    [ -n "$LINE_NO" ] || continue
+    START=$(( LINE_NO > 3 ? LINE_NO - 3 : 1 ))
+    END=$(( LINE_NO + 3 ))
+    WINDOW=$(sed -n "${START},${END}p" "$FILE")
+    if ! printf '%s\n' "$WINDOW" | grep -qP '^%%(?!\s*TEST-).+'; then
+      err "$FILE:$LINE_NO: TEST-ALLOW-UNDEFINED-REFS: yes requires a nearby %% rationale comment within 3 lines"
+    fi
+  done < <(grep -n '^%% TEST-ALLOW-UNDEFINED-REFS: yes$' "$FILE" || true)
+
 done
 
 echo >&2

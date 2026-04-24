@@ -12,6 +12,9 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 1
+%% This fixture intentionally inspects the unresolved forward-ref pass to pin
+%% \ref* front-edge capture before the target theorem has been seen.
+%% TEST-ALLOW-UNDEFINED-REFS: yes
 %% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
 %%
 %% This fixture intentionally does NOT assert clickability; the label is
