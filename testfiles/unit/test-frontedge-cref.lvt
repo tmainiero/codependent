@@ -1,0 +1,45 @@
+%% TEST-NAME: test-frontedge-cref
+%% TEST-WHAT: Verify \cref{thm:A} from theorem 1.2 emits
+%%            \codep@atomref{theorem:1.2}{thm:A} via the front-edge
+%%            wrapper installed at begindocument/end.
+%% TEST-SOURCE: docs/SW5c.md §2.2 primitive list (row 9: \cref)
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% cleveref's \cref entirely bypasses kernel \@setref, routing through
+%% \cref@getlabel instead. The backend patches \cref@getlabel to capture
+%% the label. The front-edge wrapper patches the public \cref macro at
+%% begindocument/end, providing label-level capture that is robust to
+%% cleveref internals changing in future releases.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Front-edge cref test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A. This will be referenced via cleveref.
+\end{theorem}
+
+\begin{theorem}
+  By \cref{thm:A} the conclusion follows.
+\end{theorem}
+
+\END
+\end{document}

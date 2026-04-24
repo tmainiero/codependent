@@ -1,0 +1,57 @@
+%% TEST-NAME: test-frontedge-cpagerefrange-absent
+%% TEST-WHAT: Verify \cpagerefrange{thm:A}{thm:C} does NOT produce
+%%            atomrefs (pre-existing coverage gap: goes through
+%%            \cpageref@getlabel which is not patched by the backend,
+%%            and \cpagerefrange is not wrapped by the front-edge).
+%% TEST-SOURCE: docs/SW5c.md §5 risk matrix (cpagerefrange gap)
+%% TEST-SECTION: docs/SW5c.md §5 Waivers
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.4}{thm:A}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.4}{thm:C}
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% \cpagerefrange (cleveref, prints page ranges) routes through
+%% \cpageref@getlabel, which is not patched by either the backend or
+%% the front-edge mechanism at commit 2. This is a known coverage gap
+%% documented in the waiver table. The test pins the ABSENCE of
+%% atomrefs so any future change that accidentally adds coverage (or
+%% breaks the no-crash guarantee) is caught immediately.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{cpagerefrange gap test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B.
+\end{theorem}
+
+\begin{theorem}\label{thm:C}
+  Theorem C.
+\end{theorem}
+
+\begin{theorem}
+  Theorems on pages~\cpagerefrange{thm:A}{thm:C}
+  (page range; atomrefs not captured, documented gap).
+\end{theorem}
+
+\END
+\end{document}

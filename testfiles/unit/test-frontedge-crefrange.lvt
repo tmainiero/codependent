@@ -1,0 +1,57 @@
+%% TEST-NAME: test-frontedge-crefrange
+%% TEST-WHAT: Verify \crefrange{thm:A}{thm:C} produces atomrefs for the
+%%            range endpoints at commit 2 (backend still captures via
+%%            \cref@getlabel). Documents that \crefrange is WAIVED from
+%%            front-edge wrapping; coverage at commit 2 is backend-only.
+%% TEST-SOURCE: docs/SW5c.md §5 risk matrix row 14 (\crefrange waiver)
+%% TEST-SECTION: docs/SW5c.md §5 Waivers
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:A}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:C}
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% WAIVER NOTE: \crefrange is NOT wrapped by the front-edge mechanism
+%% installed in commit 2. The backend (\cref@getlabel patch) captures
+%% the endpoint labels and produces the atomrefs seen here. At commit 3
+%% when the backend is removed, \crefrange will produce NO atomrefs
+%% (the known coverage gap). This test will be updated at commit 3 to
+%% assert ABSENCE and pin the documented gap as intentional.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{crefrange waiver test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B.
+\end{theorem}
+
+\begin{theorem}\label{thm:C}
+  Theorem C.
+\end{theorem}
+
+\begin{theorem}
+  By \crefrange{thm:A}{thm:C} the conclusion follows
+  (backend captures endpoints; front-edge wrapper is waived for \crefrange).
+\end{theorem}
+
+\END
+\end{document}

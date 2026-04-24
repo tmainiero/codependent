@@ -371,6 +371,10 @@
 \codep@eqpending={}
 \newcount\codep@eqpendingcount
 \codep@eqpendingcount=0\relax
+% Track 2: pending-append guard cleanup tokens (SW5c commit 2).
+% Cleared at each equation-block begin to reset \codep@arw@pending@<tgt>.
+\newtoks\codep@eqpendguards
+\codep@eqpendguards={}
 
 % Track 2: saved equation counter at \begin{align}.
 \newcount\codep@eq@startcount
@@ -1405,6 +1409,9 @@
       \global\def\codep@eq@lbltype@pending{equation}%
     \fi%
     \global\codep@eq@startcount=\c@equation\relax%
+    % Clear SW5c pending-append guards from the previous equation block.
+    \the\codep@eqpendguards%
+    \global\codep@eqpendguards={}%
     \global\codep@eqpending={}%
     \global\codep@eqpendingcount=0\relax%
     \codep@eqshouldtrack%
@@ -2145,15 +2152,25 @@
 % \codep@writeatomref@tracktwo{target}
 %   Track 2 (align/gather multiline) path: defer the ref
 %   to the pending list for later flush by \codep@flusheqrange.
+%   SW5c commit 2: \codep@arw@pending@<tgt> guard prevents
+%   double-enqueue when both front-edge and backend fire (B-FRONTEDGE-DEDUP-EQ).
 %% @implements \codep@writeatomref
 \def\codep@writeatomref@tracktwo#1{%
   \codep@eqshouldtrack%
   \ifx\codep@eqatom\@empty%
     \codep@writeatomref@do{#1}%
   \else%
-    \global\codep@eqpending=\expandafter{%
-      \the\codep@eqpending\codep@eqpending@entry{#1}}%
-    \global\advance\codep@eqpendingcount by 1\relax%
+    \expandafter\ifx\csname codep@arw@pending@#1\endcsname\relax%
+      \global\expandafter\let%
+        \csname codep@arw@pending@#1\endcsname\@empty%
+      \global\codep@eqpendguards=\expandafter{%
+        \the\codep@eqpendguards%
+        \global\expandafter\let%
+          \csname codep@arw@pending@#1\endcsname\relax}%
+      \global\codep@eqpending=\expandafter{%
+        \the\codep@eqpending\codep@eqpending@entry{#1}}%
+      \global\advance\codep@eqpendingcount by 1\relax%
+    \fi%
   \fi%
 }%
 
@@ -2788,6 +2805,155 @@
 % and concept edges are appended on top.
 \DeclareHookRule{begindocument/end}%
   {codependent/concept/flush}{after}{codependent/backref/flush}
+
+%% --- Section 8a.10: Front-edge ref-intent capture (SW5c commit 2) ---
+%%
+%% Wraps 12 user-level ref primitives at begindocument/end so that
+%% \codep@atomref records are emitted on EVERY pass, including pass 1
+%% when the target is still unresolved ("??").  The backend patches
+%% (\codep@installatomrefpatch) stay live in this commit; dedup via
+%% \codep@dedupwrite (non-eq, track-one) and the track-two pending
+%% guard (\codep@arw@pending@<tgt>, see \codep@writeatomref@tracktwo)
+%% prevent double-write.
+%%
+%% INV-PASS1-EDGE-AUX-COMPLETE: all ref-uses that affect pass-2 backrefs
+%% produce a \codep@atomref record on pass 1 regardless of resolution.
+%%
+%% §8 open questions resolved at implementation time:
+%%   §8.1  \protected\def for all wrappers — survives \protected@edef.
+%%   §8.2  Option (a) pending-append guard — see \codep@writeatomref@tracktwo.
+%%   §8.3  \nameref survey: no fixture uses \nameref; keep 12-primitive list.
+%%   §8.4  \cref@getlabel third-party survey: no exotic callers in integ
+%%         fixtures; defer to commit 3 runtime warning.
+%%   §8.5  pre-begindocument/end refs: at commit 2 the backend captures;
+%%         post-commit-3 is a documented waiver.
+
+% \codep@splitlabels{csv}{macro}
+%   Split comma-separated labels on top-level (unbraced) commas and
+%   call \macro{label} for each label.  Matches cleveref's parse:
+%   \cref{a,{b,c},d} → three calls: \macro{a}, \macro{b,c}, \macro{d}.
+%   Empty items (e.g. from trailing commas) are silently skipped.
+%% @utility
+\def\codep@splitlabels#1#2{%
+  \codep@sl@iter#1,\@nil{#2}%
+}%
+%% @utility
+\def\codep@sl@iter#1,#2\@nil#3{%
+  \def\codep@sl@item{#1}%
+  \ifx\codep@sl@item\@empty\else%
+    #3{#1}%
+  \fi%
+  \def\codep@sl@more{#2}%
+  \ifx\codep@sl@more\@empty\else%
+    \codep@sl@iter#2\@nil{#3}%
+  \fi%
+}%
+
+% \codep@frontedge@emit{label}
+%   Emit a front-edge atomref record for the current source atom.
+%   Delegates to \codep@writeatomref which handles: replay-depth
+%   guard, measuring-pass guard, equation track-one / track-two
+%   dispatch (with the §2.7(a) pending guard), and dedup.
+%% @behavior B-FRONTEDGE-CAPTURE
+\def\codep@frontedge@emit#1{%
+  \codep@writeatomref{#1}%
+}%
+
+% Front-edge single-label delegation helpers (no-star / star paths).
+% #1 = saved original command, #2 = label.
+%% @implements \codep@installfrontedgerefpatch
+\def\codep@fe@single@nostar#1#2{%
+  \codep@frontedge@emit{#2}%
+  #1{#2}%
+}%
+%% @implements \codep@installfrontedgerefpatch
+\def\codep@fe@single@star#1#2{%
+  \codep@frontedge@emit{#2}%
+  #1*{#2}%
+}%
+
+% Front-edge CSV-label delegation helpers (no-star / star paths).
+% #1 = saved original command, #2 = comma-separated label string.
+%% @implements \codep@installfrontedgerefpatch
+\def\codep@fe@csv@nostar#1#2{%
+  \codep@splitlabels{#2}{\codep@frontedge@emit}%
+  #1{#2}%
+}%
+%% @implements \codep@installfrontedgerefpatch
+\def\codep@fe@csv@star#1#2{%
+  \codep@splitlabels{#2}{\codep@frontedge@emit}%
+  #1*{#2}%
+}%
+
+% \codep@installfrontedgerefpatch
+%   Install front-edge wrappers for the 12 user-level ref primitives.
+%   Called at begindocument/end after nameref, hyperref, and cleveref
+%   have installed their final definitions; our wrappers wrap whatever
+%   is live at that point.  Every install is guarded by \ifcsname so
+%   absent commands (e.g. \cref when cleveref not loaded) are silently
+%   skipped.  All wrappers are \protected so they survive \protected@edef
+%   in moving args (captions, section titles, TOC entries).
+%   Backends stay live in commit 2; dual-fire managed by dedup + guard.
+%% @behavior B-FRONTEDGE-CAPTURE
+%% @behavior B-FRONTEDGE-DEDUP-EQ
+\def\codep@installfrontedgerefpatch{%
+  %% ---- \ref and \ref* ----
+  \ifcsname ref\endcsname%
+    \let\codep@saved@ref\ref%
+    \protected\def\ref{%
+      \@ifstar{\codep@fe@single@star\codep@saved@ref}%
+              {\codep@fe@single@nostar\codep@saved@ref}%
+    }%
+  \fi%
+  %% ---- \pageref and \pageref* ----
+  \ifcsname pageref\endcsname%
+    \let\codep@saved@pageref\pageref%
+    \protected\def\pageref{%
+      \@ifstar{\codep@fe@single@star\codep@saved@pageref}%
+              {\codep@fe@single@nostar\codep@saved@pageref}%
+    }%
+  \fi%
+  %% ---- \Ref and \Ref* (nameref) ----
+  \ifcsname Ref\endcsname%
+    \let\codep@saved@Ref\Ref%
+    \protected\def\Ref{%
+      \@ifstar{\codep@fe@single@star\codep@saved@Ref}%
+              {\codep@fe@single@nostar\codep@saved@Ref}%
+    }%
+  \fi%
+  %% ---- \cref and \cref* (cleveref) ----
+  \ifcsname cref\endcsname%
+    \let\codep@saved@cref\cref%
+    \protected\def\cref{%
+      \@ifstar{\codep@fe@csv@star\codep@saved@cref}%
+              {\codep@fe@csv@nostar\codep@saved@cref}%
+    }%
+  \fi%
+  %% ---- \Cref and \Cref* (cleveref) ----
+  \ifcsname Cref\endcsname%
+    \let\codep@saved@Cref\Cref%
+    \protected\def\Cref{%
+      \@ifstar{\codep@fe@csv@star\codep@saved@Cref}%
+              {\codep@fe@csv@nostar\codep@saved@Cref}%
+    }%
+  \fi%
+  %% ---- \autoref and \autoref* (hyperref) ----
+  \ifcsname autoref\endcsname%
+    \let\codep@saved@autoref\autoref%
+    \protected\def\autoref{%
+      \@ifstar{\codep@fe@single@star\codep@saved@autoref}%
+              {\codep@fe@single@nostar\codep@saved@autoref}%
+    }%
+  \fi%
+}%
+
+% Install the front-edge wrappers at begindocument/end, AFTER the
+% backref-flush hook so the aux-replay queue is processed first.
+\AddToHook{begindocument/end}[codependent/frontedge/install]{%
+  \codep@installfrontedgerefpatch%
+}%
+\DeclareHookRule{begindocument/end}%
+  {codependent/frontedge/install}{after}{codependent/backref/flush}%
 
 %% ===================================================================
 %% Section 8: Back-reference emission (rendering code in

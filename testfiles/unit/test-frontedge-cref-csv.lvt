@@ -1,0 +1,55 @@
+%% TEST-NAME: test-frontedge-cref-csv
+%% TEST-WHAT: Verify \cref{thm:A,thm:B,thm:C} (comma-separated list)
+%%            from theorem 1.4 produces three separate atomref records,
+%%            one per label: thm:A, thm:B, and thm:C.
+%% TEST-SOURCE: docs/SW5c.md §2.5 multi-label splitting
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:A}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:B}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:C}
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% When cleveref receives a comma-separated list, it iterates over
+%% each label. The front-edge wrapper intercepts the comma-separated
+%% string and calls \codep@splitlabels to iterate, firing
+%% \codep@frontedge@emit once per label. This test verifies all three
+%% edges are recorded when three labels appear in a single \cref call.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Front-edge cref CSV test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B.
+\end{theorem}
+
+\begin{theorem}\label{thm:C}
+  Theorem C.
+\end{theorem}
+
+\begin{theorem}
+  By \cref{thm:A,thm:B,thm:C} the conclusion follows.
+\end{theorem}
+
+\END
+\end{document}

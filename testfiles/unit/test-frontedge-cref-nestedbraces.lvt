@@ -1,0 +1,51 @@
+%% TEST-NAME: test-frontedge-cref-nestedbraces
+%% TEST-WHAT: Verify \cref{{thm:A},thm:B} (first label in braces)
+%%            from theorem 1.3 produces two atomrefs, one for each label.
+%%            Tests \codep@splitlabels brace-group handling.
+%% TEST-SOURCE: docs/SW5c.md §2.5 multi-label splitting (brace groups)
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.3}{thm:A}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.3}{thm:B}
+%% TEST-ATOMS-MIN: 3
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% cleveref accepts labels wrapped in extra braces (e.g., {thm:A}) in
+%% its comma-separated list. \codep@splitlabels must strip the braces
+%% so that both thm:A and thm:B are individually emitted. Without
+%% brace-group stripping, the label string "{thm:A}" would be passed
+%% to \codep@frontedge@emit and stored verbatim, producing a wrong
+%% or missing atomref record.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Front-edge cref nested-braces test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B.
+\end{theorem}
+
+\begin{theorem}
+  By \cref{{thm:A},thm:B} the conclusion follows (first label in braces).
+\end{theorem}
+
+\END
+\end{document}

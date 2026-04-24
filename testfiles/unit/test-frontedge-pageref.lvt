@@ -1,0 +1,45 @@
+%% TEST-NAME: test-frontedge-pageref
+%% TEST-WHAT: Verify \pageref{thm:A} from theorem 1.2 emits
+%%            \codep@atomref{theorem:1.2}{thm:A} via the front-edge
+%%            wrapper installed at begindocument/end.
+%% TEST-SOURCE: docs/SW5c.md §2.2 primitive list (row 3: \pageref)
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: hyperref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% \pageref typeset the page number of the target; it calls the same
+%% low-level \@setref machinery as \ref but requests the page field.
+%% The front-edge wrapper fires \codep@frontedge@emit before delegating,
+%% so the dependency edge is recorded regardless of which field is
+%% requested. This fixture distinguishes \pageref coverage from the
+%% existing test-setref-kernel-ref.lvt which only covers \ref.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Front-edge pageref test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}
+  Theorem A is on page~\pageref{thm:A}.
+\end{theorem}
+
+\END
+\end{document}

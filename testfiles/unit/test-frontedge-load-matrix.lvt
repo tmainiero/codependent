@@ -1,0 +1,56 @@
+%% TEST-NAME: test-frontedge-load-matrix
+%% TEST-WHAT: Verify front-edge capture works when codependent is loaded
+%%            BEFORE hyperref and cleveref. The wrappers install at
+%%            begindocument/end, after all package redefinitions, so
+%%            load order should not affect capture.
+%% TEST-SOURCE: docs/SW5c.md §2.6 load-order invariance
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:B}
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: amsthm,codependent,hyperref,cleveref
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% A common author pattern: load theorem packages first, then
+%% codependent, then hyperref, then cleveref. The front-edge wrappers
+%% installed at begindocument/end see whatever final definitions \ref
+%% and \cref have at that point, regardless of the preamble order.
+%% Two separate theorems exercise \ref and \cref from distinct source
+%% atoms so both wrapper paths are tested.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\begin{document}
+\START
+
+\section{Load-order test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}
+  By \ref{thm:A} (plain ref, codependent loaded before hyperref).
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B.
+\end{theorem}
+
+\begin{theorem}
+  By \cref{thm:B} (cleveref, codependent loaded before cleveref).
+\end{theorem}
+
+\END
+\end{document}

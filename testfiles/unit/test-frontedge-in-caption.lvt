@@ -1,0 +1,52 @@
+%% TEST-NAME: test-frontedge-in-caption
+%% TEST-WHAT: Verify \ref inside a \caption (moving arg, outside any
+%%            tracked atom) does NOT produce a spurious atomref record,
+%%            while \ref inside a theorem (inside a tracked atom) DOES.
+%% TEST-SOURCE: docs/SW5c.md §3.1 moving arguments; B-EDGE-HEADING
+%% TEST-SECTION: docs/SW5c.md §3 Safety cases
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: hyperref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE, B-EDGE-HEADING
+%%
+%% Captions are typeset outside any theorem atom. \codep@currentatom
+%% is \@empty at that point, so \codep@frontedge@emit short-circuits
+%% and writes nothing. Atom 1.1 is the first theorem (thm:A). Atom 1.2
+%% is the second theorem which references thm:A from within its body,
+%% producing the expected atomref. The caption's \ref{thm:A} fires
+%% outside any atom and must NOT produce an atomref. No-crash assurance
+%% comes from TEST-EXIT: 0 and TEST-LOG-NOT.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Caption safety test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{figure}[h]
+  \centering
+  \rule{2cm}{1cm}
+  \caption{Illustration for \ref{thm:A} (ref in caption, outside atom).}
+\end{figure}
+
+\begin{theorem}
+  By \ref{thm:A} (ref inside theorem atom, atomref recorded).
+\end{theorem}
+
+\END
+\end{document}

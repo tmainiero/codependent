@@ -1,0 +1,48 @@
+%% TEST-NAME: test-frontedge-in-section-title
+%% TEST-WHAT: Verify \ref{thm:A} inside a \section{...} title does not
+%%            crash and does not produce a spurious atomref, while \ref
+%%            inside a subsequent theorem DOES produce the atomref.
+%% TEST-SOURCE: docs/SW5c.md §3.1 moving arguments; B-EDGE-HEADING
+%% TEST-SECTION: docs/SW5c.md §3 Safety cases
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:2.1}{thm:A}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: hyperref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE, B-EDGE-HEADING
+%%
+%% Section headings are moving arguments written to the .toc. Our
+%% \ref wrapper is declared \protected so it is not expanded inside
+%% \protected@edef (used for .toc writes). At typeset time the heading
+%% ref fires with \codep@currentatom = \@empty (between atoms), so
+%% \codep@frontedge@emit short-circuits. The theorem in section 2 that
+%% also references thm:A DOES produce an atomref, confirming the
+%% wrapper still functions normally outside the heading context.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{First section}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\section{Section referencing \ref{thm:A} in title}
+
+\begin{theorem}
+  By \ref{thm:A} (inside theorem, atomref recorded normally).
+\end{theorem}
+
+\END
+\end{document}

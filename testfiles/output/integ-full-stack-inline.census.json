@@ -1,13 +1,44 @@
 {
   "atomref": {
     "count": [
-      1,
+      32,
       32,
       32
     ],
     "keys": [
       [
-        "paragraph:3.4||def:noetherian"
+        "corollary:2.3||def:noetherian",
+        "corollary:2.3||eq:rank-nullity",
+        "corollary:3.3||def:pid",
+        "corollary:3.3||thm:structure",
+        "equation:2.1||cor:artin",
+        "equation:2.2--2.3||cor:artin",
+        "equation:2.2--2.3||lem:pid-noetherian",
+        "lemma:1.4||def:noetherian",
+        "lemma:1.4||def:pid",
+        "paragraph:2.1||def:noetherian",
+        "paragraph:2.2||thm:hilbert-basis",
+        "paragraph:3.1||sec:modules",
+        "paragraph:3.1||sec:rings",
+        "paragraph:3.4||def:noetherian",
+        "paragraph:3.4||prop:ufd",
+        "paragraph:3.4||thm:hilbert-basis",
+        "proof:1.5||def:noetherian",
+        "proof:2.5||def:noetherian",
+        "proof:2.5||lem:pid-noetherian",
+        "proof:2.5||thm:hilbert-basis",
+        "proof:3.2||cor:artin",
+        "proof:3.2||prop:ufd",
+        "proof:3.2||thm:noether",
+        "proposition:1.6||def:pid",
+        "theorem:1.5||def:noetherian",
+        "theorem:2.5||lem:pid-noetherian",
+        "theorem:3.2||def:pid",
+        "theorem:3.2||eq:hom-tensor",
+        "theorem:3.2||eq:tensor-dist",
+        "theorem:3.2||lem:pid-noetherian",
+        "theorem:3.2||thm:hilbert-basis",
+        "theorem:3.2||thm:noether"
       ],
       [
         "corollary:2.3||def:noetherian",
@@ -80,9 +111,9 @@
     ]
   },
   "measures": {
-    "atomref_gap": 31,
-    "page_bearing_diff_pass2_to_pass3": 12,
-    "renderlist_first_appearance_after_pass2": 7
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
   },
   "page_bearing": {
     "count": [
@@ -91,7 +122,6 @@
       39
     ],
     "diff": [
-      [],
       [
         "-\\newlabel{eq:filtration@cref}{{[equation][4][2]2.4}{[1][1][]1}{}{}{}}",
         "-\\newlabel{eq:filtration}{{2.4}{1}{}{equation.25}{}}",
@@ -105,54 +135,14 @@
         "-\\newlabel{thm:noether}{{2.5}{1}{}{theorem.24}{}}",
         "+\\newlabel{thm:noether@cref}{{[theorem][5][]2.5}{[1][1][]2}{}{}{}}",
         "+\\newlabel{thm:noether}{{2.5}{2}{}{theorem.24}{}}"
-      ]
+      ],
+      []
     ],
     "diff_count": [
-      0,
-      12
+      12,
+      0
     ],
     "lines": [
-      [
-        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Rings and ideals}{1}{section.1}\\protected@file@percent }",
-        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Module structure}{1}{section.14}\\protected@file@percent }",
-        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Applications}{2}{section.28}\\protected@file@percent }",
-        "\\newlabel{cor:artin@cref}{{[corollary][3][]2.3}{[1][1][]1}{}{}{}}",
-        "\\newlabel{cor:artin}{{2.3}{1}{}{corollary.19}{}}",
-        "\\newlabel{cor:classification@cref}{{[corollary][3][]3.3}{[1][2][]2}{}{}{}}",
-        "\\newlabel{cor:classification}{{3.3}{2}{}{corollary.33}{}}",
-        "\\newlabel{def:noetherian@cref}{{[definition][2][]1.2}{[1][1][]1}{}{}{}}",
-        "\\newlabel{def:noetherian}{{1.2}{1}{}{definition.4}{}}",
-        "\\newlabel{def:pid@cref}{{[definition][3][]1.3}{[1][1][]1}{}{}{}}",
-        "\\newlabel{def:pid}{{1.3}{1}{}{definition.6}{}}",
-        "\\newlabel{eq:filtration@cref}{{[equation][4][2]2.4}{[1][1][]1}{}{}{}}",
-        "\\newlabel{eq:filtration}{{2.4}{1}{}{equation.25}{}}",
-        "\\newlabel{eq:graded-inj@cref}{{[equation][5][2]2.5}{[1][1][]1}{}{}{}}",
-        "\\newlabel{eq:graded-inj}{{2.5}{1}{}{equation.26}{}}",
-        "\\newlabel{eq:hom-tensor@cref}{{[equation][3][2]2.3}{[1][1][]1}{}{}{}}",
-        "\\newlabel{eq:hom-tensor}{{2.3}{1}{Module structure}{equation.22}{}}",
-        "\\newlabel{eq:ideal-inside-thm@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
-        "\\newlabel{eq:ideal-inside-thm}{{1.1}{1}{}{equation.11}{}}",
-        "\\newlabel{eq:rank-nullity@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
-        "\\newlabel{eq:rank-nullity}{{2.1}{1}{Module structure}{equation.17}{}}",
-        "\\newlabel{eq:tensor-dist@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
-        "\\newlabel{eq:tensor-dist}{{2.2}{1}{Module structure}{equation.21}{}}",
-        "\\newlabel{lem:pid-noetherian@cref}{{[lemma][4][]1.4}{[1][1][]1}{}{}{}}",
-        "\\newlabel{lem:pid-noetherian}{{1.4}{1}{}{lemma.8}{}}",
-        "\\newlabel{prop:ufd@cref}{{[proposition][6][]1.6}{[1][1][]1}{}{}{}}",
-        "\\newlabel{prop:ufd}{{1.6}{1}{}{proposition.13}{}}",
-        "\\newlabel{sec:applications@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
-        "\\newlabel{sec:applications}{{3}{2}{Applications}{section.28}{}}",
-        "\\newlabel{sec:modules@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
-        "\\newlabel{sec:modules}{{2}{1}{Module structure}{section.14}{}}",
-        "\\newlabel{sec:rings@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
-        "\\newlabel{sec:rings}{{1}{1}{Rings and ideals}{section.1}{}}",
-        "\\newlabel{thm:hilbert-basis@cref}{{[theorem][5][]1.5}{[1][1][]1}{}{}{}}",
-        "\\newlabel{thm:hilbert-basis}{{1.5}{1}{}{theorem.10}{}}",
-        "\\newlabel{thm:noether@cref}{{[theorem][5][]2.5}{[1][1][]1}{}{}{}}",
-        "\\newlabel{thm:noether}{{2.5}{1}{}{theorem.24}{}}",
-        "\\newlabel{thm:structure@cref}{{[theorem][2][]3.2}{[1][2][]2}{}{}{}}",
-        "\\newlabel{thm:structure}{{3.2}{2}{}{theorem.31}{}}"
-      ],
       [
         "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Rings and ideals}{1}{section.1}\\protected@file@percent }",
         "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Module structure}{1}{section.14}\\protected@file@percent }",
@@ -234,6 +224,47 @@
         "\\newlabel{thm:noether}{{2.5}{2}{}{theorem.24}{}}",
         "\\newlabel{thm:structure@cref}{{[theorem][2][]3.2}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:structure}{{3.2}{2}{}{theorem.31}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Rings and ideals}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Module structure}{1}{section.14}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Applications}{2}{section.28}\\protected@file@percent }",
+        "\\newlabel{cor:artin@cref}{{[corollary][3][]2.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{cor:artin}{{2.3}{1}{}{corollary.19}{}}",
+        "\\newlabel{cor:classification@cref}{{[corollary][3][]3.3}{[1][2][]2}{}{}{}}",
+        "\\newlabel{cor:classification}{{3.3}{2}{}{corollary.33}{}}",
+        "\\newlabel{def:noetherian@cref}{{[definition][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:noetherian}{{1.2}{1}{}{definition.4}{}}",
+        "\\newlabel{def:pid@cref}{{[definition][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:pid}{{1.3}{1}{}{definition.6}{}}",
+        "\\newlabel{eq:filtration@cref}{{[equation][4][2]2.4}{[1][1][]2}{}{}{}}",
+        "\\newlabel{eq:filtration}{{2.4}{2}{}{equation.25}{}}",
+        "\\newlabel{eq:graded-inj@cref}{{[equation][5][2]2.5}{[1][1][]2}{}{}{}}",
+        "\\newlabel{eq:graded-inj}{{2.5}{2}{}{equation.26}{}}",
+        "\\newlabel{eq:hom-tensor@cref}{{[equation][3][2]2.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:hom-tensor}{{2.3}{1}{Module structure}{equation.22}{}}",
+        "\\newlabel{eq:ideal-inside-thm@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:ideal-inside-thm}{{1.1}{1}{}{equation.11}{}}",
+        "\\newlabel{eq:rank-nullity@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:rank-nullity}{{2.1}{1}{Module structure}{equation.17}{}}",
+        "\\newlabel{eq:tensor-dist@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:tensor-dist}{{2.2}{1}{Module structure}{equation.21}{}}",
+        "\\newlabel{lem:pid-noetherian@cref}{{[lemma][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:pid-noetherian}{{1.4}{1}{}{lemma.8}{}}",
+        "\\newlabel{prop:ufd@cref}{{[proposition][6][]1.6}{[1][1][]1}{}{}{}}",
+        "\\newlabel{prop:ufd}{{1.6}{1}{}{proposition.13}{}}",
+        "\\newlabel{sec:applications@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
+        "\\newlabel{sec:applications}{{3}{2}{Applications}{section.28}{}}",
+        "\\newlabel{sec:modules@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:modules}{{2}{1}{Module structure}{section.14}{}}",
+        "\\newlabel{sec:rings@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:rings}{{1}{1}{Rings and ideals}{section.1}{}}",
+        "\\newlabel{thm:hilbert-basis@cref}{{[theorem][5][]1.5}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:hilbert-basis}{{1.5}{1}{}{theorem.10}{}}",
+        "\\newlabel{thm:noether@cref}{{[theorem][5][]2.5}{[1][1][]2}{}{}{}}",
+        "\\newlabel{thm:noether}{{2.5}{2}{}{theorem.24}{}}",
+        "\\newlabel{thm:structure@cref}{{[theorem][2][]3.2}{[1][2][]2}{}{}{}}",
+        "\\newlabel{thm:structure}{{3.2}{2}{}{theorem.31}{}}"
       ]
     ]
   },
@@ -241,13 +272,20 @@
   "renderlist": {
     "count": [
       0,
-      1,
+      8,
       8
     ],
     "keys": [
       [],
       [
-        "definition:1.2"
+        "corollary:2.3",
+        "definition:1.2",
+        "definition:1.3",
+        "lemma:1.4",
+        "proposition:1.6",
+        "theorem:1.5",
+        "theorem:2.5",
+        "theorem:3.2"
       ],
       [
         "corollary:2.3",

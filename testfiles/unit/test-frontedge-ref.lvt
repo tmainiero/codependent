@@ -1,0 +1,45 @@
+%% TEST-NAME: test-frontedge-ref
+%% TEST-WHAT: Verify plain \ref{thm:A} from theorem 1.2 produces
+%%            \codep@atomref{theorem:1.2}{thm:A} in the aux via the
+%%            front-edge wrapper installed at begindocument/end.
+%% TEST-SOURCE: docs/SW5c.md §2.2 primitive list (row 1: \ref)
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: hyperref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% Baseline for the front-edge \ref wrapper. The wrapper is installed
+%% by \codep@installfrontedgerefpatch at begindocument/end. It fires
+%% \codep@frontedge@emit{label} before delegating to the saved original,
+%% recording the edge on every compile pass including pass 1 when the
+%% target may be unresolved. This test pins the common case: unstarred
+%% \ref from a tracked theorem environment.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Front-edge ref test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A. This will be referenced by the theorem below.
+\end{theorem}
+
+\begin{theorem}
+  By \ref{thm:A} the conclusion follows.
+\end{theorem}
+
+\END
+\end{document}

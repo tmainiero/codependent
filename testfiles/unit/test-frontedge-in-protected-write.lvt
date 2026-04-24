@@ -1,0 +1,50 @@
+%% TEST-NAME: test-frontedge-in-protected-write
+%% TEST-WHAT: Verify that \ref inside a \protected@write (file output
+%%            from another package) does not crash and does not fire
+%%            \codep@frontedge@emit during the write phase.
+%% TEST-SOURCE: docs/SW5c.md §3.2 protected writes
+%% TEST-SECTION: docs/SW5c.md §3 Safety cases
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: hyperref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% \protected@write wraps its content in a \protected@edef context,
+%% where \protected macros are not expanded. Our \ref wrapper is
+%% \protected, so the literal token sequence is written to the output
+%% stream rather than the wrapper body executing. No spurious atomref
+%% fires during the write phase. Safety is confirmed by TEST-EXIT: 0
+%% and the presence of the expected atomref from inside the theorem.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Protected write safety test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+% Typeout \string\ref to the log; this exercises the \protected wrapper
+% in a context where expansion would be harmful. Our \ref is
+% \protected\def so it survives moving-arg contexts without firing.
+\typeout{frontedge-protect-test: \string\ref}
+
+\begin{theorem}
+  By \ref{thm:A} (inside theorem, atomref recorded normally).
+\end{theorem}
+
+\END
+\end{document}

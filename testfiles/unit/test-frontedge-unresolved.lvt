@@ -1,0 +1,48 @@
+%% TEST-NAME: test-frontedge-unresolved
+%% TEST-WHAT: Verify that \ref{thm:MISSING} (an undefined label that
+%%            renders as "??") STILL emits \codep@atomref{theorem:1.1}{thm:MISSING}
+%%            on pass 1. This is the load-bearing behaviour of front-edge
+%%            capture: edges are recorded even when the target is unknown.
+%% TEST-SOURCE: docs/SW5c.md §1.2 pass-1 gap; B-FRONTEDGE-CAPTURE
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.1}{thm:MISSING}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: hyperref,amsthm,codependent
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% The front-edge wrapper fires \codep@frontedge@emit{label} BEFORE
+%% calling the saved original \ref. The emit step writes the edge to
+%% the aux regardless of whether the label is defined; it does not
+%% consult \@setref or any label store. The saved original then
+%% renders "??" (the LaTeX undefined-label placeholder) and issues the
+%% standard "Reference ... undefined" warning in the log.
+%%
+%% TEST-LOG-NOT does NOT include "Package codependent Warning" here
+%% because this is a LaTeX-level warning ("LaTeX Warning: Reference
+%% `thm:MISSING' on page 1 undefined."), not a codependent warning.
+%%
+%% TEST-RERUN: 1 — single pass, so we directly observe the pass-1
+%% aux output before the second pass would add more records.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Unresolved ref test}
+
+\begin{theorem}
+  By \ref{thm:MISSING} (undefined label, renders as ??).
+  The atomref edge must still be written to the aux.
+\end{theorem}
+
+\END
+\end{document}

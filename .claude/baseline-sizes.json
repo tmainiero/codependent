@@ -4,14 +4,14 @@
   ".traceability-baseline.uncovered_behaviors": 44,
   "census": {
     "integ-appendix": {
-      "atomref_gap": 17,
+      "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
-      "renderlist_first_appearance_after_pass2": 7
+      "renderlist_first_appearance_after_pass2": 0
     },
     "integ-full-stack-inline": {
-      "atomref_gap": 31,
-      "page_bearing_diff_pass2_to_pass3": 12,
-      "renderlist_first_appearance_after_pass2": 7
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
     },
     "integ-no-cleveref": {
       "atomref_gap": 0,
@@ -24,14 +24,14 @@
       "renderlist_first_appearance_after_pass2": 0
     },
     "integ-stress-all-features": {
-      "atomref_gap": 30,
-      "page_bearing_diff_pass2_to_pass3": 4,
-      "renderlist_first_appearance_after_pass2": 9
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
     },
     "trinity-test": {
-      "atomref_gap": 37,
-      "page_bearing_diff_pass2_to_pass3": 22,
-      "renderlist_first_appearance_after_pass2": 14
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
     }
   }
 }

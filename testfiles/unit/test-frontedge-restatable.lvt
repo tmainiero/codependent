@@ -1,0 +1,60 @@
+%% TEST-NAME: test-frontedge-restatable
+%% TEST-WHAT: Verify that inside a restatable theorem restate, \ref
+%%            from the original occurrence produces an atomref, while
+%%            the restate does NOT produce a duplicate atomref. The
+%%            front-edge wrapper must respect the restatable guard so
+%%            that deduplication (B-REST-NODUP) is preserved.
+%% TEST-SOURCE: docs/SW5c.md §3.3 restatable guard; B-REST-NODUP
+%% TEST-SECTION: docs/SW5c.md §3 Safety cases
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: thmtools,hyperref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-REST-NODUP, B-FRONTEDGE-CAPTURE
+%%
+%% A restatable theorem (thmtools) is stated once in the main body and
+%% restated once in the appendix via \thmB*. The restate executes in a
+%% context where the theorem counter is aliased to \c@thmt@dummyctr, so
+%% the §8a.5.a guard aborts the begin-environment hook. The front-edge
+%% wrapper for \ref must not produce an atomref when the restate body
+%% is typeset, because the source atom (the restate occurrence) is not
+%% a real atom; only the original occurrence is.
+%%
+%% Setup: theorem 1.1 is thm:A (labeled). Theorem 1.2 is unlabeled and
+%% references thm:A via \ref (producing atomref{1.2}{thm:A}). The
+%% restate of thm:A appears in a later section; its body contains
+%% \ref{thm:A} too, but no new atom is created for the restate.
+
+\documentclass{article}
+\usepackage{thmtools}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Main}
+
+\begin{restatable}{theorem}{thmA}\label{thm:A}
+  Theorem A. This is the original statement.
+\end{restatable}
+
+\begin{theorem}
+  By \ref{thm:A} the conclusion follows (atomref{theorem:1.2}{thm:A}).
+\end{theorem}
+
+\section{Appendix}
+
+The following is a restatement of \autoref{thm:A}:
+
+\thmA*
+
+\END
+\end{document}
