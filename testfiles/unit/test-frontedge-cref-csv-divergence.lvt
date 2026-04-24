@@ -1,0 +1,70 @@
+%% TEST-NAME: test-frontedge-cref-csv-divergence
+%% TEST-WHAT: Pin the ACTUAL (divergent) front-edge behaviour for the
+%%            malformed input \cref{thm:A,{thm:B,thm:C},thm:D} where the
+%%            second element is a brace-wrapped comma-containing string.
+%%            \codep@splitlabels yields three label-tokens: thm:A,
+%%            thm:B,thm:C (a single comma-containing string), and thm:D.
+%%            This diverges from cleveref, which warns and treats the inner
+%%            content as separate refs.  The combined-label atomref
+%%            \codep@atomref{theorem:1.5}{thm:B,thm:C} is asserted as
+%%            PRESENT to make this divergence LOUD: any future fix that
+%%            makes \codep@splitlabels match cleveref exactly will change
+%%            this record and break the assertion --- flagging the change.
+%%            See test-frontedge-cref-nestedbraces.lvt for the SUPPORTED
+%%            case (individually brace-wrapped labels such as {thm:A}).
+%% TEST-SOURCE: GPT review §2.3, §3; codependent.sty \codep@splitlabels
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.5}{thm:A}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.5}{thm:B,thm:C}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.5}{thm:D}
+%% TEST-ATOMS-MIN: 5
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% NOTE: In commit-2 both front-edge wrappers and backend patches are live.
+%% The backend (\cref@getlabel patch) also emits individual thm:B and thm:C
+%% records because cleveref internally resolves them separately.  The KEY
+%% assertion is thm:B,thm:C as a combined record from the front-edge path.
+%% After commit-3 removes backends, only front-edge records remain, so
+%% thm:B,thm:C would be the ONLY record for that pair --- correctly
+%% documenting the gap in \codep@splitlabels coverage.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Cref CSV divergence test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B.
+\end{theorem}
+
+\begin{theorem}\label{thm:C}
+  Theorem C.
+\end{theorem}
+
+\begin{theorem}\label{thm:D}
+  Theorem D.
+\end{theorem}
+
+\begin{theorem}
+  By \cref{thm:A,{thm:B,thm:C},thm:D} (malformed: inner braces wrap two labels).
+\end{theorem}
+
+\END
+\end{document}

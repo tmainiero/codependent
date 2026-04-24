@@ -1,0 +1,50 @@
+%% TEST-NAME: test-frontedge-labelcref-csv
+%% TEST-WHAT: Verify \labelcref{thm:A,thm:B,thm:C} (comma-separated list)
+%%            from theorem 1.4 emits three separate atomref records, one
+%%            per label: thm:A, thm:B, thm:C.  \labelcref accepts the same
+%%            CSV arg shape as \cref; the wrapper splits via \codep@splitlabels.
+%% TEST-SOURCE: docs/SW5c.md §2.2 primitive wrap list; GPT review §2.4
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:A}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:B}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{thm:C}
+%% TEST-ATOMS-MIN: 4
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Front-edge labelcref CSV test}
+
+\begin{theorem}\label{thm:A}
+  Theorem A.
+\end{theorem}
+
+\begin{theorem}\label{thm:B}
+  Theorem B.
+\end{theorem}
+
+\begin{theorem}\label{thm:C}
+  Theorem C.
+\end{theorem}
+
+\begin{theorem}
+  By \labelcref{thm:A,thm:B,thm:C} the conclusion follows.
+\end{theorem}
+
+\END
+\end{document}

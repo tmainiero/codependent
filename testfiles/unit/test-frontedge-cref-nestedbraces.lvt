@@ -1,7 +1,9 @@
 %% TEST-NAME: test-frontedge-cref-nestedbraces
-%% TEST-WHAT: Verify \cref{{thm:A},thm:B} (first label in braces)
-%%            from theorem 1.3 produces two atomrefs, one for each label.
-%%            Tests \codep@splitlabels brace-group handling.
+%% TEST-WHAT: Verify \cref{{thm:A},thm:B} (first label brace-wrapped, second
+%%            plain) from theorem 1.3 produces two atomrefs, one per label.
+%%            Tests \codep@splitlabels SUPPORTED case: individually brace-wrapped
+%%            labels.  For the malformed/divergent case (\cref{a,{b,c},d}) see
+%%            test-frontedge-cref-csv-divergence.lvt.
 %% TEST-SOURCE: docs/SW5c.md §2.5 multi-label splitting (brace groups)
 %% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
 %% TEST-EXIT: 0

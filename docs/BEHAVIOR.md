@@ -275,7 +275,7 @@ Paragraph numbers are suppressed inside:
 | subfiles / standalone | Compatible | Multi-file projects work; canonical build from master doc |
 | article, book, report, KOMA | Supported | Auto-detects `\chapter` for depth formatting |
 
-**Reference commands tracked:** `\ref`, `\eqref`, `\cref`, `\Cref`, `\autoref`, `\ref*`, `\Ref`, `\vref`, `\nameref`, `\labelcref`, `\crefrange`, and all cleveref family commands.
+**Reference commands tracked:** `\ref`, `\eqref`, `\cref`, `\Cref`, `\autoref`, `\ref*`, `\Ref`, `\vref`, `\nameref`, `\labelcref`, `\labelcref*`, `\crefrange`, and all cleveref family commands.
 
 **Deliberately NOT tracked:** `\hyperref[label]{text}` (manual link, not a semantic reference).
 
@@ -323,5 +323,5 @@ and dispatches to a fixed-order drain pipeline.
 | [B-EDGE-PARAOFF-EQ] `paragraphs=off` + standalone equation | Equation tracked normally if `equations=outer` or `all` |
 | [B-EDGE-MULTI-SAME] Same atom references same target multiple times | Deduplicated; single backref entry |
 | [B-EDGE-HYPERREF] `\hyperref[label]{text}` inside an atom | Link rendered but NO backref edge recorded |
-| [B-FRONTEDGE-CAPTURE] Front-edge ref capture | `\ref`, `\pageref`, `\Ref`, `\cref`, `\Cref`, `\autoref` (and `*` variants) emit `\codep@atomref` records on every pass, including pass 1 when the target is unresolved (`??`). Wrappers are installed at `begindocument/end` after nameref/hyperref/cleveref settle. `\crefrange`, `\Crefrange`, `\nameref`, `\nameref*` are waived (no front-edge wrapper). |
+| [B-FRONTEDGE-CAPTURE] Front-edge ref capture | `\ref`, `\pageref`, `\Ref`, `\cref`, `\Cref`, `\autoref`, `\labelcref` (and `*` variants) emit `\codep@atomref` records on every pass, including pass 1 when the target is unresolved (`??`). Wrappers are installed at `begindocument/end` after nameref/hyperref/cleveref settle. `\crefrange`, `\Crefrange`, `\nameref`, `\nameref*` are waived (no front-edge wrapper). |
 | [B-FRONTEDGE-DEDUP-EQ] Front-edge track-two dedup | Inside multiline equation environments (`align`, `gather`, etc.), each `(source, target)` pair is enqueued at most once per equation block. The guard `\codep@arw@pending@<tgt>` prevents double-enqueue when both the front-edge wrapper and the legacy backend patch fire for the same ref call. |

@@ -1,0 +1,46 @@
+%% TEST-NAME: test-frontedge-labelcref-forward
+%% TEST-WHAT: Verify that \labelcref{thm:later} (forward reference: the
+%%            target theorem is declared AFTER the \labelcref call) still
+%%            emits \codep@atomref{theorem:1.1}{thm:later} on pass 1.
+%%            This is the specific acceptance criterion from GPT review §4:
+%%            front-edge capture must record the edge even when the target
+%%            label is unknown (renders as "??") on pass 1.
+%% TEST-SOURCE: GPT review §4 (commit 3 go-ahead criterion); B-FRONTEDGE-CAPTURE
+%% TEST-SECTION: docs/SW5c.md §2 Front-edge capture
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.1}{thm:later}
+%% TEST-ATOMS-MIN: 1
+%% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%%
+%% TEST-RERUN: 1 forces a single pass so we directly observe the pass-1
+%% aux contents.  The wrapper fires \codep@frontedge@emit{thm:later}
+%% BEFORE calling the saved \labelcref, so the atomref record is written
+%% regardless of whether the target is resolved.
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Forward-ref labelcref test}
+
+\begin{theorem}
+  By \labelcref{thm:later} the conclusion follows (forward ref).
+\end{theorem}
+
+\begin{theorem}\label{thm:later}
+  Theorem declared after the reference.
+\end{theorem}
+
+\END
+\end{document}

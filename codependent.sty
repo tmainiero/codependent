@@ -2830,8 +2830,13 @@
 
 % \codep@splitlabels{csv}{macro}
 %   Split comma-separated labels on top-level (unbraced) commas and
-%   call \macro{label} for each label.  Matches cleveref's parse:
-%   \cref{a,{b,c},d} → three calls: \macro{a}, \macro{b,c}, \macro{d}.
+%   call \macro{label} for each label.  Brace-wrapped groups are
+%   preserved as single labels: \cref{{a},b} -> \macro{a}, \macro{b}.
+%   This matches cleveref for the well-formed case where each label is
+%   individually brace-wrapped.  For malformed input such as
+%   \cref{a,{b,c},d}, this splitter yields \macro{a}, \macro{b,c},
+%   \macro{d} --- diverging from cleveref (which warns and treats a,
+%   b, c as separate refs); see test-frontedge-cref-csv-divergence.lvt.
 %   Empty items (e.g. from trailing commas) are silently skipped.
 %% @utility
 \def\codep@splitlabels#1#2{%
@@ -2935,6 +2940,14 @@
     \protected\def\Cref{%
       \@ifstar{\codep@fe@csv@star\codep@saved@Cref}%
               {\codep@fe@csv@nostar\codep@saved@Cref}%
+    }%
+  \fi%
+  %% ---- \labelcref and \labelcref* (cleveref) ----
+  \ifcsname labelcref\endcsname%
+    \let\codep@saved@labelcref\labelcref%
+    \protected\def\labelcref{%
+      \@ifstar{\codep@fe@csv@star\codep@saved@labelcref}%
+              {\codep@fe@csv@nostar\codep@saved@labelcref}%
     }%
   \fi%
   %% ---- \autoref and \autoref* (hyperref) ----
