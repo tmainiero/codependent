@@ -1,34 +1,37 @@
 %% TEST-NAME: test-frontedge-in-atbegindocument
 %% TEST-WHAT: Verify that \ref called from an \AtBeginDocument callback
 %%            (which fires before begindocument/end where our front-edge
-%%            wrappers install) does not crash. The ref fires outside any
-%%            atom context, so no atomref is expected from that callback.
-%%            A normal theorem-internal \ref DOES produce the atomref.
-%% TEST-SOURCE: docs/SW5c.md §8.5 AtBeginDocument waiver
-%% TEST-SECTION: docs/SW5c.md §3 Safety cases
+%%            wrappers install) does not emit \codep@atomref. A normal
+%%            theorem-internal \ref still DOES emit the atomref.
+%% TEST-SOURCE: .claude/comms/w03-sw5c-plan/PLAN.md §5 row 20 / §8.5
+%% TEST-SECTION: .claude/comms/w03-sw5c-plan/PLAN.md §2.1 hook contract
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.1}{thm:A}
-%% TEST-ATOMS-MIN: 1
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:body}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{}{thm:callback}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1}{thm:callback}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.2}{thm:callback}
+%% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% Hook ordering in \begin{document}:
-%%   1. begindocument/before hooks (aux read, backend patches install)
+%%   1. begindocument/before hooks (aux read, active callbacks install)
 %%   2. \AtBeginDocument callbacks (legacy LaTeX2e queue)
 %%   3. begindocument/end hooks (front-edge wrappers install HERE)
 %%
 %% An \AtBeginDocument callback calling \ref fires BEFORE our
-%% front-edge wrappers are in place. The backend (\@setref patch) is
-%% in place, but \codep@currentatom is \@empty at that point (no
-%% theorem is active), so no atomref is recorded. This is expected
-%% and documented behaviour at commit 2; the front-edge wrapper cannot
-%% intercept calls that precede its own installation.
+%% front-edge wrappers are in place. Post-commit-3 there is no backend
+%% fallback, so this is an explicit waiver: such refs render normally
+%% but must not emit \codep@atomref. The theorem-internal \ref still
+%% exercises ordinary front-edge capture.
 %%
-%% The test verifies: no crash, normal theorem-internal capture works.
+%% The callback targets thm:callback; the body-time self-ref targets
+%% thm:body. This keeps the positive and negative aux assertions
+%% independent.
 
 \documentclass{article}
 \usepackage{hyperref}
@@ -38,15 +41,20 @@
 \codeptrack{theorem}
 
 % This ref fires before our front-edge wrapper installs; no atomref.
-\AtBeginDocument{\typeout{AtBeginDocument ref test: \ref{thm:A}}}
+\AtBeginDocument{\typeout{AtBeginDocument ref test: \ref{thm:callback}}}
 
 \begin{document}
 \START
 
-\section{AtBeginDocument safety test}
+\section{AtBeginDocument waiver test}
 
-\begin{theorem}\label{thm:A}
-  By \ref{thm:A} (self-ref inside atom, atomref recorded by front-edge wrapper).
+\begin{theorem}\label{thm:callback}
+  Callback target theorem.
+\end{theorem}
+
+\begin{theorem}\label{thm:body}
+  By \ref{thm:body} (self-ref inside atom, atomref recorded by the
+  front-edge wrapper).
 \end{theorem}
 
 \END

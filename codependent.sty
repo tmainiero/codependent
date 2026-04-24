@@ -2152,8 +2152,9 @@
 % \codep@writeatomref@tracktwo{target}
 %   Track 2 (align/gather multiline) path: defer the ref
 %   to the pending list for later flush by \codep@flusheqrange.
-%   SW5c commit 2: \codep@arw@pending@<tgt> guard prevents
-%   double-enqueue when both front-edge and backend fire (B-FRONTEDGE-DEDUP-EQ).
+%   SW5c commit 3 keeps the \codep@arw@pending@<tgt> guard as
+%   belt-and-braces: each target is enqueued at most once per
+%   multiline block even though the resolved-backend wrappers are gone.
 %% @implements \codep@writeatomref
 \def\codep@writeatomref@tracktwo#1{%
   \codep@eqshouldtrack%
@@ -2207,53 +2208,6 @@
   }%
 }%
 
-% \codep@installatomrefpatch
-%   Install all three patch sites.  Called from the
-%   begindocument/before hook (Section 8a.7), AFTER
-%   hyperref/cleveref have finished wrapping their respective
-%   dispatchers.  Patching at this point wraps the OUTERMOST
-%   live definition, preserving every prior hook (hyperlink
-%   emission, cref formatting).
-%% @behavior B-EDGE-PROOF-ANY
-\def\codep@installatomrefpatch{%
-  %% ---- Patch 1: kernel \@setref ----
-  %% Covers \ref, \eqref, \pageref (via \@pagesetref
-  %% delegation), \vref, \Vref, \vpageref, \nameref.
-  \let\codep@orig@setref\@setref%
-  \def\@setref##1##2##3{%
-    \codep@orig@setref{##1}{##2}{##3}%
-    \codep@writeatomref{##3}%
-  }%
-  %% ---- Patch 2: cleveref \cref@getlabel ----
-  %% Covers every cleveref family command.
-  \@ifpackageloaded{cleveref}{%
-    \let\codep@orig@crefgetlabel\cref@getlabel%
-    \def\cref@getlabel##1##2{%
-      \codep@orig@crefgetlabel{##1}{##2}%
-      \codep@writeatomref{##1}%
-    }%
-  }{}%
-  %% ---- Patch 3: hyperref \HyRef@autosetref / \HyRef@@StarSetRef ----
-  %% \HyRef@autosetref covers \autoref.
-  %% \HyRef@@StarSetRef covers \ref* and \Ref.
-  \@ifpackageloaded{hyperref}{%
-    \@ifundefined{HyRef@autosetref}{}{%
-      \let\codep@orig@HyRefautosetref\HyRef@autosetref%
-      \def\HyRef@autosetref##1##2##3{%
-        \codep@orig@HyRefautosetref{##1}{##2}{##3}%
-        \codep@writeatomref{##2}%
-      }%
-    }%
-    \@ifundefined{HyRef@@StarSetRef}{}{%
-      \let\codep@orig@HyRefStarSetRef\HyRef@@StarSetRef%
-      \def\HyRef@@StarSetRef##1##2##3{%
-        \codep@orig@HyRefStarSetRef{##1}{##2}{##3}%
-        \codep@writeatomref{##2}%
-      }%
-    }%
-  }{}%
-}
-
 %% --- Section 8a.1: Defer queue (csname linked list) ---
 %% Per REVIEW_C finding #2, the toks-register pattern from dpmac
 %% is O(N^2) at 15k refs; replaced with a csname linked list
@@ -2298,10 +2252,11 @@
 %% read fires lands here and enqueues a processbackref call.
 %%
 %% Per REVIEW_C finding #4, guard on empty src (orphan refs
-%% emitted between atoms).  Belt-and-braces: the \@setref patch
-%% already skips the write when \codep@currentatom is empty.
+%% emitted between atoms).  Belt-and-braces: the front-edge and
+%% other live write sites already skip the write when the current
+%% atom is empty.
 
-%% @implements \codep@installatomrefpatch
+%% @behavior B-PASS-ONE
 \def\codep@atomref@active#1#2{%
   \edef\codep@tmp@src{#1}%
   \ifx\codep@tmp@src\@empty\else
@@ -2699,13 +2654,10 @@
 %% than both claiming "before *".  The \DeclareHookRule below
 %% pins \codep/backref/install to run before hyperref.
 
-% Install the three \@setref-family patches AND the \newlabel
-% override AND the active \codep@atomref callback at
-% begindocument/before.  All three belong together because
-% they co-depend on being in place before the .aux read during
+% Install the \newlabel override AND the active aux callbacks at
+% begindocument/before so they are live before the .aux read in
 % \begin{document}.
 \AddToHook{begindocument/before}[codependent/backref/install]{%
-  \codep@installatomrefpatch
   \codep@installnewlabel
   % Swap the providecommand no-ops for the active callbacks.
   \let\codep@atomref\codep@atomref@active
@@ -2810,11 +2762,11 @@
 %%
 %% Wraps 12 user-level ref primitives at begindocument/end so that
 %% \codep@atomref records are emitted on EVERY pass, including pass 1
-%% when the target is still unresolved ("??").  The backend patches
-%% (\codep@installatomrefpatch) stay live in this commit; dedup via
-%% \codep@dedupwrite (non-eq, track-one) and the track-two pending
-%% guard (\codep@arw@pending@<tgt>, see \codep@writeatomref@tracktwo)
-%% prevent double-write.
+%% when the target is still unresolved ("??").  SW5c commit 3 removes
+%% the resolved-backend wrappers; these front-edge wrappers are now the
+%% sole \codep@atomref emitters.  The track-two pending guard
+%% (\codep@arw@pending@<tgt>, see \codep@writeatomref@tracktwo)
+%% remains as defense-in-depth.
 %%
 %% INV-PASS1-EDGE-AUX-COMPLETE: all ref-uses that affect pass-2 backrefs
 %% produce a \codep@atomref record on pass 1 regardless of resolution.
@@ -2825,8 +2777,7 @@
 %%   §8.3  \nameref survey: no fixture uses \nameref; keep 12-primitive list.
 %%   §8.4  \cref@getlabel third-party survey: no exotic callers in integ
 %%         fixtures; defer to commit 3 runtime warning.
-%%   §8.5  pre-begindocument/end refs: at commit 2 the backend captures;
-%%         post-commit-3 is a documented waiver.
+%%   §8.5  pre-begindocument/end refs stay a documented waiver.
 
 % \codep@splitlabels{csv}{macro}
 %   Split comma-separated labels on top-level (unbraced) commas and
@@ -2898,7 +2849,8 @@
 %   absent commands (e.g. \cref when cleveref not loaded) are silently
 %   skipped.  All wrappers are \protected so they survive \protected@edef
 %   in moving args (captions, section titles, TOC entries).
-%   Backends stay live in commit 2; dual-fire managed by dedup + guard.
+%   SW5c commit 3 removes the resolved-backend wrappers; the pending
+%   guard stays as belt-and-braces for multiline equation refs.
 %% @behavior B-FRONTEDGE-CAPTURE
 %% @behavior B-FRONTEDGE-DEDUP-EQ
 \def\codep@installfrontedgerefpatch{%

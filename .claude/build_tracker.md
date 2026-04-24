@@ -38,3 +38,9 @@ Merge to main still pending from prior session (Wave 2 code DONE, 94/94 passing)
 3. Full integration test + stress-test validation
 4. Merge Wave 2→main (if not done)
 5. Merge Wave 3→main post-validation
+
+## Wave Ledger
+
+| Wave | Commits | Tests | Notes |
+|------|---------|-------|-------|
+| W03-SW5c | `e5994aa` census instrumentation (runner-only); `ba8669c` front-edge capture at 12 primitives; `e0cb81d` labelcref wrap + splitlabels narrowing (GPT-review fix) | 111 → 145 (+34) | Receipts: `.claude/comms/w03-sw5c-commit1-validator.md` (PASS), `.claude/comms/w03-sw5c-commit2-validator.md` (PASS), `.claude/comms/w03-sw5c-commit2-gpt-review.md` (BLOCK → resolved by 2b). Commit 3 (backend removal) QUEUED, not dispatched — awaits user greenlight. |

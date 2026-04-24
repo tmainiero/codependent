@@ -1,32 +1,22 @@
 %% TEST-NAME: test-frontedge-nameref-absent
-%% TEST-WHAT: Verify that \nameref{thm:A} at commit 2 produces an
-%%            atomref via the backend (\@setref patch, since nameref
-%%            ultimately calls \@setref via \NR@setref). Documents that
-%%            \nameref is NOT wrapped by the front-edge mechanism and
-%%            that after commit 3 (backend removal) \nameref will
-%%            produce NO atomref (the documented waiver).
-%% TEST-SOURCE: docs/SW5c.md §8.3 / §5 row 16 (\nameref waiver)
-%% TEST-SECTION: docs/SW5c.md §5 Waivers
+%% TEST-WHAT: Verify \nameref{thm:A} produces NO atomref after backend
+%%            wrapper removal. \nameref remains an explicit waiver from
+%%            the front-edge primitive list.
+%% TEST-SOURCE: .claude/comms/w03-sw5c-plan/PLAN.md §2.3 / §5 row 16
+%% TEST-SECTION: .claude/comms/w03-sw5c-plan/PLAN.md §2.4 Waiver rationale
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.2}{thm:A}
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,nameref,amsthm,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
-%% COMMIT-2 STATE: \nameref calls \NR@setref, which eventually calls
-%% \@setref. The backend patch on \@setref captures the edge, so an
-%% atomref IS recorded at commit 2.
-%%
-%% COMMIT-3 STATE (future): the backend is removed. \nameref is NOT
-%% in the front-edge primitive list (waiver §8.3). The test must be
-%% updated to TEST-AUX-NOT-CONTAINS at commit 3 to pin the absence.
-%%
-%% Note: \Ref (capital-R) IS wrapped by the front-edge and thus
-%% retains coverage beyond commit 3 (see test-frontedge-Ref.lvt).
+%% Commit-3 waiver pin: \nameref is not wrapped at the user-command
+%% layer, and the old \@setref backend wrapper is gone. Name-based refs
+%% still render normally, but they no longer contribute atomref edges.
 
 \documentclass{article}
 \usepackage{hyperref}
@@ -46,8 +36,8 @@
 \end{theorem}
 
 \begin{theorem}
-  As in \nameref{thm:A} (name-based ref; backend captures at commit 2,
-  waived from front-edge wrapper; absent after commit 3).
+  As in \nameref{thm:A} (name-based ref; waived from front-edge
+  capture, so no atomref is expected).
 \end{theorem}
 
 \END

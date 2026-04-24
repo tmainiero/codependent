@@ -1,10 +1,8 @@
 %% TEST-NAME: test-frontedge-cpagerefrange-absent
 %% TEST-WHAT: Verify \cpagerefrange{thm:A}{thm:C} does NOT produce
-%%            atomrefs (pre-existing coverage gap: goes through
-%%            \cpageref@getlabel which is not patched by the backend,
-%%            and \cpagerefrange is not wrapped by the front-edge).
-%% TEST-SOURCE: docs/SW5c.md §5 risk matrix (cpagerefrange gap)
-%% TEST-SECTION: docs/SW5c.md §5 Waivers
+%%            atomrefs. This family remains a documented coverage gap.
+%% TEST-SOURCE: .claude/comms/w03-sw5c-plan/PLAN.md §2.3 / §5 row 15
+%% TEST-SECTION: .claude/comms/w03-sw5c-plan/PLAN.md §2.4 Waiver rationale
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
@@ -17,11 +15,10 @@
 %% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% \cpagerefrange (cleveref, prints page ranges) routes through
-%% \cpageref@getlabel, which is not patched by either the backend or
-%% the front-edge mechanism at commit 2. This is a known coverage gap
-%% documented in the waiver table. The test pins the ABSENCE of
-%% atomrefs so any future change that accidentally adds coverage (or
-%% breaks the no-crash guarantee) is caught immediately.
+%% \cpageref@getlabel, which remains outside the wrapped primitive set.
+%% The test pins the ABSENCE of atomrefs so any future change that
+%% accidentally adds coverage (or breaks the no-crash guarantee) is
+%% caught immediately.
 
 \documentclass{article}
 \usepackage{hyperref}
