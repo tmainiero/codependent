@@ -1,0 +1,73 @@
+%% TEST-NAME: integ-proof-link-target
+%% TEST-WHAT: PINS-KNOWN-BROKEN regression for proof-atom link target bug.
+%%            When a proof atom (displayed as N.M*) appears in a "Used in"
+%%            backref list, clicking it should jump to the proof body, not
+%%            the parent theorem.  Root cause: no proof-typed named
+%%            destination is emitted; links for N.M* fall back to the parent
+%%            theorem anchor or are mis-wired to it at link-emission time.
+%%            Coverage hole: TEST-PDF-BACKREF-TARGETS previously only checked
+%%            "any link exists on a Used-in line" not "link goes to proof dest".
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% A proof-specific named destination must exist in the PDF.
+%% Currently FAILS: qpdf shows zero codep-*proof* named destinations.
+%% TEST-PDF-DEST-EXISTS: codep-.*proof
+%% The "Used in" line for thm:B must contain a link to a proof-typed dest.
+%% Currently FAILS: link goes to theorem:1.1 (parent theorem anchor), not proof.
+%% TEST-PDF-BACKREF-TARGETS: proof:.* = proof
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
+%% TEST-BEHAVIOR: B-LINK-CORRECT
+%%
+%% Minimal two-theorem document.  thm:A (a theorem) appears after thm:B
+%% (a lemma).  The proof of thm:A uses \codepproofof*{thm:A} so the proof
+%% atom is linked to thm:A with the starred target override, and it cites
+%% thm:B inside the proof body.  Because thm:B is cited from the proof of
+%% thm:A, thm:B's "Used in" list will contain the entry "1.2*" (the proof
+%% of thm:A at atom 1.2).  That backref link should jump to the proof body,
+%% not to theorem 1.2 itself.
+%%
+%% \codepproofof* is the mechanism that should make the proof-destination
+%% link possible.  The bug is that even with this call the PDF link still
+%% targets the parent theorem anchor (or no proof destination is emitted at
+%% all).  This fixture pins the gap so a future fix can verify closure.
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\usepackage{codependent}
+\codepsetup{backrefs=inline, proofs=on, paragraphs=off, equations=off}
+\codeptrack{theorem,lemma}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Main results}
+
+\begin{lemma}\label{thm:B}
+  Every non-empty set has a least element under the natural ordering
+  defined inductively.
+\end{lemma}
+
+\begin{theorem}\label{thm:A}
+  The natural numbers are well-ordered.
+\end{theorem}
+
+\begin{proof}[Proof of Theorem \ref{thm:A}]%
+  \codepproofof*{thm:A}%
+  The well-ordering follows directly from Lemma \ref{thm:B} applied to
+  any non-empty subset of the natural numbers.
+\end{proof}
+
+\END
+\end{document}
