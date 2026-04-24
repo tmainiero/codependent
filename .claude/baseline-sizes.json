@@ -8,6 +8,16 @@
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
     },
+    "integ-equations-all": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-equations-off": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
     "integ-full-stack-inline": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
@@ -23,7 +33,32 @@
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
     },
+    "integ-no-paragraphs": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-ntheorem": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proof-link-target": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
     "integ-stress-all-features": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "test-integration-kitchen-sink": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "test-trinity-stripped": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0

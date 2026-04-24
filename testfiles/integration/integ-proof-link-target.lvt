@@ -19,6 +19,8 @@
 %% TEST-PDF-BACKREF-TARGETS: proof:.* = proof
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
 %% TEST-BEHAVIOR: B-LINK-CORRECT
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
 %%
 %% Minimal two-theorem document.  thm:A (a theorem) appears after thm:B
 %% (a lemma).  The proof of thm:A uses \codepproofof*{thm:A} so the proof

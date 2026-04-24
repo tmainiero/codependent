@@ -103,6 +103,7 @@ METADATA_KEYS = {
     "TEST-PDF-ALL-BACKREFS-LINKED": "pdf_all_backrefs_linked",  # boolean; every Used-in entry must be a hyperlink
     "TEST-PDF-BACKREF-TARGETS": "pdf_backref_targets",  # may repeat; "<atom-dest> = <dest1>, <dest2>, ..."
     "TEST-PDF-BACKREF-ENTRY-TARGET": "pdf_backref_entry_targets",  # may repeat; "<atom_pat> | <entry_text> = <dest_pat>"
+    "TEST-PDF-BACKREF-SOURCES-RENDERED": "pdf_backref_sources_rendered",  # boolean; every backref source token must be rendered in PDF
     # Package error/warning assertions
     "TEST-EXPECT-PACKAGE-WARNING": "expect_package_warning",  # may repeat; regex on "Package codependent Warning:" line
     "TEST-EXPECT-PACKAGE-ERROR": "expect_package_error",      # may repeat; regex on "Package codependent Error:" line; also drops -halt-on-error
@@ -213,6 +214,7 @@ class Fixture:
     pdf_all_backrefs_linked: bool = False
     pdf_backref_targets: list = dataclasses.field(default_factory=list)
     pdf_backref_entry_targets: list = dataclasses.field(default_factory=list)
+    pdf_backref_sources_rendered: bool = False
     # Package error/warning assertions
     expect_package_warning: list = dataclasses.field(default_factory=list)
     expect_package_error: list = dataclasses.field(default_factory=list)
@@ -349,6 +351,8 @@ def parse_fixture(path: Path) -> Fixture:
                 fix.pdf_no_orphan_links = value.lower() in ("yes", "true", "1")
             elif attr == "pdf_all_backrefs_linked":
                 fix.pdf_all_backrefs_linked = value.lower() in ("yes", "true", "1")
+            elif attr == "pdf_backref_sources_rendered":
+                fix.pdf_backref_sources_rendered = value.lower() in ("yes", "true", "1")
             elif attr in {"census", "census_pass"}:
                 setattr(fix, attr, value.lower() in ("yes", "true", "1", "enabled", "on"))
             elif attr in REPEATING_KEYS:
@@ -913,6 +917,114 @@ def _find_link_for_entry(
     return result
 
 
+# Regex that matches display-number tokens in "Used in" rows:
+# bare N.M, starred N.M*, parenthesised (N.M) or (N.M–N.M) or (N.M-N.M).
+_BACKREF_TOKEN_RE = re.compile(
+    r"^\(?\d+\.\d+(?:[–\-]\d+\.\d+)?\)?\*?$"
+)
+# Statement labels rendered in PDF body text (e.g. "Theorem 2.3", "Lemma 1.5").
+_RENDERED_STATEMENT_RE = re.compile(
+    r"\b(?:Theorem|Lemma|Proposition|Corollary|Definition|Remark|Example|"
+    r"Claim|Conjecture|Hypothesis|Observation|Exercise|Problem|Question|"
+    r"Notation|Convention)\s+(\d+\.\d+)\b"
+)
+
+
+def _check_backref_sources_rendered(
+    backref_lines: "list[_BackrefLine]",
+    stext_xml: str,
+    fail: "callable",
+) -> None:
+    """Implement TEST-PDF-BACKREF-SOURCES-RENDERED: yes.
+
+    For each 'Used in' row, tokenise the backref list and verify that every
+    display-number token has a corresponding rendered atom in the PDF stext.
+
+    Rules per token class:
+    - Starred N.M*  : proof atom; accept if ANY rendered statement bearing
+                      number N.M appears in stext (proof inherits parent number).
+    - Parenthesised : equation ref; accept if the parenthesised form (N.M)
+                      appears literally in stext (equation numbers are rendered
+                      inside math mode as "(N.M)").
+    - Bare N.M      : theorem/definition/remark/etc.; accept if stext contains
+                      a statement-heading line like "Theorem N.M" or "Lemma N.M",
+                      OR if stext contains an appendix dest containing N.M.
+    """
+    # Pre-compute the set of rendered display numbers from statement headings.
+    rendered_statement_nums: set[str] = set()
+    for m in _RENDERED_STATEMENT_RE.finditer(stext_xml):
+        rendered_statement_nums.add(m.group(1))
+
+    for bline in backref_lines:
+        # Re-tokenise respecting top-level commas (parens protect ranges).
+        raw_text = bline.text
+        # Strip "Used in " prefix, trailing period.
+        after = raw_text[len("Used in "):]
+        if after.endswith("."):
+            after = after[:-1]
+        # Top-level comma split: track paren depth to avoid splitting inside (N.M–N.M).
+        tokens: list[str] = []
+        buf = ""
+        depth = 0
+        for ch in after:
+            if ch == "(":
+                depth += 1
+                buf += ch
+            elif ch == ")":
+                depth -= 1
+                buf += ch
+            elif ch == "," and depth == 0:
+                tokens.append(buf.strip())
+                buf = ""
+            else:
+                buf += ch
+        if buf.strip():
+            tokens.append(buf.strip())
+
+        for token in tokens:
+            if not _BACKREF_TOKEN_RE.match(token):
+                continue  # not a display-number token; skip (e.g. concept names)
+            is_starred = token.endswith("*")
+            is_paren = token.startswith("(")
+            bare = token.rstrip("*").strip("()")
+
+            if is_paren:
+                # Equation ref: "(N.M)" or "(N.M–N.M)". Check each endpoint.
+                inner = token.strip("()")
+                # May be a range "N.M–N.M"; split on en-dash or hyphen.
+                endpoints = re.split(r"[–\-]", inner, maxsplit=1)
+                all_found = True
+                for ep in endpoints:
+                    ep = ep.strip()
+                    # Equation numbers appear in PDF as "(N.M)" surrounded by parens.
+                    # Accept if the parenthesised form appears in PDF text content.
+                    paren_form = f"({ep})"
+                    if paren_form not in stext_xml:
+                        all_found = False
+                if not all_found:
+                    fail(
+                        f"phantom backref source: '{raw_text}' cites {token} "
+                        f"but no equation with display {token} is rendered"
+                    )
+            elif is_starred:
+                # Proof atom N.M*: accept if parent display number N.M appears
+                # in rendered statement headings (e.g. "Theorem 2.7" in stext).
+                # Do NOT match raw stext XML (coordinates embed arbitrary numbers).
+                if bare not in rendered_statement_nums:
+                    fail(
+                        f"phantom backref source: '{raw_text}' cites {token} "
+                        f"but no atom with display {bare} is rendered"
+                    )
+            else:
+                # Bare theorem-type atom N.M: accept if found in statement headings.
+                # Do NOT match raw stext XML (coordinates embed arbitrary numbers).
+                if bare not in rendered_statement_nums:
+                    fail(
+                        f"phantom backref source: '{raw_text}' cites {token} "
+                        f"but no atom with display {token} is rendered"
+                    )
+
+
 # ----------------------------------------------------------------------
 # Appendix entry helpers
 # ----------------------------------------------------------------------
@@ -1353,6 +1465,7 @@ def _run_assertions(
         or fix.pdf_dest_exists or fix.pdf_dest_not_exists
         or fix.pdf_link_rect or fix.pdf_no_orphan_links
         or fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
+        or fix.pdf_backref_sources_rendered
     )
     if has_pdf_checks:
         pdf_file = tmp_path / f"{fix.name}.pdf"
@@ -1518,6 +1631,7 @@ def _run_assertions(
                 fix.pdf_all_backrefs_linked
                 or fix.pdf_backref_targets
                 or fix.pdf_backref_entry_targets
+                or fix.pdf_backref_sources_rendered
             )
             if has_backref_checks:
                 if PDF_STEXT_TOOL is None or PDF_QPDF_TOOL is None:
@@ -1676,6 +1790,10 @@ def _run_assertions(
                                         f"dest_pat={dest_pat!r} — not satisfied. "
                                         f"Details: {'; '.join(entry_errors)}"
                                     )
+                            if fix.pdf_backref_sources_rendered:
+                                _check_backref_sources_rendered(
+                                    backref_lines, stext_xml, fail
+                                )
 
     # 14. Package warning assertions.
     for pat in fix.expect_package_warning:

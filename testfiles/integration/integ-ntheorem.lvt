@@ -36,6 +36,8 @@
 %% TEST-PASS-COUNT-WARM-CHANGED: 2
 %% TEST-WARM-MUTATION: sed -i '1s/$/ [warm-changed]/' testfiles/integration/integ-ntheorem.lvt
 %% TEST-BEHAVIOR: B-NUM-SHARED
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
 
 \documentclass{article}
 

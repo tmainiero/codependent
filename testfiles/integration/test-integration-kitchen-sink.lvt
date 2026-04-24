@@ -28,6 +28,8 @@
 %% audit (2026-04-24). ALL-BACKREFS-LINKED would fail on the audited build.
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
 %%
 %% The "does the whole thing compose?" smoke test. Unit
 %% fixtures pin individual features; this one verifies that
