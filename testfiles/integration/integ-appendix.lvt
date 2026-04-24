@@ -29,6 +29,8 @@
 %% TEST-ATOMS-MIN: 6
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
 %% TEST-BEHAVIOR: B-REND-APPENDIX
 %%
 %% Integration fixture for appendix mode.

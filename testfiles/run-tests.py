@@ -28,6 +28,7 @@ Standard library only. No PyYAML, no requests, no third-party deps.
 
 import argparse
 import dataclasses
+import difflib
 import json
 import os
 import re
@@ -50,6 +51,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent  # tools/codependent/
 UNIT_DIR = SCRIPT_DIR / "unit"
 INTEGRATION_DIR = SCRIPT_DIR / "integration"
 REAL_WORLD_DIR = SCRIPT_DIR / "real-world" / "wrappers"
+OUTPUT_DIR = SCRIPT_DIR / "output"
 
 # Where the .sty file lives. The runner copies it into the temp work dir
 # so each test sees a clean kpse search path.
@@ -113,6 +115,9 @@ METADATA_KEYS = {
     "TEST-PASS-COUNT-WARM-CHANGED": "pass_count_warm_changed",  # int; max passes in warm-changed phase
     "TEST-WARM-MUTATION": "warm_mutation",          # shell command run between warm and warm-changed phases
     "TEST-STABLE-AT": "stable_at",                  # int; phase-qualifiable; declares pass count + asserts convergence
+    # Census instrumentation (SW5c commit 1)
+    "TEST-CENSUS": "census",
+    "TEST-CENSUS-PASS": "census_pass",
 }
 
 REPEATING_KEYS = {
@@ -218,6 +223,8 @@ class Fixture:
     pass_count_warm_changed: int = 0
     warm_mutation: str = ""
     stable_at: int = 0  # unqualified TEST-STABLE-AT; phase-qualified variants live in phase_assertions
+    census: bool = False
+    census_pass: bool = False
     # Phase-qualified assertion overrides: {"cold": {"log_contains": [...], "stable_at": N, ...}}
     # Keys match METADATA_KEYS attribute names; non-repeating int fields stored directly.
     phase_assertions: dict = dataclasses.field(default_factory=dict)
@@ -339,6 +346,8 @@ def parse_fixture(path: Path) -> Fixture:
                 fix.pdf_no_orphan_links = value.lower() in ("yes", "true", "1")
             elif attr == "pdf_all_backrefs_linked":
                 fix.pdf_all_backrefs_linked = value.lower() in ("yes", "true", "1")
+            elif attr in {"census", "census_pass"}:
+                setattr(fix, attr, value.lower() in ("yes", "true", "1", "enabled", "on"))
             elif attr in REPEATING_KEYS:
                 getattr(fix, attr).append(value)
             else:
@@ -353,6 +362,8 @@ def parse_fixture(path: Path) -> Fixture:
         fix.parse_error = (
             "TEST-PASS-COUNT-WARM-CHANGED declared but no TEST-WARM-MUTATION command"
         )
+    if fix.census_pass:
+        fix.census = True
     return fix
 
 
@@ -802,6 +813,205 @@ def _count_appendix_entries_in_pdf(link_data: "PdfLinkObjects") -> int:
     return sum(
         1 for d in link_data.destinations if d.startswith("codep-appendix:")
     )
+
+
+# ----------------------------------------------------------------------
+# Census helpers
+# ----------------------------------------------------------------------
+
+
+CENSUS_ATOMREF_RE = re.compile(r"\\codep@atomref\{([^{}]+)\}\{([^{}]+)\}")
+CENSUS_RENDERLIST_RE = re.compile(r"\\codep@renderlist\{([^{}]+)\}\{")
+PAGE_BEARING_NEWLABEL_RE = re.compile(
+    r"^\\newlabel\{.*\}\{\{.*\}\{[^{}]+\}"
+)
+PAGE_BEARING_WRITEFILE_RE = re.compile(
+    r"^\\@writefile\{(?:toc|lof|lot)\}\{"
+)
+CENSUS_BOOLEAN_TRUE = {"yes", "true", "1", "enabled", "on"}
+CENSUS_MEASURE_KEYS = (
+    "atomref_gap",
+    "renderlist_first_appearance_after_pass2",
+    "page_bearing_diff_pass2_to_pass3",
+)
+
+
+def _census_output_path(name: str) -> Path:
+    return OUTPUT_DIR / f"{name}.census.json"
+
+
+def _extract_atomref_keys(aux_text: str) -> list[str]:
+    keys = {
+        f"{src}||{tgt}"
+        for src, tgt in CENSUS_ATOMREF_RE.findall(aux_text)
+    }
+    return sorted(keys)
+
+
+def _extract_renderlist_keys(aux_text: str) -> list[str]:
+    return sorted(set(CENSUS_RENDERLIST_RE.findall(aux_text)))
+
+
+def _extract_page_bearing_lines(aux_text: str) -> list[str]:
+    lines = []
+    for line in aux_text.splitlines():
+        if PAGE_BEARING_NEWLABEL_RE.search(line) or PAGE_BEARING_WRITEFILE_RE.search(line):
+            lines.append(line)
+    return sorted(lines)
+
+
+def _page_bearing_diff(before: list[str], after: list[str]) -> list[str]:
+    return [
+        line for line in difflib.unified_diff(before, after, lineterm="")
+        if (line.startswith("+") or line.startswith("-"))
+        and not line.startswith("+++")
+        and not line.startswith("---")
+    ]
+
+
+def _measure_census(census: dict) -> dict[str, int]:
+    atomref_counts = census["atomref"]["count"]
+    renderlist_keys = census["renderlist"]["keys"]
+    page_bearing_diffs = census["page_bearing"]["diff"]
+    return {
+        "atomref_gap": atomref_counts[1] - atomref_counts[0],
+        "renderlist_first_appearance_after_pass2": len(
+            sorted(set(renderlist_keys[2]) - set(renderlist_keys[1]))
+        ),
+        "page_bearing_diff_pass2_to_pass3": len(page_bearing_diffs[1]),
+    }
+
+
+def _load_census_baseline() -> dict[str, dict[str, int]]:
+    baseline = PROJECT_ROOT / ".claude" / "baseline-sizes.json"
+    try:
+        data = json.loads(baseline.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    census = data.get("census", {})
+    return census if isinstance(census, dict) else {}
+
+
+def _write_census_json(fix: "Fixture", census: dict) -> Path:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = _census_output_path(fix.name)
+    out_path.write_text(json.dumps(census, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return out_path
+
+
+def _prepare_fixture_workspace(fix: "Fixture", tmp_path: Path) -> None:
+    local_lvt = tmp_path / f"{fix.name}.tex"
+    shutil.copy(fix.path, local_lvt)
+    content = local_lvt.read_text(encoding="utf-8")
+    local_lvt.write_text(INJECT_L3BUILD_NOOPS + content, encoding="utf-8")
+    shutil.copy(STY_FILE, tmp_path / "codependent.sty")
+    if RENDER_STY_FILE.exists():
+        shutil.copy(RENDER_STY_FILE, tmp_path / "codependent-render.sty")
+    if LTXML_FILE.exists():
+        shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
+
+
+def _run_census(
+    fix: "Fixture",
+    engine_bin: Path,
+    verbose: bool,
+) -> tuple[dict | None, str | None]:
+    with tempfile.TemporaryDirectory(prefix=f"codep-census-{fix.name}-") as tmp:
+        tmp_path = Path(tmp)
+        _prepare_fixture_workspace(fix, tmp_path)
+        cmd = [str(engine_bin), "-interaction=nonstopmode"]
+        if not fix.expect_package_error:
+            cmd.append("-halt-on-error")
+        cmd.append(f"{fix.name}.tex")
+
+        atomref_keys_by_pass: list[list[str]] = []
+        renderlist_keys_by_pass: list[list[str]] = []
+        page_bearing_lines_by_pass: list[list[str]] = []
+
+        for pass_num in range(1, 4):
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    cwd=tmp_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+            except subprocess.TimeoutExpired:
+                return None, f"census pass {pass_num}: TIMEOUT after 120s"
+            if verbose:
+                sys.stderr.write(
+                    f"  [census] {fix.name} pass {pass_num}: exit {proc.returncode}\n"
+                )
+            if proc.returncode != 0:
+                return None, (
+                    f"census pass {pass_num}: exit {proc.returncode} "
+                    f"(expected 0 for census compile)"
+                )
+            aux_path = tmp_path / f"{fix.name}.aux"
+            aux_text = aux_path.read_text(encoding="utf-8", errors="replace") if aux_path.exists() else ""
+            atomref_keys_by_pass.append(_extract_atomref_keys(aux_text))
+            renderlist_keys_by_pass.append(_extract_renderlist_keys(aux_text))
+            page_bearing_lines_by_pass.append(_extract_page_bearing_lines(aux_text))
+
+        page_bearing_diffs = [
+            _page_bearing_diff(page_bearing_lines_by_pass[0], page_bearing_lines_by_pass[1]),
+            _page_bearing_diff(page_bearing_lines_by_pass[1], page_bearing_lines_by_pass[2]),
+        ]
+
+        census = {
+            "passes": 3,
+            "atomref": {
+                "count": [len(keys) for keys in atomref_keys_by_pass],
+                "keys": atomref_keys_by_pass,
+            },
+            "renderlist": {
+                "count": [len(keys) for keys in renderlist_keys_by_pass],
+                "keys": renderlist_keys_by_pass,
+            },
+            "page_bearing": {
+                "count": [len(lines) for lines in page_bearing_lines_by_pass],
+                "lines": page_bearing_lines_by_pass,
+                "diff": page_bearing_diffs,
+                "diff_count": [len(diff) for diff in page_bearing_diffs],
+            },
+        }
+        census["measures"] = _measure_census(census)
+        return census, None
+
+
+def _check_census_assertions(
+    fix: "Fixture",
+    result: "TestResult",
+    census: dict,
+    prefix: str = "",
+) -> None:
+    baseline = _load_census_baseline()
+    fixture_baseline = baseline.get(fix.name)
+    if not isinstance(fixture_baseline, dict):
+        result.failures.append(
+            f"{prefix}census baseline missing for {fix.name} in .claude/baseline-sizes.json"
+        )
+        return
+
+    measures = census.get("measures", {})
+    for key in CENSUS_MEASURE_KEYS:
+        expected = fixture_baseline.get(key)
+        actual = measures.get(key)
+        if expected is None:
+            result.failures.append(
+                f"{prefix}census baseline for {fix.name} missing key {key}"
+            )
+            continue
+        if actual is None:
+            result.failures.append(
+                f"{prefix}census output for {fix.name} missing key {key}"
+            )
+            continue
+        if actual > expected:
+            result.failures.append(
+                f"{prefix}census regression {key}: expected <= {expected}, got {actual}"
+            )
 
 
 # ----------------------------------------------------------------------
@@ -1417,7 +1627,13 @@ class TestResult:
     log_excerpt: str = ""
 
 
-def run_fixture(fix: "Fixture", engine_bin: Path, keep_temp: bool, verbose: bool) -> "TestResult":
+def run_fixture(
+    fix: "Fixture",
+    engine_bin: Path,
+    keep_temp: bool,
+    verbose: bool,
+    force_census: bool = False,
+) -> "TestResult":
     """Compile a fixture and verify its assertions."""
     t0 = time.time()
     result = TestResult(fixture=fix, passed=False)
@@ -1436,15 +1652,7 @@ def run_fixture(fix: "Fixture", engine_bin: Path, keep_temp: bool, verbose: bool
 
     with tempfile.TemporaryDirectory(prefix=f"codep-test-{fix.name}-") as tmp:
         tmp_path = Path(tmp)
-        local_lvt = tmp_path / f"{fix.name}.tex"
-        shutil.copy(fix.path, local_lvt)
-        content = local_lvt.read_text(encoding="utf-8")
-        local_lvt.write_text(INJECT_L3BUILD_NOOPS + content, encoding="utf-8")
-        shutil.copy(STY_FILE, tmp_path / "codependent.sty")
-        if RENDER_STY_FILE.exists():
-            shutil.copy(RENDER_STY_FILE, tmp_path / "codependent-render.sty")
-        if LTXML_FILE.exists():
-            shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
+        _prepare_fixture_workspace(fix, tmp_path)
 
         if _is_multi_phase(fix):
             _run_multi_phase(fix, result, engine_bin, tmp_path, verbose)
@@ -1477,6 +1685,21 @@ def run_fixture(fix: "Fixture", engine_bin: Path, keep_temp: bool, verbose: bool
             if persistent.exists():
                 shutil.rmtree(persistent)
             shutil.copytree(tmp_path, persistent)
+
+    census_requested = force_census or fix.census
+    if census_requested:
+        census, census_error = _run_census(fix, engine_bin, verbose)
+        if census_error is not None:
+            result.failures.append(census_error)
+        elif census is not None:
+            out_path = _write_census_json(fix, census)
+            if verbose:
+                sys.stderr.write(
+                    f"  [census] wrote {out_path} "
+                    f"measures={census.get('measures', {})}\n"
+                )
+            if fix.census_pass:
+                _check_census_assertions(fix, result, census)
 
     result.passed = not result.failures
     result.duration_ms = int((time.time() - t0) * 1000)
@@ -1649,6 +1872,11 @@ def main():
     parser.add_argument("--unit-only", action="store_true", help="only run unit fixtures")
     parser.add_argument("--integration-only", action="store_true", help="only run integration fixtures")
     parser.add_argument("--real-world", action="store_true", help="include real-world arxiv-corpus fixtures")
+    parser.add_argument(
+        "--census",
+        action="store_true",
+        help="run only TEST-CENSUS fixtures and emit testfiles/output/*.census.json",
+    )
     args = parser.parse_args()
 
     # Engine binary.
@@ -1705,9 +1933,14 @@ def main():
         real_world = args.real_world
 
     fixtures = discover_fixtures(unit, integration, real_world, args.filter)
+    if args.census:
+        fixtures = [fix for fix in fixtures if fix.census]
 
     if not fixtures:
-        sys.stderr.write("No fixtures matched the filter.\n")
+        if args.census:
+            sys.stderr.write("No TEST-CENSUS fixtures matched the filter.\n")
+        else:
+            sys.stderr.write("No fixtures matched the filter.\n")
         return 0
 
     sys.stderr.write(f"Discovered {len(fixtures)} fixture(s)\n\n")
@@ -1718,7 +1951,13 @@ def main():
         if not args.brief:
             sys.stderr.write(f"  {fix.name} ...")
             sys.stderr.flush()
-        result = run_fixture(fix, engine_bin, args.keep_temp, args.verbose)
+        result = run_fixture(
+            fix,
+            engine_bin,
+            args.keep_temp,
+            args.verbose,
+            force_census=args.census,
+        )
         if not args.brief:
             if result.skipped:
                 sys.stderr.write(" SKIP\n")

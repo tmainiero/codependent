@@ -66,6 +66,8 @@
 %%   "Used in 3.3." appears on its own line after the align equations.
 %%   corollary:3.3 has anchor corollary.49.
 %% TEST-PDF-BACKREF-TARGETS: lemma\.30 = corollary\.49
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
 %% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
 %%
 %% This fixture inlines the theorem declarations from sty-theorems-ta.sty

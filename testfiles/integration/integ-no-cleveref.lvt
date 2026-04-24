@@ -29,6 +29,8 @@
 %% TEST-PASS-COUNT-WARM: 1
 %% TEST-PASS-COUNT-WARM-CHANGED: 2
 %% TEST-WARM-MUTATION: sed -i '1s/$/ [warm-changed]/' testfiles/integration/integ-no-cleveref.lvt
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
 %% TEST-PDF-LINKS: 2
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-BEHAVIOR: B-PASS-ONE

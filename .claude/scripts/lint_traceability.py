@@ -522,6 +522,12 @@ RATCHET_KEYS = (
     ".traceability-baseline.uncovered_behaviors",
     ".test-behavior-baseline",
 )
+CENSUS_MEASURE_KEYS = (
+    "atomref_gap",
+    "renderlist_first_appearance_after_pass2",
+    "page_bearing_diff_pass2_to_pass3",
+)
+CENSUS_OUTPUT_DIR = os.path.join(PROJ_ROOT, "testfiles", "output")
 
 
 def _count_traceability_baseline_sections(path: str) -> tuple:
@@ -554,6 +560,33 @@ def write_baseline_sizes(sizes: Dict[str, int]) -> None:
         f.write("\n")
 
 
+def load_census_outputs() -> Dict[str, Dict[str, int]]:
+    """Load per-fixture census measures from testfiles/output/*.census.json."""
+    results: Dict[str, Dict[str, int]] = {}
+    if not os.path.isdir(CENSUS_OUTPUT_DIR):
+        return results
+    for path in sorted(glob.glob(os.path.join(CENSUS_OUTPUT_DIR, "*.census.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        measures = data.get("measures", {})
+        if not isinstance(measures, dict):
+            continue
+        fixture = os.path.basename(path).removesuffix(".census.json")
+        if not fixture:
+            continue
+        fixture_measures: Dict[str, int] = {}
+        for key in CENSUS_MEASURE_KEYS:
+            val = measures.get(key)
+            if isinstance(val, int):
+                fixture_measures[key] = val
+        if len(fixture_measures) == len(CENSUS_MEASURE_KEYS):
+            results[fixture] = fixture_measures
+    return results
+
+
 def run_check_ratchet() -> int:
     """Check that no baseline has grown. Return 0 = pass, 1 = fail."""
     recorded = load_baseline_sizes()
@@ -575,17 +608,75 @@ def run_check_ratchet() -> int:
         print("RATCHET FAIL — baselines must only shrink:")
         for e in errors:
             print(e)
+        ratchet_rc = 1
+    else:
+        ratchet_rc = 0
+
+    print("=== Census Ratchet ===")
+    census_recorded = recorded.get("census", {})
+    if census_recorded and not isinstance(census_recorded, dict):
+        print("ERROR: baseline census entry must be a fixture->measure map", file=sys.stderr)
         return 1
-    return 0
+    if not census_recorded:
+        print("  ok:     no census baselines recorded")
+        return ratchet_rc
+
+    census_current = load_census_outputs()
+    census_errors = []
+    for fixture in sorted(census_recorded):
+        expected = census_recorded.get(fixture, {})
+        if not isinstance(expected, dict):
+            census_errors.append(f"  malformed recorded census entry for {fixture}")
+            continue
+        current = census_current.get(fixture)
+        if current is None:
+            census_errors.append(
+                f"  missing current census output: testfiles/output/{fixture}.census.json"
+            )
+            continue
+        for key in CENSUS_MEASURE_KEYS:
+            rec = expected.get(key)
+            cur = current.get(key)
+            if not isinstance(rec, int):
+                census_errors.append(f"  {fixture}: baseline missing integer key {key}")
+                continue
+            if not isinstance(cur, int):
+                census_errors.append(f"  {fixture}: current census missing integer key {key}")
+                continue
+            if cur > rec:
+                census_errors.append(
+                    f"  GREW: census.{fixture}.{key}: {rec} → {cur} (+{cur - rec})"
+                )
+            elif cur < rec:
+                print(
+                    f"  shrunk: census.{fixture}.{key}: {rec} → {cur} "
+                    f"(−{rec - cur}) — run --update-ratchet"
+                )
+            else:
+                print(f"  ok:     census.{fixture}.{key}: {cur}")
+    if census_errors:
+        print("CENSUS RATCHET FAIL — convergence measures must only shrink:")
+        for err in census_errors:
+            print(err)
+        return 1
+    return ratchet_rc
 
 
 def run_update_ratchet() -> int:
     """Write current baseline sizes to .claude/baseline-sizes.json."""
     sizes = compute_baseline_sizes()
+    existing = load_baseline_sizes()
+    census = load_census_outputs()
+    if census:
+        sizes["census"] = census
+    elif "census" in existing:
+        sizes["census"] = existing["census"]
     write_baseline_sizes(sizes)
     print(f"Ratchet updated → {BASELINE_SIZES_FILE}")
     for key, val in sorted(sizes.items()):
         print(f"  {key}: {val}")
+    if not census and "census" in sizes:
+        print("  NOTE: preserved existing census baseline (no testfiles/output/*.census.json found)")
     return 0
 
 
