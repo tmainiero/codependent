@@ -79,7 +79,7 @@
 %% TEST-RERUN: 3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-BEHAVIOR: B-REND-INLINE, B-LINK-CLICKABLE
+%% TEST-BEHAVIOR: B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-PROOFOF-STAR
 %%
 %% Full-stack integration fixture. All codependent options are on,
 %% with backref-style=inline (renders backrefs inline within the theorem body).

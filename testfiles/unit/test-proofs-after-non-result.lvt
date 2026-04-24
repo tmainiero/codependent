@@ -7,6 +7,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Proof not adjacent
+%% TEST-PDF-CONTAINS: Used in 1.2*.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{definition}
@@ -41,7 +42,7 @@
 \section{Definition followed by proof}
 
 % Atom 1.1 -- theorem (establishes baseline)
-\begin{theorem}
+\begin{theorem}\label{thm:baseline}
   A theorem statement.
 \end{theorem}
 
@@ -53,7 +54,8 @@
 % Adjacent proof: inherits 1.2* from the definition
 % (current behavior: no result/non-result distinction)
 \begin{proof}
-  Proof that the definition is well-formed.
+  Proof that the definition is well-formed by \ref{thm:baseline}.%
+  \codepbackrefs
 \end{proof}
 
 \END

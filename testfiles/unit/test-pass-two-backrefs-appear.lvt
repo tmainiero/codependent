@@ -1,0 +1,35 @@
+%% TEST-NAME: test-pass-two-backrefs-appear
+%% TEST-WHAT: On the second pass the visible "Used in" annotation
+%%            appears with the final source number.
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-PASS-TWO
+%% TEST-SECTION: two-pass output
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-CONTAINS: Theorem 1.1
+%% TEST-PDF-CONTAINS: Used in 1.2
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PASS-TWO
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Two pass}
+
+\begin{theorem}\label{thm:target}
+  Target theorem.
+\end{theorem}
+
+\begin{theorem}
+  By \ref{thm:target}.
+\end{theorem}
+
+\END
+\end{document}

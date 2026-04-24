@@ -7,6 +7,9 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-CONTAINS: a + b = c.
+%% TEST-PDF-CONTAINS: (1)
+%% TEST-PDF-CONTAINS: Second paragraph, which references (1).
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{paragraph} = 1
@@ -36,13 +39,13 @@
 
 \section{Equations separate}
 
-First paragraph before the display equation. Atom 1.1.
+First paragraph before the display equation.
 
 \begin{equation}\label{eq:first}
   a + b = c.
 \end{equation}
 
-Second paragraph, which references \eqref{eq:first}. Atom 1.2.
+Second paragraph, which references \eqref{eq:first}.
 
 \END
 \end{document}

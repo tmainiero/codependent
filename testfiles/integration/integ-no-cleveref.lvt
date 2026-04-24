@@ -1,4 +1,4 @@
-%% TEST-NAME: integ-no-cleveref
+%% TEST-NAME: integ-no-cleveref [warm-changed]
 %% TEST-WHAT: Correct patch-site selection when cleveref is absent.
 %%            Verifies that codependent patches \@setref and hyperref's
 %%            \HyRef@autosetref / \HyRef@@StarSetRef but does NOT attempt

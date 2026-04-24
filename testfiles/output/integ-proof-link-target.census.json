@@ -1,0 +1,79 @@
+{
+  "atomref": {
+    "count": [
+      2,
+      2,
+      2
+    ],
+    "keys": [
+      [
+        "proof:1.2||thm:A",
+        "proof:1.2||thm:B"
+      ],
+      [
+        "proof:1.2||thm:A",
+        "proof:1.2||thm:B"
+      ],
+      [
+        "proof:1.2||thm:A",
+        "proof:1.2||thm:B"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      3,
+      3,
+      3
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Main results}{1}{section.1}\\protected@file@percent }",
+        "\\newlabel{thm:A}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{thm:B}{{1.1}{1}{}{theorem.2}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Main results}{1}{section.1}\\protected@file@percent }",
+        "\\newlabel{thm:A}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{thm:B}{{1.1}{1}{}{theorem.2}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Main results}{1}{section.1}\\protected@file@percent }",
+        "\\newlabel{thm:A}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{thm:B}{{1.1}{1}{}{theorem.2}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      2,
+      2
+    ],
+    "keys": [
+      [],
+      [
+        "lemma:1.1",
+        "theorem:1.2"
+      ],
+      [
+        "lemma:1.1",
+        "theorem:1.2"
+      ]
+    ]
+  }
+}

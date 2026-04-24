@@ -1,0 +1,36 @@
+%% TEST-NAME: test-hyperref-manual-no-edge
+%% TEST-WHAT: A manual \hyperref link still renders as a link in the PDF
+%%            but does not create a semantic backref edge.
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-EDGE-HYPERREF
+%% TEST-SECTION: manual hyperref omission from edge graph
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-NOT: Used in
+%% TEST-PDF-LINKS: 1
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EDGE-HYPERREF
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Manual link}
+
+\begin{theorem}\label{thm:target}
+  Target theorem for a manual hyperlink.
+\end{theorem}
+
+\begin{theorem}
+  Manual link: \hyperref[thm:target]{jump to the target theorem}.
+\end{theorem}
+
+\END
+\end{document}

@@ -1,0 +1,167 @@
+{
+  "atomref": {
+    "count": [
+      11,
+      11,
+      11
+    ],
+    "keys": [
+      [
+        "equation:1.1||def:continuity",
+        "equation:1.2--1.3||def:continuity",
+        "equation:2.1||def:compactness",
+        "lemma:1.4||def:continuity",
+        "lemma:1.4||thm:continuity-compact",
+        "paragraph:2.1||def:compactness",
+        "paragraph:2.1||def:continuity",
+        "paragraph:2.2||lem:preimage-union",
+        "paragraph:2.2||thm:continuity-compact",
+        "theorem:1.3||def:compactness",
+        "theorem:1.3||def:continuity"
+      ],
+      [
+        "equation:1.1||def:continuity",
+        "equation:1.2--1.3||def:continuity",
+        "equation:2.1||def:compactness",
+        "lemma:1.4||def:continuity",
+        "lemma:1.4||thm:continuity-compact",
+        "paragraph:2.1||def:compactness",
+        "paragraph:2.1||def:continuity",
+        "paragraph:2.2||lem:preimage-union",
+        "paragraph:2.2||thm:continuity-compact",
+        "theorem:1.3||def:compactness",
+        "theorem:1.3||def:continuity"
+      ],
+      [
+        "equation:1.1||def:continuity",
+        "equation:1.2--1.3||def:continuity",
+        "equation:2.1||def:compactness",
+        "lemma:1.4||def:continuity",
+        "lemma:1.4||thm:continuity-compact",
+        "paragraph:2.1||def:compactness",
+        "paragraph:2.1||def:continuity",
+        "paragraph:2.2||lem:preimage-union",
+        "paragraph:2.2||thm:continuity-compact",
+        "theorem:1.3||def:compactness",
+        "theorem:1.3||def:continuity"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      22,
+      22,
+      22
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Topology}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Maps}{1}{section.9}\\protected@file@percent }",
+        "\\newlabel{def:compactness@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:compactness}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{def:continuity@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:continuity}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{eq:compact-image@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:compact-image}{{2.1}{1}{Maps}{equation.11}{}}",
+        "\\newlabel{eq:limit-image@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:limit-image}{{1.1}{1}{}{equation.5}{}}",
+        "\\newlabel{eq:preimage-inter@cref}{{[equation][3][1]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:preimage-inter}{{1.3}{1}{}{equation.8}{}}",
+        "\\newlabel{eq:preimage-union@cref}{{[equation][2][1]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:preimage-union}{{1.2}{1}{}{equation.7}{}}",
+        "\\newlabel{lem:preimage-union@cref}{{[theorem][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:preimage-union}{{1.4}{1}{}{theorem.6}{}}",
+        "\\newlabel{sec:maps@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:maps}{{2}{1}{Maps}{section.9}{}}",
+        "\\newlabel{sec:topology@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:topology}{{1}{1}{Topology}{section.1}{}}",
+        "\\newlabel{thm:continuity-compact@cref}{{[theorem][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:continuity-compact}{{1.3}{1}{}{theorem.4}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Topology}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Maps}{1}{section.9}\\protected@file@percent }",
+        "\\newlabel{def:compactness@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:compactness}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{def:continuity@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:continuity}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{eq:compact-image@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:compact-image}{{2.1}{1}{Maps}{equation.11}{}}",
+        "\\newlabel{eq:limit-image@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:limit-image}{{1.1}{1}{}{equation.5}{}}",
+        "\\newlabel{eq:preimage-inter@cref}{{[equation][3][1]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:preimage-inter}{{1.3}{1}{}{equation.8}{}}",
+        "\\newlabel{eq:preimage-union@cref}{{[equation][2][1]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:preimage-union}{{1.2}{1}{}{equation.7}{}}",
+        "\\newlabel{lem:preimage-union@cref}{{[theorem][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:preimage-union}{{1.4}{1}{}{theorem.6}{}}",
+        "\\newlabel{sec:maps@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:maps}{{2}{1}{Maps}{section.9}{}}",
+        "\\newlabel{sec:topology@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:topology}{{1}{1}{Topology}{section.1}{}}",
+        "\\newlabel{thm:continuity-compact@cref}{{[theorem][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:continuity-compact}{{1.3}{1}{}{theorem.4}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Topology}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Maps}{1}{section.9}\\protected@file@percent }",
+        "\\newlabel{def:compactness@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:compactness}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{def:continuity@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:continuity}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{eq:compact-image@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:compact-image}{{2.1}{1}{Maps}{equation.11}{}}",
+        "\\newlabel{eq:limit-image@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:limit-image}{{1.1}{1}{}{equation.5}{}}",
+        "\\newlabel{eq:preimage-inter@cref}{{[equation][3][1]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:preimage-inter}{{1.3}{1}{}{equation.8}{}}",
+        "\\newlabel{eq:preimage-union@cref}{{[equation][2][1]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:preimage-union}{{1.2}{1}{}{equation.7}{}}",
+        "\\newlabel{lem:preimage-union@cref}{{[theorem][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:preimage-union}{{1.4}{1}{}{theorem.6}{}}",
+        "\\newlabel{sec:maps@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:maps}{{2}{1}{Maps}{section.9}{}}",
+        "\\newlabel{sec:topology@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:topology}{{1}{1}{Topology}{section.1}{}}",
+        "\\newlabel{thm:continuity-compact@cref}{{[theorem][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:continuity-compact}{{1.3}{1}{}{theorem.4}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      4,
+      4
+    ],
+    "keys": [
+      [],
+      [
+        "definition:1.1",
+        "definition:1.2",
+        "lemma:1.4",
+        "theorem:1.3"
+      ],
+      [
+        "definition:1.1",
+        "definition:1.2",
+        "lemma:1.4",
+        "theorem:1.3"
+      ]
+    ]
+  }
+}

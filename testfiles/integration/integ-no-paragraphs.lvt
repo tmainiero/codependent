@@ -35,6 +35,7 @@
 %% TEST-RERUN: 3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
+%% TEST-BEHAVIOR: B-EDGE-PARAOFF-EQ
 
 %%
 %% Paragraphs=off integration test.

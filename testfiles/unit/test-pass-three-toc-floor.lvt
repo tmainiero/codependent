@@ -1,0 +1,41 @@
+%% TEST-NAME: test-pass-three-toc-floor
+%% TEST-WHAT: A document whose base TOC machinery requires a third pass
+%%            still settles within that same three-pass budget while
+%%            rendering the final visible backref row.
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-PASS-THREE
+%% TEST-SECTION: three-pass base-package floor
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 3
+%% TEST-PDF-CONTAINS: Contents
+%% TEST-PDF-CONTAINS: Used in 2.1
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-BEHAVIOR: B-PASS-THREE
+
+\documentclass{article}
+\usepackage{amsthm}
+\usepackage[hypertexnames=false]{hyperref}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\tableofcontents
+
+\section{First}
+
+\begin{theorem}\label{thm:target}
+  Target theorem in the TOC-bearing document.
+\end{theorem}
+
+\section{Second}
+
+\begin{theorem}
+  By \ref{thm:target}.
+\end{theorem}
+
+\END
+\end{document}

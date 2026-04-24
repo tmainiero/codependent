@@ -8,6 +8,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-CONTAINS: Theorem 1.1. The main theorem statement. Used in (1), 1.2.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{definition} = 1
@@ -16,8 +17,6 @@
 %% TEST-AUX-CONTAINS: \codep@atomref{definition:1.2}{thm:main}
 %% TEST-ATOMS-MIN: 2
 %% --- PDF-level backref link assertions ---
-%% Verify "Used in" text renders in the PDF
-%% TEST-PDF-CONTAINS: Used in
 %% No dangling link destinations
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% Theorem 1.1 (thm:main) "Used in (1), 1.2" is inline (same typographic line as

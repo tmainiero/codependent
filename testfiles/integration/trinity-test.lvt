@@ -61,6 +61,7 @@
 %%   "Used in 2.3*." appears on its own line after the tikz-cd diagram.
 %%   proof:2.3 has anchor equation.32.
 %% TEST-PDF-BACKREF-TARGETS: proposition\.27 = equation\.32
+%% TEST-PDF-BACKREF-ENTRY-TARGET: equation\.32 | 2.3* = equation\.32
 %%
 %% lem:pentagon (Lemma 2.3, dest lemma.30) — cross-section backref;
 %%   "Used in 3.3." appears on its own line after the align equations.
@@ -72,7 +73,7 @@
 %% TEST-PDF-STEXT: (?s)Used in 3\.4, 4\.3\.
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
 %%
 %% This fixture inlines the theorem declarations from sty-theorems-ta.sty
 %% (the three-avatars monograph's real theorem style) to avoid an external

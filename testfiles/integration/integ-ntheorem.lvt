@@ -1,4 +1,4 @@
-%% TEST-NAME: integ-ntheorem
+%% TEST-NAME: integ-ntheorem [warm-changed]
 %% TEST-WHAT: Verify codependent works with ntheorem as the theorem backend
 %%            instead of amsthm.  ntheorem and amsthm are mutually exclusive;
 %%            this fixture loads ntheorem only.  Tests that \codeptrack wires

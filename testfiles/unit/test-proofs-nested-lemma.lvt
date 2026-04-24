@@ -6,6 +6,8 @@
 %% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-CONTAINS: Lemma 1.2. A helper lemma inside the proof.
+%% TEST-PDF-NOT: Proof 1.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}

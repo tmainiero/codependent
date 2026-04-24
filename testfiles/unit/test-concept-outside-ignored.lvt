@@ -1,0 +1,44 @@
+%% TEST-NAME: test-concept-outside-ignored
+%% TEST-WHAT: Concept invocations outside any tracked atom, including in
+%%            headings, captions, and footnotes, are silently ignored and
+%%            do not produce visible backrefs.
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-CONC-OUTSIDE, B-EDGE-CONC-OUTSIDE
+%% TEST-SECTION: concept uses outside atoms
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-NOT: Used in
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-CONC-OUTSIDE, B-EDGE-CONC-OUTSIDE
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+\codepnewcommand{\Hom}[2]{\mathrm{Hom}(#1,#2)}
+
+\begin{document}
+\START
+
+\section{Outside uses}
+
+\begin{theorem}
+  Definition atom introducing $\Hom*{X}{Y}$.
+\end{theorem}
+
+\section{Heading use of $\Hom{A}{B}$}
+
+Caption test starts here.\footnote{Footnote use of $\Hom{B}{C}$.}
+
+\begin{figure}[h]
+  \centering
+  \rule{2cm}{1cm}
+  \caption{Caption use of $\Hom{C}{D}$.}
+\end{figure}
+
+\END
+\end{document}

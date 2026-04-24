@@ -7,6 +7,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-CONTAINS: 1.1 Body paragraph under the titlesec-managed section.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
 %% TEST-ATOMS-MIN: 1

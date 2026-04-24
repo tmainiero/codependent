@@ -1,0 +1,39 @@
+%% TEST-NAME: test-effective-anchor-overwrite
+%% TEST-WHAT: When a theorem body installs a same-typed, same-display
+%%            label later in the body, visible backref links target that
+%%            overwritten effective anchor rather than the heading anchor.
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-LINK-EFFECTIVE-ANCHOR
+%% TEST-SECTION: effective-anchor overwrite
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-STEXT: (?s)Used in 1\.2\.
+%% TEST-PDF-BACKREF-ENTRY-TARGET: section\*\.[0-9]+ | 1.2 = section\*\.[0-9]+
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-EFFECTIVE-ANCHOR
+
+\documentclass{article}
+\usepackage{amsthm}
+\usepackage[hypertexnames=false]{hyperref}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Effective anchor}
+
+\begin{theorem}\label{thm:target}
+  Target theorem.
+\end{theorem}
+
+\begin{theorem}\label{thm:source}
+  Opening text by \ref{thm:target}.
+  \phantomsection\label{thm:source-late}
+  More text after the overwritten anchor.
+\end{theorem}
+
+\END
+\end{document}

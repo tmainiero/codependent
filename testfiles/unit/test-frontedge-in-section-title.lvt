@@ -7,6 +7,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-CONTAINS: Theorem 1.1. Theorem A. Used in 2.1.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-AUX-CONTAINS: \codep@atomref{theorem:2.1}{thm:A}
 %% TEST-ATOMS-MIN: 1

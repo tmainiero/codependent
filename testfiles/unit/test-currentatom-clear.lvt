@@ -8,6 +8,7 @@
 %% TEST-SECTION: docs/DESIGN.md §8a.5 currentatom state management
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-NOT: Used in
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1.2}{thm:A}
 %% TEST-PACKAGES: hyperref,amsthm,codependent

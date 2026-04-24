@@ -6,6 +6,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-CONTAINS: Proof not adjacent to a tracked
+%% TEST-PDF-CONTAINS: Used in 1.3*.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{proof}
@@ -41,8 +42,9 @@ and its proof, breaking adjacency detection.
 
 % Atom 1.3 -- proof (standalone, NOT inherited)
 \begin{proof}
-  This proof is separated by a paragraph. It should get
-  its own atom number, not inherit from the theorem.
+  This proof is separated by a paragraph. See \ref{thm:main}.%
+  \codepbackrefs
+  It should get its own atom number, not inherit from the theorem.
 \end{proof}
 
 \END

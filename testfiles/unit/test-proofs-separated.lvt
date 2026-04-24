@@ -5,6 +5,8 @@
 %% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-CONTAINS: Theorem 1.1. Main theorem statement. Used in 2.1*.
+%% TEST-PDF-CONTAINS: Theorem 2.1. A target theorem. Used in 1.1*.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}

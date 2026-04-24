@@ -1,0 +1,212 @@
+{
+  "atomref": {
+    "count": [
+      19,
+      19,
+      19
+    ],
+    "keys": [
+      [
+        "corollary:2.2||def:eigenvalue",
+        "corollary:2.2||eq:charpoly",
+        "corollary:2.2||thm:spectral",
+        "corollary:3.2||def:eigenvalue",
+        "corollary:3.2||thm:diag",
+        "definition:1.2||def:linmap",
+        "equation:2.1||thm:spectral",
+        "lemma:1.3||def:linmap",
+        "proof:2.1||prop:rank-nullity",
+        "proof:3.1||cor:jordan",
+        "proposition:1.4||def:linmap",
+        "theorem:2.1||def:eigenvalue",
+        "theorem:2.1||eq:charpoly",
+        "theorem:2.1||lem:kernel",
+        "theorem:3.1||cor:jordan",
+        "theorem:3.1||def:linmap",
+        "theorem:3.1||lem:kernel",
+        "theorem:3.1||prop:rank-nullity",
+        "theorem:3.1||thm:spectral"
+      ],
+      [
+        "corollary:2.2||def:eigenvalue",
+        "corollary:2.2||eq:charpoly",
+        "corollary:2.2||thm:spectral",
+        "corollary:3.2||def:eigenvalue",
+        "corollary:3.2||thm:diag",
+        "definition:1.2||def:linmap",
+        "equation:2.1||thm:spectral",
+        "lemma:1.3||def:linmap",
+        "proof:2.1||prop:rank-nullity",
+        "proof:3.1||cor:jordan",
+        "proposition:1.4||def:linmap",
+        "theorem:2.1||def:eigenvalue",
+        "theorem:2.1||eq:charpoly",
+        "theorem:2.1||lem:kernel",
+        "theorem:3.1||cor:jordan",
+        "theorem:3.1||def:linmap",
+        "theorem:3.1||lem:kernel",
+        "theorem:3.1||prop:rank-nullity",
+        "theorem:3.1||thm:spectral"
+      ],
+      [
+        "corollary:2.2||def:eigenvalue",
+        "corollary:2.2||eq:charpoly",
+        "corollary:2.2||thm:spectral",
+        "corollary:3.2||def:eigenvalue",
+        "corollary:3.2||thm:diag",
+        "definition:1.2||def:linmap",
+        "equation:2.1||thm:spectral",
+        "lemma:1.3||def:linmap",
+        "proof:2.1||prop:rank-nullity",
+        "proof:3.1||cor:jordan",
+        "proposition:1.4||def:linmap",
+        "theorem:2.1||def:eigenvalue",
+        "theorem:2.1||eq:charpoly",
+        "theorem:2.1||lem:kernel",
+        "theorem:3.1||cor:jordan",
+        "theorem:3.1||def:linmap",
+        "theorem:3.1||lem:kernel",
+        "theorem:3.1||prop:rank-nullity",
+        "theorem:3.1||thm:spectral"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      27,
+      27,
+      27
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Linear maps}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Spectral theory}{1}{section.10}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Applications}{2}{section.16}\\protected@file@percent }",
+        "\\newlabel{cor:jordan@cref}{{[corollary][2][]2.2}{[1][1][]2}{}{}{}}",
+        "\\newlabel{cor:jordan}{{2.2}{2}{}{corollary.15}{}}",
+        "\\newlabel{cor:symmetric@cref}{{[corollary][2][]3.2}{[1][2][]2}{}{}{}}",
+        "\\newlabel{cor:symmetric}{{3.2}{2}{}{corollary.20}{}}",
+        "\\newlabel{def:eigenvalue@cref}{{[definition][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:eigenvalue}{{1.2}{1}{}{definition.5}{}}",
+        "\\newlabel{def:linmap@cref}{{[definition][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:linmap}{{1.1}{1}{}{definition.3}{}}",
+        "\\newlabel{eq:charpoly@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:charpoly}{{2.1}{1}{Spectral theory}{equation.11}{}}",
+        "\\newlabel{lem:kernel@cref}{{[lemma][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:kernel}{{1.3}{1}{}{lemma.7}{}}",
+        "\\newlabel{prop:rank-nullity@cref}{{[proposition][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{prop:rank-nullity}{{1.4}{1}{}{proposition.9}{}}",
+        "\\newlabel{sec:apps@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
+        "\\newlabel{sec:apps}{{3}{2}{Applications}{section.16}{}}",
+        "\\newlabel{sec:linear@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:linear}{{1}{1}{Linear maps}{section.1}{}}",
+        "\\newlabel{sec:spectral@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:spectral}{{2}{1}{Spectral theory}{section.10}{}}",
+        "\\newlabel{thm:diag@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
+        "\\newlabel{thm:diag}{{3.1}{2}{}{theorem.18}{}}",
+        "\\newlabel{thm:spectral@cref}{{[theorem][1][]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:spectral}{{2.1}{1}{}{theorem.13}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Linear maps}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Spectral theory}{1}{section.10}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Applications}{2}{section.16}\\protected@file@percent }",
+        "\\newlabel{cor:jordan@cref}{{[corollary][2][]2.2}{[1][1][]2}{}{}{}}",
+        "\\newlabel{cor:jordan}{{2.2}{2}{}{corollary.15}{}}",
+        "\\newlabel{cor:symmetric@cref}{{[corollary][2][]3.2}{[1][2][]2}{}{}{}}",
+        "\\newlabel{cor:symmetric}{{3.2}{2}{}{corollary.20}{}}",
+        "\\newlabel{def:eigenvalue@cref}{{[definition][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:eigenvalue}{{1.2}{1}{}{definition.5}{}}",
+        "\\newlabel{def:linmap@cref}{{[definition][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:linmap}{{1.1}{1}{}{definition.3}{}}",
+        "\\newlabel{eq:charpoly@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:charpoly}{{2.1}{1}{Spectral theory}{equation.11}{}}",
+        "\\newlabel{lem:kernel@cref}{{[lemma][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:kernel}{{1.3}{1}{}{lemma.7}{}}",
+        "\\newlabel{prop:rank-nullity@cref}{{[proposition][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{prop:rank-nullity}{{1.4}{1}{}{proposition.9}{}}",
+        "\\newlabel{sec:apps@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
+        "\\newlabel{sec:apps}{{3}{2}{Applications}{section.16}{}}",
+        "\\newlabel{sec:linear@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:linear}{{1}{1}{Linear maps}{section.1}{}}",
+        "\\newlabel{sec:spectral@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:spectral}{{2}{1}{Spectral theory}{section.10}{}}",
+        "\\newlabel{thm:diag@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
+        "\\newlabel{thm:diag}{{3.1}{2}{}{theorem.18}{}}",
+        "\\newlabel{thm:spectral@cref}{{[theorem][1][]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:spectral}{{2.1}{1}{}{theorem.13}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Linear maps}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Spectral theory}{1}{section.10}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Applications}{2}{section.16}\\protected@file@percent }",
+        "\\newlabel{cor:jordan@cref}{{[corollary][2][]2.2}{[1][1][]2}{}{}{}}",
+        "\\newlabel{cor:jordan}{{2.2}{2}{}{corollary.15}{}}",
+        "\\newlabel{cor:symmetric@cref}{{[corollary][2][]3.2}{[1][2][]2}{}{}{}}",
+        "\\newlabel{cor:symmetric}{{3.2}{2}{}{corollary.20}{}}",
+        "\\newlabel{def:eigenvalue@cref}{{[definition][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:eigenvalue}{{1.2}{1}{}{definition.5}{}}",
+        "\\newlabel{def:linmap@cref}{{[definition][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:linmap}{{1.1}{1}{}{definition.3}{}}",
+        "\\newlabel{eq:charpoly@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:charpoly}{{2.1}{1}{Spectral theory}{equation.11}{}}",
+        "\\newlabel{lem:kernel@cref}{{[lemma][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:kernel}{{1.3}{1}{}{lemma.7}{}}",
+        "\\newlabel{prop:rank-nullity@cref}{{[proposition][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{prop:rank-nullity}{{1.4}{1}{}{proposition.9}{}}",
+        "\\newlabel{sec:apps@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
+        "\\newlabel{sec:apps}{{3}{2}{Applications}{section.16}{}}",
+        "\\newlabel{sec:linear@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:linear}{{1}{1}{Linear maps}{section.1}{}}",
+        "\\newlabel{sec:spectral@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:spectral}{{2}{1}{Spectral theory}{section.10}{}}",
+        "\\newlabel{thm:diag@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
+        "\\newlabel{thm:diag}{{3.1}{2}{}{theorem.18}{}}",
+        "\\newlabel{thm:spectral@cref}{{[theorem][1][]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:spectral}{{2.1}{1}{}{theorem.13}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      7,
+      7
+    ],
+    "keys": [
+      [],
+      [
+        "corollary:2.2",
+        "definition:1.1",
+        "definition:1.2",
+        "lemma:1.3",
+        "proposition:1.4",
+        "theorem:2.1",
+        "theorem:3.1"
+      ],
+      [
+        "corollary:2.2",
+        "definition:1.1",
+        "definition:1.2",
+        "lemma:1.3",
+        "proposition:1.4",
+        "theorem:2.1",
+        "theorem:3.1"
+      ]
+    ]
+  }
+}

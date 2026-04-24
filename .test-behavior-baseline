@@ -18,7 +18,6 @@
 # One test demoted by adversarial audit D (sidecar-only assertion, no B-* covers it yet):
 testfiles/unit/test-label-kernel.lvt
 # Demotions from parallel adversarial audits A and B (reconciled 2026-04-20):
-testfiles/integration/integ-no-paragraphs.lvt
 testfiles/unit/test-backrefs-none.lvt
 testfiles/unit/test-codepsetup.lvt
 testfiles/unit/test-codeptag.lvt

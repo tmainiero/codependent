@@ -1,0 +1,34 @@
+%% TEST-NAME: test-empty-proof-visible
+%% TEST-WHAT: Even an empty adjacent proof gets a proof atom number, so a
+%%            ref in the proof heading contributes a visible starred entry.
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-EDGE-EMPTY-PROOF
+%% TEST-SECTION: empty proof numbering
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-STEXT: (?s)Used in 1\.1\*\.
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EDGE-EMPTY-PROOF
+
+\documentclass{article}
+\usepackage{amsthm}
+\usepackage[hypertexnames=false]{hyperref}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Empty proof}
+
+\begin{theorem}\label{thm:target}
+  Target theorem for the empty-proof edge case.
+\end{theorem}
+
+\begin{proof}[Proof of Theorem~\ref{thm:target}]
+\end{proof}
+
+\END
+\end{document}

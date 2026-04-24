@@ -6,6 +6,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Proof not adjacent
+%% TEST-PDF-NOT: Used in
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2}{proof}
@@ -29,13 +30,14 @@
 \section{Results}
 
 % Atom 1.1 -- theorem
-\begin{theorem}
+\begin{theorem}\label{thm:main}
   A theorem.
 \end{theorem}
 
 % No atom -- proofs=off
 \begin{proof}
-  Proof content (no atom number).
+  Proof content (no atom number); compare \ref{thm:main}.%
+  \codepbackrefs
 \end{proof}
 
 \END

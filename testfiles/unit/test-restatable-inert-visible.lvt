@@ -1,0 +1,42 @@
+%% TEST-NAME: test-restatable-inert-visible
+%% TEST-WHAT: A restated theorem body is inert for tracking, so a ref in
+%%            the original declaration yields exactly one visible backref
+%%            entry and the restatement adds no duplicate.
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-EDGE-RESTATE
+%% TEST-SECTION: restated body inertness
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-CONTAINS: Used in 1.2
+%% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
+%% TEST-PACKAGES: thmtools,amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-EDGE-RESTATE
+
+\documentclass{article}
+\usepackage{thmtools}
+\usepackage{amsthm}
+\usepackage{hyperref}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Main}
+
+\begin{theorem}\label{thm:target}
+  Target theorem referenced from a restatable body.
+\end{theorem}
+
+\begin{restatable}{theorem}{thmMain}
+  By \ref{thm:target}, the main statement holds.
+\end{restatable}
+
+\section{Appendix}
+
+\thmMain*
+
+\END
+\end{document}

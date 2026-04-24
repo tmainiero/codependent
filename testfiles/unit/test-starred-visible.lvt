@@ -1,0 +1,54 @@
+%% TEST-NAME: test-starred-visible
+%% TEST-WHAT: Starred theorem-like environments are tracked, numbered from
+%%            the shared atom counter, and can appear as visible backref
+%%            targets just like their unstarred counterparts.
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-NUM-STARRED
+%% TEST-SECTION: starred theorem-like environment numbering
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-CONTAINS: Definition 1.2
+%% TEST-PDF-CONTAINS: Theorem 1.4
+%% TEST-PDF-STEXT: (?s)Used in 1\.5\.
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-NUM-STARRED
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem*{theorem*}{Theorem}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem*{definition*}{Definition}
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{definition,theorem}
+
+\begin{document}
+\START
+
+\section{Starred variants}
+
+\begin{definition}
+  Unstarred definition 1.1.
+\end{definition}
+
+\begin{definition*}\label{def:star}
+  Starred definition target.
+\end{definition*}
+
+\begin{theorem}
+  Unstarred theorem 1.3.
+\end{theorem}
+
+\begin{theorem*}\label{thm:star}
+  Starred theorem target.
+\end{theorem*}
+
+\begin{theorem}
+  By Definition~\ref{def:star} and Theorem~\ref{thm:star}.
+\end{theorem}
+
+\END
+\end{document}

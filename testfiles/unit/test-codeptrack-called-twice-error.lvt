@@ -1,0 +1,29 @@
+%% TEST-NAME: test-codeptrack-called-twice-error
+%% TEST-WHAT: Calling \codeptrack twice is a package error and does not
+%%            produce visible backref output.
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-EDGE-TRACK-TWICE
+%% TEST-SECTION: codeptrack duplicate call
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: codeptrack\\s+called twice
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-PDF-NOT: Used in
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 1
+%% TEST-BEHAVIOR: B-EDGE-TRACK-TWICE
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+\section{Duplicate tracking}
+\begin{theorem}
+  This should never typeset normally.
+\end{theorem}
+\END
+\end{document}

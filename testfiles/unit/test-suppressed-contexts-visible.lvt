@@ -1,0 +1,48 @@
+%% TEST-NAME: test-suppressed-contexts-visible
+%% TEST-WHAT: Refs in quote environments, floats, tabular content, and
+%%            footnotes are suppressed and produce no visible backref row.
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-SUPP-QUOTE, B-SUPP-FLOATS, B-SUPP-TABLES, B-EDGE-FOOTNOTE
+%% TEST-SECTION: suppressed contexts
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-NOT: Used in
+%% TEST-PACKAGES: amsthm,hyperref,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-SUPP-QUOTE, B-SUPP-FLOATS, B-SUPP-TABLES, B-EDGE-FOOTNOTE
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{hyperref}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Suppressed contexts}
+
+\begin{theorem}\label{thm:target}
+  Target theorem for suppressed-context references.
+\end{theorem}
+
+\begin{quote}
+  Quote reference \ref{thm:target}.
+\end{quote}
+
+Footnote site\footnote{Footnote reference \ref{thm:target}.}
+
+\begin{figure}[h]
+  \centering
+  \rule{2cm}{1cm}
+  \caption{Float caption reference \ref{thm:target}.}
+\end{figure}
+
+\begin{tabular}{l}
+  Tabular reference \ref{thm:target}.
+\end{tabular}
+
+\END
+\end{document}

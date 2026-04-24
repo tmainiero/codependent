@@ -1,0 +1,53 @@
+%% TEST-NAME: integ-supp-tracked-env
+%% TEST-WHAT: Verify paragraph numbering is suppressed inside tracked
+%%            environments. Multiple paragraph breaks and duplicate refs
+%%            inside one tracked theorem must still render as a single
+%%            theorem-sourced backref entry, not extra paragraph atoms.
+%% TEST-SOURCE: coverage backfill Phase 2 shard A
+%% TEST-SECTION: suppression inside tracked environments
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{def:tracked}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{paragraph:
+%% TEST-ATOMS-MIN: 2
+%% TEST-PACKAGES: amsthm,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-PDF-CONTAINS: Used in
+%% TEST-PDF-STEXT: (?s)Used in 1\.2\.
+%% TEST-PDF-STEXT-NOT: (?s)Used in 1\.2, 1\.3\.
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-BEHAVIOR: B-SUPP-TRACKED
+
+\documentclass{article}
+
+\usepackage{amsthm}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}[definition]{Theorem}
+
+\usepackage{codependent}
+\codeptrack{definition,theorem}
+
+\begin{document}
+\START
+
+\section{Tracked-environment suppression}
+
+\begin{definition}\label{def:tracked}
+  A tracked definition.
+\end{definition}
+
+\begin{theorem}\label{thm:main}
+  The first theorem paragraph cites \cref{def:tracked}.
+
+  The second theorem paragraph also cites \cref{def:tracked}. If tracked
+  environments leaked paragraph atoms, this would add a second bare source
+  number to the definition's rendered backrefs.
+\end{theorem}
+
+\END
+\end{document}

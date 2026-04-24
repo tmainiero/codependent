@@ -1,0 +1,182 @@
+{
+  "atomref": {
+    "count": [
+      14,
+      14,
+      14
+    ],
+    "keys": [
+      [
+        "corollary:2.2||def:continuous",
+        "corollary:2.2||thm:ivt",
+        "corollary:2.3||def:continuous",
+        "corollary:2.3||lem:extreme",
+        "lemma:1.3||def:continuous",
+        "paragraph:2.1||lem:extreme",
+        "paragraph:2.1||thm:ivt",
+        "paragraph:2.4||eq:lipschitz",
+        "paragraph:2.4||thm:ivt",
+        "paragraph:2.4||thm:mvt",
+        "proof:1.2||def:continuous",
+        "theorem:1.2||def:continuous",
+        "theorem:1.4||def:continuous",
+        "theorem:1.4||thm:ivt"
+      ],
+      [
+        "corollary:2.2||def:continuous",
+        "corollary:2.2||thm:ivt",
+        "corollary:2.3||def:continuous",
+        "corollary:2.3||lem:extreme",
+        "lemma:1.3||def:continuous",
+        "paragraph:2.1||lem:extreme",
+        "paragraph:2.1||thm:ivt",
+        "paragraph:2.4||eq:lipschitz",
+        "paragraph:2.4||thm:ivt",
+        "paragraph:2.4||thm:mvt",
+        "proof:1.2||def:continuous",
+        "theorem:1.2||def:continuous",
+        "theorem:1.4||def:continuous",
+        "theorem:1.4||thm:ivt"
+      ],
+      [
+        "corollary:2.2||def:continuous",
+        "corollary:2.2||thm:ivt",
+        "corollary:2.3||def:continuous",
+        "corollary:2.3||lem:extreme",
+        "lemma:1.3||def:continuous",
+        "paragraph:2.1||lem:extreme",
+        "paragraph:2.1||thm:ivt",
+        "paragraph:2.4||eq:lipschitz",
+        "paragraph:2.4||thm:ivt",
+        "paragraph:2.4||thm:mvt",
+        "proof:1.2||def:continuous",
+        "theorem:1.2||def:continuous",
+        "theorem:1.4||def:continuous",
+        "theorem:1.4||thm:ivt"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      24,
+      24,
+      24
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Real analysis}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Corollaries}{1}{section.7}\\protected@file@percent }",
+        "\\newlabel{cor:bounded@cref}{{[theorem][3][]2.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{cor:bounded}{{2.3}{1}{}{theorem.10}{}}",
+        "\\newlabel{cor:fixed@cref}{{[theorem][2][]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{cor:fixed}{{2.2}{1}{}{theorem.9}{}}",
+        "\\newlabel{def:continuous@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:continuous}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{eq:lipschitz@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:lipschitz}{{2.1}{1}{Corollaries}{equation.12}{}}",
+        "\\newlabel{eq:mvt@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:mvt}{{1.1}{1}{}{equation.6}{}}",
+        "\\newlabel{eq:sup-norm@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:sup-norm}{{2.2}{1}{Corollaries}{equation.13}{}}",
+        "\\newlabel{lem:extreme@cref}{{[theorem][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:extreme}{{1.3}{1}{}{theorem.4}{}}",
+        "\\newlabel{sec:corollaries@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:corollaries}{{2}{1}{Corollaries}{section.7}{}}",
+        "\\newlabel{sec:real@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:real}{{1}{1}{Real analysis}{section.1}{}}",
+        "\\newlabel{thm:ivt@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:ivt}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{thm:mvt@cref}{{[theorem][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:mvt}{{1.4}{1}{}{theorem.5}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Real analysis}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Corollaries}{1}{section.7}\\protected@file@percent }",
+        "\\newlabel{cor:bounded@cref}{{[theorem][3][]2.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{cor:bounded}{{2.3}{1}{}{theorem.10}{}}",
+        "\\newlabel{cor:fixed@cref}{{[theorem][2][]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{cor:fixed}{{2.2}{1}{}{theorem.9}{}}",
+        "\\newlabel{def:continuous@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:continuous}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{eq:lipschitz@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:lipschitz}{{2.1}{1}{Corollaries}{equation.12}{}}",
+        "\\newlabel{eq:mvt@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:mvt}{{1.1}{1}{}{equation.6}{}}",
+        "\\newlabel{eq:sup-norm@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:sup-norm}{{2.2}{1}{Corollaries}{equation.13}{}}",
+        "\\newlabel{lem:extreme@cref}{{[theorem][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:extreme}{{1.3}{1}{}{theorem.4}{}}",
+        "\\newlabel{sec:corollaries@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:corollaries}{{2}{1}{Corollaries}{section.7}{}}",
+        "\\newlabel{sec:real@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:real}{{1}{1}{Real analysis}{section.1}{}}",
+        "\\newlabel{thm:ivt@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:ivt}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{thm:mvt@cref}{{[theorem][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:mvt}{{1.4}{1}{}{theorem.5}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Real analysis}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Corollaries}{1}{section.7}\\protected@file@percent }",
+        "\\newlabel{cor:bounded@cref}{{[theorem][3][]2.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{cor:bounded}{{2.3}{1}{}{theorem.10}{}}",
+        "\\newlabel{cor:fixed@cref}{{[theorem][2][]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{cor:fixed}{{2.2}{1}{}{theorem.9}{}}",
+        "\\newlabel{def:continuous@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{def:continuous}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{eq:lipschitz@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:lipschitz}{{2.1}{1}{Corollaries}{equation.12}{}}",
+        "\\newlabel{eq:mvt@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:mvt}{{1.1}{1}{}{equation.6}{}}",
+        "\\newlabel{eq:sup-norm@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:sup-norm}{{2.2}{1}{Corollaries}{equation.13}{}}",
+        "\\newlabel{lem:extreme@cref}{{[theorem][3][]1.3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:extreme}{{1.3}{1}{}{theorem.4}{}}",
+        "\\newlabel{sec:corollaries@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:corollaries}{{2}{1}{Corollaries}{section.7}{}}",
+        "\\newlabel{sec:real@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:real}{{1}{1}{Real analysis}{section.1}{}}",
+        "\\newlabel{thm:ivt@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:ivt}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{thm:mvt@cref}{{[theorem][4][]1.4}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:mvt}{{1.4}{1}{}{theorem.5}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      4,
+      4
+    ],
+    "keys": [
+      [],
+      [
+        "definition:1.1",
+        "lemma:1.3",
+        "theorem:1.2",
+        "theorem:1.4"
+      ],
+      [
+        "definition:1.1",
+        "lemma:1.3",
+        "theorem:1.2",
+        "theorem:1.4"
+      ]
+    ]
+  }
+}

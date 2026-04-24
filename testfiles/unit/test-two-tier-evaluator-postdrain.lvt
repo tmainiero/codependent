@@ -9,10 +9,10 @@
 %% TEST-EXIT: 0
 %% TEST-EXPECT-PACKAGE-WARNING: of.*operations failed
 %% TEST-LOG-NOT: codependent.*Error
+%% TEST-PDF-CONTAINS: Theorem 1.1. A theorem. Used in 1.2.
 %% TEST-PACKAGES: amsthm,hyperref,codependent
-%% TEST-RERUN: 1
+%% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-WARN-ENDDOC
-%% TEST-PDF-CONTAINS: A theorem
 %%
 %% Synthetically set the proofof subsystem to partial-fail state:
 %% total=2, failed=1 (some but not all operations failed). The post-drain
@@ -37,8 +37,12 @@
 
 \section{Results}
 
-\begin{theorem}
+\begin{theorem}\label{thm:main}
   A theorem.
+\end{theorem}
+
+\begin{theorem}
+  A second theorem using \ref{thm:main}.
 \end{theorem}
 
 \END

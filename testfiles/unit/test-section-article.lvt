@@ -6,6 +6,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
+%% TEST-PDF-CONTAINS: 1.1 Body paragraph.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@meta{1.1}{env}{heading}
