@@ -66,6 +66,10 @@
 %%   "Used in 3.3." appears on its own line after the align equations.
 %%   corollary:3.3 has anchor corollary.49.
 %% TEST-PDF-BACKREF-TARGETS: lemma\.30 = corollary\.49
+%% TEST-PDF-STEXT: (?s)Used in 1\.4\*, 1\.11, 2\.5, \(2\.6&#x2013;2\.7\), 3\.1, 3\.4, 4\.3\.
+%% TEST-PDF-STEXT: (?s)Used in 1\.9, 1\.10, 1\.11, 2\.1, 3\.2\.
+%% TEST-PDF-STEXT: (?s)Used in 3\.1\.
+%% TEST-PDF-STEXT: (?s)Used in 3\.4, 4\.3\.
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP

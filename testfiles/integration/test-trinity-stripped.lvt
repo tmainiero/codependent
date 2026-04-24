@@ -36,6 +36,9 @@
 %% TEST-AUX-CONTAINS: \codep@conceptref
 %% TEST-ATOMS-MIN: 8
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,tikz,tikz-cd,codependent
+%% TEST-PDF-CONTAINS: Used in
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
 %%

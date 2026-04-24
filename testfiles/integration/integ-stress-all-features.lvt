@@ -50,6 +50,9 @@
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-STEXT: (?s)Used in 2\.3, \(2\.3&#x2013;2\.4\), 2\.4, 2\.7\*, 2\.4\*, 3\.2, 3\.4\.
+%% TEST-PDF-STEXT: (?s)Used in 2\.6\*, 3\.1\*\.
+%% TEST-PDF-STEXT: (?s)Used in 3\.3, 3\.3\*\.
 %% TEST-PDF-BACKREF-TARGETS: remark\.7 = corollary\.22, theorem\.26
 %% TEST-PDF-LINK-DEST: definition\.
 %% TEST-PDF-LINK-DEST: theorem\.
