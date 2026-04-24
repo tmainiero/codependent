@@ -58,6 +58,14 @@
 %% Theorem 2.5 (thm:noether): Used in 3.2, 3.2*
 %%   3.2 = theorem.31 (thm:structure), 3.2* = theorem.31 (proof of thm:structure)
 %% TEST-PDF-BACKREF-TARGETS: theorem\.24 = theorem\.31
+%% Entry-level backref target: on theorem.10's "Used in 2.2, 2.5*, 3.2, 3.4." row,
+%% the entry "2.5*" must link to atom.27 (proof of thm:hilbert-basis in §2).
+%% Row is identified by atom_pat matching atom.16 (one of its backref links).
+%% TEST-PDF-BACKREF-ENTRY-TARGET: atom\.16 | 2.5* = atom\.27
+%% TEST-PDF-STEXT: (?s)Used in 1\.4, 1\.6, 3\.2, 3\.3\.
+%% TEST-PDF-STEXT: (?s)Used in 3\.2\*, 3\.4\.
+%% TEST-PDF-STEXT: (?s)Used in \(2\.1\), \(2\.2&#x2013;2\.3\), 3\.2\*\.
+%% TEST-PDF-STEXT: (?s)Used in 3\.3\.
 %% TEST-PDF-LINK-DEST: definition\.4
 %% TEST-PDF-LINK-DEST: definition\.6
 %% TEST-PDF-LINK-DEST: lemma\.8

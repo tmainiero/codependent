@@ -102,6 +102,7 @@ METADATA_KEYS = {
     # Backref hyperlink verification (require both mutool and qpdf)
     "TEST-PDF-ALL-BACKREFS-LINKED": "pdf_all_backrefs_linked",  # boolean; every Used-in entry must be a hyperlink
     "TEST-PDF-BACKREF-TARGETS": "pdf_backref_targets",  # may repeat; "<atom-dest> = <dest1>, <dest2>, ..."
+    "TEST-PDF-BACKREF-ENTRY-TARGET": "pdf_backref_entry_targets",  # may repeat; "<atom_pat> | <entry_text> = <dest_pat>"
     # Package error/warning assertions
     "TEST-EXPECT-PACKAGE-WARNING": "expect_package_warning",  # may repeat; regex on "Package codependent Warning:" line
     "TEST-EXPECT-PACKAGE-ERROR": "expect_package_error",      # may repeat; regex on "Package codependent Error:" line; also drops -halt-on-error
@@ -131,6 +132,7 @@ REPEATING_KEYS = {
     "pdf_dest_exists", "pdf_dest_not_exists",
     "pdf_link_rect",
     "pdf_backref_targets",
+    "pdf_backref_entry_targets",
     "expect_package_warning", "expect_package_error",
     "pdf_appendix_entry", "pdf_appendix_entry_text_only",
 }
@@ -210,6 +212,7 @@ class Fixture:
     # Backref hyperlink verification
     pdf_all_backrefs_linked: bool = False
     pdf_backref_targets: list = dataclasses.field(default_factory=list)
+    pdf_backref_entry_targets: list = dataclasses.field(default_factory=list)
     # Package error/warning assertions
     expect_package_warning: list = dataclasses.field(default_factory=list)
     expect_package_error: list = dataclasses.field(default_factory=list)
@@ -670,6 +673,9 @@ class _BackrefLine:
     entries: list     # individual backref entries e.g. ["1.4", "1.5", "1.5*", "2.1"]
     bbox: list        # [x1_stext, y1_stext, x2_stext, y2_stext] (top-down coords)
     page_height: float
+    # Per-character x-ranges: list of (char_str, x_left, x_right) in stext coords.
+    # Populated by _parse_backref_lines_from_stext for entry-level link matching.
+    char_xranges: list = dataclasses.field(default_factory=list)
 
 
 def _parse_backref_lines_from_stext(stext_xml: str) -> list[_BackrefLine]:
@@ -703,13 +709,19 @@ def _parse_backref_lines_from_stext(stext_xml: str) -> list[_BackrefLine]:
             height = h
         return height
 
-    # Find all <line> elements containing "Used in"
-    line_re = re.compile(
-        r'<line\s+bbox="([^"]+)"[^>]*text="([^"]*Used in[^"]*)"'
+    # Find all <line> elements containing "Used in" — full block including </line>
+    line_block_re = re.compile(
+        r'<line\s+bbox="([^"]+)"[^>]*text="([^"]*Used in[^"]*)"[^>]*>(.*?)</line>',
+        re.DOTALL,
     )
-    for m in line_re.finditer(stext_xml):
+    # Regex to extract per-character positions from <char> elements.
+    # quad="x0 y0 x1 y1 x2 y2 x3 y3" encodes 4 corners; x0 is left edge, x2/x1 is right.
+    char_re = re.compile(r'<char\s+quad="([^"]+)"[^>]*\bc="([^"]*)"')
+
+    for m in line_block_re.finditer(stext_xml):
         bbox_str = m.group(1)
         text = m.group(2)
+        inner_xml = m.group(3)
         # Extract the "Used in ..." portion from the full line text.
         ui_idx = text.find("Used in")
         if ui_idx < 0:
@@ -734,11 +746,26 @@ def _parse_backref_lines_from_stext(stext_xml: str) -> list[_BackrefLine]:
         # Split on ", " to get individual entries
         entries = [e.strip() for e in after_prefix.split(",") if e.strip()]
 
+        # Extract per-character x-ranges from <char> elements within this line.
+        # quad format: "x0 y0 x1 y1 x2 y2 x3 y3" where x0=left, x2=right of glyph.
+        char_xranges = []
+        for cm in char_re.finditer(inner_xml):
+            quad_parts = cm.group(1).split()
+            c = cm.group(2)
+            if len(quad_parts) >= 3:
+                try:
+                    x_left = float(quad_parts[0])
+                    x_right = float(quad_parts[2])
+                    char_xranges.append((c, x_left, x_right))
+                except ValueError:
+                    pass
+
         results.append(_BackrefLine(
             text=text,
             entries=entries,
             bbox=bbox,
             page_height=page_height,
+            char_xranges=char_xranges,
         ))
     return results
 
@@ -783,6 +810,107 @@ def _links_overlapping_line(
         overlapping.append(lnk)
     return overlapping
 
+
+def _x_range_of_entry_text(
+    bline: "_BackrefLine",
+    entry_text: str,
+) -> tuple[float, float] | None:
+    """Find the x-range [x_left, x_right] of entry_text within a backref line.
+
+    Uses char_xranges (populated from stext <char> elements) to find the
+    contiguous run of characters matching entry_text as a substring of the
+    line's text.  Returns (x_left, x_right) in stext coordinates, or None if
+    the substring cannot be located.
+
+    Matching is done by aligning the line's char sequence (ignoring chars with
+    zero-width, i.e. kerning/spacing glyphs) against the full line text, then
+    locating the offset of entry_text within that text.
+    """
+    if not bline.char_xranges:
+        return None
+    line_text = bline.text
+    if entry_text not in line_text:
+        return None
+    # Find all occurrences; we will try to map each to char positions.
+    # The char_xranges list was built from ALL chars in the line (including
+    # those before "Used in"), but line.text starts at "Used in".  We need
+    # to find the char index offset corresponding to the start of "Used in"
+    # within the full sequence of chars.
+
+    # Strategy: reconstruct the full concatenation of char characters from
+    # char_xranges and align with line_text (which starts at "Used in").
+    # The stext line text attribute is the concatenated c attributes of all
+    # <char> elements.  We find where our entry_text sits in line_text, then
+    # map that back to char indices.
+
+    # Reconstruct text from chars (c attributes joined).
+    # line_text starts at "Used in" but char_xranges covers the full stext line.
+    chars_text = "".join(c for c, _xl, _xr in bline.char_xranges)
+
+    # Find where line_text starts within chars_text (line_text is a suffix
+    # of chars_text starting at "Used in").
+    offset = chars_text.find("Used in")
+    if offset < 0:
+        # Fallback: try direct search from beginning.
+        offset = 0
+
+    # Now find entry_text within line_text starting at position 0.
+    et_start_in_line = line_text.find(entry_text)
+    if et_start_in_line < 0:
+        return None
+
+    # Convert to index in chars_text.
+    char_start = offset + et_start_in_line
+    char_end = char_start + len(entry_text)
+
+    if char_end > len(bline.char_xranges):
+        return None
+
+    # Collect x-ranges of chars in [char_start, char_end).
+    xs_left = []
+    xs_right = []
+    for ci in range(char_start, char_end):
+        _c, xl, xr = bline.char_xranges[ci]
+        if xl < xr:  # skip zero-width glyphs
+            xs_left.append(xl)
+            xs_right.append(xr)
+    if not xs_left:
+        return None
+    return (min(xs_left), max(xs_right))
+
+
+def _find_link_for_entry(
+    link_data: "PdfLinkObjects",
+    bline: "_BackrefLine",
+    entry_x_left: float,
+    entry_x_right: float,
+) -> list["PdfLinkInfo"]:
+    """Find link annotations that cover an entry's x-range within a backref line.
+
+    Uses the line's y-range (from bbox) together with the entry's x-range to
+    narrow to links whose rectangle overlaps the entry's position.  Coordinates
+    are converted from stext (top-down) to PDF (bottom-up) as in
+    _links_overlapping_line.
+    """
+    sx1, sy1, sx2, sy2 = bline.bbox
+    ph = bline.page_height
+    pdf_y_bottom = ph - sy2
+    pdf_y_top = ph - sy1
+    tol = 3.0  # slightly wider tolerance for entry-level matching
+    result = []
+    for lnk in link_data.links:
+        if len(lnk.rect) != 4:
+            continue
+        lx1, ly1, lx2, ly2 = lnk.rect
+        # Vertical: link midpoint must be within line y-range.
+        link_y_mid = (ly1 + ly2) / 2.0
+        if link_y_mid < pdf_y_bottom - tol or link_y_mid > pdf_y_top + tol:
+            continue
+        # Horizontal: link rect must overlap entry's x-range.
+        if lx2 < entry_x_left - tol or lx1 > entry_x_right + tol:
+            continue
+        result.append(lnk)
+    return result
 
 
 # ----------------------------------------------------------------------
@@ -1386,7 +1514,11 @@ def _run_assertions(
                                 )
 
             # 13. Backref hyperlink verification.
-            has_backref_checks = fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
+            has_backref_checks = (
+                fix.pdf_all_backrefs_linked
+                or fix.pdf_backref_targets
+                or fix.pdf_backref_entry_targets
+            )
             if has_backref_checks:
                 if PDF_STEXT_TOOL is None or PDF_QPDF_TOOL is None:
                     missing = [
@@ -1430,6 +1562,7 @@ def _run_assertions(
                                                 f"with dest '{link.dest}' that does not exist "
                                                 f"in PDF named destinations"
                                             )
+                            # LHS atom_pat is currently ignored; use TEST-PDF-BACKREF-ENTRY-TARGET for strict entry-level checks.
                             for spec in fix.pdf_backref_targets:
                                 if "=" not in spec:
                                     fail(f"malformed TEST-PDF-BACKREF-TARGETS: {spec}")
@@ -1461,6 +1594,87 @@ def _run_assertions(
                                         f"matching all of {expected_dests} "
                                         f"(atom pattern: {atom_pat!r}). "
                                         f"Lines found: {'; '.join(summaries)}"
+                                    )
+                            for spec in fix.pdf_backref_entry_targets:
+                                # Parse: "<atom_pat> | <entry_text> = <dest_pat>"
+                                if "=" not in spec or "|" not in spec:
+                                    fail(f"malformed TEST-PDF-BACKREF-ENTRY-TARGET: {spec}")
+                                    continue
+                                lhs, dest_pat = spec.split("=", 1)
+                                dest_pat = dest_pat.strip()
+                                lhs_parts = lhs.split("|", 1)
+                                if len(lhs_parts) != 2:
+                                    fail(f"malformed TEST-PDF-BACKREF-ENTRY-TARGET: {spec}")
+                                    continue
+                                atom_pat = lhs_parts[0].strip()
+                                entry_text = lhs_parts[1].strip()
+                                # Step 1: bind rows whose link destinations include atom_pat.
+                                candidate_rows = []
+                                all_atom_dests = []
+                                for bline in backref_lines:
+                                    overlapping = _links_overlapping_line(br_link_data, bline)
+                                    row_dests = [lnk.dest for lnk in overlapping if lnk.dest]
+                                    all_atom_dests.extend(row_dests)
+                                    if any(re.search(atom_pat, d) for d in row_dests):
+                                        candidate_rows.append(bline)
+                                if not candidate_rows:
+                                    fail(
+                                        f"backref-entry-target: no 'Used in' row found whose "
+                                        f"link destinations match atom_pat={atom_pat!r}. "
+                                        f"Candidate atom dests seen: "
+                                        f"{sorted(set(all_atom_dests))[:10]}"
+                                    )
+                                    continue
+                                # Step 2: within candidate rows, find entry_text and check dest.
+                                spec_passed = False
+                                entry_errors = []
+                                for bline in candidate_rows:
+                                    if entry_text not in bline.text:
+                                        entry_errors.append(
+                                            f"row '{bline.text}' does not contain entry_text={entry_text!r}"
+                                        )
+                                        continue
+                                    # Find x-range of entry_text within the row.
+                                    xrange = _x_range_of_entry_text(bline, entry_text)
+                                    if xrange is None:
+                                        entry_errors.append(
+                                            f"row '{bline.text}': could not determine "
+                                            f"x-range for entry_text={entry_text!r} "
+                                            f"(no char data or entry not locatable)"
+                                        )
+                                        continue
+                                    entry_x_left, entry_x_right = xrange
+                                    # Find links covering that x-range on this line.
+                                    entry_links = _find_link_for_entry(
+                                        br_link_data, bline, entry_x_left, entry_x_right
+                                    )
+                                    if not entry_links:
+                                        entry_errors.append(
+                                            f"row '{bline.text}': no link found "
+                                            f"covering x=[{entry_x_left:.1f},{entry_x_right:.1f}] "
+                                            f"for entry_text={entry_text!r}"
+                                        )
+                                        continue
+                                    # Check dest_pat against each candidate link.
+                                    matching_dests = [
+                                        lnk.dest for lnk in entry_links
+                                        if lnk.dest and re.search(dest_pat, lnk.dest)
+                                    ]
+                                    if matching_dests:
+                                        spec_passed = True
+                                        break
+                                    actual_dests = [lnk.dest for lnk in entry_links]
+                                    entry_errors.append(
+                                        f"row '{bline.text}': entry_text={entry_text!r} "
+                                        f"has link(s) with dest(s) {actual_dests} "
+                                        f"— none match dest_pat={dest_pat!r}"
+                                    )
+                                if not spec_passed:
+                                    fail(
+                                        f"backref-entry-target: "
+                                        f"atom_pat={atom_pat!r} entry_text={entry_text!r} "
+                                        f"dest_pat={dest_pat!r} — not satisfied. "
+                                        f"Details: {'; '.join(entry_errors)}"
                                     )
 
     # 14. Package warning assertions.
