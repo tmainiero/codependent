@@ -1711,7 +1711,14 @@
 %   the respective package is loaded.
 \AddToHook{begindocument/before}[codependent/suppress/boxes]{%
   \@ifpackageloaded{tcolorbox}{%
-    \codep@suppressenv{tcolorbox}%
+    % tcolorbox emits a box-closing paragraph at \end{tcolorbox};
+    % keep suppression active through AfterEndEnvironment.
+    \AtBeginEnvironment{tcolorbox}{%
+      \global\advance\codep@suppressdepth\@ne%
+    }%
+    \AfterEndEnvironment{tcolorbox}{%
+      \global\advance\codep@suppressdepth\m@ne%
+    }%
   }{}%
   \@ifpackageloaded{mdframed}{%
     \codep@suppressenv{mdframed}%
