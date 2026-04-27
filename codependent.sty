@@ -343,6 +343,23 @@
 %% @utility
 \newcommand*{\codep@proofend@pendingclear}{}
 
+% Deferred adjacent-proof anchormap stashes.  The proof-adjacent path
+% captures the proof key + inherited theorem anchor before \proof
+% starts.
+%% @utility
+\newcommand*{\codep@proofadj@pendinganchormapkey}{}
+%% @utility
+\newcommand*{\codep@proofadj@pendinganchormapanchor}{}
+
+% Afterend stashes for the deferred adjacent-proof anchormap write.
+% \codep@hookproof@end snapshots the current proof's adjacent-proof
+% anchor payload here before \codep@proofstaterestore swaps outer proof
+% state back in; \codep@hookproof@afterend then emits and clears them.
+%% @utility
+\newcommand*{\codep@proofafterend@pendinganchormapkey}{}
+%% @utility
+\newcommand*{\codep@proofafterend@pendinganchormapanchor}{}
+
 % Flag: true when \codeptrack has been called.
 \newbool{codep@tracked}
 \boolfalse{codep@tracked}
@@ -1123,6 +1140,10 @@
   \fi%
   \expandafter\xdef\csname codep@savedproofbind@#1\endcsname{%
     \codep@pendingproofbind}%
+  \expandafter\xdef\csname codep@savedproofadjkey@#1\endcsname{%
+    \codep@proofadj@pendinganchormapkey}%
+  \expandafter\xdef\csname codep@savedproofadjanchor@#1\endcsname{%
+    \codep@proofadj@pendinganchormapanchor}%
   \global\codep@proofneststack=\expandafter{%
     \the\codep@proofneststack{\codep@currentproofid}}%
 }%
@@ -1136,6 +1157,8 @@
     \codep@pendingproofbind@checkoverwrite%
     \global\let\codep@pendingproofbind\@empty%
     \global\codep@proofdisplaypendingfalse%
+    \global\let\codep@proofadj@pendinganchormapkey\@empty%
+    \global\let\codep@proofadj@pendinganchormapanchor\@empty%
   \else%
     \global\expandafter\let\expandafter\codep@currentproofid%
       \csname codep@savedproofid@#1\endcsname%
@@ -1149,12 +1172,22 @@
     \fi%
     \global\expandafter\let\expandafter\codep@pendingproofbind%
       \csname codep@savedproofbind@#1\endcsname%
+    \global\expandafter\let\expandafter%
+      \codep@proofadj@pendinganchormapkey%
+      \csname codep@savedproofadjkey@#1\endcsname%
+    \global\expandafter\let\expandafter%
+      \codep@proofadj@pendinganchormapanchor%
+      \csname codep@savedproofadjanchor@#1\endcsname%
     \global\expandafter\let%
       \csname codep@savedproofid@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofpending@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofbind@#1\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@savedproofadjkey@#1\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@savedproofadjanchor@#1\endcsname\@undefined%
   \fi%
 }%
 
@@ -1179,6 +1212,8 @@
         \xdef\codep@currentproofid{\codep@thisproofid}%
         \codep@ctxpush{\codep@currentproofid}{proof}%
         \global\advance\codep@suppressdepth by 1\relax%
+        \global\let\codep@proofadj@pendinganchormapkey\@empty%
+        \global\let\codep@proofadj@pendinganchormapanchor\@empty%
         \codep@pendingproofbind@checkoverwrite%
         \let\codep@pendingproofbind\@empty%
         \codep@proof@standalone%
@@ -1192,6 +1227,8 @@
       \xdef\codep@currentproofid{\codep@thisproofid}%
       \codep@ctxpush{\codep@currentproofid}{proof}%
       \global\advance\codep@suppressdepth by 1\relax%
+      \global\let\codep@proofadj@pendinganchormapkey\@empty%
+      \global\let\codep@proofadj@pendinganchormapanchor\@empty%
       \codep@pendingproofbind@checkoverwrite%
       \let\codep@pendingproofbind\@empty%
       \codep@proof@standalone%
@@ -1247,15 +1284,15 @@
       \csname codep@anchor@\codep@tmp@parentkey\endcsname%
     \fi}%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+  \global\let\codep@proofadj@pendinganchormapkey\@empty%
+  \global\let\codep@proofadj@pendinganchormapanchor\@empty%
   \ifx\codep@tmp@thmanchor\@empty\else%
     \expandafter\xdef%
       \csname codep@anchor@\codep@tmp@proofkey\endcsname%
       {\codep@tmp@thmanchor}%
-    \if@filesw%
-      \protected@write\@auxout{}{%
-        \string\codep@anchormap{\codep@tmp@proofkey}%
-          {\codep@tmp@thmanchor}}%
-    \fi%
+    \xdef\codep@proofadj@pendinganchormapkey{\codep@tmp@proofkey}%
+    \xdef\codep@proofadj@pendinganchormapanchor{%
+      \codep@tmp@thmanchor}%
   \fi%
   \global\let\codep@pendingresultid\@empty%
   \codep@cdpwrite@atom{%
@@ -1288,6 +1325,10 @@
       \global\let\codep@pendingresultid\@empty%
       \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
       \xdef\codep@proofend@pendingclear{\codep@tmp@proofkey}%
+      \xdef\codep@proofafterend@pendinganchormapkey{%
+        \codep@proofadj@pendinganchormapkey}%
+      \xdef\codep@proofafterend@pendinganchormapanchor{%
+        \codep@proofadj@pendinganchormapanchor}%
       % W03-P03: capture entitymeta for this just-closed proof.
       % Display extracted via \codep@splitprefix (sets \codep@tmp@num).
       \expandafter\codep@splitprefix\codep@tmp@proofkey\@nil%
@@ -1304,11 +1345,22 @@
 %   Post-env hook body.  Inline flush already happened in
 %   \codep@hookproof@end; retained as a hook point so the proof
 %   orchestrator body stays stable across future rendering variants.
+%   Also emits any deferred adjacent-proof anchormap write after the
+%   proof environment has fully ended, avoiding the theorem→proof gap.
 %   Also consumes \codep@proofend@pendingclear to undefine the
 %   per-atom \codep@manuallyemitted@<key> flag for the proof that
 %   just closed (v12 A4: the proof-side flag clear lives here, NOT
 %   in a new cmd/endproof/after hook).
 \newcommand*{\codep@hookproof@afterend}{%
+  \ifx\codep@proofafterend@pendinganchormapkey\@empty\else%
+    \if@filesw%
+      \protected@write\@auxout{}{%
+        \string\codep@anchormap{\codep@proofafterend@pendinganchormapkey}%
+          {\codep@proofafterend@pendinganchormapanchor}}%
+    \fi%
+  \fi%
+  \global\let\codep@proofafterend@pendinganchormapkey\@empty%
+  \global\let\codep@proofafterend@pendinganchormapanchor\@empty%
   \codep@render@proof@afterend%
   \ifnum\codep@replaydepth=0\relax%
     \ifx\codep@proofend@pendingclear\@empty\else%

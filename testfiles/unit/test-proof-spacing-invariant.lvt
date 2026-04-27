@@ -1,0 +1,35 @@
+%% TEST-NAME: test-proof-spacing-invariant
+%% TEST-WHAT: Adjacent tracked theorem/proof spacing stays at the
+%%            amsthm baseline; proof-adjacency bookkeeping must not
+%%            inject extra vertical space into the theorem→proof gap.
+%% TEST-SOURCE: .claude/comms/waves/W03-FIN/bug4-briefing.md
+%% TEST-SECTION: theorem/proof adjacency spacing
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-PDF-VSPACE-BETWEEN: "^Theorem\\s+1\\.1\\." "^Proof\\." 14.0
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-PROOF-ADJ
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Spacing}
+
+\begin{theorem}
+  Statement with an adjacent proof.
+\end{theorem}
+\begin{proof}
+  Proof text.
+\end{proof}
+
+\END
+\end{document}
