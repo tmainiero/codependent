@@ -1,5 +1,5 @@
 {
-  ".test-behavior-baseline": 13,
+  ".test-behavior-baseline": 12,
   ".traceability-baseline.unclassified_macros": 42,
   ".traceability-baseline.uncovered_behaviors": 44,
   "census": {
@@ -28,6 +28,11 @@
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
     },
+    "integ-no-cleveref [warm-changed]": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
     "integ-no-hyperref": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
@@ -44,11 +49,6 @@
       "renderlist_first_appearance_after_pass2": 0
     },
     "integ-ntheorem [warm-changed]": {
-      "atomref_gap": 0,
-      "page_bearing_diff_pass2_to_pass3": 0,
-      "renderlist_first_appearance_after_pass2": 0
-    },
-    "integ-no-cleveref [warm-changed]": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0

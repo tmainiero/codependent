@@ -1567,6 +1567,7 @@
 % \codep@installsuppress
 %   Hook suppression for standard environments.
 %% @behavior B-SUPP-TRACKED
+%% @behavior B-SUPP-WRAPPERS
 \newcommand*{\codep@installsuppress}{%
   \codep@suppressenv{enumerate}%
   \codep@suppressenv{itemize}%
@@ -1580,6 +1581,14 @@
   \codep@suppressenv{tabularx}%
   \codep@suppressenv{longtable}%
   \codep@suppressenv{trivlist}%
+  % Kernel wrappers around \trivlist (latex.ltx:15407-15460).
+  % Their bodies typeset with \codep@suppressdepth==0 unless we
+  % register the surface env names; \codep@suppressenv{trivlist}
+  % alone does not catch para/begin inside these wrappers.
+  \codep@suppressenv{center}%
+  \codep@suppressenv{flushleft}%
+  \codep@suppressenv{flushright}%
+  \codep@suppressenv{verbatim}%
   % Numbered equation environments.
   % Track 1: single-number (counter steps at \begin).
   \codep@trackeqenv{equation}%

@@ -35,7 +35,6 @@ testfiles/unit/test-numbering-depth3.lvt
 testfiles/unit/test-sbl-end-marker.lvt
 testfiles/unit/test-sbl-flat-records.lvt
 testfiles/unit/test-sbl-version-source.lvt
-testfiles/unit/test-suppress-trivlist.lvt
 
 # B-CONC-USEDIN: current coverage is .cdp-only on the def-site atom; no PDF row assertion exists yet.
 B-CONC-USEDIN

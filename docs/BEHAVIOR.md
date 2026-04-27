@@ -247,6 +247,7 @@ Paragraph numbers are suppressed inside:
 | [B-SUPP-QUOTE] Quoting | `quote`, `quotation` |
 | [B-SUPP-FLOATS] Floats | `figure`, `table` |
 | [B-SUPP-BOXES] Boxes | `minipage`, `\parbox` |
+| [B-SUPP-WRAPPERS] Kernel align wrappers | `center`, `flushleft`, `flushright`, `verbatim` (paragraphs typeset by these `\trivlist`-based wrappers are not numbered) |
 | [B-SUPP-TABLES] Tables | `tabular`, `tabularx`, `longtable` |
 | [B-SUPP-MATH] Math display | `equation(*)`, `align(*)`, `gather(*)`, `multline(*)`, `flalign(*)`, `displaymath` |
 | [B-SUPP-TRACKED] Tracked envs | All environments registered via `\codeptrack` |
