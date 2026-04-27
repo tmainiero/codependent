@@ -15,6 +15,9 @@ build/
 texbuild/
 pdf-out/
 
-# Ephemeral agent state (findings, comms, candidate claims)
+# Ephemeral agent state (findings, comms, candidate claims, wave tracker, locks)
 .claude/agent_memory/
 .claude/comms/
+.claude/build_tracker.md
+.claude/scheduled_tasks.lock
+.codex
