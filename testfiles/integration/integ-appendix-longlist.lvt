@@ -1,6 +1,7 @@
 %% TEST-NAME: integ-appendix-longlist
 %% TEST-WHAT: Integration stress test for appendix mode long-list wrapping,
-%%            pgfkey page-number formatting, and anchor-start page capture.
+%%            pgfkey page-number formatting, render-time template expansion,
+%%            and anchor-start page capture.
 %% TEST-SOURCE: docs/DESIGN.md §8a.6.g; docs/CONVENTIONS.md
 %% TEST-SECTION: docs/DESIGN.md §8a.6.g (appendix mode)
 %% TEST-EXIT: 0
@@ -11,13 +12,15 @@
 %% TEST-AUX-CONTAINS: \codep@anchorpage{proof:2.3}{
 %% TEST-AUX-CONTAINS: \codep@anchorpage{paragraph:2.13}{
 %% TEST-PDF-CONTAINS: Dependency Index
-%% TEST-PDF-CONTAINS: Theorem 1.4 — page 1
+%% TEST-PDF-CONTAINS: Theorem 1.4 SEP 1
+%% TEST-PDF-NOT: OLDSEP
 %% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.4
 %% TEST-PDF-LINK-DEST: theorem\.9
-%% TEST-PDF-STEXT: (?s)text="Theorem 1\.4 &#x2014; page 1".*text="2\.3, 2\.3\*, 2\.5, 2\.6, 2\.7, 2\.8, 2\.9, 2\.10,".*text="2\.11, 2\.12"
+%% TEST-PDF-STEXT: (?s)text="Theorem 1\.4 SEP 1".*text="2\.3, 2\.3\*, 2\.5, 2\.6, 2\.7, 2\.8, 2\.9, 2\.10,".*text="2\.11, 2\.12"
 %% TEST-ATOMS-MIN: 13
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
 %% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN
 
 \documentclass{article}
@@ -42,14 +45,16 @@
 \declaretheorem[name=Lemma,     style=thmstyle, sibling=theorem]{lemma}
 \declaretheorem[name=Definition,style=defstyle, sibling=theorem]{definition}
 
+\newcommand{\mysep}{OLDSEP}
 \usepackage{codependent}
 \codepsetup{
   backrefs=appendix,
   paragraphs=on,
   equations=off,
   proofs=on,
-  appendix/pagenum-format={##1~\textemdash~page~##2}
+  appendix/pagenum-format={##1~\mysep~##2}
 }
+\renewcommand{\mysep}{SEP}
 \codeptrack{theorem,lemma,definition}
 
 \usepackage[hypertexnames=false]{hyperref}

@@ -50,6 +50,7 @@
 %% TEST-PDF-STEXT: (?s)text="Definition 2\.1 \(p\. 1\)".*text="2\.2, 2\.2\*, 2\.3, 2\.4"
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN

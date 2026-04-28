@@ -753,16 +753,21 @@ bidirectional links:
 - the visible page-number format is configured by the public pgfkey
   `/codep/appendix/pagenum-format`.
 
-`/codep/appendix/pagenum-format` stores a two-argument template.
-`##1` is the full appendix label text (for example
-`Theorem~1.2`) and `##2` is the anchor's start page.  The
-default template is `##1~(p.~##2)`.  Users can override it with
+`/codep/appendix/pagenum-format` stores a two-argument template as
+verbatim data.  `##1` is the full appendix label text (for example
+`Theorem~1.2`) and `##2` is the anchor's start page.  The default
+template is `##1~(p.~##2)`.  Users can override it with
 
 ```latex
 \codepsetup{
   appendix/pagenum-format={##1~\textemdash~page~##2}
 }
 ```
+
+The package does **not** expand that value when `\codepsetup` runs.
+Instead it stores the raw token sequence and substitutes `##1` /
+`##2` only when the appendix entry is emitted, so helper macros in the
+template follow normal render-time expansion.
 
 The appendix page number is **not** carried in
 `\codep@entitymeta`.  That aux contract remains the five-field
@@ -783,6 +788,22 @@ written when the anchor key is assigned (theorem after-hook,
 proof-key bind/materialize, paragraph open), so it captures the
 anchor's **start page**, not the page where the environment later
 ends.
+
+The split is intentional.  Existing readers already consume
+`\codep@entitymeta{key}{kind}{display}{print-kind}{parent-key}`, and
+page metadata has a slightly different lifecycle than entity metadata:
+anchor start pages can be written as soon as a key materializes, while
+rebound proofs may not know their final parent/display metadata until a
+later pass.  Keeping page data in `\codep@anchorpage` preserves the
+five-argument aux contract and avoids a 6-field migration for readers
+that only care about entity classification.
+
+Like the rest of codependent's hyperref-facing metadata, these records
+stabilize within the standard two-pass cycle demanded by the base
+packages.  Rebound proofs can show a transient pass-1 mismatch where a
+final-key `\codep@anchorpage` has already been written but the matching
+final-key `\codep@entitymeta` arrives on pass 2 once the parent label
+resolves; that temporary skew is expected and converges on the next run.
 
 **None mode.**  Numbering only, no back-references
 displayed.  The Section-8a graph inversion is still run

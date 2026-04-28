@@ -72,12 +72,32 @@
 %% @utility
 \newcommand*{\codep@marginfont}{\scriptsize}
 %% @utility
-\def\codep@appendix@pagenum@template#1#2{#1~(p.~#2)}%
+\edef\codep@appendix@pagenum@template{%
+  \detokenize{##1~(p.~##2)}}%
 %% @utility
 \def\codep@setappendixpagenumformat#1{%
-  \edef\codep@tmp@appendixpagenum{%
-    \def\noexpand\codep@appendix@pagenum@template####1####2{#1}}%
+  \toks@{#1}%
+  \edef\codep@appendix@pagenum@template{%
+    \detokenize\expandafter{\the\toks@}}%
+}%
+%% @utility
+\def\codep@renderappendixpagenumtemplate#1#2{%
+  \begingroup%
+    \endlinechar=-1\relax%
+    \edef\codep@tmp@appendixpagenum{%
+      \endgroup%
+      \noexpand\makeatletter%
+      \noexpand\scantokens{%
+        \def\noexpand\codep@tmp@appendixpagenum@stored{%
+          \codep@appendix@pagenum@template}}%
+      \noexpand\makeatother%
+    }%
   \codep@tmp@appendixpagenum%
+  \edef\codep@tmp@appendixpagenum{%
+    \def\noexpand\codep@tmp@appendixpagenum@apply####1####2{%
+      \codep@tmp@appendixpagenum@stored}}%
+  \codep@tmp@appendixpagenum%
+  \codep@tmp@appendixpagenum@apply{#1}{#2}%
 }%
 
 \pgfkeys{%
