@@ -73,7 +73,7 @@
 \newcommand*{\codep@marginfont}{\scriptsize}
 %% @utility
 \edef\codep@appendix@pagenum@template{%
-  \detokenize{##1~(p.~##2)}}%
+  \detokenize{##1~(p.\@~##2)}}%
 %% @utility
 \def\codep@setappendixpagenumformat#1{%
   \toks@{#1}%
@@ -1511,6 +1511,7 @@
 }%
 
 %% @behavior B-REND-INLINE
+%% @behavior B-LINK-PROOF-DEST
 % \codep@hookproof@afterend
 %   Post-env hook body.  Inline flush already happened in
 %   \codep@hookproof@end; retained as a hook point so the proof

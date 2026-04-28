@@ -902,3 +902,69 @@ If you are coming back to this project and want to:
 - **Contribute lessons to other LaTeX projects** -> see the
   cross-referenced `lessons_latex_package_evolution.md` in
   user-global agent memory.
+
+## Wave 4 — Proof-anchor architecture + appendix mode (2026-04-28)
+
+Wave 4 closed on `graph-redesign-phase3` at HEAD.  Suite 156/10/0
+(passed/pinned-broken/real-failures).  All 3 linters PASS.
+
+### Scope and deliverables
+
+W04 implemented the proof-anchor architecture decision made 2026-04-27:
+dedicate a `codep-proof:N.M` PDF destination namespace for adjacent and
+`\codepproofof`-rebound proofs.  Standalone-tracked proofs use
+`codep-proof:a<N>` instead.  Prior to W04, proof atoms aliased whatever
+upstream anchor existed at resolve time.  The wave folded appendix mode
+requirements (bidirectional links + page numbers) with the namespace work
+because both touch the PDF-anchor layer.
+
+| Phase | Commit | Deliverable |
+|---|---|---|
+| P01 | `397aa96` | `codep-proof:N.M` namespace + keymap rail; Trinity fixture rewire |
+| P03 | `276f8ff` | `_RENDERED_STATEMENT_RE` split (paragraph-margin atoms) |
+| P02 | `f2b5f36` | Counter rule + standalone suppression + renderer migration |
+| P04+P05 | `5002f43` | Appendix bidir links + page numbers + aux roundtrip |
+| P04 fix | `70901c3` | True `.store in` pagenum-format + DESIGN parity contract |
+| P06 | this commit | Closeout: pin flips, B-ID rewrites, ratchet, stress-test addition |
+
+### Bug closures
+
+- **Bug #1** (proof links land on `theorem.X` not proof body) — **closed in P01
+  (commit `397aa96`)**. Adjacent and rebound proofs now emit
+  `\hypertarget{codep-proof:N.M}{}` at the proof body; standalone-tracked
+  proofs emit `\hypertarget{codep-proof:a<N>}{}`.  Backref links resolve to
+  the respective destination.  `integ-proof-link-target.lvt` pin flipped to
+  green.
+
+- **Bug #2** (2.7\* phantom standalone source + counter slot consumption) —
+  **closed in P02 (commit `f2b5f36`)**. Standalone proofs no longer call
+  `\refstepcounter{atom}` and are suppressed from inline source-token output.
+  `integ-stress-all-features.lvt` pin flipped to green; 2.7\* absent from
+  stress-test backref lists.
+
+- **Trinity 2.3\* → equation.32 collision** — closed in P01 (same commit).
+  The link from Definition 1.6's "Used in 2.3\*" now lands on
+  `codep-proof:2.3`, not `equation.32`.
+
+### Architecture decisions
+
+- `codep-proof:N.M` PDF destinations emitted at the proof body's first stable
+  position, deferred past the `\proof` macro's trivlist setup to avoid
+  whatsit injection in the theorem→proof gap (Bug #4 territory).
+- Keymap rail (`\codep@keymap`) activated: `\codepproofof` rebinds record
+  `old-key → final-key` so render-time source resolution uses a single
+  lookup point.
+- Renderer migrated to kind-aware logic: adjacent+proofs=on → `N.M*`;
+  separated+proofs=on → `<display>*`; standalone → suppressed; proofs=off →
+  unstarred.
+- Separate `\codep@anchorpage{key}{page}` aux record captures anchor page at
+  emission time (not env-end), enabling accurate page numbers in appendix mode
+  even when a theorem crosses a page boundary.
+- Public API: `/codep/appendix/pagenum-format` pgfkey (`.store in` semantics);
+  default `##1~(p.\@~##2)` (sfcode-suppressed to prevent end-of-sentence spacing after `p.`).
+
+### B-IDs
+
+New: `B-LINK-PROOF-DEST`, `B-LINK-APPENDIX-BIDIR`.
+Reworded: `B-LINK-CORRECT`, `B-LINK-EFFECTIVE-ANCHOR`, `B-LINK-ADJ-PROOF`,
+`B-PROOF-SEP`.  VISIBLE-VERIFIED count grew from 80 to 82.

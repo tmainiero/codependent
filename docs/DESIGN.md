@@ -756,7 +756,7 @@ bidirectional links:
 `/codep/appendix/pagenum-format` stores a two-argument template as
 verbatim data.  `##1` is the full appendix label text (for example
 `Theorem~1.2`) and `##2` is the anchor's start page.  The default
-template is `##1~(p.~##2)`.  Users can override it with
+template is `##1~(p.\@~##2)`.  Users can override it with
 
 ```latex
 \codepsetup{

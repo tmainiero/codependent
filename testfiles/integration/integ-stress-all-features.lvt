@@ -20,11 +20,8 @@
 %% TEST-STABLE-AT: 3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-PINS-KNOWN-BROKEN: yes
-%% PINS: phantom backref source 2.7* — no atom with display 2.7 is rendered
-%%       in section 2 (visible: 2.1, 2.4, 2.5, 2.6). Bug confirmed 2026-04-24.
 %% TEST-PDF-BACKREF-SOURCES-RENDERED: yes
-%% TEST-BEHAVIOR: B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-RERUN
+%% TEST-BEHAVIOR: B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-RERUN
 %% --- CDP assertions ---
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@version{1}
@@ -54,10 +51,12 @@
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
-%% TEST-PDF-STEXT: (?s)Used in 2\.3, \(2\.3&#x2013;2\.4\), 2\.4, 2\.7\*, 2\.4\*, 3\.2, 3\.4\.
+%% TEST-PDF-STEXT: (?s)Used in 2\.3, \(2\.3&#x2013;2\.4\), 2\.4, 2\.4\*, 3\.2, 3\.4\.
 %% TEST-PDF-STEXT: (?s)Used in 2\.6\*, 3\.1\*\.
 %% TEST-PDF-STEXT: (?s)Used in 3\.3, 3\.3\*\.
-%% TEST-PDF-BACKREF-TARGETS: remark\.7 = corollary\.22, theorem\.26
+%% TEST-PDF-BACKREF-TARGETS: remark\.7 = codep-proof:2\.4, codep-proof:3\.3
+%% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:2\.4 | 2.4* = codep-proof:2\.4
+%% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:3\.3 | 3.3* = codep-proof:3\.3
 %% TEST-PDF-LINK-DEST: definition\.
 %% TEST-PDF-LINK-DEST: theorem\.
 %% TEST-PDF-DEST-EXISTS: definition\.

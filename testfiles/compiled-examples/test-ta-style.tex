@@ -12,8 +12,10 @@
 \usepackage{sty-theorems-ta}  % loads amsthm, thmtools, xparse, fontawesome, xcolor
 \usepackage{thm-restate}
 
-%% codependent with inline backrefs in gray (user's preferred style)
-\usepackage[backref-style=inline,backref-color=gray]{codependent}
+%% codependent in appendix mode (W04: exercises appendix bidir + page numbers)
+\usepackage[backrefs=appendix,backref-color=gray]{codependent}
+%% W04-P04: page-number format override — uses non-default value to exercise the API
+\codepsetup{appendix/pagenum-format={##1~\textemdash~p.~##2}}
 \codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
 
 %% Multi-file compatibility check: load subfiles and standalone.
@@ -367,6 +369,34 @@ categorical framework, while
 \cref{cor:equiv,def:enrichment,q:coherence} provide the
 foundational vocabulary.  See also \autoref{not:hom} and
 \cref{thm:long,prop:endmath,lem:endlist}.
+
+
+%% ====================================================================
+%%  Section 7: W04 proof-anchor features (codep-proof:N.M namespace)
+%% ====================================================================
+\section{Proof-anchor features}
+\label{sec:w04proof}
+
+%% --- 7.1: Long-distance proof with starred anchor ---
+%%
+%% \codepproofof*{label} rebinds this proof to thm:long (section~5)
+%% AND emits a codep-proof:N.M named PDF destination at the proof body.
+%% Backref entries for this proof atom resolve to codep-proof:N.M,
+%% not to the parent theorem heading.  (W04-P01, Bug #1 closed.)
+\begin{proof}[\codepproofof*{thm:long}]
+By verifying each implication in \cref{thm:long} using the rigidity
+criterion of \cref{def:trace} and the cyclic property of \cref{lem:trace-cyclic}.
+The dualisability condition (i) implies (ii) by naturality, and (iii)
+follows from \cref{def:enrichment}.
+\end{proof}
+
+%% ====================================================================
+%%  Dependency Index (appendix mode — W04-P04)
+%%  Emits bidirectional links: theorem body \to appendix entry AND
+%%  appendix entry \to theorem heading.  Page numbers use the
+%%  /codep/appendix/pagenum-format key set above.
+%% ====================================================================
+\codepappendix
 
 \END
 \end{document}

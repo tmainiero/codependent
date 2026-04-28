@@ -1,25 +1,21 @@
 %% TEST-NAME: integ-proof-link-target
-%% TEST-WHAT: PINS-KNOWN-BROKEN regression for proof-atom link target bug.
-%%            When a proof atom (displayed as N.M*) appears in a "Used in"
-%%            backref list, clicking it should jump to the proof body, not
-%%            the parent theorem.  Root cause: no proof-typed named
-%%            destination is emitted; links for N.M* fall back to the parent
-%%            theorem anchor or are mis-wired to it at link-emission time.
-%%            Coverage hole: TEST-PDF-BACKREF-TARGETS previously only checked
-%%            "any link exists on a Used-in line" not "link goes to proof dest".
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-WHAT: Proof-atom link target: clicking N.M* in a "Used in" list
+%%            jumps to the proof body, not the parent theorem.
+%%            codep-proof:1.2 named destination emitted by \codepproofof*;
+%%            backref entries for proof atoms resolve to codep-proof:N.M.
+%%            Bug #1 closed in W04-P01 (commit 397aa96).
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
 %% A proof-specific named destination must exist in the PDF.
-%% Currently FAILS: qpdf shows /D (theorem.3), not /D (codep-proof:1.2).
 %% TEST-PDF-DEST-EXISTS: codep-proof:1\.2
 %% The "Used in" line for thm:B must link the 1.2* entry to the
 %% proof-specific destination, not to the parent theorem anchor.
 %% TEST-PDF-BACKREF-TARGETS: proof:.* = codep-proof:1\.2
 %% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:1\.2 | 1.2* = codep-proof:1\.2
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
-%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOFOF-STAR
+%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%
