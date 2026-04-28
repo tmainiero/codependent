@@ -1,15 +1,16 @@
 %% TEST-NAME: test-proofs-paragraph-breaks-adjacency
 %% TEST-WHAT: A paragraph between theorem and proof breaks adjacency;
-%%            the proof gets its own standalone atom number.
+%%            the proof becomes STANDALONE (opaque proof-id key,
+%%            no shared-counter slot, suppressed from source-token output).
 %% TEST-SOURCE: docs/DESIGN.md §Proof adjacency
 %% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-CONTAINS: Proof not adjacent to a tracked
-%% TEST-PDF-CONTAINS: Used in 1.3*.
+%% TEST-PDF-NOT: Used in
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{proof}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{proof}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
@@ -18,7 +19,10 @@
 %%
 %% The paragraph of text between theorem and proof clears
 %% \codep@lasttheorematom, so the proof falls through to the
-%% non-adjacent path and gets its own atom number with a warning.
+%% standalone path: opaque proof-id key, no shared-counter slot,
+%% and suppressed from rendered "Used in ..." source-token output
+%% on the theorem.  The standalone proof's CDP atom record uses
+%% the opaque a<N> key, so {1.3}{proof} no longer appears.
 
 \documentclass{article}
 \usepackage{amsthm}

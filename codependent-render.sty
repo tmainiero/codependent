@@ -60,7 +60,13 @@
 % pure anchor-present check would produce \hyperlink tokens that
 % crash at typeset time when hyperref is absent.
 %% @utility
-\def\codep@collapsebr@cb#1{%
+% \codep@collapsebr@cb@emit{src-key}
+%   Build the rendered source-token entry for src-key (display +
+%   optional hyperlink wrapper) and append it to \codep@tmp@acc.
+%   Pre-W04-P02 this body lived inline in \codep@collapsebr@cb;
+%   it was extracted so the classifier can decide whether to emit
+%   without duplicating the renderer logic.
+\def\codep@collapsebr@cb@emit#1{%
   \codep@graph@getdisplay{#1}{\codep@tmp@brdisplay}%
   \@ifpackageloaded{hyperref}{%
     \codep@graph@getanchor{#1}{\codep@tmp@branchor}%
@@ -81,6 +87,41 @@
     \edef\codep@tmp@acc{%
       \unexpanded\expandafter{\codep@tmp@acc}, %
       \unexpanded\expandafter{\codep@tmp@cbentry}}%
+  \fi%
+}%
+
+%% @behavior B-EDGE-EMPTY-PROOF
+%% @utility
+% \codep@collapsebr@cb{src-key}
+%   Classifier-front collapse callback.  Decides whether the source
+%   should appear in the rendered source-token list for the current
+%   target, then dispatches to \codep@collapsebr@cb@emit.
+%
+%   Classification consults the W04-P01 keymap (CLASSIFICATION ONLY —
+%   the keymap-resolved key is used to look up entity@<key>@parent;
+%   the original src-key is still passed to the emitter so display
+%   rendering remains a function of the key as the graph stored it).
+%
+%   Suppression rule (B-EDGE-EMPTY-PROOF / W04-P02): a proof with
+%   no parent is STANDALONE — its key is "proof:a<N>" (opaque) and
+%   no entity@<key>@parent record exists.  STANDALONE proofs are
+%   omitted from inline source-token output.  ADJACENT proofs
+%   (parent set by \codep@proof@adjacent → bindproofparent) and
+%   REBOUND proofs (parent set by \codep@proofof@resolve) carry a
+%   non-empty parent and are emitted normally.
+\def\codep@collapsebr@cb#1{%
+  \codep@graph@resolvekey{#1}\codep@tmp@cbresolved%
+  \codep@graph@getkind{\codep@tmp@cbresolved}{\codep@tmp@cbkind}%
+  \ifx\codep@tmp@cbkind\codep@const@typeproof%
+    \codep@graph@getentityparent{\codep@tmp@cbresolved}%
+      {\codep@tmp@cbparent}%
+    \ifx\codep@tmp@cbparent\@empty%
+      % standalone — suppress from source-token output.
+    \else%
+      \codep@collapsebr@cb@emit{#1}%
+    \fi%
+  \else%
+    \codep@collapsebr@cb@emit{#1}%
   \fi%
 }%
 %% @implements \codep@queuebackref

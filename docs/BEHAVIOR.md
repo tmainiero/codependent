@@ -148,7 +148,7 @@ Load **after** the theorem backend (amsthm/ntheorem) and **after** all
 
 | Property | Behavior |
 |---|---|
-| [B-NUM-SHARED] Shared counter | One counter for all tracked environments + paragraphs + proofs |
+| [B-NUM-SHARED] Shared counter | One counter for tracked environments + paragraphs only; standalone proofs do NOT consume a slot (their key uses an opaque proof-id) |
 | [B-NUM-DEPTH1] Display format (`depth=1`) | `section.N` (article) or `chapter.N` (book/report) |
 | [B-NUM-DEPTH2] Display format (`depth=2`) | `section.subsection.N` or `chapter.section.N` |
 | [B-NUM-RESET] Counter reset | Resets at the deepest sectioning level in the display |
@@ -220,7 +220,7 @@ displays "Used in A" in the PDF.
 |---|---|---|
 | [B-PROOF-ADJ] Adjacent proof (directly after a tracked result env) | Inherits theorem's number | `2.1*` |
 | [B-PROOF-SEP] Separated proof with `\codepproofof{label}` | Inherits target's number | `2.1*` |
-| [B-PROOF-NONADJ] Non-adjacent proof (no `\codepproofof`) | Gets own atom number + warning | `3.5` |
+| [B-PROOF-NONADJ] Non-adjacent proof (no `\codepproofof`) | Opaque proof-id key (`proof:a<N>`); does not consume a shared-counter slot; warning emitted | suppressed from source-token output |
 | [B-PROOF-INNER] Proof inside a tracked env | Suppressed (part of outer atom) | N/A |
 | [B-PROOF-OFF] `proofs=off` | No atom number, paragraph suppression only | N/A |
 
@@ -315,8 +315,8 @@ and dispatches to a fixed-order drain pipeline.
 | [B-EDGE-NESTED] Nested tracked environments | Inner env suppressed; no separate atom number |
 | [B-EDGE-PROOF-ANY] Proof after any tracked env (including definition, remark) | Adjacent; inherits parent number with * |
 | [B-EDGE-NOTAG] All-`\notag` align block | No equation tracking; falls through to containing atom |
-| [B-EDGE-EMPTY-PROOF] Empty proof (no body content) | Still gets an atom number |
-| [B-EDGE-BADLABEL] `\codepproofof` with invalid label | Warning; proof becomes standalone with own number |
+| [B-EDGE-EMPTY-PROOF] Empty proof (no body content) | Adjacent: inherits parent's number with `*`. Standalone: opaque proof-id key, no shared-counter slot, suppressed from source-token output (per B-PROOF-NONADJ) |
+| [B-EDGE-BADLABEL] `\codepproofof` with invalid label | Warning; falls through to standalone materialization (opaque proof-id key, no shared-counter slot, suppressed from source-token output, per B-PROOF-NONADJ) |
 | [B-EDGE-TRACK-TWICE] `\codeptrack` called twice | Error: "codeptrack called twice" |
 | [B-EDGE-TRACK-ORDER] `\codeptrack` before `\newtheorem` | Error: counter undefined |
 | [B-EDGE-CONC-OUTSIDE] `\codepnewcommand` cmd used in caption/heading | No concept record (outside atom context) |

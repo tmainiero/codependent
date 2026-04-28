@@ -1,13 +1,16 @@
 %% TEST-NAME: test-proofof-invalid-label
 %% TEST-WHAT: \codepproofof with a nonexistent label produces a warning
-%%            (not a crash); compilation succeeds.
+%%            (not a crash); compilation succeeds.  The proof falls
+%%            through to STANDALONE materialization (opaque proof-id
+%%            key, suppressed from rendered source-token output).
 %% TEST-SOURCE: docs/DESIGN.md §Proof attribution, codependent.sty §10 \codepproofof
 %% TEST-SECTION: codependent.sty §10
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-LOG-NOT: codependent.*Error
 %% TEST-LOG-CONTAINS: codepproofof: unknown label 'bogus-label'
-%% TEST-PDF-CONTAINS: Theorem 1.1. A theorem that actually exists. Used in 1.3*.
+%% TEST-PDF-CONTAINS: Theorem 1.1. A theorem that actually exists.
+%% TEST-PDF-NOT: Used in
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{bogus}
 %% TEST-ATOMS-MIN: 1
@@ -17,8 +20,11 @@
 %%
 %% When \codepproofof references a label that does not exist,
 %% the package emits a warning via \PackageWarning but does not
-%% crash.  The proof falls through to standalone materialization
+%% crash.  The proof falls through to STANDALONE materialization
 %% (deferred path) since \codepproofof did not resolve an identity.
+%% Standalone proofs have an opaque proof-id key and are suppressed
+%% from rendered source-token output, so theorem 1.1 has no
+%% "Used in" line even though the proof references thm:exists.
 %% On rerun the label is still undefined, so the warning persists.
 
 \documentclass{article}

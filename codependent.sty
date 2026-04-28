@@ -359,6 +359,12 @@
 \newcommand*{\codep@proofafterend@pendinganchormapkey}{}
 %% @utility
 \newcommand*{\codep@proofafterend@pendinganchormapanchor}{}
+% W04-P02 (vii): pre-rebind key carried from \codep@hookproof@end to
+% \codep@hookproof@afterend so the latter can emit a second PDF anchor
+% (codep-proof:<oldnum>) for proofs rewritten by \codepproofof.  Empty
+% when the closing proof was not rebound.
+%% @utility
+\newcommand*{\codep@proofafterend@pendingoldkey}{}
 
 % Flag: true when \codeptrack has been called.
 \newbool{codep@tracked}
@@ -754,9 +760,20 @@
 %% @behavior B-PROOF-SEP
 % \codep@bindproofparent{proof-id}{parent-id}{mode}
 %   Bind proof-id to parent-id and derive the proof's legacy key.
+%   The third argument (mode) is currently unused at the call site;
+%   the parent slot's emptiness alone drives the renderer's
+%   ADJACENT-or-REBOUND vs. STANDALONE classifier (see
+%   \codep@graph@getentityparent).  Retained in the signature for
+%   call-site clarity.
+%   The parent slot stores the parent atom's prefixed key (e.g.
+%   "theorem:1.1") rather than the raw atom-id so the entitymeta
+%   parent value is consistent across adjacent and rebound paths
+%   (\codep@proofof@resolve also writes a prefixed key).  The
+%   classifier still only checks emptiness.
 \def\codep@bindproofparent#1#2#3{%
-  \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
-  \expandafter\xdef\csname codep@proofparentmode@#1\endcsname{#3}%
+  \codep@atomgetkey{#2}{\codep@tmp@parentprefixedkey}%
+  \expandafter\xdef\csname codep@proofparent@#1\endcsname{%
+    \codep@tmp@parentprefixedkey}%
   \codep@atomgetdisplay{#2}\codep@tmp@parentdisplay%
   \ifx\codep@tmp@parentdisplay\@empty\else%
     \edef\codep@tmp@proofkey{proof:\codep@tmp@parentdisplay}%
@@ -1261,23 +1278,36 @@
 %% @behavior B-PROOF-NONADJ
 %% @behavior B-EDGE-EMPTY-PROOF
 % \codep@proof@materialize
-%   Materialize the current proof as a standalone numbered proof atom.
+%   Materialize the current proof as a standalone proof atom.
+%   Standalone proofs do NOT consume a shared-counter slot — their
+%   key uses the opaque atom-id (\codep@currentproofid → "proof:a<N>")
+%   so the atom remains addressable for graph queries while being
+%   suppressed from rendered source-token output by the
+%   collapsebr classifier (codependent-render.sty:codep@collapsebr@cb).
+%   Adjacent and \codepproofof-rebound proofs continue to bind a
+%   "proof:N.M" key via \codep@proof@adjacent / \codep@proofof@resolve;
+%   only the standalone path lands here.
 \newcommand*{\codep@proof@materialize}{%
   \global\codep@proofdisplaypendingfalse%
-  \refstepcounter{atom}%
-  \edef\codep@tmp@proofkey{proof:\theatom}%
+  \edef\codep@tmp@proofkey{proof:\codep@currentproofid}%
   \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
-  \codep@writeanchormap{\codep@tmp@proofkey}%
+  % Anchor for this proof key is emitted by \codep@hookproof@afterend
+  % (codep-proof:a<N>) — materialize must NOT write the anchormap
+  % here, because materialize fires from para/begin inside the proof
+  % body where \@currentHref still points at the prior paragraph
+  % atom; that deferred \protected@write would override afterend's
+  % \immediate\write at shipout time.
   \codep@cdpwrite@atom{%
-    \string\codep@cdp@atom{\theatom}{proof}}%
+    \string\codep@cdp@atom{\codep@currentproofid}{proof}}%
   \codep@cdpwrite@atom{%
-    \string\codep@cdp@meta{\theatom}{src}%
+    \string\codep@cdp@meta{\codep@currentproofid}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
   \codep@registeratom{\codep@tmp@proofkey}{proof}%
   \codep@render@queuebackref{\codep@tmp@proofkey}%
   \ifbool{codep@proofwarnings}{%
     \PackageWarning{codependent}{Proof not adjacent to a tracked\space%
-      environment; assigned independent atom number \theatom}%
+      environment and has no \string\codepproofof\space binding;\space%
+      suppressed from backref source-token output}%
   }{}%
 }%
 
@@ -1337,11 +1367,44 @@
       \xdef\codep@proofafterend@pendinganchormapkey{%
         \codep@tmp@proofkey}%
       \global\let\codep@proofafterend@pendinganchormapanchor\@empty%
+      % W04-P02 (vii): if this proof was rebound by \codepproofof,
+      % surface the pre-rebind key so \codep@hookproof@afterend can
+      % emit the second PDF anchor.  The stash lives at
+      % \codep@proofof@oldkey@<proofid> and was set in
+      % \codep@proofof@resolve.  Suppress when the stash is
+      % unset (non-rebound proof) or equal to the post-rebind key
+      % (degenerate same-display rebind).
+      \expandafter\let\expandafter\codep@tmp@stashedoldkey%
+        \csname codep@proofof@oldkey@\codep@currentproofid\endcsname%
+      \ifx\codep@tmp@stashedoldkey\relax%
+        \global\let\codep@proofafterend@pendingoldkey\@empty%
+      \else%
+        \ifx\codep@tmp@stashedoldkey\codep@tmp@proofkey%
+          \global\let\codep@proofafterend@pendingoldkey\@empty%
+        \else%
+          \global\let\codep@proofafterend@pendingoldkey%
+            \codep@tmp@stashedoldkey%
+        \fi%
+      \fi%
       % W03-P03: capture entitymeta for this just-closed proof.
       % Display extracted via \codep@splitprefix (sets \codep@tmp@num).
+      % W04-P02: populate the parent slot from \codep@proofparent@<id>
+      % so the renderer's collapsebr classifier can distinguish
+      % ADJACENT/REBOUND proofs (non-empty parent) from STANDALONE
+      % proofs (empty parent — bindproofparent never ran).
+      % \codep@bindproofparent (adjacent path) sets the binding from
+      % \codep@proof@adjacent; \codep@proofof@resolve (rebound path)
+      % sets the binding directly.  Standalone proofs reach
+      % \codep@proof@materialize without ever touching the binding,
+      % which is the ground truth the classifier checks.
       \expandafter\codep@splitprefix\codep@tmp@proofkey\@nil%
+      \expandafter\let\expandafter\codep@tmp@proofparentval%
+        \csname codep@proofparent@\codep@thisproofid\endcsname%
+      \ifx\codep@tmp@proofparentval\relax%
+        \let\codep@tmp@proofparentval\@empty%
+      \fi%
       \codep@captureentitymeta{\codep@tmp@proofkey}{proof}%
-        {\codep@tmp@num}{proof}{}%
+        {\codep@tmp@num}{proof}{\codep@tmp@proofparentval}%
       \codep@proofstaterestore{\codep@thisproofid}%
     \fi%
   }{}%
@@ -1446,9 +1509,33 @@
         \fi%
       \fi%
     \fi%
+    % W04-P02 (vii): rebound proofs (pendingoldkey non-empty) emit
+    % a second PDF anchor under the pre-rebind key, so source-token
+    % links carrying the pre-rebind display id (e.g. 2.1*) land on
+    % a destination matching their visible text (codep-proof:2.1)
+    % rather than being keymap-redirected to the post-rebind anchor.
+    \ifx\codep@proofafterend@pendingoldkey\@empty\else%
+      \expandafter\codep@splitprefix%
+        \codep@proofafterend@pendingoldkey\@nil%
+      \edef\codep@tmp@oldproofanchorname{codep-proof:\codep@tmp@num}%
+      \Hy@pstringdef\Hy@pstringDest{%
+        \HyperDestNameFilter{\codep@tmp@oldproofanchorname}}%
+      \Hy@DestName\Hy@pstringDest\@pdfview%
+      \expandafter\xdef%
+        \csname codep@anchor@%
+          \codep@proofafterend@pendingoldkey\endcsname%
+        {\codep@tmp@oldproofanchorname}%
+      \if@filesw%
+        \immediate\write\@auxout{%
+          \string\codep@anchormap{%
+            \codep@proofafterend@pendingoldkey}%
+            {\codep@tmp@oldproofanchorname}}%
+      \fi%
+    \fi%
   }{}%
   \global\let\codep@proofafterend@pendinganchormapkey\@empty%
   \global\let\codep@proofafterend@pendinganchormapanchor\@empty%
+  \global\let\codep@proofafterend@pendingoldkey\@empty%
   \codep@render@proof@afterend%
   \ifnum\codep@replaydepth=0\relax%
     \ifx\codep@proofend@pendingclear\@empty\else%
@@ -2503,23 +2590,33 @@
 }%
 
 % \codep@processbr{tgt}{src}
-%   #1 = target label key (display number via lblnum map)
+%   #1 = target label key (resolves to canonical atom-key via
+%        lblentity, or falls back to ltype:lblnum for stale aux)
 %   #2 = source atom prefixed key (e.g. thm:2.1, para:1.3)
-%   Constructs the prefixed target key using \codep@ltype@<label>
-%   and the resolved display number from \codep@lblnum@<label>.
+%   Prefers \codep@lblentity@<label> (canonical atom-key written
+%   by W03-P03 enddoc) so standalone proofs whose label binds to
+%   the surrounding paragraph counter (lblnum=para number) still
+%   resolve to their opaque atom-key (proof:a<N>) rather than
+%   the wrong "proof:<para-num>".  Falls through to legacy
+%   ltype:lblnum if lblentity is unavailable (pre-W03-P03 aux,
+%   or labels written outside the codependent label hook).
 \def\codep@processbr#1#2{%
-  \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax
-    % Unknown target: silently drop.
-  \else
-    % Construct prefixed target key: type:number.
-    \expandafter\ifx\csname codep@ltype@#1\endcsname\relax
-      % No type record (equation labels, stale aux): use bare number.
-      \edef\codep@tmp@tgt{\csname codep@lblnum@#1\endcsname}%
+  \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax
+    \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax
+      % Unknown target: silently drop.
     \else
-      \edef\codep@tmp@tgt{%
-        \csname codep@ltype@#1\endcsname
-        :\csname codep@lblnum@#1\endcsname}%
+      \expandafter\ifx\csname codep@ltype@#1\endcsname\relax
+        \edef\codep@tmp@tgt{\csname codep@lblnum@#1\endcsname}%
+      \else
+        \edef\codep@tmp@tgt{%
+          \csname codep@ltype@#1\endcsname
+          :\csname codep@lblnum@#1\endcsname}%
+      \fi
+      \edef\codep@tmp@src{#2}%
+      \codep@appendbr@core%
     \fi
+  \else
+    \edef\codep@tmp@tgt{\csname codep@lblentity@#1\endcsname}%
     \edef\codep@tmp@src{#2}%
     \codep@appendbr@core%
   \fi
@@ -2585,13 +2682,29 @@
 %   collapsebr accumulator, which iterates and mutates
 %   \codep@tmp@num between sibling callbacks).  The theorem
 %   branch already snapshots via \let-meaning.
-%   equation:X → (X)   proof:X → X*   otherwise → X
+%
+%   Proof display gates on the proofs=on|off option:
+%     proofs=on  (default) → "N.M*"  (star marks proof-sourced)
+%     proofs=off           → "N.M"   (unstarred)
+%   Standalone proofs (which carry an opaque "proof:a<N>" key
+%   rather than a "proof:N.M" key) are suppressed upstream by
+%   \codep@collapsebr@cb's classifier and never reach this
+%   helper, so getdisplay only sees adjacent / rebound keys
+%   whose num half is a real "N.M" display string.
+%
+%   equation:X → (X)
+%   proof:X    → X* | X (per proofs=on|off)
+%   otherwise  → X
+%% @behavior B-DISP-PROOF
+%% @behavior B-PROOF-OFF
 \def\codep@graph@getdisplay#1#2{%
   \expandafter\codep@splitprefix#1\@nil%
   \ifx\codep@tmp@type\codep@const@typeequation%
     \edef#2{(\codep@tmp@num)}%
   \else\ifx\codep@tmp@type\codep@const@typeproof%
-    \edef#2{\codep@tmp@num*}%
+    \ifbool{codep@proofsnumbered}%
+      {\edef#2{\codep@tmp@num*}}%
+      {\let#2\codep@tmp@num}%
   \else%
     \let#2\codep@tmp@num%
   \fi\fi%
@@ -2601,14 +2714,27 @@
 % \codep@graph@getanchor{entity-key}{macro}
 %   Retrieve the hyperref anchor for entity-key into #2,
 %   or set #2 to \@empty if no anchor exists.
+%
+%   Local-first lookup: if \codep@anchor@<key> exists for the
+%   original key, use it; otherwise fall back through the
+%   keymap rail (W04-P01) to the rebind target.  This preserves
+%   per-proof-id PDF anchors for B-PROOF-SEP (rebound proofs
+%   that emitted their own \Hy@DestName via codep-proof:N.M
+%   under their original key) while still supplying a fallback
+%   anchor for keys that never recorded one locally.
 \def\codep@graph@getanchor#1#2{%
-  \codep@graph@resolvekey{#1}\codep@tmp@graphkey%
-  \expandafter\ifx%
-      \csname codep@anchor@\codep@tmp@graphkey\endcsname\relax%
-    \let#2\@empty%
+  \expandafter\ifx\csname codep@anchor@#1\endcsname\relax%
+    \codep@graph@resolvekey{#1}\codep@tmp@graphkey%
+    \expandafter\ifx%
+        \csname codep@anchor@\codep@tmp@graphkey\endcsname\relax%
+      \let#2\@empty%
+    \else%
+      \expandafter\let\expandafter#2%
+        \csname codep@anchor@\codep@tmp@graphkey\endcsname%
+    \fi%
   \else%
     \expandafter\let\expandafter#2%
-      \csname codep@anchor@\codep@tmp@graphkey\endcsname%
+      \csname codep@anchor@#1\endcsname%
   \fi%
 }%
 
@@ -2618,6 +2744,26 @@
 \def\codep@graph@getkind#1#2{%
   \expandafter\codep@splitprefix#1\@nil%
   \let#2\codep@tmp@type%
+}%
+
+%% @utility
+% \codep@graph@getentityparent{entity-key}{macro}
+%   Retrieve the entitymeta parent-key field for entity-key into #2,
+%   or set #2 to \@empty if no entity record is bound or the parent
+%   slot is empty.  Used by the rendering classifier to distinguish
+%   ADJACENT / REBOUND proofs (non-empty parent) from STANDALONE
+%   proofs (empty parent) when deciding source-token visibility.
+%
+%   Intentionally does NOT call \codep@graph@resolvekey: the parent
+%   slot is only populated by the adjacent (\codep@proof@adjacent →
+%   \codep@bindproofparent) and rebound (\codep@proofof@resolve)
+%   paths, both of which write directly to the post-rebind key.
+%   So the keymap rail never needs to be consulted to find a parent
+%   record — the record always lives at the final key.
+\def\codep@graph@getentityparent#1#2{%
+  \expandafter\let\expandafter#2%
+    \csname codep@entity@#1@parent\endcsname%
+  \ifx#2\relax\let#2\@empty\fi%
 }%
 
 %% @utility
@@ -3842,8 +3988,33 @@
       \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
         \codep@keymap@record{%
           \codep@tmp@oldproofkey}{\codep@tmp@proofkey}%
+        % W04-P02 (vii): persist the pre-rebind key so
+        % \codep@hookproof@afterend can emit a second PDF anchor
+        % (codep-proof:<oldnum>) under the original display id.
+        % Both pre- and post-rebind source-token links thus land on
+        % a destination matching their visible number text.  Stash
+        % once: only the very first rebind (where oldkey is the
+        % adjacent-inheritance key) supplies a meaningful old key.
+        \expandafter\ifx\csname codep@proofof@oldkey@#1\endcsname\relax%
+          \expandafter\xdef\csname codep@proofof@oldkey@#1\endcsname{%
+            \codep@tmp@oldproofkey}%
+        \fi%
       \fi%
     \fi%
+    % W04-P02: bind the proofparent rail so \codep@hookproof@end
+    % can pass a non-empty parent to captureentitymeta and the
+    % renderer's classifier sees this as REBOUND (not STANDALONE).
+    % Use the resolved target's lblentity (or its display key fallback)
+    % as the parent value; the classifier only cares about emptiness,
+    % but downstream consumers may want a meaningful identifier.
+    \expandafter\ifx\csname codep@lblentity@#2\endcsname\relax%
+      \edef\codep@tmp@proofparentval{theorem:\codep@tmp@proofdisp}%
+    \else%
+      \edef\codep@tmp@proofparentval{%
+        \csname codep@lblentity@#2\endcsname}%
+    \fi%
+    \expandafter\xdef\csname codep@proofparent@#1\endcsname{%
+      \codep@tmp@proofparentval}%
     \global\codep@proofdisplaypendingfalse%
     \global\let\codep@pendingproofbind\@empty%
     \codep@cdpwrite@atom{%

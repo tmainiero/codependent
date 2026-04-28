@@ -1,6 +1,7 @@
 %% TEST-NAME: test-proofs-inherit
 %% TEST-WHAT: Adjacent proofs inherit theorem atom number with star suffix;
-%%            non-adjacent proofs get independent atom numbers.
+%%            non-adjacent proofs use an opaque proof-id key (no shared-counter
+%%            slot) and are suppressed from rendered source-token output.
 %% TEST-SOURCE: docs/DESIGN.md Proof adjacency, Pavlov-style numbering
 %% TEST-SECTION: docs/DESIGN.md §Proof environments
 %% TEST-EXIT: 0
@@ -10,7 +11,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
-%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.4}{proof}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.4}{proof}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.1*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2*}
 %% TEST-LOG-CONTAINS: Proof not adjacent to a tracked
@@ -22,8 +23,10 @@
 %% Tests three scenarios:
 %% 1. Theorem + adjacent proof -> proof inherits theorem's number (1.1*)
 %% 2. Theorem + adjacent proof -> same inheritance (1.2*)
-%% 3. Paragraph between theorem and proof -> proof gets own number (1.4)
-%%    with a "not adjacent" warning.
+%% 3. Paragraph between theorem and proof -> proof becomes STANDALONE
+%%    (opaque proof-id key, no N.M slot) with a "not adjacent" warning.
+%%    The standalone proof's CDP atom record uses the opaque a<N> key,
+%%    so {1.4}{proof} no longer appears (counter slot 1.4 is unused).
 
 \documentclass{article}
 \usepackage{amsthm}

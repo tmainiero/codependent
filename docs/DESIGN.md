@@ -502,9 +502,24 @@ numbers.
 `proof` (from `amsthm`) is not a `\newtheorem` environment.
 It is hooked separately via `\AtBeginEnvironment{proof}`.
 
-Proofs get their own atom number for backref tracking but do
-NOT render margin numbers.  Only paragraphs get margin numbers.
-The "Proof." heading from `amsthm` stays as-is.
+Proof tracking depends on the proof kind:
+
+* **Adjacent / `\codepproofof`-rebound proofs** are bound to a
+  parent atom (theorem / equation) and use the parent's display
+  number for their key (`proof:N.M`).  They render as `N.M*` in
+  source-token output (the trailing star marks proof-sourced
+  refs) and do not consume an additional shared-counter slot —
+  the slot is the parent atom's.
+* **Standalone proofs** (no adjacency, no `\codepproofof`) do NOT
+  consume a shared-counter slot at all.  Their key is the opaque
+  proof-id form (`proof:a<N>`) and they are SUPPRESSED from
+  rendered backref source-token output by the collapsebr
+  classifier.  They remain addressable in the graph (CDP atom
+  records, anchor maps, registeratom array) so post-hoc tooling
+  can still observe them.
+
+Proofs do NOT render margin numbers.  Only paragraphs get margin
+numbers.  The "Proof." heading from `amsthm` stays as-is.
 
 #### Proof attribution
 
@@ -4375,8 +4390,8 @@ documentation point.
 \usepackage[backrefs=inline]{codependent}      % "Used in" after each atom (default)
 \usepackage[backrefs=appendix]{codependent}    % dependency index at end
 \usepackage[backrefs=none]{codependent}        % numbering only
-\usepackage[proofs=numbered]{codependent}      % proofs get atom numbers (default)
-\usepackage[proofs=unnumbered]{codependent}    % proofs unnumbered
+\usepackage[proofs=on]{codependent}            % proof rail active; "*" marker on proof-sourced backrefs (default)
+\usepackage[proofs=off]{codependent}           % proof rail off; no proof tracking, no "*" marker
 \usepackage[conceptwarnings=on]{codependent}   % warn on missing \Hom* def site (default)
 \usepackage[conceptwarnings=off]{codependent}  % silent (real-world smoke test mode)
 ```

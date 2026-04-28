@@ -17,7 +17,12 @@
 %% TEST-AUX-CONTAINS: \codep@lblentity{thm:a}{theorem:1.1}
 %% TEST-AUX-CONTAINS: \codep@lblentity{p:aside}{paragraph:
 %% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:1.1}{theorem}{1.1}{theorem}{}
-%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.1}{proof}{1.1}{proof}{}
+%% W04-P02 (ix): adjacent proofs now carry a non-empty parent slot
+%% (the parent statement's prefixed key) so the renderer's classifier
+%% can discriminate ADJACENT/REBOUND from STANDALONE by parent
+%% emptiness alone.  See \codep@graph@getentityparent and the
+%% capture site at \codep@hookproof@end.
+%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.1}{proof}{1.1}{proof}{theorem:1.1}
 %% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2

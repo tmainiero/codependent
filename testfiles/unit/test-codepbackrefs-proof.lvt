@@ -1,31 +1,35 @@
 %% TEST-NAME: test-codepbackrefs-proof
-%% TEST-WHAT: \codepbackrefs called inside a proof body emits the PROOF
-%%            atom's refs (not the parent theorem's), and the proof
-%%            auto-flush at \AfterEndEnvironment{proof} is suppressed.
+%% TEST-WHAT: \codepbackrefs called inside a STANDALONE proof body emits
+%%            the proof atom's refs (not the parent theorem's), and the
+%%            proof auto-flush at \AfterEndEnvironment{proof} is suppressed.
 %% TEST-SOURCE: wave3-plan-v11.md P01(A2) call-site contract
 %% TEST-SECTION: codependent.sty §\codepbackrefs, §\codep@hookproof@afterend
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-EXPECT-PACKAGE-WARNING: Proof not adjacent
-%% TEST-PDF-CONTAINS: Proof. Step. Used in 1.4.
+%% TEST-PDF-CONTAINS: Proof. Step. Used in 1.3.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
-%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{proof} = 1
-%% TEST-CDP-COUNT: \codep@cdp@atom{1.4}{theorem} = 1
-%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.4}{prf:target}
-%% --- Exactly one "Used in 1.4" line for proof:1.3, auto-flush suppressed:
-%% TEST-PDF-STEXT-NOT: Used in 1\.4[^0-9].*Used in 1\.4
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{proof}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{theorem} = 1
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.3}{prf:target}
+%% --- Exactly one "Used in 1.3" line for the proof, auto-flush suppressed:
+%% TEST-PDF-STEXT-NOT: Used in 1\.3[^0-9].*Used in 1\.3
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 %% TEST-BEHAVIOR: B-REND-INLINE, B-PROOF-NONADJ
 %%
-%% Uses a NON-ADJACENT proof (separated from thm:src by an
-%% intervening paragraph atom) so the proof materializes with its
-%% OWN atom number (proof:1.3 — 1.2 is the paragraph between), which
-%% makes \label{prf:target} inside the proof body resolve to the
-%% proof's display number. Theorem 1.4 refs prf:target. At pass 2,
-%% \codepbackrefs emits "Used in 1.4" at the call site; auto-flush
-%% is suppressed via \codep@manuallyemitted@proof:1.3.
+%% Uses a STANDALONE proof (separated from thm:src by an intervening
+%% paragraph atom) so the proof has an OPAQUE proof-id key
+%% (proof:a<N>) and does NOT consume a shared-counter slot.  Atoms:
+%% 1.1 = thm:src, 1.2 = intervening paragraph, 1.3 = next theorem
+%% (the standalone proof slots in between but has no N.M number).
+%% \label{prf:target} inside the proof body binds to the proof's
+%% (opaque) atom-key via \codep@lblentity@prf:target; theorem 1.3
+%% refs prf:target which resolves to the proof at pass 2.  Inside
+%% the proof body, \codepbackrefs emits "Used in 1.3." at the call
+%% site (the source token is theorem 1.3, not the proof itself);
+%% auto-flush is suppressed via \codep@manuallyemitted@<proofkey>.
 
 \documentclass{article}
 \usepackage{amsthm}
