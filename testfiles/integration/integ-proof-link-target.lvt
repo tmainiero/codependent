@@ -12,13 +12,14 @@
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
 %% A proof-specific named destination must exist in the PDF.
-%% Currently FAILS: qpdf shows zero codep-*proof* named destinations.
-%% TEST-PDF-DEST-EXISTS: codep-.*proof
-%% The "Used in" line for thm:B must contain a link to a proof-typed dest.
-%% Currently FAILS: link goes to theorem:1.1 (parent theorem anchor), not proof.
-%% TEST-PDF-BACKREF-TARGETS: proof:.* = proof
+%% Currently FAILS: qpdf shows /D (theorem.3), not /D (codep-proof:1.2).
+%% TEST-PDF-DEST-EXISTS: codep-proof:1\.2
+%% The "Used in" line for thm:B must link the 1.2* entry to the
+%% proof-specific destination, not to the parent theorem anchor.
+%% TEST-PDF-BACKREF-TARGETS: proof:.* = codep-proof:1\.2
+%% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:1\.2 | 1.2* = codep-proof:1\.2
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
-%% TEST-BEHAVIOR: B-LINK-CORRECT
+%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOFOF-STAR
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%

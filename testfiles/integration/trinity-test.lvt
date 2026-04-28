@@ -59,9 +59,9 @@
 %%
 %% prop:square (Proposition 2.2, dest proposition.27) — proof backref;
 %%   "Used in 2.3*." appears on its own line after the tikz-cd diagram.
-%%   proof:2.3 has anchor equation.32.
-%% TEST-PDF-BACKREF-TARGETS: proposition\.27 = equation\.32
-%% TEST-PDF-BACKREF-ENTRY-TARGET: equation\.32 | 2.3* = equation\.32
+%%   proof:2.3 now resolves to the dedicated proof destination.
+%% TEST-PDF-BACKREF-TARGETS: proposition\.27 = codep-proof:2\.3
+%% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:2\.3 | 2.3* = codep-proof:2\.3
 %%
 %% lem:pentagon (Lemma 2.3, dest lemma.30) — cross-section backref;
 %%   "Used in 3.3." appears on its own line after the align equations.

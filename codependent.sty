@@ -1210,6 +1210,7 @@
       \else%
         \codep@allocatomid{\codep@thisproofid}{proof}%
         \xdef\codep@currentproofid{\codep@thisproofid}%
+        \codep@proof@capturebeginanchor{\codep@currentproofid}%
         \codep@ctxpush{\codep@currentproofid}{proof}%
         \global\advance\codep@suppressdepth by 1\relax%
         \global\let\codep@proofadj@pendinganchormapkey\@empty%
@@ -1225,6 +1226,7 @@
       \codep@allocatomid{\codep@thisproofid}{proof}%
       \codep@proofstatesave{\codep@thisproofid}%
       \xdef\codep@currentproofid{\codep@thisproofid}%
+      \codep@proof@capturebeginanchor{\codep@currentproofid}%
       \codep@ctxpush{\codep@currentproofid}{proof}%
       \global\advance\codep@suppressdepth by 1\relax%
       \global\let\codep@proofadj@pendinganchormapkey\@empty%
@@ -1243,6 +1245,17 @@
 %   Leave the current proof unresolved until fallback or \codepproofof.
 \newcommand*{\codep@proof@standalone}{%
   \global\codep@proofdisplaypendingtrue%
+}%
+
+%% @utility
+% \codep@proof@capturebeginanchor{proof-id}
+%   Snapshot \@currentHref at proof begin so \codepproofof* can
+%   reuse the proof-start location without waiting for afterend.
+\newcommand*{\codep@proof@capturebeginanchor}[1]{%
+  \@ifpackageloaded{hyperref}{%
+    \expandafter\xdef\csname codep@proofbeginanchor@#1\endcsname{%
+      \@currentHref}%
+  }{}%
 }%
 
 %% @behavior B-PROOF-NONADJ
@@ -1276,23 +1289,19 @@
     statement}%
   \global\codep@proofdisplaypendingfalse%
   \codep@atomgetdisplay{\codep@pendingresultid}\codep@tmp@num%
-  \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@parentkey}%
-  \edef\codep@tmp@thmanchor{%
-    \expandafter\ifx\csname codep@anchor@\codep@tmp@parentkey\endcsname\relax%
-      \noexpand\@empty%
-    \else%
-      \csname codep@anchor@\codep@tmp@parentkey\endcsname%
-    \fi}%
+  \edef\codep@tmp@proofanchor{codep-proof:\codep@tmp@num}%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@proofadj@pendinganchormapkey\@empty%
   \global\let\codep@proofadj@pendinganchormapanchor\@empty%
-  \ifx\codep@tmp@thmanchor\@empty\else%
-    \expandafter\xdef%
-      \csname codep@anchor@\codep@tmp@proofkey\endcsname%
-      {\codep@tmp@thmanchor}%
-    \xdef\codep@proofadj@pendinganchormapkey{\codep@tmp@proofkey}%
-    \xdef\codep@proofadj@pendinganchormapanchor{%
-      \codep@tmp@thmanchor}%
+  \expandafter\xdef%
+    \csname codep@anchor@\codep@tmp@proofkey\endcsname%
+    {\codep@tmp@proofanchor}%
+  \xdef\codep@proofadj@pendinganchormapkey{\codep@tmp@proofkey}%
+  \xdef\codep@proofadj@pendinganchormapanchor{\codep@tmp@proofanchor}%
+  \if@filesw%
+    \immediate\write\@auxout{%
+      \string\codep@anchormap{\codep@tmp@proofkey}%
+        {\codep@tmp@proofanchor}}%
   \fi%
   \global\let\codep@pendingresultid\@empty%
   \codep@cdpwrite@atom{%
@@ -1326,9 +1335,8 @@
       \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
       \xdef\codep@proofend@pendingclear{\codep@tmp@proofkey}%
       \xdef\codep@proofafterend@pendinganchormapkey{%
-        \codep@proofadj@pendinganchormapkey}%
-      \xdef\codep@proofafterend@pendinganchormapanchor{%
-        \codep@proofadj@pendinganchormapanchor}%
+        \codep@tmp@proofkey}%
+      \global\let\codep@proofafterend@pendinganchormapanchor\@empty%
       % W03-P03: capture entitymeta for this just-closed proof.
       % Display extracted via \codep@splitprefix (sets \codep@tmp@num).
       \expandafter\codep@splitprefix\codep@tmp@proofkey\@nil%
@@ -1340,25 +1348,105 @@
   \global\advance\codep@suppressdepth by -1\relax%
 }%
 
+%% @utility
+% \codep@ifatomanchor{anchor}{then}{else}
+%   True iff anchor begins with "atom.".
+\def\codep@ifatomanchor#1{%
+  \edef\codep@tmp@anchorprobe{#1}%
+  \ifx\codep@tmp@anchorprobe\@empty%
+    \expandafter\@secondoftwo%
+  \else%
+    \def\codep@ifatomanchor@probe##1atom.##2\@nil{%
+      \def\codep@tmp@anchorprefix{##1}}%
+    \expandafter\codep@ifatomanchor@probe%
+      \codep@tmp@anchorprobe atom.\@nil%
+    \ifx\codep@tmp@anchorprefix\@empty%
+      \expandafter\@firstoftwo%
+    \else%
+      \expandafter\@secondoftwo%
+    \fi%
+  \fi%
+}%
+
+%% @utility
+% \codep@ifproofdestanchor{anchor}{then}{else}
+%   True iff anchor begins with "codep-proof:".
+\def\codep@ifproofdestanchor#1{%
+  \edef\codep@tmp@anchorprobe{#1}%
+  \ifx\codep@tmp@anchorprobe\@empty%
+    \expandafter\@secondoftwo%
+  \else%
+    \def\codep@ifproofdestanchor@probe##1codep-proof:##2\@nil{%
+      \def\codep@tmp@anchorprefix{##1}}%
+    \expandafter\codep@ifproofdestanchor@probe%
+      \codep@tmp@anchorprobe codep-proof:\@nil%
+    \ifx\codep@tmp@anchorprefix\@empty%
+      \expandafter\@firstoftwo%
+    \else%
+      \expandafter\@secondoftwo%
+    \fi%
+  \fi%
+}%
+
 %% @behavior B-REND-INLINE
 % \codep@hookproof@afterend
 %   Post-env hook body.  Inline flush already happened in
 %   \codep@hookproof@end; retained as a hook point so the proof
 %   orchestrator body stays stable across future rendering variants.
-%   Also emits any deferred adjacent-proof anchormap write after the
-%   proof environment has fully ended, avoiding the theorem→proof gap.
+%   Also emits the dedicated codep-proof:N.M PDF destination after
+%   the proof environment has fully ended, avoiding the theorem→proof
+%   gap and any in-proof \@currentHref shadowing.
 %   Also consumes \codep@proofend@pendingclear to undefine the
 %   per-atom \codep@manuallyemitted@<key> flag for the proof that
 %   just closed (v12 A4: the proof-side flag clear lives here, NOT
 %   in a new cmd/endproof/after hook).
 \newcommand*{\codep@hookproof@afterend}{%
-  \ifx\codep@proofafterend@pendinganchormapkey\@empty\else%
-    \if@filesw%
-      \protected@write\@auxout{}{%
-        \string\codep@anchormap{\codep@proofafterend@pendinganchormapkey}%
-          {\codep@proofafterend@pendinganchormapanchor}}%
+  \@ifpackageloaded{hyperref}{%
+    \ifx\codep@proofafterend@pendinganchormapkey\@empty\else%
+      \expandafter\codep@splitprefix%
+        \codep@proofafterend@pendinganchormapkey\@nil%
+      \edef\codep@tmp@proofanchor{codep-proof:\codep@tmp@num}%
+      \Hy@pstringdef\Hy@pstringDest{%
+        \HyperDestNameFilter{\codep@tmp@proofanchor}}%
+      \Hy@DestName\Hy@pstringDest\@pdfview%
+      \expandafter\ifx%
+          \csname codep@anchor@%
+            \codep@proofafterend@pendinganchormapkey\endcsname\relax%
+        \let\codep@tmp@oldproofanchor\@empty%
+      \else%
+        \expandafter\let\expandafter\codep@tmp@oldproofanchor%
+          \csname codep@anchor@%
+            \codep@proofafterend@pendinganchormapkey\endcsname%
+      \fi%
+      \let\codep@tmp@preserveproofanchor\@empty%
+      \expandafter\ifx%
+          \csname codep@proofanchorhint@%
+            \codep@proofafterend@pendinganchormapkey\endcsname\relax%
+      \else%
+        \def\codep@tmp@preserveproofanchor{1}%
+        \global\expandafter\let%
+          \csname codep@proofanchorhint@%
+            \codep@proofafterend@pendinganchormapkey\endcsname\@undefined%
+      \fi%
+      \ifx\codep@tmp@preserveproofanchor\@empty%
+        \codep@ifatomanchor{\codep@tmp@oldproofanchor}{%
+          \def\codep@tmp@preserveproofanchor{1}%
+        }{}%
+      \fi%
+      \ifx\codep@tmp@preserveproofanchor\@empty%
+        \expandafter\xdef%
+          \csname codep@anchor@%
+            \codep@proofafterend@pendinganchormapkey\endcsname%
+          {\codep@tmp@proofanchor}%
+        \if@filesw%
+          \immediate\write\@auxout{%
+            \string\codep@anchormap{%
+              \codep@proofafterend@pendinganchormapkey}%
+              {\codep@tmp@proofanchor}}%
+        \fi%
+      \fi%
     \fi%
-  \fi%
+  }{}%
   \global\let\codep@proofafterend@pendinganchormapkey\@empty%
   \global\let\codep@proofafterend@pendinganchormapanchor\@empty%
   \codep@render@proof@afterend%
@@ -1953,10 +2041,23 @@
 
 %% @behavior B-PASS-ONE
 % \codep@keymap@active{old-key}{new-key}
-%   Reserved for atom-key rename stability across passes.
-%   P05 consumer; P03 pins the wire format only.
+%   Persist atom-key renames for cross-run consumers.  Activated
+%   before aux read so graph-query helpers can resolve stale proof
+%   keys through the latest rebound key.
 \def\codep@keymap@active#1#2{%
-  \expandafter\gdef\csname codep@keymap@#1\endcsname{#2}}
+  \expandafter\xdef\csname codep@keymap@#1\endcsname{#2}}
+
+%% @utility
+% \codep@keymap@record{old-key}{new-key}
+%   Populate the in-memory keymap immediately and persist it to
+%   the aux so later runs can remap stale proof keys.
+\def\codep@keymap@record#1#2{%
+  \codep@keymap{#1}{#2}%
+  \if@filesw%
+    \protected@write\@auxout{}{%
+      \string\codep@keymap{#1}{#2}}%
+  \fi%
+}%
 
 %% @behavior B-PASS-ONE
 % \codep@renderlist@active{key}{style}{payload}
@@ -2450,6 +2551,17 @@
 \def\codep@const@typeproof{proof}%
 
 %% @utility
+% \codep@graph@resolvekey{entity-key}{macro}
+%   Follow a one-hop key rename through \codep@keymap@<old>.
+\def\codep@graph@resolvekey#1#2{%
+  \expandafter\ifx\csname codep@keymap@#1\endcsname\relax%
+    \edef#2{#1}%
+  \else%
+    \expandafter\let\expandafter#2\csname codep@keymap@#1\endcsname%
+  \fi%
+}%
+
+%% @utility
 % \codep@graph@hasrefs{target-key}{then}{else}
 %   Test whether the target has at least one backref edge.
 %   #1 = target key (prefixed key like "theorem:1.2")
@@ -2490,11 +2602,13 @@
 %   Retrieve the hyperref anchor for entity-key into #2,
 %   or set #2 to \@empty if no anchor exists.
 \def\codep@graph@getanchor#1#2{%
-  \expandafter\ifx\csname codep@anchor@#1\endcsname\relax%
+  \codep@graph@resolvekey{#1}\codep@tmp@graphkey%
+  \expandafter\ifx%
+      \csname codep@anchor@\codep@tmp@graphkey\endcsname\relax%
     \let#2\@empty%
   \else%
     \expandafter\let\expandafter#2%
-      \csname codep@anchor@#1\endcsname%
+      \csname codep@anchor@\codep@tmp@graphkey\endcsname%
   \fi%
 }%
 
@@ -3638,19 +3752,19 @@
   \fi%
 }%
 
-% \codepproofof{label}    — "Used in 2.4*" links to the theorem
-% \codepproofof*{label}   — "Used in 2.4*" links to the proof
+% \codepproofof{label}    — bind a separated proof to label
+% \codepproofof*{label}   — same, preserving explicit proof-anchor mode
 %   Associate a separated proof with its theorem.  Must be called
 %   inside a \begin{proof}...\end{proof} environment.  Looks up
 %   the label's atom number and sets the current atom to the
 %   starred version (e.g., 2.1*), enabling correct backref
 %   attribution.
 %
-%   The starred form writes an anchormap entry so the hyperlink
-%   for the starred backref points to the proof location instead
-%   of falling back to the theorem.  Use this when the proof is
-%   far from the theorem and the reader should be taken to the
-%   proof, not back to the statement.
+%   The dedicated codep-proof:N.M destination is emitted from the
+%   proof afterend hook once the proof closes, so proof backrefs
+%   land on the proof body rather than on the statement or an
+%   in-proof equation anchor.  The starred form preserves the
+%   historical explicit proof-anchor request during the proof body.
 %
 %   Lazy proof integration: if the proof was non-adjacent,
 %   \codep@proof@standalone only set the deferred flag (no atom
@@ -3722,18 +3836,57 @@
       The label may not exist or may not have been processed yet}%
   \else%
     \edef\codep@tmp@proofkey{proof:\codep@tmp@proofdisp}%
+    \codep@atomgetkey{#1}{\codep@tmp@oldproofkey}%
     \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
+    \ifx\codep@tmp@oldproofkey\@empty\else%
+      \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
+        \codep@keymap@record{%
+          \codep@tmp@oldproofkey}{\codep@tmp@proofkey}%
+      \fi%
+    \fi%
     \global\codep@proofdisplaypendingfalse%
     \global\let\codep@pendingproofbind\@empty%
     \codep@cdpwrite@atom{%
       \string\codep@cdp@proof{\codep@tmp@proofdisp*}}%
     \def\codep@tmp@anchormode{#3}%
     \ifx\codep@tmp@anchormode\@empty\else%
-      \codep@writeanchormap{\codep@tmp@proofkey}%
       \@ifpackageloaded{hyperref}{%
+        \let\codep@tmp@proofanchorhref\@empty%
+        \edef\codep@tmp@expectedproofanchor{%
+          codep-proof:\codep@tmp@proofdisp}%
+        \expandafter\ifx%
+            \csname codep@anchor@\codep@tmp@proofkey\endcsname\relax%
+          \edef\codep@tmp@existingproofanchor{}%
+        \else%
+          \edef\codep@tmp@existingproofanchor{%
+            \csname codep@anchor@\codep@tmp@proofkey\endcsname%
+          }%
+        \fi%
+        \ifx\codep@tmp@existingproofanchor\codep@tmp@expectedproofanchor%
+          \edef\codep@tmp@proofanchorhref{\codep@tmp@existingproofanchor}%
+        \fi%
+        \ifx\codep@tmp@proofanchorhref\@empty%
+          \expandafter\ifx%
+              \csname codep@proofbeginanchor@#1\endcsname\relax%
+            \edef\codep@tmp@proofanchorhref{\@currentHref}%
+          \else%
+            \edef\codep@tmp@proofanchorhref{%
+              \csname codep@proofbeginanchor@#1\endcsname}%
+          \fi%
+        \fi%
         \expandafter\xdef%
           \csname codep@anchor@\codep@tmp@proofkey\endcsname%
-          {\@currentHref}%
+          {\codep@tmp@proofanchorhref}%
+        \if@filesw%
+          \immediate\write\@auxout{%
+            \string\codep@anchormap{\codep@tmp@proofkey}%
+              {\codep@tmp@proofanchorhref}}%
+        \fi%
+      }{}%
+      \ifbool{codep@paragraphs}{%
+        \expandafter\gdef%
+          \csname codep@proofanchorhint@\codep@tmp@proofkey\endcsname%
+          {preserve}%
       }{}%
     \fi%
     \codep@render@queuebackref{\codep@tmp@proofkey}%
