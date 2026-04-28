@@ -1049,6 +1049,11 @@ _RENDERED_STATEMENT_RE = re.compile(
     r"Claim|Conjecture|Hypothesis|Observation|Exercise|Problem|Question|"
     r"Notation|Convention)\s+(\d+\.\d+)\b"
 )
+# Paragraph margin-numbers rendered in the PDF by \codep@emitmargin.
+# mutool stext represents these as <line> elements whose text attribute is
+# exactly the atom number — e.g. text="2.3" — distinct from bbox/quad
+# coordinate attributes (which always contain multiple space-separated floats).
+_RENDERED_PARAGRAPH_RE = re.compile(r'\btext="\s*(\d+\.\d+)\s*"')
 
 
 def _check_backref_sources_rendered(
@@ -1067,14 +1072,18 @@ def _check_backref_sources_rendered(
     - Parenthesised : equation ref; accept if the parenthesised form (N.M)
                       appears literally in stext (equation numbers are rendered
                       inside math mode as "(N.M)").
-    - Bare N.M      : theorem/definition/remark/etc.; accept if stext contains
-                      a statement-heading line like "Theorem N.M" or "Lemma N.M",
-                      OR if stext contains an appendix dest containing N.M.
+    - Bare N.M      : theorem/definition/remark/paragraph/etc.; accept if stext
+                      contains a statement-heading line like "Theorem N.M" OR a
+                      paragraph margin annotation with text exactly "N.M".
     """
     # Pre-compute the set of rendered display numbers from statement headings.
     rendered_statement_nums: set[str] = set()
     for m in _RENDERED_STATEMENT_RE.finditer(stext_xml):
         rendered_statement_nums.add(m.group(1))
+    # Pre-compute the set of rendered display numbers from paragraph margin annotations.
+    rendered_paragraph_nums: set[str] = set()
+    for m in _RENDERED_PARAGRAPH_RE.finditer(stext_xml):
+        rendered_paragraph_nums.add(m.group(1))
 
     for bline in backref_lines:
         # Re-tokenise respecting top-level commas (parens protect ranges).
@@ -1137,9 +1146,10 @@ def _check_backref_sources_rendered(
                         f"but no atom with display {bare} is rendered"
                     )
             else:
-                # Bare theorem-type atom N.M: accept if found in statement headings.
+                # Bare N.M: accept if found in statement headings OR in paragraph
+                # margin annotations (union of both detection paths).
                 # Do NOT match raw stext XML (coordinates embed arbitrary numbers).
-                if bare not in rendered_statement_nums:
+                if bare not in rendered_statement_nums | rendered_paragraph_nums:
                     fail(
                         f"phantom backref source: '{raw_text}' cites {token} "
                         f"but no atom with display {token} is rendered"
