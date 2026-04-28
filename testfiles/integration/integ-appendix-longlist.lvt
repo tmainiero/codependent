@@ -1,73 +1,29 @@
-%% TEST-NAME: integ-appendix
-%% TEST-WHAT: Integration test for backrefs=appendix mode.
-%%            Verifies that inline/below "Used in" lines are suppressed,
-%%            that \codepappendix produces a "Dependency Index" section,
-%%            that index entries carry page numbers, and that appendix/body
-%%            hyperlinks work in both directions.
+%% TEST-NAME: integ-appendix-longlist
+%% TEST-WHAT: Integration stress test for appendix mode long-list wrapping,
+%%            pgfkey page-number formatting, and anchor-start page capture.
 %% TEST-SOURCE: docs/DESIGN.md §8a.6.g; docs/CONVENTIONS.md
 %% TEST-SECTION: docs/DESIGN.md §8a.6.g (appendix mode)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Overfull \\hbox
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
-%% TEST-CDP-CONTAINS: \codep@cdp@atom
-%% TEST-CDP-CONTAINS: \codep@cdp@label
-%% TEST-AUX-CONTAINS: \codep@atomref
-%% TEST-AUX-CONTAINS: \codep@renderlist{definition:1.1}{inline}{\hyperlink {definition.5}{1.2}, \hyperlink {lemma.7}{1.3}
-%% TEST-AUX-CONTAINS: \codep@renderlist{definition:1.2}{inline}{\hyperlink {lemma.7}{1.3}, \hyperlink {theorem.9}{1.4}, \hyperlink {codep-proof:1.4}{1.4*}, \hyperlink {definition.12}{2.1}}
-%% TEST-AUX-CONTAINS: \codep@anchorpage{definition:1.1}{1}
-%% TEST-AUX-CONTAINS: \codep@anchorpage{proof:1.4}{1}
-%% TEST-AUX-NOT-CONTAINS: \codep@tmp@rlpayload
-%% TEST-AUX-NOT-CONTAINS: \codep@rendered@
-%% No inline/below "Used in" lines should appear in theorem bodies
-%% TEST-PDF-NOT: Used in
-%% The appendix dependency index must appear in the PDF
+%% TEST-AUX-CONTAINS: \codep@anchorpage{theorem:1.4}{1}
+%% TEST-AUX-CONTAINS: \codep@anchorpage{proof:2.3}{
+%% TEST-AUX-CONTAINS: \codep@anchorpage{paragraph:2.13}{
 %% TEST-PDF-CONTAINS: Dependency Index
-%% Section grouping headers must appear
-%% TEST-PDF-CONTAINS: Groups and subgroups
-%% TEST-PDF-CONTAINS: Normal subgroups and homomorphisms
-%% Key atom entries must appear (Definition 1.1, Theorem 1.3, etc.)
-%% TEST-PDF-CONTAINS: definition
-%% TEST-PDF-CONTAINS: theorem
-%% TEST-PDF-CONTAINS: lemma
-%% TEST-ATOMS-MIN: 6
-%% TEST-PDF-DEST-EXISTS: codep-appendix:definition:1\.1
-%% TEST-PDF-DEST-EXISTS: codep-appendix:definition:1\.2
-%% TEST-PDF-DEST-EXISTS: codep-appendix:lemma:1\.3
+%% TEST-PDF-CONTAINS: Theorem 1.4 — page 1
 %% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.4
-%% TEST-PDF-DEST-EXISTS: codep-appendix:definition:2\.1
-%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:2\.2
-%% TEST-PDF-DEST-EXISTS: codep-appendix:lemma:2\.3
-%% TEST-PDF-LINK-DEST: codep-appendix:definition:1\.1
-%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.4
-%% TEST-PDF-LINK-DEST: definition\.3
 %% TEST-PDF-LINK-DEST: theorem\.9
-%% TEST-PDF-LINK-DEST: codep-proof:1\.4
-%% TEST-PDF-LINK-DEST: codep-proof:2\.3
-%% TEST-PDF-STEXT: (?s)text="Definition 1\.1 \(p\. 1\)".*text="1\.2, 1\.3, 2\.2"
-%% TEST-PDF-STEXT: (?s)text="Definition 1\.2 \(p\. 1\)".*text="1\.3, 1\.4, 1\.4\*, 2\.1"
-%% TEST-PDF-STEXT: (?s)text="Theorem 1\.4 \(p\. 1\)".*text="2\.3, 2\.3\*"
-%% TEST-PDF-STEXT: (?s)text="Definition 2\.1 \(p\. 1\)".*text="2\.2, 2\.2\*, 2\.3, 2\.4"
+%% TEST-PDF-STEXT: (?s)text="Theorem 1\.4 &#x2014; page 1".*text="2\.3, 2\.3\*, 2\.5, 2\.6, 2\.7, 2\.8, 2\.9, 2\.10,".*text="2\.11, 2\.12"
+%% TEST-ATOMS-MIN: 13
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
-%% TEST-CENSUS: enabled
-%% TEST-CENSUS-PASS: yes
 %% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN
-%%
-%% Integration fixture for appendix mode.
-%%
-%% Mathematical content: basic group theory (groups, subgroups,
-%% normal subgroups, homomorphisms).  Two sections, each with
-%% definitions and theorems that reference each other.
-%% At document end, \codepappendix emits the dependency index.
 
 \documentclass{article}
 
-%% ---------- Standard math stack ----------
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
-
-%% ---------- Theorem infrastructure ----------
 \usepackage{amsthm}
 \usepackage{thmtools}
 
@@ -86,12 +42,16 @@
 \declaretheorem[name=Lemma,     style=thmstyle, sibling=theorem]{lemma}
 \declaretheorem[name=Definition,style=defstyle, sibling=theorem]{definition}
 
-%% ---------- codependent (appendix mode) ----------
 \usepackage{codependent}
-\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codepsetup{
+  backrefs=appendix,
+  paragraphs=on,
+  equations=off,
+  proofs=on,
+  appendix/pagenum-format={##1~\textemdash~page~##2}
+}
 \codeptrack{theorem,lemma,definition}
 
-%% ---------- hyperref + cleveref ----------
 \usepackage[hypertexnames=false]{hyperref}
 \hypersetup{colorlinks=true, linkcolor=blue, citecolor=gray}
 \usepackage{cleveref}
@@ -99,9 +59,6 @@
 \begin{document}
 \START
 
-%% ====================================================================
-%%  Section 1: Groups and subgroups
-%% ====================================================================
 \section{Groups and subgroups}%
 \label{sec:groups}
 
@@ -134,6 +91,9 @@
 \begin{theorem}\label{thm:lagrange}
   If $H \le G$ (\cref{def:subgroup}) and $G$ is finite, then
   $|H|$ divides $|G|$.  In particular, $[G : H] = |G|/|H|$.
+  \newpage
+  The theorem continues here so the appendix must still report the
+  theorem's start page, not the page where the environment ends.
 \end{theorem}
 
 \begin{proof}
@@ -141,9 +101,6 @@
   using \cref{def:subgroup,lem:subgroup-test}.
 \end{proof}
 
-%% ====================================================================
-%%  Section 2: Normal subgroups and homomorphisms
-%% ====================================================================
 \section{Normal subgroups and homomorphisms}%
 \label{sec:normal}
 
@@ -193,9 +150,41 @@
   implies $g \in \ker\varphi$.
 \end{proof}
 
-%% ====================================================================
-%%  Dependency Index (appendix mode output)
-%% ====================================================================
+\begin{lemma}
+  By \cref{thm:lagrange}, the first wrapping consequence holds.
+\end{lemma}
+
+\begin{lemma}
+  By \cref{thm:lagrange}, the second wrapping consequence holds.
+\end{lemma}
+
+\begin{lemma}
+  By \cref{thm:lagrange}, the third wrapping consequence holds.
+\end{lemma}
+
+\begin{lemma}
+  By \cref{thm:lagrange}, the fourth wrapping consequence holds.
+\end{lemma}
+
+\begin{lemma}
+  By \cref{thm:lagrange}, the fifth wrapping consequence holds.
+\end{lemma}
+
+\begin{lemma}
+  By \cref{thm:lagrange}, the sixth wrapping consequence holds.
+\end{lemma}
+
+\begin{lemma}
+  By \cref{thm:lagrange}, the seventh wrapping consequence holds.
+\end{lemma}
+
+\begin{lemma}
+  By \cref{thm:lagrange}, the eighth wrapping consequence holds.
+\end{lemma}
+
+This concluding paragraph exists only to exercise paragraph
+anchor-page persistence in appendix mode.
+
 \codepappendix
 
 \END

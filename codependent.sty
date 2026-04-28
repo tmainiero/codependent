@@ -71,6 +71,14 @@
 \newcommand*{\codep@backreflabel}{Used in}
 %% @utility
 \newcommand*{\codep@marginfont}{\scriptsize}
+%% @utility
+\def\codep@appendix@pagenum@template#1#2{#1~(p.~#2)}%
+%% @utility
+\def\codep@setappendixpagenumformat#1{%
+  \edef\codep@tmp@appendixpagenum{%
+    \def\noexpand\codep@appendix@pagenum@template####1####2{#1}}%
+  \codep@tmp@appendixpagenum%
+}%
 
 \pgfkeys{%
   /codep/.is family,%
@@ -142,6 +150,9 @@
   backref-color/.store in = \codep@backrefcolor,%
   backref-prefix/.store in = \codep@backrefprefix,%
   backref-label/.store in = \codep@backreflabel,%
+  appendix/pagenum-format/.code = {%
+    \codep@setappendixpagenumformat{#1}%
+  },%
   margin-font/.store in = \codep@marginfont,%
 }
 
@@ -998,6 +1009,7 @@
     \xdef\codep@outeratom{#1:\theatom}%
     \codep@atomsetkey{\codep@thisatomid}{\codep@outeratom}%
     \codep@writeanchormap{\codep@outeratom}%
+    \codep@writeanchorpagecurrent{\codep@outeratom}%
   \fi%
 }%
 
@@ -1228,6 +1240,7 @@
         \codep@allocatomid{\codep@thisproofid}{proof}%
         \xdef\codep@currentproofid{\codep@thisproofid}%
         \codep@proof@capturebeginanchor{\codep@currentproofid}%
+        \codep@proof@capturebeginpage{\codep@currentproofid}%
         \codep@ctxpush{\codep@currentproofid}{proof}%
         \global\advance\codep@suppressdepth by 1\relax%
         \global\let\codep@proofadj@pendinganchormapkey\@empty%
@@ -1244,6 +1257,7 @@
       \codep@proofstatesave{\codep@thisproofid}%
       \xdef\codep@currentproofid{\codep@thisproofid}%
       \codep@proof@capturebeginanchor{\codep@currentproofid}%
+      \codep@proof@capturebeginpage{\codep@currentproofid}%
       \codep@ctxpush{\codep@currentproofid}{proof}%
       \global\advance\codep@suppressdepth by 1\relax%
       \global\let\codep@proofadj@pendinganchormapkey\@empty%
@@ -1275,6 +1289,29 @@
   }{}%
 }%
 
+%% @utility
+% \codep@proof@capturebeginpage{proof-id}
+%   Snapshot \thepage at proof begin so later key rebinds can
+%   keep the proof-start page rather than the resolution page.
+\newcommand*{\codep@proof@capturebeginpage}[1]{%
+  \edef\codep@tmp@proofbeginpage{\thepage}%
+  \expandafter\xdef\csname codep@proofbeginpage@#1\endcsname{%
+    \codep@tmp@proofbeginpage}%
+}%
+
+%% @utility
+% \codep@proof@writebeginpage{proof-id}{proof-key}
+%   Persist the proof-start page under the current proof key.
+\newcommand*{\codep@proof@writebeginpage}[2]{%
+  \expandafter\ifx\csname codep@proofbeginpage@#1\endcsname\relax%
+    \codep@writeanchorpagecurrent{#2}%
+  \else%
+    \edef\codep@tmp@proofpage{%
+      \csname codep@proofbeginpage@#1\endcsname}%
+    \codep@writeanchorpage{#2}{\codep@tmp@proofpage}%
+  \fi%
+}%
+
 %% @behavior B-PROOF-NONADJ
 %% @behavior B-EDGE-EMPTY-PROOF
 % \codep@proof@materialize
@@ -1291,6 +1328,7 @@
   \global\codep@proofdisplaypendingfalse%
   \edef\codep@tmp@proofkey{proof:\codep@currentproofid}%
   \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+  \codep@proof@writebeginpage{\codep@currentproofid}{\codep@tmp@proofkey}%
   % Anchor for this proof key is emitted by \codep@hookproof@afterend
   % (codep-proof:a<N>) — materialize must NOT write the anchormap
   % here, because materialize fires from para/begin inside the proof
@@ -1333,6 +1371,7 @@
       \string\codep@anchormap{\codep@tmp@proofkey}%
         {\codep@tmp@proofanchor}}%
   \fi%
+  \codep@proof@writebeginpage{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@pendingresultid\@empty%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@proof{\codep@tmp@num*}}%
@@ -1977,6 +2016,7 @@
   \edef\codep@tmp@parakey{paragraph:\theatom}%
   \codep@atomsetkey{\codep@thisatomid}{\codep@tmp@parakey}%
   \codep@writeanchormap{\codep@tmp@parakey}%
+  \codep@writeanchorpagecurrent{\codep@tmp@parakey}%
   \codep@cdpwrite@atom{%
     \string\codep@cdp@atom{\theatom}{paragraph}}%
   \codep@cdpwrite@atom{%
@@ -2059,6 +2099,7 @@
 % Pass-1 safety: \codep@anchormap records atom→hyperref anchor
 % mappings.  No-op until hyperref is detected at begindocument/before.
 \providecommand*{\codep@anchormap}[2]{}
+\providecommand*{\codep@anchorpage}[2]{}
 
 % Active definition for \codep@anchormap: populates the anchor lookup
 % table from aux records.  Defined at package load time (outside any
@@ -2068,12 +2109,40 @@
 \def\codep@anchormap@active#1#2{%
   \expandafter\gdef\csname codep@anchor@#1\endcsname{#2}}
 
+%% @behavior B-PASS-ONE
+% \codep@anchorpage@active{key}{page}
+%   Populate the in-memory anchor-start-page table from aux.
+\def\codep@anchorpage@active#1#2{%
+  \expandafter\xdef\csname codep@anchorpage@#1\endcsname{#2}}
+
 % \codep@writeanchormap{atomnum}
 %   Write an atom→anchor aux record.  No-op by default; activated
 %   at \AtBeginDocument when hyperref is loaded, so the write only
 %   happens when \@currentHref is meaningful.
 %% @behavior B-PASS-ONE
 \newcommand*{\codep@writeanchormap}[1]{}
+
+%% @utility
+% \codep@writeanchorpage{key}{page}
+%   Persist the page where key's hyperlink anchor begins.
+\newcommand*{\codep@writeanchorpage}[2]{%
+  \codep@anchorpage@active{#1}{#2}%
+  \if@filesw%
+    % Immediate write: adjacent proof begin runs in the theorem→proof
+    % gap, and a deferred \protected@write whatsit breaks amsthm's
+    % adjacency glue cancellation (see W03 bug4 investigation).
+    \immediate\write\@auxout{%
+      \string\codep@anchorpage{#1}{#2}}%
+  \fi%
+}%
+
+%% @utility
+% \codep@writeanchorpagecurrent{key}
+%   Persist the current page under key.
+\newcommand*{\codep@writeanchorpagecurrent}[1]{%
+  \edef\codep@tmp@anchorpage{\thepage}%
+  \codep@writeanchorpage{#1}{\codep@tmp@anchorpage}%
+}%
 
 % Pass-1 safety for concept-tracking aux records (§9a User API).
 % Active definitions installed at begindocument/before
@@ -2747,6 +2816,33 @@
 }%
 
 %% @utility
+% \codep@graph@getentitydisplay{entity-key}{macro}
+%   Retrieve the entitymeta display field for entity-key into #2.
+\def\codep@graph@getentitydisplay#1#2{%
+  \expandafter\let\expandafter#2%
+    \csname codep@entity@#1@display\endcsname%
+  \ifx#2\relax\let#2\@empty\fi%
+}%
+
+%% @utility
+% \codep@graph@getprintkind{entity-key}{macro}
+%   Retrieve the entitymeta print-kind field for entity-key into #2.
+\def\codep@graph@getprintkind#1#2{%
+  \expandafter\let\expandafter#2%
+    \csname codep@entity@#1@print\endcsname%
+  \ifx#2\relax\let#2\@empty\fi%
+}%
+
+%% @utility
+% \codep@graph@getanchorpage{entity-key}{macro}
+%   Retrieve the anchor-start page for entity-key into #2.
+\def\codep@graph@getanchorpage#1#2{%
+  \expandafter\let\expandafter#2%
+    \csname codep@anchorpage@#1\endcsname%
+  \ifx#2\relax\let#2\@empty\fi%
+}%
+
+%% @utility
 % \codep@graph@getentityparent{entity-key}{macro}
 %   Retrieve the entitymeta parent-key field for entity-key into #2,
 %   or set #2 to \@empty if no entity record is bound or the parent
@@ -2996,6 +3092,7 @@
   \let\codep@entitymeta\codep@entitymeta@active
   \let\codep@keymap\codep@keymap@active
   \let\codep@renderlist\codep@renderlist@active
+  \let\codep@anchorpage\codep@anchorpage@active
   % Activate anchormap BEFORE aux read so equation range anchors
   % like \codep@anchormap{equation:4.4--4.5}{codep.eq.3} are not discarded.
   \@ifpackageloaded{hyperref}{%
@@ -3984,6 +4081,7 @@
     \edef\codep@tmp@proofkey{proof:\codep@tmp@proofdisp}%
     \codep@atomgetkey{#1}{\codep@tmp@oldproofkey}%
     \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
+    \codep@proof@writebeginpage{#1}{\codep@tmp@proofkey}%
     \ifx\codep@tmp@oldproofkey\@empty\else%
       \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
         \codep@keymap@record{%

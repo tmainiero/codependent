@@ -741,6 +741,49 @@ Dependency Index
    1.3  Hom-set ............... 2.1, 4.1
 ```
 
+Appendix entries now carry the target atom's start page and
+bidirectional links:
+
+- the body-side tracked result emits a small forward hyperlink to
+  the appendix destination `codep-appendix:<key>`;
+- the appendix entry heading hyperlinks back to the body's anchor
+  (for theorem-like atoms this is the usual `theorem.X` /
+  `definition.X` destination; proof-source entries inside the row
+  keep using the `codep-proof:N.M` namespace);
+- the visible page-number format is configured by the public pgfkey
+  `/codep/appendix/pagenum-format`.
+
+`/codep/appendix/pagenum-format` stores a two-argument template.
+`##1` is the full appendix label text (for example
+`Theorem~1.2`) and `##2` is the anchor's start page.  The
+default template is `##1~(p.~##2)`.  Users can override it with
+
+```latex
+\codepsetup{
+  appendix/pagenum-format={##1~\textemdash~page~##2}
+}
+```
+
+The appendix page number is **not** carried in
+`\codep@entitymeta`.  That aux contract remains the five-field
+record
+
+```tex
+\codep@entitymeta{key}{kind}{display}{print-kind}{parent-key}
+```
+
+Page metadata travels in a separate aux record
+
+```tex
+\codep@anchorpage{key}{page}
+```
+
+mirrored in memory as `\codep@anchorpage@<key>`.  The record is
+written when the anchor key is assigned (theorem after-hook,
+proof-key bind/materialize, paragraph open), so it captures the
+anchor's **start page**, not the page where the environment later
+ends.
+
 **None mode.**  Numbering only, no back-references
 displayed.  The Section-8a graph inversion is still run
 (cheap) but the rendering step is skipped.

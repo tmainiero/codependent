@@ -10,7 +10,8 @@
 %% query API defined in codependent.sty (Section 8a.3a):
 %%   \codep@graph@hasrefs, \codep@graph@getdisplay,
 %%   \codep@graph@getanchor, \codep@graph@getkind,
-%%   \codep@graph@foreachref.
+%%   \codep@graph@getentitydisplay, \codep@graph@getprintkind,
+%%   \codep@graph@getanchorpage, \codep@graph@foreachref.
 %% It does NOT read codep@brcount@, codep@brnode@, or
 %% codep@anchor@ directly.  Rendering-specific pgfkeys
 %% (backref-style, backref-font, etc.) are defined in the driver
@@ -325,37 +326,39 @@
 %% @behavior B-REND-APPENDIX
 \renewcommand*{\codepappendix}{%
   \ifbool{codep@appendix}{%
-    \section*{Dependency Index}%
-    \begingroup
-      \small%
-      \def\codep@appendix@lastsec{}%
-      \count@=\z@%
-      \loop%
-        \ifnum\count@<\codep@atomcount%
-        \advance\count@ by 1\relax
-        % Check for section change and emit header if needed.
-        \edef\codep@appendix@thissec{%
-          \csname codep@atom@sec@\the\count@\endcsname}%
-        \ifx\codep@appendix@thissec\codep@appendix@lastsec%
-        \else
-          \ifx\codep@appendix@thissec\@empty\else
-            \edef\codep@appendix@thistitle{%
-              \csname codep@sectitle@%
-                \codep@appendix@thissec\endcsname}%
-            \ifx\codep@appendix@thistitle\relax\else
-              \codep@appendixsection%
-                {\codep@appendix@thissec}%
-                {\codep@appendix@thistitle}%
+    \codep@withsuppression{%
+      \section*{Dependency Index}%
+      \begingroup
+        \small%
+        \def\codep@appendix@lastsec{}%
+        \count@=\z@%
+        \loop%
+          \ifnum\count@<\codep@atomcount%
+          \advance\count@ by 1\relax
+          % Check for section change and emit header if needed.
+          \edef\codep@appendix@thissec{%
+            \csname codep@atom@sec@\the\count@\endcsname}%
+          \ifx\codep@appendix@thissec\codep@appendix@lastsec%
+          \else
+            \ifx\codep@appendix@thissec\@empty\else
+              \edef\codep@appendix@thistitle{%
+                \csname codep@sectitle@%
+                  \codep@appendix@thissec\endcsname}%
+              \ifx\codep@appendix@thistitle\relax\else
+                \codep@appendixsection%
+                  {\codep@appendix@thissec}%
+                  {\codep@appendix@thistitle}%
+              \fi
             \fi
+            \let\codep@appendix@lastsec%
+              \codep@appendix@thissec%
           \fi
-          \let\codep@appendix@lastsec%
-            \codep@appendix@thissec%
-        \fi
-        \expandafter\expandafter\expandafter%
-          \codep@appendix@emit%
-          \csname codep@atom@\the\count@\endcsname%
-      \repeat%
-    \endgroup
+          \expandafter\expandafter\expandafter%
+            \codep@appendix@emit%
+            \csname codep@atom@\the\count@\endcsname%
+        \repeat%
+      \endgroup
+    }%
   }{%
     \PackageWarning{codependent}{%
       \string\codepappendix\space ignored: %
@@ -363,13 +366,27 @@
   }%
 }
 
+%% @implements \codepappendix
+% \codep@appendix@titlecase{text}
+%   Uppercase the first token of a lower-case print-kind.
+\def\codep@appendix@titlecase#1{%
+  \edef\codep@tmp@appendixkind{#1}%
+  \expandafter\codep@appendix@titlecase@aux%
+    \codep@tmp@appendixkind\@nil%
+}%
+
+%% @implements \codepappendix
+% \codep@appendix@titlecase@aux
+%   Worker for \codep@appendix@titlecase.
+\def\codep@appendix@titlecase@aux#1#2\@nil{%
+  \uppercase{#1}#2%
+}%
+
 % \codep@appendix@emit{prefixedkey}{type}
 %   Emit an appendix entry if P05a's frozen render cache has a
-%   populated payload for this atom.  Reads display from the P03
-%   entity active-map (\codep@entity@<key>@display) and payload
-%   from the P05a Moment-1/Moment-3 cache (\codep@rendered@<key>);
-%   no \codep@collapsebr or \codep@graph@getdisplay calls in the
-%   print loop — both cache slots are authoritative by enddoc time.
+%   populated payload for this atom.  Reads the entity display,
+%   print-kind, and start page from the query API, and payload from
+%   the P05a Moment-1/Moment-3 cache (\codep@rendered@<key>).
 %% @implements \codepappendix
 \def\codep@appendix@emit#1#2{%
   \ifcsname codep@rendered@#1\endcsname%
@@ -377,9 +394,20 @@
     \else%
       \expandafter\let\expandafter\codep@tmp@rlpayload%
         \csname codep@rendered@#1\endcsname%
-      \expandafter\let\expandafter\codep@tmp@display%
-        \csname codep@entity@#1@display\endcsname%
-      \codep@appendixentry{#1}{\codep@tmp@display}{#2}{\codep@tmp@rlpayload}%
+      \codep@graph@getentitydisplay{#1}{\codep@tmp@display}%
+      \codep@graph@getprintkind{#1}{\codep@tmp@printkind}%
+      \codep@graph@getanchorpage{#1}{\codep@tmp@page}%
+      \ifx\codep@tmp@display\@empty%
+        \codep@graph@getdisplay{#1}{\codep@tmp@display}%
+      \fi%
+      \ifx\codep@tmp@printkind\@empty%
+        \def\codep@tmp@printkind{#2}%
+      \fi%
+      \ifx\codep@tmp@page\@empty%
+        \def\codep@tmp@page{?}%
+      \fi%
+      \codep@appendixentry{#1}{\codep@tmp@display}{%
+        \codep@tmp@printkind}{\codep@tmp@page}{\codep@tmp@rlpayload}%
     \fi%
   \fi%
 }
@@ -392,23 +420,29 @@
   \textbf{#1\quad #2}\par%
 }
 
-% \codep@appendixentry{key}{atomnumber}{atomname}{reflist}
-%   Call-site hyperref guard: when hyperref is loaded, wrap the
-%   display number in \hypertarget{codep-appendix:<key>}{...} so
-%   inline backrefs from the body can link back to the appendix
-%   entry.  No cached boolean — \@ifpackageloaded is evaluated
-%   each call, robust against hyperref being loaded after
-%   codependent-render.
+% \codep@appendixentry{key}{display}{print-kind}{page}{reflist}
+%   Emits the appendix destination codep-appendix:<key> and wraps
+%   the entry label in a reverse hyperlink back to the body anchor
+%   when one exists.
 %% @implements \codepappendix
-\newcommand*{\codep@appendixentry}[4]{%
+\newcommand*{\codep@appendixentry}[5]{%
   \par\noindent%
   \hspace{1.5em}%
+  \def\codep@tmp@entrylabel{%
+    \codep@appendix@pagenum@template{%
+      \codep@appendix@titlecase{#3}~#2}{#4}}%
   \@ifpackageloaded{hyperref}{%
-    \hypertarget{codep-appendix:#1}{#2}%
-  }{#2}%
-  \quad #3\quad\dotfill\quad%
+    \codep@graph@getanchor{#1}{\codep@tmp@entryanchor}%
+    \ifx\codep@tmp@entryanchor\@empty%
+      \hypertarget{codep-appendix:#1}{\codep@tmp@entrylabel}%
+    \else%
+      \hypertarget{codep-appendix:#1}{%
+        \hyperlink{\codep@tmp@entryanchor}{\codep@tmp@entrylabel}}%
+    \fi%
+  }{\codep@tmp@entrylabel}%
+  \quad\dotfill\quad%
   \begin{minipage}[t]{0.45\linewidth}%
-    \raggedright #4%
+    \raggedright #5%
   \end{minipage}%
 }
 
@@ -457,6 +491,22 @@
   \codep@queuebackref{#1}%
 }%
 
+%% @implements \codep@hooktheorem
+% \codep@appendix@forwardlink{atom-key}
+%   Emit a small theorem-side link to the appendix entry in
+%   appendix mode when the atom has at least one back-reference.
+\def\codep@appendix@forwardlink#1{%
+  \ifbool{codep@appendix}{%
+    \@ifpackageloaded{hyperref}{%
+      \codep@graph@hasrefs{#1}{%
+        \nobreak\hspace{0.25em}%
+        \textsuperscript{%
+          \hyperlink{codep-appendix:#1}{\ensuremath{\dagger}}}%
+      }{}%
+    }{}%
+  }{}%
+}%
+
 % \codep@render@thm@preparebackref{envname}
 %   Queue backrefs for the outermost atom and auto-flush inline.
 %   Callable at cmd/end#1/before inside the tracked env body.
@@ -471,6 +521,7 @@
   \ifcsname codep@manuallyemitted@\codep@outeratom\endcsname%
   \else%
     \codep@queuebackref{\codep@outeratom}%
+    \codep@appendix@forwardlink{\codep@outeratom}%
     \codep@flushbackref%
   \fi%
 }%

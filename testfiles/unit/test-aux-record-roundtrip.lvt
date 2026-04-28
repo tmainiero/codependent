@@ -2,38 +2,53 @@
 %% TEST-WHAT: The four W03-P03 .aux record types (\codep@lblentity,
 %%            \codep@entitymeta, \codep@keymap, \codep@renderlist)
 %%            are written at enddoc and round-trip to the next pass.
-%%            This fixture asserts presence of the concrete records
-%%            produced by a minimal tracked-env mix (theorem + proof
-%%            + paragraph).  Keymap and renderlist are wire-format
-%%            stubs (no emitters yet — P05 owns renderlist, P07 owns
-%%            keymap), so this fixture asserts only that \codep@lblentity
-%%            and \codep@entitymeta records exist in the aux.
+%%            W04-P01 activated the keymap emitter; this fixture now
+%%            also asserts that \codep@keymap{old-key}{new-key} records
+%%            (written when \codepproofof rebinds a separated proof)
+%%            survive the aux roundtrip.  Scenario: theorem + adjacent
+%%            proof + paragraph (section 1) + theorem + separated
+%%            proof via \codepproofof (section 2).
 %% TEST-SOURCE: .claude/comms/wave3-plan-v11.md §P03 (item 2,
-%%              "New .aux record types")
+%%              "New .aux record types");
+%%              .claude/comms/waves/W04/plan-synthesized-rev3.md W04-P05
 %% TEST-SECTION: docs/DESIGN.md §8a (proof envs), §9a (paragraph atoms)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-AUX-CONTAINS: \codep@lblentity{thm:a}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:b}{theorem:2.1}
 %% TEST-AUX-CONTAINS: \codep@lblentity{p:aside}{paragraph:
 %% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:1.1}{theorem}{1.1}{theorem}{}
-%% W04-P02 (ix): adjacent proofs now carry a non-empty parent slot
-%% (the parent statement's prefixed key) so the renderer's classifier
-%% can discriminate ADJACENT/REBOUND from STANDALONE by parent
-%% emptiness alone.  See \codep@graph@getentityparent and the
-%% capture site at \codep@hookproof@end.
+%% --- W04-P02 (ix) audit — source authority: bug2-investigator §3:218
+%% --- (verdict: restore-and-extend).  The failed rewrite hard-coded new
+%% --- parent metadata into aux; that deliberate aux-semantic change is
+%% --- permitted.  P02 unified \codep@bindproofparent to store the
+%% --- prefixed parent key (e.g. theorem:1.1) instead of the raw atom-id,
+%% --- so the classifier can discriminate ADJACENT/REBOUND from STANDALONE
+%% --- by parent-slot emptiness alone.  This P05 audit confirms the
+%% --- prefixed-key parent slot survives the aux roundtrip (TEST-RERUN: 2).
+%% --- See \codep@graph@getentityparent + capture at \codep@hookproof@end.
 %% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.1}{proof}{1.1}{proof}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:2.1}{theorem}{2.1}{theorem}{}
 %% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:
+%% --- W04-P05: keymap roundtrip.  The section-2 proof is adjacent to
+%% --- theorem:2.1 so its pre-rebind key is proof:2.1.  \codepproofof{thm:a}
+%% --- rebinds it to proof:1.1.  \codep@keymap@record (W04-P01 keymap rail,
+%% --- codependent.sty:3989) writes \codep@keymap{proof:2.1}{proof:1.1} to
+%% --- the aux at enddoc.  This assertion verifies that record survives the
+%% --- full roundtrip (second compile reads, repopulates, and re-emits it).
+%% TEST-AUX-CONTAINS: \codep@keymap{proof:2.1}{proof:1.1}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-BEHAVIOR: B-PASS-ONE, B-PROOF-SEP
 %%
 %% Roundtrip scenario: a small mix of tracked entities produces
 %% one \codep@lblentity per \label-in-tracked-env and one
-%% \codep@entitymeta per closed tracked entity.  Both record types
-%% must survive the enddoc aux write so next-run begindoc can
-%% repopulate the in-memory binding before the body processes any
-%% tracked envs.
+%% \codep@entitymeta per closed tracked entity.  The keymap emitter
+%% (W04-P01) writes one \codep@keymap entry per \codepproofof rebind.
+%% All record types must survive the enddoc aux write so next-run
+%% begindoc can repopulate the in-memory bindings before the body
+%% processes any tracked envs.
 
 \documentclass{article}
 \usepackage{amsthm}
@@ -58,6 +73,20 @@
 A tracked paragraph follows, labelled for binding.%
 \label{p:aside}
 One more sentence so the paragraph atom has material.
+
+\section{Deferred proofs}
+
+\begin{theorem}\label{thm:b}
+  Second theorem; produces theorem:2.1 atom.
+\end{theorem}
+
+% Separated proof of thm:a.  Adjacent to thm:b so pre-rebind key is
+% proof:2.1; \codepproofof{thm:a} rebinds to proof:1.1.  The keymap
+% rail (W04-P01) writes \codep@keymap{proof:2.1}{proof:1.1} to aux.
+\begin{proof}[Proof of Theorem~\ref{thm:a}]
+  \codepproofof{thm:a}
+  Separated proof of the first theorem; body runs after rebind.
+\end{proof}
 
 \END
 \end{document}
