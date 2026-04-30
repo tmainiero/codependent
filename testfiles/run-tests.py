@@ -107,6 +107,10 @@ METADATA_KEYS = {
     "TEST-PDF-BACKREF-ENTRY-TARGET": "pdf_backref_entry_targets",  # may repeat; "<atom_pat> | <entry_text> = <dest_pat>"
     "TEST-PDF-BACKREF-SOURCES-RENDERED": "pdf_backref_sources_rendered",  # boolean; every backref source token must be rendered in PDF
     "TEST-PDF-VSPACE-BETWEEN": "pdf_vspace_between",  # may repeat; "<anchor1-regex> <anchor2-regex> <max-points>" (use shell-style quoting for spaces)
+    # PDF y-coordinate and page assertions (require both mutool and qpdf)
+    "TEST-PDF-LINK-Y-NEAR": "pdf_link_y_near",   # may repeat; "<source-text> | <anchor-text> | within=<Δpt>"
+    "TEST-PDF-LINK-Y-BETWEEN": "pdf_link_y_between",  # may repeat; "<source-text> | <top-text> | <bottom-text>"
+    "TEST-PDF-DEST-PAGE": "pdf_dest_page",         # may repeat; "<dest-name> | <anchor-text>"
     # Package error/warning assertions
     "TEST-EXPECT-PACKAGE-WARNING": "expect_package_warning",  # may repeat; regex on "Package codependent Warning:" line
     "TEST-EXPECT-PACKAGE-ERROR": "expect_package_error",      # may repeat; regex on "Package codependent Error:" line; also drops -halt-on-error
@@ -139,6 +143,7 @@ REPEATING_KEYS = {
     "pdf_backref_targets",
     "pdf_backref_entry_targets",
     "pdf_vspace_between",
+    "pdf_link_y_near", "pdf_link_y_between", "pdf_dest_page",
     "expect_package_warning", "expect_package_error",
     "pdf_appendix_entry", "pdf_appendix_entry_text_only",
 }
@@ -221,6 +226,10 @@ class Fixture:
     pdf_backref_entry_targets: list = dataclasses.field(default_factory=list)
     pdf_backref_sources_rendered: bool = False
     pdf_vspace_between: list = dataclasses.field(default_factory=list)
+    # PDF y-coordinate and page assertions (B-API-TEST-RUNNER-PDF-Y)
+    pdf_link_y_near: list = dataclasses.field(default_factory=list)
+    pdf_link_y_between: list = dataclasses.field(default_factory=list)
+    pdf_dest_page: list = dataclasses.field(default_factory=list)
     # Package error/warning assertions
     expect_package_warning: list = dataclasses.field(default_factory=list)
     expect_package_error: list = dataclasses.field(default_factory=list)
@@ -574,6 +583,60 @@ def _measure_pdf_vspace_between(
     return gap, None
 
 
+def _find_stext_line_for_text(
+    stext_xml: str,
+    text_regex: str,
+) -> "tuple[list[float], float, int] | None":
+    """Find the first stext <line> whose text attribute matches text_regex.
+
+    Returns (bbox [x1, y1_topdown, x2, y2_topdown], page_height, page_index)
+    in stext top-down coordinates, or None if not found.
+    """
+    try:
+        root = ElementTree.fromstring(stext_xml)
+    except ElementTree.ParseError:
+        return None
+    try:
+        pat = re.compile(text_regex)
+    except re.error:
+        return None
+    for page_idx, page in enumerate(root.findall(".//page")):
+        try:
+            ph = float(page.attrib.get("height", "792"))
+        except ValueError:
+            ph = 792.0
+        for block in page.findall("./block"):
+            for line in block.findall(".//line"):
+                text = (line.attrib.get("text") or "").strip()
+                if pat.search(text):
+                    bbox_str = line.attrib.get("bbox", "")
+                    try:
+                        bbox = [float(x) for x in bbox_str.split()]
+                    except ValueError:
+                        continue
+                    if len(bbox) == 4:
+                        return (bbox, ph, page_idx)
+    return None
+
+
+def _find_link_for_source_text(
+    link_data: "PdfLinkObjects",
+    stext_xml: str,
+    source_regex: str,
+) -> "PdfLinkInfo | None":
+    """Find the first link annotation whose source text matches source_regex.
+
+    Locates the text via stext bboxes then finds overlapping link annotations.
+    """
+    result = _find_stext_line_for_text(stext_xml, source_regex)
+    if result is None:
+        return None
+    bbox, page_height, _page_idx = result
+    bline = _BackrefLine(text="", entries=[], bbox=bbox, page_height=page_height)
+    overlapping = _links_overlapping_line(link_data, bline)
+    return overlapping[0] if overlapping else None
+
+
 def _extract_pdf_objects(pdf_path: Path) -> str | None:
     """Dump all PDF objects as text (mutool only).
 
@@ -648,10 +711,19 @@ class PdfLinkInfo:
 
 
 @dataclasses.dataclass
+class PdfDestData:
+    """Named destination data extracted from qpdf JSON."""
+    page_ref: str        # page object reference string e.g. "5 0 R"
+    y_pdf: float | None  # PDF bottom-up y-coordinate, or None for /Fit destinations
+
+
+@dataclasses.dataclass
 class PdfLinkObjects:
     """Structured PDF link/destination data extracted via qpdf --json=2."""
     links: list   # list of PdfLinkInfo
     destinations: set  # set of named destination strings
+    dest_data: dict = dataclasses.field(default_factory=dict)  # dict[str, PdfDestData]
+    page_ref_to_index: dict = dataclasses.field(default_factory=dict)  # dict[str, int]
 
 
 def _collect_names_from_tree(objs: dict, obj_ref: str, visited: set) -> list[str]:
@@ -716,6 +788,128 @@ def _find_names_root(objs: dict) -> str | None:
     return None
 
 
+def _parse_dest_array(dest_val) -> tuple[str | None, float | None]:
+    """Extract (page_ref, y_pdf) from a PDF destination value.
+
+    Handles both array form [page_ref, /FitType, ...] and dict form {/D: [...]}.
+    Returns (page_ref, y_pdf) where y_pdf is PDF bottom-up coords, or None for /Fit.
+    """
+    if isinstance(dest_val, dict):
+        dest_val = dest_val.get("/D")
+    if not isinstance(dest_val, list) or len(dest_val) < 2:
+        return None, None
+    page_ref = dest_val[0] if isinstance(dest_val[0], str) else None
+    fit_type = dest_val[1] if isinstance(dest_val[1], str) else None
+    y_pdf = None
+    if fit_type == "/XYZ" and len(dest_val) >= 4:
+        try:
+            v = dest_val[3]
+            y_pdf = float(v) if v is not None else None
+        except (TypeError, ValueError):
+            pass
+    elif fit_type == "/FitH" and len(dest_val) >= 3:
+        try:
+            v = dest_val[2]
+            y_pdf = float(v) if v is not None else None
+        except (TypeError, ValueError):
+            pass
+    return page_ref, y_pdf
+
+
+def _collect_dest_data_from_tree(
+    objs: dict,
+    obj_ref: str,
+    visited: set,
+) -> list[tuple[str, str, float | None]]:
+    """Collect (dest_name, page_ref, y_pdf) tuples from a PDF Names tree.
+
+    Extends _collect_names_from_tree to also resolve each destination object,
+    extracting the page reference and y-coordinate for spatial assertions.
+    """
+    if obj_ref in visited:
+        return []
+    visited.add(obj_ref)
+    key = f"obj:{obj_ref}"
+    node = objs.get(key)
+    if not isinstance(node, dict):
+        return []
+    val = node.get("value", {})
+    if not isinstance(val, dict):
+        return []
+
+    results: list[tuple[str, str, float | None]] = []
+    names_arr = val.get("/Names")
+    if isinstance(names_arr, list):
+        i = 0
+        while i + 1 < len(names_arr):
+            name = names_arr[i]
+            dest_ref = names_arr[i + 1]
+            i += 2
+            if not isinstance(name, str):
+                continue
+            dest_val = None
+            if isinstance(dest_ref, str):
+                dest_obj = objs.get(f"obj:{dest_ref}")
+                if isinstance(dest_obj, dict):
+                    dest_val = dest_obj.get("value")
+            elif isinstance(dest_ref, list):
+                dest_val = dest_ref
+            page_ref, y_pdf = _parse_dest_array(dest_val)
+            results.append((name, page_ref or "", y_pdf))
+
+    kids = val.get("/Kids")
+    if isinstance(kids, list):
+        for kid_ref in kids:
+            if isinstance(kid_ref, str):
+                results.extend(_collect_dest_data_from_tree(objs, kid_ref, visited))
+
+    return results
+
+
+def _collect_page_refs(objs: dict, node_ref: str, visited: set) -> list[str]:
+    """Recursively collect leaf page object refs in document order from the page tree."""
+    if node_ref in visited:
+        return []
+    visited.add(node_ref)
+    key = f"obj:{node_ref}"
+    node = objs.get(key)
+    if not isinstance(node, dict):
+        return []
+    val = node.get("value", {})
+    if not isinstance(val, dict):
+        return []
+    if val.get("/Type") == "/Page":
+        return [node_ref]
+    kids = val.get("/Kids")
+    if isinstance(kids, list):
+        result: list[str] = []
+        for kid_ref in kids:
+            if isinstance(kid_ref, str):
+                result.extend(_collect_page_refs(objs, kid_ref, visited))
+        return result
+    return []
+
+
+def _build_page_ref_to_index(objs: dict) -> dict[str, int]:
+    """Build {page_ref: 0-based-index} by traversing the page tree from catalog."""
+    pages_root: str | None = None
+    for val_container in objs.values():
+        if not isinstance(val_container, dict):
+            continue
+        v = val_container.get("value", {})
+        if not isinstance(v, dict):
+            continue
+        if v.get("/Type") == "/Catalog":
+            ref = v.get("/Pages")
+            if isinstance(ref, str):
+                pages_root = ref
+                break
+    if pages_root is None:
+        return {}
+    page_refs = _collect_page_refs(objs, pages_root, set())
+    return {ref: idx for idx, ref in enumerate(page_refs)}
+
+
 def _extract_pdf_link_objects(pdf_path: Path) -> PdfLinkObjects | None:
     """Extract link annotations and named destinations via qpdf --json=2.
 
@@ -775,15 +969,25 @@ def _extract_pdf_link_objects(pdf_path: Path) -> PdfLinkObjects | None:
             dest=dest or "",
         ))
 
-    # Collect named destinations from the Names tree.
+    # Collect named destinations from the Names tree (names + dest data).
     destinations: set[str] = set()
+    dest_data: dict[str, PdfDestData] = {}
     dests_root = _find_names_root(objs)
     if dests_root is not None:
         visited: set[str] = set()
-        dest_names = _collect_names_from_tree(objs, dests_root, visited)
-        destinations.update(dest_names)
+        dest_items = _collect_dest_data_from_tree(objs, dests_root, visited)
+        for name, page_ref, y_pdf in dest_items:
+            destinations.add(name)
+            dest_data[name] = PdfDestData(page_ref=page_ref, y_pdf=y_pdf)
 
-    return PdfLinkObjects(links=links, destinations=destinations)
+    page_ref_to_index = _build_page_ref_to_index(objs)
+
+    return PdfLinkObjects(
+        links=links,
+        destinations=destinations,
+        dest_data=dest_data,
+        page_ref_to_index=page_ref_to_index,
+    )
 
 
 # ----------------------------------------------------------------------
@@ -1505,6 +1709,214 @@ def _check_convergence(
     return []
 
 
+# ----------------------------------------------------------------------
+# PDF y-coordinate and dest-page assertion helpers (B-API-TEST-RUNNER-PDF-Y)
+# ----------------------------------------------------------------------
+
+
+def _parse_link_y_near_spec(spec: str) -> "tuple[str, str, float] | None":
+    """Parse 'source-text | anchor-text | within=Δpt' for TEST-PDF-LINK-Y-NEAR."""
+    parts = [p.strip() for p in spec.split("|")]
+    if len(parts) != 3 or not parts[2].startswith("within="):
+        return None
+    try:
+        delta = float(parts[2][7:])
+    except ValueError:
+        return None
+    return parts[0], parts[1], delta
+
+
+def _parse_link_y_between_spec(spec: str) -> "tuple[str, str, str] | None":
+    """Parse 'source-text | top-text | bottom-text' for TEST-PDF-LINK-Y-BETWEEN."""
+    parts = [p.strip() for p in spec.split("|")]
+    if len(parts) != 3:
+        return None
+    return parts[0], parts[1], parts[2]
+
+
+def _parse_dest_page_spec(spec: str) -> "tuple[str, str] | None":
+    """Parse 'dest-name | anchor-text' for TEST-PDF-DEST-PAGE."""
+    parts = [p.strip() for p in spec.split("|")]
+    if len(parts) != 2:
+        return None
+    return parts[0], parts[1]
+
+
+def _check_pdf_link_y_near(
+    link_data: "PdfLinkObjects",
+    stext_xml: str,
+    spec: str,
+    fail,
+) -> None:
+    """Handle TEST-PDF-LINK-Y-NEAR: <source-text> | <anchor-text> | within=<Δpt>."""
+    parsed = _parse_link_y_near_spec(spec)
+    if parsed is None:
+        fail(
+            f"malformed TEST-PDF-LINK-Y-NEAR: {spec!r} "
+            "(expected: '<source-text> | <anchor-text> | within=<Δpt>')"
+        )
+        return
+    source_text, anchor_text, within_pt = parsed
+
+    link = _find_link_for_source_text(link_data, stext_xml, source_text)
+    if link is None:
+        fail(f"TEST-PDF-LINK-Y-NEAR: no link found with source text matching {source_text!r}")
+        return
+    if not link.dest:
+        fail(f"TEST-PDF-LINK-Y-NEAR: link matching {source_text!r} has no named destination")
+        return
+    dest_info = link_data.dest_data.get(link.dest)
+    if dest_info is None:
+        fail(f"TEST-PDF-LINK-Y-NEAR: destination {link.dest!r} not found in named destinations")
+        return
+    if dest_info.y_pdf is None:
+        fail(
+            f"TEST-PDF-LINK-Y-NEAR: destination {link.dest!r} has no extractable y-coordinate "
+            f"(non-XYZ/FitH destination type)"
+        )
+        return
+
+    dest_page_idx = link_data.page_ref_to_index.get(dest_info.page_ref)
+    anchor_result = _find_stext_line_for_text(stext_xml, anchor_text)
+    if anchor_result is None:
+        fail(f"TEST-PDF-LINK-Y-NEAR: anchor text {anchor_text!r} not found in stext")
+        return
+    anchor_bbox, anchor_page_height, anchor_page_idx = anchor_result
+
+    if dest_page_idx is not None and anchor_page_idx != dest_page_idx:
+        fail(
+            f"TEST-PDF-LINK-Y-NEAR: destination {link.dest!r} is on page {dest_page_idx} "
+            f"but anchor text {anchor_text!r} is on page {anchor_page_idx}"
+        )
+        return
+
+    anchor_y_pdf = anchor_page_height - anchor_bbox[1]
+    delta = abs(dest_info.y_pdf - anchor_y_pdf)
+    if delta > within_pt:
+        fail(
+            f"TEST-PDF-LINK-Y-NEAR: destination {link.dest!r} y={dest_info.y_pdf:.1f} "
+            f"is {delta:.1f}pt from anchor {anchor_text!r} y={anchor_y_pdf:.1f} "
+            f"(within={within_pt}pt required)"
+        )
+
+
+def _check_pdf_link_y_between(
+    link_data: "PdfLinkObjects",
+    stext_xml: str,
+    spec: str,
+    fail,
+) -> None:
+    """Handle TEST-PDF-LINK-Y-BETWEEN: <source-text> | <top-text> | <bottom-text>."""
+    parsed = _parse_link_y_between_spec(spec)
+    if parsed is None:
+        fail(
+            f"malformed TEST-PDF-LINK-Y-BETWEEN: {spec!r} "
+            "(expected: '<source-text> | <top-text> | <bottom-text>')"
+        )
+        return
+    source_text, top_text, bottom_text = parsed
+
+    link = _find_link_for_source_text(link_data, stext_xml, source_text)
+    if link is None:
+        fail(f"TEST-PDF-LINK-Y-BETWEEN: no link found with source text matching {source_text!r}")
+        return
+    if not link.dest:
+        fail(f"TEST-PDF-LINK-Y-BETWEEN: link matching {source_text!r} has no named destination")
+        return
+    dest_info = link_data.dest_data.get(link.dest)
+    if dest_info is None:
+        fail(f"TEST-PDF-LINK-Y-BETWEEN: destination {link.dest!r} not found in named dests")
+        return
+    if dest_info.y_pdf is None:
+        fail(
+            f"TEST-PDF-LINK-Y-BETWEEN: destination {link.dest!r} has no extractable y-coordinate"
+        )
+        return
+
+    top_result = _find_stext_line_for_text(stext_xml, top_text)
+    if top_result is None:
+        fail(f"TEST-PDF-LINK-Y-BETWEEN: top-text {top_text!r} not found in stext")
+        return
+    top_bbox, top_page_height, top_page_idx = top_result
+
+    bottom_result = _find_stext_line_for_text(stext_xml, bottom_text)
+    if bottom_result is None:
+        fail(f"TEST-PDF-LINK-Y-BETWEEN: bottom-text {bottom_text!r} not found in stext")
+        return
+    bottom_bbox, bottom_page_height, bottom_page_idx = bottom_result
+
+    if top_page_idx != bottom_page_idx:
+        fail("TEST-PDF-LINK-Y-BETWEEN: top-text and bottom-text are on different pages")
+        return
+    dest_page_idx = link_data.page_ref_to_index.get(dest_info.page_ref)
+    if dest_page_idx is not None and dest_page_idx != top_page_idx:
+        fail(
+            f"TEST-PDF-LINK-Y-BETWEEN: destination {link.dest!r} is on page {dest_page_idx} "
+            f"but reference texts are on page {top_page_idx}"
+        )
+        return
+
+    # Convert to PDF bottom-up coords; "top" text (higher on page) → larger PDF y.
+    top_y_pdf = top_page_height - top_bbox[1]
+    bottom_y_pdf = bottom_page_height - bottom_bbox[1]
+    dest_y = dest_info.y_pdf
+
+    if not (bottom_y_pdf < dest_y < top_y_pdf):
+        fail(
+            f"TEST-PDF-LINK-Y-BETWEEN: destination {link.dest!r} y={dest_y:.1f} "
+            f"not strictly between top={top_y_pdf:.1f} ({top_text!r}) "
+            f"and bottom={bottom_y_pdf:.1f} ({bottom_text!r})"
+        )
+
+
+def _check_pdf_dest_page(
+    link_data: "PdfLinkObjects",
+    stext_xml: str,
+    spec: str,
+    fail,
+) -> None:
+    """Handle TEST-PDF-DEST-PAGE: <dest-name> | <anchor-text>."""
+    parsed = _parse_dest_page_spec(spec)
+    if parsed is None:
+        fail(
+            f"malformed TEST-PDF-DEST-PAGE: {spec!r} "
+            "(expected: '<dest-name> | <anchor-text>')"
+        )
+        return
+    dest_name, anchor_text = parsed
+
+    matched_key = next(
+        (k for k in link_data.dest_data if re.search(dest_name, k)), None
+    )
+    dest_info = link_data.dest_data.get(matched_key) if matched_key else None
+    if dest_info is None:
+        sample = sorted(link_data.dest_data.keys())[:8]
+        fail(
+            f"TEST-PDF-DEST-PAGE: named destination {dest_name!r} not found "
+            f"(known dests: {sample})"
+        )
+        return
+    dest_page_idx = link_data.page_ref_to_index.get(dest_info.page_ref)
+    if dest_page_idx is None:
+        fail(
+            f"TEST-PDF-DEST-PAGE: destination {dest_name!r} page_ref={dest_info.page_ref!r} "
+            f"not resolvable in page tree"
+        )
+        return
+
+    anchor_result = _find_stext_line_for_text(stext_xml, anchor_text)
+    if anchor_result is None:
+        fail(f"TEST-PDF-DEST-PAGE: anchor text {anchor_text!r} not found in stext")
+        return
+    _, _anchor_ph, anchor_page_idx = anchor_result
+
+    if dest_page_idx != anchor_page_idx:
+        fail(
+            f"TEST-PDF-DEST-PAGE: destination {dest_name!r} is on page {dest_page_idx} "
+            f"but anchor text {anchor_text!r} is on page {anchor_page_idx}"
+        )
+
+
 def _run_assertions(
     fix: "Fixture",
     result: "TestResult",
@@ -2050,6 +2462,36 @@ def _run_assertions(
                             f"(declare TEST-APPENDIX-ENUM-WAIVER to suppress)"
                         )
                 # TEXT-ONLY: informational guard — no dest count available yet
+
+    # 17. PDF y-coordinate and dest-page assertions (B-API-TEST-RUNNER-PDF-Y).
+    has_y_checks = fix.pdf_link_y_near or fix.pdf_link_y_between or fix.pdf_dest_page
+    if has_y_checks:
+        pdf_file = tmp_path / f"{fix.name}.pdf"
+        if not pdf_file.exists():
+            fail("y-coordinate assertions present but no PDF was produced")
+        elif PDF_STEXT_TOOL is None or PDF_QPDF_TOOL is None:
+            missing = [
+                t for t, v in [("mutool", PDF_STEXT_TOOL), ("qpdf", PDF_QPDF_TOOL)]
+                if v is None
+            ]
+            fail(
+                f"PDF y-coordinate assertions require mutool and qpdf "
+                f"(missing: {', '.join(missing)}). Run inside 'nix develop'."
+            )
+        else:
+            y_stext = _extract_pdf_stext(pdf_file)
+            y_link_data = _extract_pdf_link_objects(pdf_file)
+            if y_stext is None:
+                fail("y-check: stext extraction failed")
+            elif y_link_data is None:
+                fail(f"y-check: qpdf extraction failed (tool: {PDF_QPDF_TOOL})")
+            else:
+                for spec in fix.pdf_link_y_near:
+                    _check_pdf_link_y_near(y_link_data, y_stext, spec, fail)
+                for spec in fix.pdf_link_y_between:
+                    _check_pdf_link_y_between(y_link_data, y_stext, spec, fail)
+                for spec in fix.pdf_dest_page:
+                    _check_pdf_dest_page(y_link_data, y_stext, spec, fail)
 
 
 # ----------------------------------------------------------------------

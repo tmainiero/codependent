@@ -1,0 +1,43 @@
+%% TEST-NAME: test-runner-pdf-dest-page
+%% TEST-WHAT: Self-test for TEST-PDF-DEST-PAGE assertion type.
+%%            A \hypertarget on page two and anchor text on the same
+%%            page.  The assertion verifies the named destination
+%%            resolves to the same page as the anchor text using the
+%%            page tree from qpdf JSON.
+%% TEST-SOURCE: testfiles/run-tests.py _check_pdf_dest_page
+%% TEST-SECTION: testfiles/run-tests.py _build_page_ref_to_index, _parse_dest_page_spec
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-NOT: Emergency stop
+%% TEST-PDF-DEST-EXISTS: page-two-anchor
+%% TEST-PDF-DEST-NOT-EXISTS: nonexistent-page-anchor-xyz
+%% TEST-PDF-LINK-DEST: page-two-anchor
+%% TEST-PDF-DEST-PAGE: page-two-anchor | Appendix section text
+%% TEST-PACKAGES: hyperref
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-NO-ORPHAN
+%%
+%% Verifies that _check_pdf_dest_page correctly resolves a named
+%% destination to the page where anchor text appears.  A \hyperlink
+%% on page one links to a \hypertarget on page two that is placed
+%% immediately before "Appendix section text".  The destination page
+%% index (from qpdf page tree) must match the stext page index.
+
+\documentclass{article}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+\START
+
+\section{Introduction}
+
+See the appendix: \hyperlink{page-two-anchor}{go to appendix}
+
+\clearpage
+
+\section{Appendix}
+
+\hypertarget{page-two-anchor}{}Appendix section text.
+
+\END
+\end{document}

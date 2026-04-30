@@ -1,0 +1,51 @@
+%% TEST-NAME: test-runner-pdf-link-y-between
+%% TEST-WHAT: Self-test for TEST-PDF-LINK-Y-BETWEEN assertion type.
+%%            A \hyperlink destination (\hypertarget) is placed between
+%%            two reference texts vertically.  The assertion verifies
+%%            the destination y falls strictly between top-text y and
+%%            bottom-text y in PDF coordinates.
+%% TEST-SOURCE: testfiles/run-tests.py _check_pdf_link_y_between
+%% TEST-SECTION: testfiles/run-tests.py _parse_link_y_between_spec
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-NOT: Emergency stop
+%% TEST-PDF-DEST-EXISTS: between-anchor
+%% TEST-PDF-DEST-NOT-EXISTS: nonexistent-between-xyz
+%% TEST-PDF-LINK-DEST: between-anchor
+%% TEST-PDF-LINK-Y-BETWEEN: reference here | Above the destination | Below the destination
+%% TEST-PACKAGES: hyperref
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-CORRECT
+%%
+%% Verifies that _check_pdf_link_y_between correctly identifies that
+%% a hyperlink destination y lies strictly between the y-coordinates
+%% of two named reference texts.  "Above the destination" appears
+%% before the hypertarget and "Below the destination" appears after,
+%% so in PDF bottom-up coords: above.y > dest.y > below.y.
+
+\documentclass{article}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+\START
+
+\section{Reference section}
+
+\hyperlink{between-anchor}{reference here}
+
+\bigskip\bigskip
+
+\section{Body section}
+
+Above the destination
+
+\bigskip\bigskip\bigskip
+
+\hypertarget{between-anchor}{}Destination area content.
+
+\bigskip\bigskip\bigskip
+
+Below the destination
+
+\END
+\end{document}

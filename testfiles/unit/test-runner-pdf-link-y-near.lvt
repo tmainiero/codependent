@@ -1,0 +1,42 @@
+%% TEST-NAME: test-runner-pdf-link-y-near
+%% TEST-WHAT: Self-test for TEST-PDF-LINK-Y-NEAR assertion type.
+%%            A \hyperlink jumps to a \hypertarget placed immediately
+%%            before anchor text.  The assertion verifies the named
+%%            destination y-coordinate is within tolerance of the
+%%            anchor text y-coordinate extracted from stext.
+%% TEST-SOURCE: testfiles/run-tests.py _check_pdf_link_y_near
+%% TEST-SECTION: testfiles/run-tests.py _find_link_for_source_text, _parse_link_y_near_spec
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-NOT: Emergency stop
+%% TEST-PDF-DEST-EXISTS: proof-anchor
+%% TEST-PDF-DEST-NOT-EXISTS: nonexistent-anchor-xyz
+%% TEST-PDF-LINK-DEST: proof-anchor
+%% TEST-PDF-LINK-Y-NEAR: go to proof | Proof body text here | within=30
+%% TEST-PACKAGES: hyperref
+%% TEST-RERUN: 2
+%% TEST-BEHAVIOR: B-LINK-PROOF-DEST, B-LINK-CORRECT
+%%
+%% Verifies that _check_pdf_link_y_near correctly identifies that a
+%% hyperlink destination lands within 30pt of the target text.  The
+%% \hypertarget is placed immediately before the anchor text, so the
+%% destination y is within a few points of the stext line top.
+
+\documentclass{article}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+\START
+
+\section{Reference section}
+
+Click here: \hyperlink{proof-anchor}{go to proof}
+
+\bigskip\bigskip\bigskip\bigskip
+
+\section{Proof section}
+
+\hypertarget{proof-anchor}{}Proof body text here.
+
+\END
+\end{document}
