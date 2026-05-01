@@ -224,7 +224,7 @@ $f\colon A \to B$ and $g\colon B \to A$ in $\catname{C}$,
 %%
 %% The proof of prop:square is given here, in a different section
 %% from the statement.  This tests the \codepproofof mechanism.
-\begin{proof}[\codepproofof{prop:square}]
+\begin{proof}[Proof of Proposition~\ref{prop:square}]\codepproofof{prop:square}%
 We construct the natural isomorphism componentwise.  For each
 object $X$ in $\catname{C}$, the strictification functor
 $\Funct{S}{C}$ sends $X$ to $[X]$, and the square commutes
@@ -372,18 +372,19 @@ foundational vocabulary.  See also \autoref{not:hom} and
 
 
 %% ====================================================================
-%%  Section 7: W04 proof-anchor features (codep-proof:N.M namespace)
+%%  Section 7: W04 proof-anchor features (proof-begin anchormap routing)
 %% ====================================================================
 \section{Proof-anchor features}
 \label{sec:w04proof}
 
 %% --- 7.1: Long-distance proof with starred anchor ---
 %%
-%% \codepproofof*{label} rebinds this proof to thm:long (section~5)
-%% AND emits a codep-proof:N.M named PDF destination at the proof body.
-%% Backref entries for this proof atom resolve to codep-proof:N.M,
-%% not to the parent theorem heading.  (W04-P01, Bug #1 closed.)
-\begin{proof}[\codepproofof*{thm:long}]
+%% \codepproofof*{label} rebinds this proof to thm:long (section~5).
+%% Like the plain form, it now routes backlinks through the proof
+%% key's \codep@anchormap entry and the shared proof-begin
+%% \Hy@raisedlink emission path, so clicks land near the proof
+%% heading rather than on the parent theorem anchor.
+\begin{proof}[Proof of Theorem~\ref{thm:long}]\codepproofof*{thm:long}%
 By verifying each implication in \cref{thm:long} using the rigidity
 criterion of \cref{def:trace} and the cyclic property of \cref{lem:trace-cyclic}.
 The dualisability condition (i) implies (ii) by naturality, and (iii)
@@ -391,9 +392,10 @@ follows from \cref{def:enrichment}.
 \end{proof}
 
 %% ====================================================================
-%%  Dependency Index (appendix mode — W04-P04)
-%%  Emits bidirectional links: theorem body \to appendix entry AND
-%%  appendix entry \to theorem heading.  Page numbers use the
+%%  Dependency Index (appendix mode — W04 closeout)
+%%  Emits bidirectional links: body-side dagger \to appendix entry AND
+%%  appendix entry label \to effective body anchor.  Each appendix row
+%%  owns its own \Hy@raisedlink destination, and page numbers use the
 %%  /codep/appendix/pagenum-format key set above.
 %% ====================================================================
 \codepappendix

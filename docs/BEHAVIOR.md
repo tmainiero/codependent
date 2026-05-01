@@ -74,13 +74,14 @@ Load **after** the theorem backend (amsthm/ntheorem) and **after** all
 ### 2.5 \codepproofof / \codepproofof*
 
 ```latex
-\begin{proof}[\codepproofof{label}]   % link "Used in X*" -> theorem
-\begin{proof}[\codepproofof*{label}]  % link "Used in X*" -> proof location
+\begin{proof}[\codepproofof{label}]   % bind a separated proof to label
+\begin{proof}[\codepproofof*{label}]  % compatibility alias for the same path
 ```
 
 - Associates a separated proof with its theorem via label lookup.
 - The proof's backrefs display as `X*` where X is the theorem's number.
-- Starred form: clicking the backref jumps to the proof, not the theorem.
+- Backrefs to that proof resolve to the proof heading via the proof key's `\codep@anchormap` entry, not the theorem heading.
+- The starred form is retained for compatibility; both forms alias to the same proof-begin anchor path.
 - Warning if label is undefined.
 - Must be called inside `\begin{proof}...\end{proof}`.
 
@@ -137,8 +138,8 @@ Load **after** the theorem backend (amsthm/ntheorem) and **after** all
 
 - Typesets a "Dependency Index" section listing every atom with its back-references.
 - Only functional when `backrefs=appendix`.
-- Entries grouped by section, with dotfill leaders.
-- Format: `number  type  ......  ref1, ref2, ref3`
+- Entries grouped by section, with hanging-indent rows and leader dots.
+- Format: `Kind N (p. P) ...... ref1, ref2, ref3` (the page-number segment is configurable via `/codep/appendix/pagenum-format`).
 
 ---
 
@@ -191,12 +192,13 @@ displays "Used in A" in the PDF.
 ### 3.3 Hyperlinks
 
 - [B-LINK-CLICKABLE] When hyperref is loaded, every entry in "Used in X, Y" is a clickable link.
-- [B-LINK-CORRECT] Link targets point to the correct atom's location in the PDF. For proof atoms with `codep-proof:N.M` destinations, backref links resolve to the proof body, not the parent theorem anchor.
-- [B-LINK-EFFECTIVE-ANCHOR] For theorem-like atoms, backlink destinations resolve from the effective anchor: the heading anchor, possibly replaced by a same-typed same-display in-theorem label. Source links to a contained proof resolve to the proof body (`codep-proof:N.M`), not the theorem heading.
-- [B-LINK-PROOF-DEST] Adjacent proofs and proofs rebound via `\codepproofof` emit a `\hypertarget{codep-proof:N.M}{}` PDF destination at the proof body; their backref source tokens resolve to `codep-proof:N.M`. Standalone-tracked proofs (not adjacent and not rebound) emit `\hypertarget{codep-proof:a<N>}{}` instead, where `<N>` is the atom counter value, and resolve to `codep-proof:a<N>`.
-- [B-LINK-PROOFOF-STAR] `\codepproofof*` overrides the link target to point to the proof location.
-- [B-LINK-ADJ-PROOF] Backref entries for adjacent proofs resolve to the proof body destination (`codep-proof:N.M`), not the parent theorem heading. If a same-typed, same-display in-theorem label exists, the proof body's `codep-proof:N.M` anchor is emitted at the same scope.
-- [B-LINK-APPENDIX-BIDIR] In `backrefs=appendix` mode, links are bidirectional: a dagger marker link emitted next to the body theorem heading links forward to its appendix entry (`codep-appendix:kind:N.M`), and each appendix entry links back to the theorem heading. Proof entries within appendix entries resolve to `codep-proof:N.M`.
+- [B-LINK-CORRECT] Link targets point to the correct atom location in the PDF. Theorem-like atoms resolve via their effective anchor; proof atoms resolve via the proof key's `\codep@anchormap` entry to the proof heading, not the parent theorem anchor.
+- [B-LINK-EFFECTIVE-ANCHOR] For theorem-like atoms, backlink destinations resolve from the effective anchor: the heading anchor, possibly replaced by a same-typed same-display in-atom label. Proof and appendix links are routed through their own anchor maps rather than borrowing the theorem anchor.
+- [B-LINK-PROOF-DEST] Proof backlinks are addressable through `\codep@anchormap`. Adjacent proofs bind `proof:N.M` directly to their proof-begin anchor; rebound proofs alias the post-rebind `proof:N.M` key to the already-emitted proof-begin anchor; standalone proofs bind their opaque `proof:a<N>` key similarly. The physical hyperref destination names are not part of the public contract.
+- [B-PROOF-ANCHOR-NEAR-HEADING] Adjacent, standalone, and rebound proofs all place exactly one proof-local anchor at proof-begin, so proof backlinks land near the rendered proof heading, not after the proof or on a later in-proof equation anchor.
+- [B-LINK-PROOFOF-STAR] Both `\codepproofof` and `\codepproofof*` bind separated proofs to the proof's own anchor; the starred form is retained as an explicit compatibility spelling for the same proof-begin aliasing path.
+- [B-LINK-ADJ-PROOF] Backref entries for adjacent proofs resolve through the adjacent proof's own `\codep@anchormap` target, not the parent theorem anchor. Effective-anchor rewrites on the parent theorem do not collapse the proof backlink onto the theorem target.
+- [B-LINK-APPENDIX-BIDIR] In `backrefs=appendix` mode, links are bidirectional: a dagger marker emitted with the body-side backref rail links forward to `codep-appendix:<key>`, and each appendix entry label links back to the atom's effective body anchor. Proof-source entries within appendix rows resolve through the proof key's `\codep@anchormap` target.
 - [B-LINK-NO-ORPHAN] No orphan links: every link resolves to a valid PDF destination.
 
 ### 3.4 Equation tracking
@@ -220,8 +222,8 @@ displays "Used in A" in the PDF.
 
 | Situation | Atom identity | Display in backrefs |
 |---|---|---|
-| [B-PROOF-ADJ] Adjacent proof (directly after a tracked result env) | Inherits theorem's number | `2.1*` |
-| [B-PROOF-SEP] Separated proof via `\codepproofof{label}` | Inherits target's number; bidirectional: the target's "Used in" shows `N.M*`, and `N.M*` entries in other atoms' backref lists link to `codep-proof:N.M` | `2.1*` |
+| [B-PROOF-ADJ] Adjacent proof (directly after a tracked env) | Inherits the parent atom's number | `2.1*` |
+| [B-PROOF-SEP] Separated proof via `\codepproofof{label}` | Inherits target's number; bidirectional: the target's "Used in" shows `N.M*`, and `N.M*` entries in other atoms' backref lists resolve through the proof's `\codep@anchormap` target | `2.1*` |
 | [B-PROOF-NONADJ] Non-adjacent proof (no `\codepproofof`) | Opaque proof-id key (`proof:a<N>`); does not consume a shared-counter slot; warning emitted | suppressed from source-token output |
 | [B-PROOF-INNER] Proof inside a tracked env | Suppressed (part of outer atom) | N/A |
 | [B-PROOF-OFF] `proofs=off` | No atom number, paragraph suppression only | N/A |

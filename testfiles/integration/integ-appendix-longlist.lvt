@@ -16,7 +16,7 @@
 %% TEST-PDF-NOT: OLDSEP
 %% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.4
 %% TEST-PDF-LINK-DEST: theorem\.9
-%% TEST-PDF-STEXT: (?s)text="Theorem 1\.4 SEP 1".*text="2\.3, 2\.3\*, 2\.5, 2\.6, 2\.7, 2\.8, 2\.9, 2\.10,".*text="2\.11, 2\.12"
+%% TEST-PDF-STEXT: (?s)text="Theorem 1\.4 SEP 1".*?text="2\.3, 2\.3\*, 2\.5, 2\.6, 2\.7, 2\.8, 2\.9, 2\.10,".*?text="2\.11, 2\.12"
 %% TEST-ATOMS-MIN: 13
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
 %% TEST-RERUN: 3

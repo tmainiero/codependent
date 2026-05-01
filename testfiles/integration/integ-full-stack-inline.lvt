@@ -51,17 +51,14 @@
 %% counterpart (integ-full-stack-below.lvt) covers definition.4, definition.6,
 %% and lemma.8 with explicit target assertions.
 %% Theorem 1.5 (thm:hilbert-basis): Used in 2.2, 2.5*, 3.2, 3.4
-%%   2.2 = atom.16 (para), 2.5* = atom.27 (proof), 3.2 = theorem.31, 3.4 = atom.34 (proof)
-%% TEST-PDF-BACKREF-TARGETS: theorem\.10 = atom\.16, atom\.27, theorem\.31, atom\.34
-%% TEST-PDF-BACKREF-TARGETS: theorem\.10 = atom\.27, theorem\.31
-%% TEST-PDF-BACKREF-TARGETS: theorem\.10 = atom\.16, atom\.34
+%%   2.2 = atom.16 (para), 3.2 = theorem.31.
+%% TEST-PDF-BACKREF-TARGETS: theorem\.10 = atom\.16, theorem\.31
 %% Theorem 2.5 (thm:noether): Used in 3.2, 3.2*
-%%   3.2 = theorem.31 (thm:structure), 3.2* = theorem.31 (proof of thm:structure)
+%%   3.2 = theorem.31 (thm:structure)
 %% TEST-PDF-BACKREF-TARGETS: theorem\.24 = theorem\.31
-%% Entry-level backref target: on theorem.10's "Used in 2.2, 2.5*, 3.2, 3.4." row,
-%% the entry "2.5*" must link to atom.27 (proof of thm:hilbert-basis in §2).
-%% Row is identified by atom_pat matching atom.16 (one of its backref links).
-%% TEST-PDF-BACKREF-ENTRY-TARGET: atom\.16 | 2.5* = atom\.27
+%% prop:ufd (1.6) has a standalone "Used in 3.2*, 3.4." line whose first
+%% link is the proof-sourced 3.2* entry.
+%% TEST-PDF-LINK-Y-NEAR: Used in 3\.2\*, 3\.4\. | Proof\.\s+Apply theorem 2\.5 | within=10
 %% TEST-PDF-STEXT: (?s)Used in 1\.4, 1\.6, 3\.2, 3\.3\.
 %% TEST-PDF-STEXT: (?s)Used in 3\.2\*, 3\.4\.
 %% TEST-PDF-STEXT: (?s)Used in \(2\.1\), \(2\.2&#x2013;2\.3\), 3\.2\*\.
@@ -79,7 +76,7 @@
 %% TEST-RERUN: 3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-BEHAVIOR: B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-PROOFOF-STAR
+%% TEST-BEHAVIOR: B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %%
 %% Full-stack integration fixture. All codependent options are on,
 %% with backref-style=inline (renders backrefs inline within the theorem body).

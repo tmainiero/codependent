@@ -1,67 +1,53 @@
 %% TEST-NAME: test-proofs-separated-link-targets
 %% TEST-WHAT: For a rebound proof (\codepproofof, B-PROOF-SEP), backref
-%%            entries in source-token "Used in" lists carry hyperref
-%%            link annotations whose /D field matches the visible
-%%            display number.  The pre-rebind id 2.1* lands on
-%%            codep-proof:2.1 (its physical location), and the post-
-%%            rebind id 1.1* lands on codep-proof:1.1 (the rebind
-%%            target's proof anchor).  Both PDF named destinations
-%%            exist so neither link is an orphan.
+%%            entries in source-token "Used in" lists for both the
+%%            pre-rebind id 2.1* and post-rebind id 1.1* land near
+%%            the rebound proof's rendered heading.  The proof emits
+%%            one proof-begin anchor; \codep@anchormap rebinds both
+%%            proof keys onto that location.
 %% TEST-SOURCE: .claude/comms/waves/W04/plan-synthesized-rev3.md (vii)
-%% TEST-SECTION: codependent.sty §6 (\codep@hookproof@afterend), §10
-%%               (\codep@proofof@resolve), §graph (\codep@graph@getanchor)
+%% TEST-SECTION: codependent.sty §6 (\codep@proof@capturebeginanchor),
+%%               §10 (\codep@proofof@resolve), §graph (\codep@graph@getanchor)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% --- Both PDF named destinations exist (post-rebind + pre-rebind):
-%% TEST-PDF-DEST-EXISTS: codep-proof:1\.1
-%% TEST-PDF-DEST-EXISTS: codep-proof:2\.1
-%% --- "Used in 2.1*" row (on Theorem 1.1's page) — entry "2.1*" links
-%%     to codep-proof:2.1 (the source-token's pre-rebind key is
-%%     proof:2.1, since the optional-arg \ref{thm:main} fires before
-%%     \codepproofof rebinds).  atom_pat = dest_pat per the
-%%     TEST-PDF-BACKREF-ENTRY-TARGET convention (parser matches the
-%%     row by any link destination it contains):
-%% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:2\.1 | 2.1* = codep-proof:2\.1
-%% --- "Used in 1.1*" row (on Theorem 2.1's page) — entry "1.1*" links
-%%     to codep-proof:1.1 (the source-token's post-rebind key is
-%%     proof:1.1, since the body's \ref{thm:target} fires after rebind):
-%% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:1\.1 | 1.1* = codep-proof:1\.1
+%% TEST-PDF-LINK-Y-NEAR: 2\.1\* | Proof of Theorem 1\.1 | within=10
+%% TEST-PDF-LINK-Y-NEAR: 1\.1\* | Proof of Theorem 1\.1 | within=10
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{2.1}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{2.1*}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:1.1}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:2.1}
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.1}{codep-proof:2.1}
+%% TEST-AUX-CONTAINS: \codep@keymap{proof:2.1}{proof:1.1}
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-CORRECT, B-LINK-PROOFOF-STAR
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %%
 %% Companion to test-proofs-separated.lvt, which asserts the source-
 %% level rendering ("Used in 2.1*" on thm:main, "Used in 1.1*" on
 %% thm:target) without hyperref.  This fixture loads hyperref and
-%% verifies the corresponding link annotations land on per-display-
-%% id PDF named destinations:
+%% verifies the corresponding link annotations land near the same
+%% proof-begin anchor:
 %%
 %%   * Theorem 1.1 thm:main is referenced from the optional arg
 %%     \ref{thm:main} in \begin{proof}[Proof of Theorem~\ref{thm:main}].
 %%     That \ref runs BEFORE \codepproofof rebinds, so \codep@atomref
 %%     records source-key proof:2.1 (the adjacent-inheritance key).
-%%     thm:main's "Used in" line contains "2.1*", and its link /D
-%%     points to codep-proof:2.1.
+%%     thm:main's "Used in" line contains "2.1*", and its link
+%%     lands at the rebound proof's heading.
 %%
 %%   * Theorem 2.1 thm:target is referenced from the body's
 %%     \ref{thm:target}, which runs AFTER \codepproofof rebinds.
 %%     \codep@atomref records source-key proof:1.1 (post-rebind).
 %%     thm:target's "Used in" line contains "1.1*", and its link
-%%     /D points to codep-proof:1.1.
+%%     lands at the same rebound proof heading.
 %%
-%% \codep@hookproof@afterend emits BOTH anchors for a rebound proof:
-%% the post-rebind codep-proof:1.1 (existing W03/W04-P01 path) and
-%% the pre-rebind codep-proof:2.1 (W04-P02 (vii) addition via the
-%% \codep@proofafterend@pendingoldkey rail), so both source-key
-%% lookups in \codep@graph@getanchor land on the visible-number-
-%% matching destination rather than being keymap-redirected.
+%% The adjacent proof begin emits codep-proof:2.1 before \codepproofof
+%% rebinds the proof key.  \codep@proofof@resolve then aliases the
+%% rebound proof:1.1 key back to that stored proof-begin anchor, so
+%% pre- and post-rebind source keys both land near the same proof.
 
 \documentclass{article}
 \usepackage{amsthm}

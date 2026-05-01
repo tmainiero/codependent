@@ -1,0 +1,82 @@
+{
+  "atomref": {
+    "count": [
+      2,
+      2,
+      2
+    ],
+    "keys": [
+      [
+        "proof:1.1||thm:target",
+        "proof:2.1||thm:main"
+      ],
+      [
+        "proof:1.1||thm:target",
+        "proof:2.1||thm:main"
+      ],
+      [
+        "proof:1.1||thm:target",
+        "proof:2.1||thm:main"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      4,
+      4,
+      4
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Deferred proofs}{1}{section.2}\\protected@file@percent }",
+        "\\newlabel{thm:main}{{1.1}{1}{}{theorem.1.1}{}}",
+        "\\newlabel{thm:target}{{2.1}{1}{}{theorem.2.1}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Deferred proofs}{1}{section.2}\\protected@file@percent }",
+        "\\newlabel{thm:main}{{1.1}{1}{}{theorem.1.1}{}}",
+        "\\newlabel{thm:target}{{2.1}{1}{}{theorem.2.1}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Deferred proofs}{1}{section.2}\\protected@file@percent }",
+        "\\newlabel{thm:main}{{1.1}{1}{}{theorem.1.1}{}}",
+        "\\newlabel{thm:target}{{2.1}{1}{}{theorem.2.1}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      2,
+      2
+    ],
+    "keys": [
+      [],
+      [
+        "theorem:1.1",
+        "theorem:2.1"
+      ],
+      [
+        "theorem:1.1",
+        "theorem:2.1"
+      ]
+    ]
+  }
+}

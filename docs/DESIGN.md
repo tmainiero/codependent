@@ -526,16 +526,28 @@ numbers.  The "Proof." heading from `amsthm` stays as-is.
 Three-level attribution model.  The `.sty` is conservative:
 no false attribution.  The CLI resolves ambiguous cases.
 
-**Adjacent proofs** (nothing intervened between theorem and proof):
-auto-attributed to the preceding theorem.  Display: `proof:2.1`
+**Adjacent proofs** (nothing intervened between a tracked
+environment and the proof): auto-attributed to the preceding
+tracked atom.  Display: `proof:2.1`
 renders as `2.1*`.
 
 **Non-adjacent proofs with explicit attribution:**
 
-| Command | Purpose | `.cdp` record |
-|---------|---------|---------------|
-| `\codepproofof{label}` | Proof is for this theorem | `\codep@cdp@proof{proof:2.1}` |
-| `\codepproofof*{label}` | Same + anchor hyperlink at proof location | Same + `\codep@anchormap` |
+**Switch-off safety contract.** `\codepproofof` and `\codepproofof*` are
+intentionally side-effect-only: they record the proof↔theorem binding
+for backref tracking but emit no visible heading text. The user authors
+the proof heading directly (e.g. `\begin{proof}[Proof of Proposition~\ref{prop:square}]`),
+and `\codepproofof` is invoked separately inside the proof body. This
+guarantees that removing codependent (`\usepackage{codependent}` →
+commented out) leaves the rendered document's proof headings intact.
+The W05 backlog tracks an additive feature that auto-detects `\ref` in
+the proof's optional argument; that feature is purely additive and
+preserves the same switch-off-safety property.
+
+| Command | Purpose | Stable PDF effect | `.cdp` record |
+|---------|---------|-------------------|---------------|
+| `\codepproofof{label}` | Bind a separated proof to this labeled atom | Backrefs to the proof land at the proof heading by aliasing the rebound proof key to the existing proof-begin `\codep@anchormap` target | `\codep@cdp@proof{2.1*}` |
+| `\codepproofof*{label}` | Compatibility spelling for the same binding path | Uses the same single proof-begin anchor path as the plain form | `\codep@cdp@proof{2.1*}` |
 | `\codepproofin{citation}` | Proof is in an external source | `\codep@cdp@proofext{citation}` (TODO) |
 | `\codepnoproof{label}` | Theorem intentionally has no proof here | `\codep@cdp@noproof{label}` (TODO) |
 
@@ -547,49 +559,25 @@ cases.
 
 **Adjacency rule:** only auto-attributes when:
 1. Nothing intervened (no paragraph, no other tracked env)
-2. The preceding environment is in `results`
+2. The preceding environment was registered via `\codeptrack`
 
 ### Environment tracking
 
-All tracked environments fall into two categories:
-
-| Category | Default environments | Proof-eligible |
-|----------|---------------------|----------------|
-| `results` | theorem, lemma, proposition, corollary | Yes |
-| `nonresults` | definition, remark, example | No |
-
-Both categories are fully tracked (atom numbers, backrefs,
-`.cdp` sidecar records).  The distinction is purely about
-proof adjacency: only `results` environments can receive
-auto-attributed proofs.
-
-**Configuration via `\codepsetup`:**
+Tracked theorem-like environments are registered explicitly via
+`\codeptrack{...}`.  There is no result/nonresult split in the
+package: any tracked environment can receive an adjacent proof,
+and all tracked environments participate uniformly in numbering,
+backrefs, and the `.cdp` sidecar.
 
 ```latex
 \usepackage{codependent}
-% Defaults apply: results={theorem,lemma,proposition,corollary}
-%                 nonresults={definition,remark,example}
-
-% Add custom environments (append to defaults):
-\codepsetup{results+={conjecture,claim}}
-\codepsetup{nonresults+={notation,convention}}
-
-% Full override (replaces defaults entirely):
-\codepsetup{results={theorem,lemma,myresult}}
-\codepsetup{nonresults={definition}}
+\codeptrack{theorem,lemma,proposition,corollary,definition,remark}
 ```
 
-A proof after a `nonresults` environment becomes unattributed
-— the CLI flags it for user review.
-
-**`\codeptrack` is deprecated.** All environment registration
-goes through `\codepsetup{results=..., nonresults=...}`.
-Internally `\codeptrack` remains as the hook-installation
-mechanism, but users do not call it directly.
-
-**Future:** auto-hook into `\newtheorem` / `\declaretheorem`
-so custom environments beyond the defaults do not need
-explicit registration at all.
+Custom theorem-like environments are added by including them in
+that same comma-separated list.  `\codeptrack` is a one-shot
+registration call, so it must run after the corresponding
+`\newtheorem` / `\declaretheorem` declarations are in place.
 
 ### Labels
 
@@ -736,20 +724,30 @@ already writes to `.aux`.
 Dependency Index
 
 1  Categories
-   1.2  Category .............. 2.1, 2.3, 3.1, 3.4, 4.2,
+   Definition 1.2 (p. 1) ...... 2.1, 2.3, 3.1, 3.4, 4.2,
                                 5.1, 5.3, 7.2
-   1.3  Hom-set ............... 2.1, 4.1
+   Definition 1.3 (p. 1) ...... 2.1, 4.1
 ```
 
-Appendix entries now carry the target atom's start page and
-bidirectional links:
+Codependent emits a `\Hy@raisedlink` destination only for atom
+classes that lack an in-scope hyperref anchor at their natural
+emission site: equations, proofs (all kinds), and appendix
+entries. Theorems, paragraphs, and other tracked atoms reuse the
+existing in-scope hyperref anchor by recording
+`<atom-key> -> <anchor-name>` in `\codep@anchormap`.
 
-- the body-side tracked result emits a small forward hyperlink to
-  the appendix destination `codep-appendix:<key>`;
-- the appendix entry heading hyperlinks back to the body's anchor
-  (for theorem-like atoms this is the usual `theorem.X` /
-  `definition.X` destination; proof-source entries inside the row
-  keep using the `codep-proof:N.M` namespace);
+Appendix entries now carry the target atom's start page,
+bidirectional links, and a hangindent + leaders layout:
+
+- the body-side tracked atom emits a dagger forward link to the
+  appendix destination `codep-appendix:<key>`;
+- the appendix entry label hyperlinks back to the body's effective
+  anchor (for theorem-like atoms this is usually the surrounding
+  heading anchor, unless a same-typed same-display in-atom label
+  replaced it);
+- proof-source entries inside an appendix row resolve through the
+  proof key's `\codep@anchormap` target rather than through a
+  hard-coded PDF destination namespace;
 - the visible page-number format is configured by the public pgfkey
   `/codep/appendix/pagenum-format`.
 

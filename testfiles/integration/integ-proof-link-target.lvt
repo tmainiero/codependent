@@ -1,21 +1,20 @@
 %% TEST-NAME: integ-proof-link-target
 %% TEST-WHAT: Proof-atom link target: clicking N.M* in a "Used in" list
-%%            jumps to the proof body, not the parent theorem.
-%%            codep-proof:1.2 named destination emitted by \codepproofof*;
-%%            backref entries for proof atoms resolve to codep-proof:N.M.
-%%            Bug #1 closed in W04-P01 (commit 397aa96).
+%%            jumps near the proof heading, not the parent theorem.
+%%            The proof emits its anchor at proof-begin, and the
+%%            backref entry for the proof atom lands within 10pt of
+%%            the rendered proof heading.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
 %% TEST-STABLE-AT: 2
-%% A proof-specific named destination must exist in the PDF.
-%% TEST-PDF-DEST-EXISTS: codep-proof:1\.2
-%% The "Used in" line for thm:B must link the 1.2* entry to the
-%% proof-specific destination, not to the parent theorem anchor.
-%% TEST-PDF-BACKREF-TARGETS: proof:.* = codep-proof:1\.2
-%% TEST-PDF-BACKREF-ENTRY-TARGET: codep-proof:1\.2 | 1.2* = codep-proof:1\.2
+%% The "Used in" line for thm:B must land at the proof heading, not
+%% at the parent theorem anchor.
+%% TEST-PDF-LINK-Y-NEAR: 1\.2\* | Proof of Theorem 1\.2 | within=10
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.2}
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
-%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST
+%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%
@@ -27,10 +26,8 @@
 %% of thm:A at atom 1.2).  That backref link should jump to the proof body,
 %% not to theorem 1.2 itself.
 %%
-%% \codepproofof* is the mechanism that should make the proof-destination
-%% link possible.  The bug is that even with this call the PDF link still
-%% targets the parent theorem anchor (or no proof destination is emitted at
-%% all).  This fixture pins the gap so a future fix can verify closure.
+%% This fixture pins the gap so the proof-begin anchor placement can be
+%% verified directly against the rendered proof heading.
 
 \documentclass{article}
 

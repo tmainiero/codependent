@@ -63,6 +63,11 @@
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
     },
+    "test-proofof-deep-callsite": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
     "test-integration-kitchen-sink": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,

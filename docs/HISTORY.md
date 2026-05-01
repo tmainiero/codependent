@@ -903,68 +903,92 @@ If you are coming back to this project and want to:
   cross-referenced `lessons_latex_package_evolution.md` in
   user-global agent memory.
 
-## Wave 4 — Proof-anchor architecture + appendix mode (2026-04-28)
+## Wave 4 — Proof-anchor architecture + appendix mode (2026-04-30)
 
-Wave 4 closed on `graph-redesign-phase3` at HEAD.  Suite 156/10/0
-(passed/pinned-broken/real-failures).  All 3 linters PASS.
+Wave 4 closed at suite **160/10/0** (passed/pinned-broken/real-failures).
+All 3 linters PASS.
 
 ### Scope and deliverables
 
-W04 implemented the proof-anchor architecture decision made 2026-04-27:
-dedicate a `codep-proof:N.M` PDF destination namespace for adjacent and
-`\codepproofof`-rebound proofs.  Standalone-tracked proofs use
-`codep-proof:a<N>` instead.  Prior to W04, proof atoms aliased whatever
-upstream anchor existed at resolve time.  The wave folded appendix mode
-requirements (bidirectional links + page numbers) with the namespace work
-because both touch the PDF-anchor layer.
+W04's final closeout replaced the temporary `codep-proof:N.M`
+named-destination contract with proof-begin anchormap routing.
+All proofs — adjacent, standalone, and `\codepproofof`-rebound —
+now use the same `\Hy@raisedlink` proof-begin emission path.
+Adjacent and rebound proofs bind their visible `proof:N.M` key to
+that anchor; rebound proofs alias post-rebind keys back to the
+already-emitted begin anchor; standalone proofs bind their opaque
+`proof:a<N>` key.
 
-| Phase | Commit | Deliverable |
-|---|---|---|
-| P01 | `397aa96` | `codep-proof:N.M` namespace + keymap rail; Trinity fixture rewire |
-| P03 | `276f8ff` | `_RENDERED_STATEMENT_RE` split (paragraph-margin atoms) |
-| P02 | `f2b5f36` | Counter rule + standalone suppression + renderer migration |
-| P04+P05 | `5002f43` | Appendix bidir links + page numbers + aux roundtrip |
-| P04 fix | `70901c3` | True `.store in` pagenum-format + DESIGN parity contract |
-| P06 | this commit | Closeout: pin flips, B-ID rewrites, ratchet, stress-test addition |
+Appendix mode closed in the same wave: each appendix row now emits
+its own `\Hy@raisedlink`, rows use a hangindent + leaders layout,
+and page numbers come from the anchor's start page via
+`\codep@anchorpage`.
 
 ### Bug closures
 
-- **Bug #1** (proof links land on `theorem.X` not proof body) — **closed in P01
-  (commit `397aa96`)**. Adjacent and rebound proofs now emit
-  `\hypertarget{codep-proof:N.M}{}` at the proof body; standalone-tracked
-  proofs emit `\hypertarget{codep-proof:a<N>}{}`.  Backref links resolve to
-  the respective destination.  `integ-proof-link-target.lvt` pin flipped to
-  green.
+- **Proof backlinks no longer fall onto theorem/equation anchors.**
+  Proof atoms now resolve through proof-begin anchors, so adjacent
+  and rebound proof clicks land near the rendered proof heading
+  instead of after QED or on a later in-proof equation anchor.
 
-- **Bug #2** (2.7\* phantom standalone source + counter slot consumption) —
-  **closed in P02 (commit `f2b5f36`)**. Standalone proofs no longer call
-  `\refstepcounter{atom}` and are suppressed from inline source-token output.
-  `integ-stress-all-features.lvt` pin flipped to green; 2.7\* absent from
-  stress-test backref lists.
+- **Standalone proofs remain opaque and do not consume the shared
+  counter.** They keep their `proof:a<N>` identity, are suppressed
+  from source-token output, and are verified at the destination-page
+  level rather than through inline clickable backrefs.
 
-- **Trinity 2.3\* → equation.32 collision** — closed in P01 (same commit).
-  The link from Definition 1.6's "Used in 2.3\*" now lands on
-  `codep-proof:2.3`, not `equation.32`.
+- **Appendix entries now own their destination.** The appendix row
+  no longer borrows surrounding text anchors; long reference lists
+  wrap cleanly while retaining bidirectional links and page numbers.
+
+- **The proof-begin spacing regression hypothesis was falsified.**
+  Pre-flight probe `W04-PRE-F-SPACING` measured the `\Hy@raisedlink`
+  proof-begin gap within the accepted `amsthm` tolerance, so the
+  proof-begin path shipped without reopening the spacing bug.
 
 ### Architecture decisions
 
-- `codep-proof:N.M` PDF destinations emitted at the proof body's first stable
-  position, deferred past the `\proof` macro's trivlist setup to avoid
-  whatsit injection in the theorem→proof gap (Bug #4 territory).
-- Keymap rail (`\codep@keymap`) activated: `\codepproofof` rebinds record
-  `old-key → final-key` so render-time source resolution uses a single
-  lookup point.
-- Renderer migrated to kind-aware logic: adjacent+proofs=on → `N.M*`;
-  separated+proofs=on → `<display>*`; standalone → suppressed; proofs=off →
-  unstarred.
-- Separate `\codep@anchorpage{key}{page}` aux record captures anchor page at
-  emission time (not env-end), enabling accurate page numbers in appendix mode
-  even when a theorem crosses a page boundary.
-- Public API: `/codep/appendix/pagenum-format` pgfkey (`.store in` semantics);
-  default `##1~(p.\@~##2)` (sfcode-suppressed to prevent end-of-sentence spacing after `p.`).
+- `\codep@anchormap` is the routing layer for PDF targets. Proofs no
+  longer promise a literal `codep-proof:N.M` named destination; they
+  promise that the proof key resolves to the proof heading location.
+
+- Codependent emits a `\Hy@raisedlink` destination only for atom
+  classes that lack an in-scope hyperref anchor at their natural
+  emission site: equations, proofs (all kinds), and appendix
+  entries. Theorems, paragraphs, and other tracked atoms reuse the
+  existing in-scope hyperref anchor by recording
+  `<atom-key> -> <anchor-name>` in `\codep@anchormap`.
+
+- The keymap rail remains active for rebound proofs: when
+  `\codepproofof` retargets a standalone proof key to a visible proof
+  key, both old and new source tokens converge through the same
+  anchormap lookup, and the rebound key aliases to the proof-begin
+  anchor rather than emitting a second call-site destination.
+
+- Appendix mode remains bidirectional: the body-side dagger links
+  forward to `codep-appendix:<key>`, and the appendix-row label links
+  back to the atom's effective body anchor.
+
+- `/codep/appendix/pagenum-format` remains a render-time
+  two-argument template. The page value comes from
+  `\codep@anchorpage{key}{page}`, so it records the anchor's start
+  page rather than the page where the environment later ends.
+
+### Tests and documentation
+
+- Proof-link fixtures were extended with landing-position
+  (`TEST-PDF-LINK-Y-NEAR`) and standalone-page (`TEST-PDF-DEST-PAGE`)
+  assertions to verify visible PDF behavior, while internal anchormap
+  assertions continue to pin the `codep-proof:N.M` namespace.
+- Appendix fixtures were updated for the hangindent + leaders layout.
+- `BEHAVIOR.md`, `DESIGN.md`, and the compiled stress example were
+  rewritten to drop `codep-proof:N.M` as a public PDF contract and to
+  document the new proof-heading landing behavior.
 
 ### B-IDs
 
-New: `B-LINK-PROOF-DEST`, `B-LINK-APPENDIX-BIDIR`.
-Reworded: `B-LINK-CORRECT`, `B-LINK-EFFECTIVE-ANCHOR`, `B-LINK-ADJ-PROOF`,
-`B-PROOF-SEP`.  VISIBLE-VERIFIED count grew from 80 to 82.
+New: `B-PROOF-ANCHOR-NEAR-HEADING`.
+
+Reworded: `B-LINK-CORRECT`, `B-LINK-EFFECTIVE-ANCHOR`,
+`B-LINK-PROOF-DEST`, `B-LINK-PROOFOF-STAR`,
+`B-LINK-ADJ-PROOF`, `B-LINK-APPENDIX-BIDIR`,
+`B-PROOF-ADJ`, `B-PROOF-SEP`.

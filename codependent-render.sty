@@ -428,24 +428,28 @@
 %% @implements \codepappendix
 \newcommand*{\codep@appendixentry}[5]{%
   \par\noindent%
-  \hspace{1.5em}%
-  \def\codep@tmp@entrylabel{%
-    \codep@renderappendixpagenumtemplate{%
-      \codep@appendix@titlecase{#3}~#2}{#4}}%
-  \@ifpackageloaded{hyperref}{%
-    \codep@graph@getanchor{#1}{\codep@tmp@entryanchor}%
-    \ifx\codep@tmp@entryanchor\@empty%
-      \hypertarget{codep-appendix:#1}{\codep@tmp@entrylabel}%
-    \else%
-      \hypertarget{codep-appendix:#1}{%
-        \hyperlink{\codep@tmp@entryanchor}{\codep@tmp@entrylabel}}%
-    \fi%
-  }{\codep@tmp@entrylabel}%
-  \quad\dotfill\quad%
-  \begin{minipage}[t]{0.45\linewidth}%
-    \raggedright #5%
-  \end{minipage}%
-}
+  \begingroup%
+    \def\codep@tmp@entrylabel{%
+      \codep@renderappendixpagenumtemplate{%
+        \codep@appendix@titlecase{#3}~#2}{#4}}%
+    \def\codep@tmp@entrycontent{\codep@tmp@entrylabel}%
+    \@ifpackageloaded{hyperref}{%
+      \codep@graph@getanchor{#1}{\codep@tmp@entryanchor}%
+      \ifx\codep@tmp@entryanchor\@empty\else%
+        \def\codep@tmp@entrycontent{%
+          \hyperlink{\codep@tmp@entryanchor}{\codep@tmp@entrylabel}}%
+      \fi%
+      \Hy@raisedlink{%
+        \hyper@anchorstart{codep-appendix:#1}\hyper@anchorend}%
+    }{}%
+    \hspace{1.5em}%
+    \codep@tmp@entrycontent%
+    \quad\dotfill\quad%
+    \begin{minipage}[t]{0.45\linewidth}%
+      \raggedright #5%
+    \end{minipage}%
+  \endgroup%
+}%
 
 %% ===================================================================
 %% Hyperref link rendering
