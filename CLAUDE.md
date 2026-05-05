@@ -37,6 +37,11 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 - `.claude/baseline-sizes.json` — baseline ratchet; linter fails if any baseline grows
 - `.latexmkrc` + `scripts/clean-build.sh` — build artifacts route to `texbuild/` + `pdf-out/`
 
+## Scripts layout
+
+- `.claude/scripts/` — harness/agent tooling: hooks, linters, dispatch helpers, wire-format checkers. Invoked by agents, PreToolUse hooks, and humans following CLAUDE.md.
+- `scripts/` — repo utilities for humans (build cleanup, release scaffolding).
+
 ## Rules
 
 - Read `docs/IMPLEMENTATION_PICKUP.md` before starting any work
