@@ -239,6 +239,18 @@
 \newif\ifcodep@proofdisplaypending
 \codep@proofdisplaypendingfalse
 
+% Flag: true only while the current proof heading may auto-bind itself.
+\newif\ifcodep@autoproofof@eligible
+\codep@autoproofof@eligiblefalse
+
+% Scratch count for proof-heading reference auto-detection.
+\newcount\codep@autoproofof@refcount
+\codep@autoproofof@refcount=0\relax
+
+% Flag: true when the last proof-of resolver call bound a target.
+\newif\ifcodep@proofof@resolved
+\codep@proofof@resolvedfalse
+
 % Flag: abort finalization — set by \codep@enddoc@evaluator@pre when
 % a fatal enddoc state is detected (e.g. unsettled proof-binding slot,
 % or a subsystem counter reporting incomplete work we cannot recover
@@ -315,6 +327,14 @@
 % Current proof atom ID (empty outside proofs).
 %% @utility
 \newcommand*{\codep@currentproofid}{}
+
+% Label captured by the proof-heading auto-detect scanner.
+%% @utility
+\newcommand*{\codep@autoproofof@label}{}
+
+% Pending proof-heading label awaiting end-of-proof auto resolution.
+%% @utility
+\newcommand*{\codep@autoproofof@pendinglabel}{}
 
 % Saved nested-proof state.
 \newtoks\codep@proofneststack
@@ -1159,6 +1179,328 @@
   }%
 }%
 
+% \codep@autoproofof@stop
+%   Sentinel token for proof-heading scanner termination.
+%% @utility
+\def\codep@autoproofof@stop{\codep@autoproofof@stop}%
+
+% Star token used by starred \ref-like scanner branches.
+\let\codep@autoproofof@star=*
+
+% \codep@autoproofof@reset
+%   Clear scanner scratch slots after one proof-heading scan.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@reset{%
+  \global\codep@autoproofof@refcount=0\relax%
+  \global\let\codep@autoproofof@label\@empty%
+}%
+
+% \codep@autoproofof@rememberlabel{label}
+%   Record one supported ref-family label found in a proof heading.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@rememberlabel#1{%
+  \global\advance\codep@autoproofof@refcount by 1\relax%
+  \ifnum\codep@autoproofof@refcount=1\relax%
+    \xdef\codep@autoproofof@label{#1}%
+  \fi%
+}%
+
+% \codep@autoproofof@remembercsv{csv-labels}
+%   Count each comma-separated label in a \cref heading reference.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@remembercsv#1{%
+  \def\codep@tmp@csvlabels{#1}%
+  \@for\codep@tmp@csvlabel:=\codep@tmp@csvlabels\do{%
+    \ifx\codep@tmp@csvlabel\@empty\else%
+      \expandafter\codep@autoproofof@rememberlabel\expandafter{%
+        \codep@tmp@csvlabel}%
+    \fi%
+  }%
+}%
+
+% \codep@autoproofof@scan@tokens
+%   Walk heading tokens without expansion, dispatching on ref-family macros.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@tokens{%
+  \futurelet\codep@autoproofof@nexttoken%
+    \codep@autoproofof@scan@dispatch%
+}%
+
+% \codep@autoproofof@scan@dispatch
+%   Select the scanner continuation for the next token.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@dispatch{%
+  \ifx\codep@autoproofof@nexttoken\codep@autoproofof@stop%
+    \let\codep@autoproofof@next\codep@autoproofof@scan@end%
+  \else%
+    \codep@autoproofof@selectnext%
+  \fi%
+  \codep@autoproofof@next%
+}%
+
+% \codep@autoproofof@selectnext
+%   Choose the scanner continuation for a non-stop token.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@selectnext{%
+  \let\codep@autoproofof@next\codep@autoproofof@scan@gobble%
+  \ifx\codep@autoproofof@nexttoken\@sptoken%
+    \let\codep@autoproofof@next\codep@autoproofof@scan@space%
+  \fi%
+  \ifx\codep@autoproofof@nexttoken\ref%
+    \let\codep@autoproofof@next\codep@autoproofof@scan@ref%
+  \fi%
+  \codep@autoproofof@selectautoref%
+  \codep@autoproofof@selectcref%
+}%
+
+% \codep@autoproofof@selectautoref
+%   Select \autoref only when hyperref has defined it.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@selectautoref{%
+  \@ifundefined{autoref}{}{%
+    \ifx\codep@autoproofof@nexttoken\autoref%
+      \let\codep@autoproofof@next\codep@autoproofof@scan@autoref%
+    \fi%
+  }%
+}%
+
+% \codep@autoproofof@selectcref
+%   Select \cref only when cleveref has defined it.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@selectcref{%
+  \@ifundefined{cref}{}{%
+    \ifx\codep@autoproofof@nexttoken\cref%
+      \let\codep@autoproofof@next\codep@autoproofof@scan@cref%
+    \fi%
+  }%
+}%
+
+% \codep@autoproofof@scan@space
+%   Consume one explicit space token and resume heading scanning.
+%% @implements \codep@hookproof
+\let\codep@autoproofof@savedcolon\:%
+\def\:{\codep@autoproofof@scan@space}%
+\expandafter\def\: {%
+  \codep@autoproofof@scan@tokens%
+}%
+\let\:\codep@autoproofof@savedcolon%
+
+% \codep@autoproofof@scan@end
+%   Consume the scanner stop token.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@end#1{}%
+
+% \codep@autoproofof@scan@gobble{token-or-group}
+%   Consume non-ref tokens and resume heading scanning.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@gobble#1{%
+  \codep@autoproofof@scan@tokens%
+}%
+
+% \codep@autoproofof@scan@ref
+%   Consume \ref and then one required label argument.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@ref\ref{%
+  \futurelet\codep@autoproofof@nexttoken%
+    \codep@autoproofof@scan@label@dispatch%
+}%
+
+% \codep@autoproofof@scan@autoref
+%   Consume \autoref and then one required label argument.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@autoref\autoref{%
+  \futurelet\codep@autoproofof@nexttoken%
+    \codep@autoproofof@scan@label@dispatch%
+}%
+
+% \codep@autoproofof@scan@cref
+%   Consume \cref and then one comma-separated label argument.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@cref\cref{%
+  \futurelet\codep@autoproofof@nexttoken%
+    \codep@autoproofof@scan@csv@dispatch%
+}%
+
+% \codep@autoproofof@scan@label@dispatch
+%   Route starred/non-starred \ref-like commands.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@label@dispatch{%
+  \ifx\codep@autoproofof@nexttoken\codep@autoproofof@star%
+    \let\codep@autoproofof@next\codep@autoproofof@scan@label@star%
+  \else%
+    \let\codep@autoproofof@next\codep@autoproofof@scan@label%
+  \fi%
+  \codep@autoproofof@next%
+}%
+
+% \codep@autoproofof@scan@label{label}
+%   Record one label and resume heading scanning.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@label#1{%
+  \codep@autoproofof@rememberlabel{#1}%
+  \codep@autoproofof@scan@tokens%
+}%
+
+% \codep@autoproofof@scan@label@star*{label}
+%   Record a starred \ref-like label and resume scanning.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@label@star*#1{%
+  \codep@autoproofof@rememberlabel{#1}%
+  \codep@autoproofof@scan@tokens%
+}%
+
+% \codep@autoproofof@scan@csv@dispatch
+%   Route starred/non-starred \cref commands.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@csv@dispatch{%
+  \ifx\codep@autoproofof@nexttoken\codep@autoproofof@star%
+    \let\codep@autoproofof@next\codep@autoproofof@scan@csv@star%
+  \else%
+    \let\codep@autoproofof@next\codep@autoproofof@scan@csv%
+  \fi%
+  \codep@autoproofof@next%
+}%
+
+% \codep@autoproofof@scan@csv{csv-labels}
+%   Record one or more \cref labels and resume heading scanning.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@csv#1{%
+  \codep@autoproofof@remembercsv{#1}%
+  \codep@autoproofof@scan@tokens%
+}%
+
+% \codep@autoproofof@scan@csv@star*{csv-labels}
+%   Record starred \cref labels and resume heading scanning.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan@csv@star*#1{%
+  \codep@autoproofof@remembercsv{#1}%
+  \codep@autoproofof@scan@tokens%
+}%
+
+% \codep@autoproofof@setpending{label}
+%   Store one auto-detected label for end-of-proof resolution.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@setpending#1{%
+  \xdef\codep@autoproofof@pendinglabel{#1}%
+}%
+
+% \codep@autoproofof@scan{heading}
+%   Scan a proof heading and bind only when exactly one label is found.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan#1{%
+  \codep@autoproofof@reset%
+  \codep@autoproofof@scan@tokens#1\codep@autoproofof@stop%
+  \ifnum\codep@autoproofof@refcount=1\relax%
+    \edef\codep@tmp@autoproofoflabel{\codep@autoproofof@label}%
+    \expandafter\codep@autoproofof@setpending\expandafter{%
+      \codep@tmp@autoproofoflabel}%
+  \else\ifnum\codep@autoproofof@refcount>1\relax%
+    \PackageWarning{codependent}{Proof heading contains\space%
+      \the\codep@autoproofof@refcount\space supported reference\space%
+      labels; automatic proof attribution skipped}%
+  \fi\fi%
+  \codep@autoproofof@reset%
+}%
+
+% \codep@autoproofof@clearpending
+%   Drop any tentative proof-heading attribution for the current proof.
+%% @utility
+\def\codep@autoproofof@clearpending{%
+  \global\let\codep@autoproofof@pendinglabel\@empty%
+}%
+
+% \codep@autoproofof@finalizepending
+%   Resolve a still-tentative proof-heading attribution at proof end.
+%% @implements \codep@hookproof@end
+\def\codep@autoproofof@finalizepending{%
+  \ifx\codep@autoproofof@pendinglabel\@empty%
+  \else%
+    \ifx\codep@currentproofid\@empty%
+      \codep@autoproofof@clearpending%
+    \else%
+      \edef\codep@tmp@autoproofofpending{%
+        \codep@autoproofof@pendinglabel}%
+      \codep@autoproofof@clearpending%
+      \codep@subsystem@recordtotal{proofof}%
+      \expandafter\codep@autoproofof@finalizepending@label\expandafter{%
+        \codep@tmp@autoproofofpending}%
+    \fi%
+  \fi%
+}%
+
+% \codep@autoproofof@finalizepending@label{label}
+%   Dispatch expanded pending label through the silent proof resolver.
+%% @implements \codep@hookproof@end
+\def\codep@autoproofof@finalizepending@label#1{%
+  \codep@proofof@do@resolver{\codep@proofof@resolve}{#1}{}%
+}%
+
+% \codep@autoproofof@markseen{envname}
+%   Mark that the patched optional-heading body ran for this proof.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@markseen#1{%
+  \ifx\codep@currentproofid\@empty\else%
+    \expandafter\gdef\csname codep@autoproofof@seen@%
+      \codep@currentproofid\endcsname{1}%
+  \fi%
+}%
+
+% \codep@autoproofof@warnclobbered{envname}
+%   Warn once when a proof redefinition removes the heading patch.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@warnclobbered#1{%
+  \@ifundefined{codep@autoproofof@warned@#1}{%
+    \PackageWarning{codependent}{Automatic proof-heading detection for\space%
+      '#1' was disabled by a proof environment redefinition;\space%
+      use explicit \string\codepproofof\space for affected proofs}%
+    \expandafter\gdef\csname codep@autoproofof@warned@#1\endcsname{1}%
+  }{}%
+}%
+
+% \codep@autoproofof@checkseen{envname}{proof-id}
+%   Verify that the patched optional-heading body survived to this proof.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@checkseen#1#2{%
+  \expandafter\ifx\csname codep@autoproofof@seen@#2\endcsname\relax%
+    \codep@autoproofof@warnclobbered{#1}%
+  \else%
+    \global\expandafter\let%
+      \csname codep@autoproofof@seen@#2\endcsname\@undefined%
+  \fi%
+}%
+
+% \codep@autoproofof@heading{envname}{heading}
+%   Entry point prepended to proof's internal optional-heading body.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@heading#1#2{%
+  \codep@autoproofof@markseen{#1}%
+  \ifcodep@autoproofof@eligible%
+    \codep@autoproofof@scan{#2}%
+    \global\codep@autoproofof@eligiblefalse%
+  \fi%
+}%
+
+\begingroup
+  \catcode`\#=12
+  % \codep@autoproofof@install@proof
+  %   Patch proof's generated optional-argument body under catcode-12 #.
+  %% @implements \codep@hookproof
+  \gdef\codep@autoproofof@install@proof{%
+    \@ifundefined{proof}{}{%
+      \expandafter\pretocmd\csname\string\proof\endcsname{%
+        \codep@autoproofof@heading{proof}{#1}%
+      }{}{%
+        \PackageWarning{codependent}{Automatic proof-heading detection\space%
+          unavailable: could not patch proof's optional-heading body;\space%
+          use explicit \string\codepproofof\space for separated proofs}%
+        \expandafter\gdef%
+          \csname codep@autoproofof@warned@proof\endcsname{1}%
+      }%
+    }%
+  }%
+\endgroup
+\AtBeginDocument{\codep@autoproofof@install@proof}
+
 %% @implements \codep@hookproof@begin
 % \codep@proofstatesave{proof-id}
 %   Save the outer proof state under the nested proof-id.
@@ -1170,6 +1512,13 @@
   \else%
     \expandafter\gdef\csname codep@savedproofpending@#1\endcsname{0}%
   \fi%
+  \ifcodep@autoproofof@eligible%
+    \expandafter\gdef\csname codep@savedproofautoeligible@#1\endcsname{1}%
+  \else%
+    \expandafter\gdef\csname codep@savedproofautoeligible@#1\endcsname{0}%
+  \fi%
+  \expandafter\xdef\csname codep@savedproofautopending@#1\endcsname{%
+    \codep@autoproofof@pendinglabel}%
   \expandafter\xdef\csname codep@savedproofbind@#1\endcsname{%
     \codep@pendingproofbind}%
   \expandafter\xdef\csname codep@savedproofadjkey@#1\endcsname{%
@@ -1189,6 +1538,8 @@
     \codep@pendingproofbind@checkoverwrite%
     \global\let\codep@pendingproofbind\@empty%
     \global\codep@proofdisplaypendingfalse%
+    \global\codep@autoproofof@eligiblefalse%
+    \codep@autoproofof@clearpending%
     \global\let\codep@proofadj@pendinganchormapkey\@empty%
     \global\let\codep@proofadj@pendinganchormapanchor\@empty%
   \else%
@@ -1202,6 +1553,15 @@
     \else%
       \global\codep@proofdisplaypendingfalse%
     \fi%
+    \edef\codep@tmp@proofautoeligible{%
+      \csname codep@savedproofautoeligible@#1\endcsname}%
+    \ifx\codep@tmp@proofautoeligible\codep@tmp@proofone%
+      \global\codep@autoproofof@eligibletrue%
+    \else%
+      \global\codep@autoproofof@eligiblefalse%
+    \fi%
+    \global\expandafter\let\expandafter\codep@autoproofof@pendinglabel%
+      \csname codep@savedproofautopending@#1\endcsname%
     \global\expandafter\let\expandafter\codep@pendingproofbind%
       \csname codep@savedproofbind@#1\endcsname%
     \global\expandafter\let\expandafter%
@@ -1214,6 +1574,10 @@
       \csname codep@savedproofid@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofpending@#1\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@savedproofautoeligible@#1\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@savedproofautopending@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofbind@#1\endcsname\@undefined%
     \global\expandafter\let%
@@ -1231,13 +1595,16 @@
 %   Begin dispatch for proof environments.
 \newcommand*{\codep@hookproof@begin}{%
   \codep@closeparagraphifopen%
+  \global\codep@autoproofof@eligiblefalse%
   \ifbool{codep@proofsnumbered}{%
     \codep@ctxpeekkind\codep@tmp@ctxkind%
     \def\codep@tmp@proofkind{proof}%
     \ifx\codep@currentproofid\@empty%
       \ifnum\codep@ctxdepth>0\relax%
+        \global\codep@autoproofof@eligiblefalse%
         \global\advance\codep@suppressdepth by 1\relax%
       \else\ifnum\codep@suppressdepth>0\relax%
+        \global\codep@autoproofof@eligiblefalse%
         \global\advance\codep@suppressdepth by 1\relax%
       \else%
         \codep@allocatomid{\codep@thisproofid}{proof}%
@@ -1253,6 +1620,7 @@
         \ifx\codep@pendingresultid\@empty%
           \codep@proof@capturebeginanchor{\codep@currentproofid}%
         \else%
+          \global\codep@autoproofof@eligiblefalse%
           \codep@proof@adjacent%
         \fi%
       \fi\fi%
@@ -1271,6 +1639,7 @@
       \codep@proof@capturebeginanchor{\codep@currentproofid}%
     \fi%
   }{%
+    \global\codep@autoproofof@eligiblefalse%
     \global\advance\codep@suppressdepth by 1\relax%
   }%
 }%
@@ -1280,6 +1649,8 @@
 %   Leave the current proof unresolved until fallback or \codepproofof.
 \newcommand*{\codep@proof@standalone}{%
   \global\codep@proofdisplaypendingtrue%
+  \global\codep@autoproofof@eligibletrue%
+  \codep@autoproofof@clearpending%
 }%
 
 %% @utility
@@ -1370,6 +1741,8 @@
 %   only the standalone path lands here.
 \newcommand*{\codep@proof@materialize}{%
   \global\codep@proofdisplaypendingfalse%
+  \global\codep@autoproofof@eligiblefalse%
+  \codep@autoproofof@clearpending%
   \edef\codep@tmp@proofkey{proof:\codep@currentproofid}%
   \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \codep@proof@writebeginpage{\codep@currentproofid}{\codep@tmp@proofkey}%
@@ -1395,6 +1768,8 @@
   \codep@bindproofparent{\codep@currentproofid}{\codep@pendingresultid}{%
     statement}%
   \global\codep@proofdisplaypendingfalse%
+  \global\codep@autoproofof@eligiblefalse%
+  \codep@autoproofof@clearpending%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@proofadj@pendinganchormapkey\@empty%
   \global\let\codep@proofadj@pendinganchormapanchor\@empty%
@@ -1421,10 +1796,12 @@
     \codep@ctxpeekkind\codep@tmp@ctxkind%
     \def\codep@tmp@proofkind{proof}%
     \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
+      \codep@autoproofof@finalizepending%
       \ifcodep@proofdisplaypending%
         \codep@proof@materialize%
       \fi%
       \codep@ctxpeekid\codep@thisproofid%
+      \codep@autoproofof@checkseen{proof}{\codep@thisproofid}%
       \codep@render@proof@end%
       \codep@ctxpop{proof}%
       \global\let\codep@pendingresultid\@empty%
@@ -1928,7 +2305,9 @@
         \codep@ctxpeekkind\codep@tmp@ctxkind%
         \def\codep@tmp@proofkind{proof}%
         \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
-          \codep@proof@materialize%
+          \ifx\codep@autoproofof@pendinglabel\@empty%
+            \codep@proof@materialize%
+          \fi%
         \fi%
       \fi%
       \ifbool{codep@sectioning}{%
@@ -2269,31 +2648,29 @@
 %% @utility
 \gdef\codep@refpendinglabels{}
 
-% \codep@defer@proofof{proofid}{label}{anchormode}
+% \codep@defer@proofof{resolver}{proofid}{label}{anchormode}
 %   Queue a deferred \codepproofof resolution against <label>.  The
 %   proof-id is expanded NOW so the drain has the originating
 %   proof's atom-id even if \codep@currentproofid has moved on by
-%   drain time.  Label + anchormode are preserved verbatim.
+%   drain time.  Resolver, label, and anchormode are preserved.
 %
 %   Replay-guarded: skipped during \restatable replay.  Deferrals
 %   are a pass-1 mechanism; replay should not duplicate queued
 %   tokens (the originating proofof call would have already been
 %   processed or deferred in the non-replay pass).
 %% @utility
-\def\codep@defer@proofof#1#2#3{%
+\def\codep@defer@proofof#1#2#3#4{%
   \ifnum\codep@replaydepth>0\relax%
   \else%
-    \@ifundefined{codep@refpending@#2}{%
-      \expandafter\xdef\csname codep@refpending@#2\endcsname{%
-        \noexpand\codep@proofof@resolve%
-          {#1}{\unexpanded{#2}}{\unexpanded{#3}}}%
-      \g@addto@macro\codep@refpendinglabels{\do{#2}}%
+    \@ifundefined{codep@refpending@#3}{%
+      \expandafter\xdef\csname codep@refpending@#3\endcsname{%
+        \noexpand#1{#2}{\unexpanded{#3}}{\unexpanded{#4}}}%
+      \g@addto@macro\codep@refpendinglabels{\do{#3}}%
     }{%
       \edef\codep@tmp@proofpending{%
-        \noexpand\codep@proofof@resolve%
-          {#1}{\unexpanded{#2}}{\unexpanded{#3}}}%
+        \noexpand#1{#2}{\unexpanded{#3}}{\unexpanded{#4}}}%
       \expandafter\g@addto@macro%
-        \csname codep@refpending@#2\endcsname%
+        \csname codep@refpending@#3\endcsname%
         \expandafter{\codep@tmp@proofpending}%
     }%
   \fi%
@@ -3942,17 +4319,25 @@
   \ifbool{codep@proofsnumbered}{%
     \codep@subsystem@recordtotal{proofof}%
     \ifx\codep@currentproofid\@empty\else%
-      \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax%
-        \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax%
-          \codep@defer@proofof{\codep@currentproofid}{#1}{#2}%
-        \else%
-          \codep@proofof@resolve{\codep@currentproofid}{#1}{#2}%
-        \fi%
-      \else%
-        \codep@proofof@resolve{\codep@currentproofid}{#1}{#2}%
-      \fi%
+      \codep@autoproofof@clearpending%
+      \codep@proofof@do@resolver{\codep@proofof@resolve@warn}{#1}{#2}%
     \fi%
   }{}%
+}%
+
+% \codep@proofof@do@resolver{resolver}{label}{anchormode}
+%   Dispatch a proof-of binding through the requested resolver.
+%% @utility
+\def\codep@proofof@do@resolver#1#2#3{%
+  \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax%
+    \expandafter\ifx\csname codep@lblentity@#2\endcsname\relax%
+      \codep@defer@proofof{#1}{\codep@currentproofid}{#2}{#3}%
+    \else%
+      #1{\codep@currentproofid}{#2}{#3}%
+    \fi%
+  \else%
+    #1{\codep@currentproofid}{#2}{#3}%
+  \fi%
 }%
 
 % \codep@proofof@resolve{proofid}{label}{anchormode}
@@ -3964,10 +4349,11 @@
 %   Looks up the display number via the same cascade as
 %   \codep@proofof@do (lblnum first, then lblentity->entity@display).
 %   If still unresolved at this point the label truly never
-%   existed; emit the same unknown-label warning the pre-P03
-%   dispatcher used to emit synchronously.
+%   existed; record failure silently so callers can decide whether
+%   to warn.
 %% @behavior B-PROOF-SEP
 \def\codep@proofof@resolve#1#2#3{%
+  \global\codep@proofof@resolvedfalse%
   \let\codep@tmp@proofdisp\@empty%
   \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax%
     \expandafter\ifx\csname codep@lblentity@#2\endcsname\relax\else%
@@ -3982,10 +4368,8 @@
   \else%
     \edef\codep@tmp@proofdisp{\csname codep@lblnum@#2\endcsname}%
   \fi%
-  \ifx\codep@tmp@proofdisp\@empty%
-    \PackageWarning{codependent}{\string\codepproofof: unknown label '#2'.\space%
-      The label may not exist or may not have been processed yet}%
-  \else%
+  \ifx\codep@tmp@proofdisp\@empty\else%
+    \global\codep@proofof@resolvedtrue%
     \edef\codep@tmp@proofkey{proof:\codep@tmp@proofdisp}%
     \codep@atomgetkey{#1}{\codep@tmp@oldproofkey}%
     \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
@@ -4011,11 +4395,23 @@
     \expandafter\xdef\csname codep@proofparent@#1\endcsname{%
       \codep@tmp@proofparentval}%
     \global\codep@proofdisplaypendingfalse%
+    \global\codep@autoproofof@eligiblefalse%
     \global\let\codep@pendingproofbind\@empty%
     \codep@cdpwrite@atom{%
       \string\codep@cdp@proof{\codep@tmp@proofdisp*}}%
     \codep@proof@bindbeginanchor{#1}{\codep@tmp@proofkey}%
     \codep@render@queuebackref{\codep@tmp@proofkey}%
+  \fi%
+}%
+
+% \codep@proofof@resolve@warn{proofid}{label}{anchormode}
+%   Resolver wrapper used by explicit \codepproofof calls.
+%% @implements \codep@proofof@resolve
+\def\codep@proofof@resolve@warn#1#2#3{%
+  \codep@proofof@resolve{#1}{#2}{#3}%
+  \ifcodep@proofof@resolved\else%
+    \PackageWarning{codependent}{\string\codepproofof: unknown label\space%
+      '#2'. The label may not exist or may not have been processed yet}%
   \fi%
 }%
 
