@@ -1,0 +1,53 @@
+%% TEST-NAME: integ-proofauto-multiref-decline
+%% TEST-WHAT: Multiple supported refs in headings decline with warnings, including a navigational section ref pattern.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-NONADJ
+%% TEST-EXPECT-PACKAGE-WARNING: Proof heading contains.*2 supported reference.*automatic proof attribution skipped
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1.2}{codep-proof:a
+%% TEST-PDF-STEXT: (?s)Proof of theorems 1\.1 and 1\.2
+%% TEST-PDF-STEXT: (?s)Proof of Theorem 1\.1 in &#xa7;1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{Statements}\label{sec:multi-statements}
+\begin{theorem}\label{thm:multi-a}
+  First result.
+\end{theorem}
+\begin{lemma}\label{lem:multi-b}
+  Second result, referring to Section~\ref{sec:multi-statements}.
+\end{lemma}
+\section{Proofs}\label{sec:multi-proofs}
+\begin{proof}[Proof of \cref{thm:multi-a,lem:multi-b}]
+  The comma-list heading is intentionally ambiguous.
+\end{proof}
+\begin{proof}[Proof of Theorem~\ref{thm:multi-a} in \S\ref{sec:multi-statements}]
+  The section reference is navigational decoration, not joint attribution.
+\end{proof}
+\END
+\end{document}

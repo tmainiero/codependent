@@ -1,0 +1,103 @@
+{
+  "atomref": {
+    "count": [
+      3,
+      3,
+      3
+    ],
+    "keys": [
+      [
+        "lemma:1.2||sec:joint-statements",
+        "proof:1.1||thm:joint-a",
+        "proof:1.2||lem:joint-b"
+      ],
+      [
+        "lemma:1.2||sec:joint-statements",
+        "proof:1.1||thm:joint-a",
+        "proof:1.2||lem:joint-b"
+      ],
+      [
+        "lemma:1.2||sec:joint-statements",
+        "proof:1.1||thm:joint-a",
+        "proof:1.2||lem:joint-b"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      10,
+      10,
+      10
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Joint proof}{1}{section.4}\\protected@file@percent }",
+        "\\newlabel{lem:joint-b@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:joint-b}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:joint-proof@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:joint-proof}{{2}{1}{Joint proof}{section.4}{}}",
+        "\\newlabel{sec:joint-statements@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:joint-statements}{{1}{1}{Statements}{section.1}{}}",
+        "\\newlabel{thm:joint-a@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:joint-a}{{1.1}{1}{}{theorem.2}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Joint proof}{1}{section.4}\\protected@file@percent }",
+        "\\newlabel{lem:joint-b@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:joint-b}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:joint-proof@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:joint-proof}{{2}{1}{Joint proof}{section.4}{}}",
+        "\\newlabel{sec:joint-statements@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:joint-statements}{{1}{1}{Statements}{section.1}{}}",
+        "\\newlabel{thm:joint-a@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:joint-a}{{1.1}{1}{}{theorem.2}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Joint proof}{1}{section.4}\\protected@file@percent }",
+        "\\newlabel{lem:joint-b@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:joint-b}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:joint-proof@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:joint-proof}{{2}{1}{Joint proof}{section.4}{}}",
+        "\\newlabel{sec:joint-statements@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:joint-statements}{{1}{1}{Statements}{section.1}{}}",
+        "\\newlabel{thm:joint-a@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:joint-a}{{1.1}{1}{}{theorem.2}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      2,
+      2
+    ],
+    "keys": [
+      [],
+      [
+        "lemma:1.2",
+        "theorem:1.1"
+      ],
+      [
+        "lemma:1.2",
+        "theorem:1.1"
+      ]
+    ]
+  }
+}

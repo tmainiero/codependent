@@ -1,0 +1,60 @@
+%% TEST-NAME: integ-proofauto-repeated-explicit
+%% TEST-WHAT: Two explicit \codepproofof* calls in one proof are silent joint attribution.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-LOG-NOT: codepproofof: unknown label|joint attribution|last-write
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 2
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:1.1}{proof:1.2}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:1.2}{proof:1.1}
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:1.1}{thm:joint-a}
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:1.2}{lem:joint-b}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.1}{proof}{1.1}{proof}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.2}{proof}{1.2}{proof}{lemma:1.2}
+%% TEST-PDF-STEXT: (?s)Used in 1\.1\*
+%% TEST-PDF-STEXT: (?s)Used in 1\.2\*
+%% TEST-PDF-LINK-Y-NEAR: Used in 1\.1\*\. | Joint proof | within=30
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{Statements}\label{sec:joint-statements}
+\begin{theorem}\label{thm:joint-a}
+  First joint target.
+\end{theorem}
+\begin{lemma}\label{lem:joint-b}
+  Second joint target referring to Section~\ref{sec:joint-statements}.
+\end{lemma}
+\section{Joint proof}\label{sec:joint-proof}
+\begin{proof}[Joint proof]
+  \codepproofof*{thm:joint-a}%
+  We first cite \cref{thm:joint-a}.
+  \codepproofof*{lem:joint-b}%
+  We then cite \cref{lem:joint-b}.
+\end{proof}
+\END
+\end{document}

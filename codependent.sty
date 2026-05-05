@@ -251,6 +251,12 @@
 \newif\ifcodep@proofof@resolved
 \codep@proofof@resolvedfalse
 
+% Per-proof count of successful explicit/auto proof-attribution
+% resolutions.  Stored in csname family
+% \codep@proofof@attribcount@<proof-id> so repeated explicit
+% attributions in one proof can be treated as intentional joint
+% attribution rather than a key rename.
+
 % Flag: abort finalization — set by \codep@enddoc@evaluator@pre when
 % a fatal enddoc state is detected (e.g. unsettled proof-binding slot,
 % or a subsystem counter reporting incomplete work we cannot recover
@@ -1435,6 +1441,57 @@
   \codep@proofof@do@resolver{\codep@proofof@resolve}{#1}{}%
 }%
 
+% \codep@proofof@attribcount@get{proof-id}{macro}
+%   Return the number of successful proof-attribution resolutions
+%   already performed for proof-id.
+%% @utility
+\def\codep@proofof@attribcount@get#1#2{%
+  \expandafter\ifx%
+      \csname codep@proofof@attribcount@#1\endcsname\relax%
+    \def#2{0}%
+  \else%
+    \edef#2{\csname codep@proofof@attribcount@#1\endcsname}%
+  \fi%
+}%
+
+% \codep@proofof@attribcount@advance{proof-id}
+%   Mark one successful proof-attribution resolution for proof-id.
+%% @implements \codep@proofof@resolve
+\def\codep@proofof@attribcount@advance#1{%
+  \codep@proofof@attribcount@get{#1}{\codep@tmp@proofofcount}%
+  \count@=\codep@tmp@proofofcount\relax%
+  \advance\count@ by 1\relax%
+  \expandafter\xdef\csname codep@proofof@attribcount@#1\endcsname{%
+    \the\count@}%
+}%
+
+% \codep@proofof@attribcount@clear{proof-id}
+%   Clear per-proof attribution count when the proof scope closes.
+%% @implements \codep@hookproof@end
+\def\codep@proofof@attribcount@clear#1{%
+  \global\expandafter\let%
+    \csname codep@proofof@attribcount@#1\endcsname\relax%
+}%
+
+% \codep@proofof@capturejointmeta{proof-id}{proof-key}
+%   Preserve entity metadata for a non-final proof key when a later
+%   explicit proof attribution joins the proof to another target.  The
+%   keymap rail is deliberately skipped for joint attribution, so each
+%   proof key needs its own parent metadata for source-token rendering.
+%% @implements \codep@proofof@resolve
+\def\codep@proofof@capturejointmeta#1#2{%
+  \expandafter\let\expandafter\codep@tmp@jointparent%
+    \csname codep@proofparent@#1\endcsname%
+  \ifx\codep@tmp@jointparent\relax%
+    \let\codep@tmp@jointparent\@empty%
+  \fi%
+  \ifx\codep@tmp@jointparent\@empty\else%
+    \expandafter\codep@splitprefix#2\@nil%
+    \codep@captureentitymeta{#2}{proof}{\codep@tmp@num}{proof}%
+      {\codep@tmp@jointparent}%
+  \fi%
+}%
+
 % \codep@autoproofof@markseen{envname}
 %   Mark that the patched optional-heading body ran for this proof.
 %% @implements \codep@hookproof
@@ -1826,6 +1883,7 @@
       \fi%
       \codep@captureentitymeta{\codep@tmp@proofkey}{proof}%
         {\codep@tmp@num}{proof}{\codep@tmp@proofparentval}%
+      \codep@proofof@attribcount@clear{\codep@thisproofid}%
       \codep@proofstaterestore{\codep@thisproofid}%
     \fi%
   }{}%
@@ -4371,13 +4429,27 @@
   \ifx\codep@tmp@proofdisp\@empty\else%
     \global\codep@proofof@resolvedtrue%
     \edef\codep@tmp@proofkey{proof:\codep@tmp@proofdisp}%
+    \codep@proofof@attribcount@get{#1}{\codep@tmp@proofofcount}%
     \codep@atomgetkey{#1}{\codep@tmp@oldproofkey}%
+    \ifnum\codep@tmp@proofofcount>0\relax%
+      \ifx\codep@tmp@oldproofkey\@empty\else%
+        \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
+          \codep@proofof@capturejointmeta{#1}{\codep@tmp@oldproofkey}%
+        \fi%
+      \fi%
+    \fi%
     \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
     \codep@proof@writebeginpage{#1}{\codep@tmp@proofkey}%
     \ifx\codep@tmp@oldproofkey\@empty\else%
       \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
-        \codep@keymap@record{%
-          \codep@tmp@oldproofkey}{\codep@tmp@proofkey}%
+        \ifnum\codep@tmp@proofofcount>0\relax%
+          % Repeated explicit proof attributions are intentional
+          % joint attribution.  Keep both proof keys independent:
+          % no old-key -> new-key remap.
+        \else%
+          \codep@keymap@record{%
+            \codep@tmp@oldproofkey}{\codep@tmp@proofkey}%
+        \fi%
       \fi%
     \fi%
     % W04-P02: bind the proofparent rail so \codep@hookproof@end
@@ -4401,6 +4473,7 @@
       \string\codep@cdp@proof{\codep@tmp@proofdisp*}}%
     \codep@proof@bindbeginanchor{#1}{\codep@tmp@proofkey}%
     \codep@render@queuebackref{\codep@tmp@proofkey}%
+    \codep@proofof@attribcount@advance{#1}%
   \fi%
 }%
 

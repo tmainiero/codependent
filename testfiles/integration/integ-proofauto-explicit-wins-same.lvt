@@ -1,0 +1,50 @@
+%% TEST-NAME: integ-proofauto-explicit-wins-same
+%% TEST-WHAT: Heading auto candidate plus same-target explicit \codepproofof* leaves one proof record.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 1
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:1.1}
+%% TEST-PDF-STEXT: (?s)Proof of theorem 1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{Statements}\label{sec:explicit-same-statements}
+\begin{theorem}\label{thm:explicit-same}
+  Main result for same-target explicit override.
+\end{theorem}
+\begin{lemma}\label{lem:explicit-same-witness}
+  A witness lemma referring to Section~\ref{sec:explicit-same-statements}.
+\end{lemma}
+\section{Proofs}\label{sec:explicit-same-proofs}
+\begin{proof}[Proof of \cref{thm:explicit-same}]
+  \codepproofof*{thm:explicit-same}%
+  We cite \cref{lem:explicit-same-witness} after the explicit attribution.
+\end{proof}
+\END
+\end{document}

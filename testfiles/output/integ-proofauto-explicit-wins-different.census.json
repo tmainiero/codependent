@@ -1,0 +1,98 @@
+{
+  "atomref": {
+    "count": [
+      2,
+      2,
+      2
+    ],
+    "keys": [
+      [
+        "lemma:1.2||sec:explicit-diff-statements",
+        "proof:1.2||lem:explicit-target"
+      ],
+      [
+        "lemma:1.2||sec:explicit-diff-statements",
+        "proof:1.2||lem:explicit-target"
+      ],
+      [
+        "lemma:1.2||sec:explicit-diff-statements",
+        "proof:1.2||lem:explicit-target"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      10,
+      10,
+      10
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Proofs}{1}{section.4}\\protected@file@percent }",
+        "\\newlabel{lem:explicit-target@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:explicit-target}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:explicit-diff-proofs@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:explicit-diff-proofs}{{2}{1}{Proofs}{section.4}{}}",
+        "\\newlabel{sec:explicit-diff-statements@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:explicit-diff-statements}{{1}{1}{Statements}{section.1}{}}",
+        "\\newlabel{thm:heading-target@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:heading-target}{{1.1}{1}{}{theorem.2}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Proofs}{1}{section.4}\\protected@file@percent }",
+        "\\newlabel{lem:explicit-target@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:explicit-target}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:explicit-diff-proofs@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:explicit-diff-proofs}{{2}{1}{Proofs}{section.4}{}}",
+        "\\newlabel{sec:explicit-diff-statements@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:explicit-diff-statements}{{1}{1}{Statements}{section.1}{}}",
+        "\\newlabel{thm:heading-target@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:heading-target}{{1.1}{1}{}{theorem.2}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Statements}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Proofs}{1}{section.4}\\protected@file@percent }",
+        "\\newlabel{lem:explicit-target@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:explicit-target}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:explicit-diff-proofs@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:explicit-diff-proofs}{{2}{1}{Proofs}{section.4}{}}",
+        "\\newlabel{sec:explicit-diff-statements@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:explicit-diff-statements}{{1}{1}{Statements}{section.1}{}}",
+        "\\newlabel{thm:heading-target@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:heading-target}{{1.1}{1}{}{theorem.2}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      1,
+      1
+    ],
+    "keys": [
+      [],
+      [
+        "lemma:1.2"
+      ],
+      [
+        "lemma:1.2"
+      ]
+    ]
+  }
+}

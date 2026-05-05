@@ -1,0 +1,49 @@
+%% TEST-NAME: integ-proofauto-no-ref
+%% TEST-WHAT: A standalone proof heading with no supported ref remains unattributed.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-NONADJ
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-PDF-STEXT: (?s)Proof\.\s+This proof has no heading reference
+%% TEST-PDF-DEST-EXISTS: codep-proof:a[0-9]+
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{Statements}\label{sec:noref-statements}
+\begin{theorem}\label{thm:noref-a}
+  First theorem.
+\end{theorem}
+\begin{lemma}\label{lem:noref-b}
+  Second tracked result, with a reference to Section~\ref{sec:noref-statements}.
+\end{lemma}
+\section{Proofs}\label{sec:noref-proofs}
+\begin{proof}
+  This proof has no heading reference and cites \cref{lem:noref-b} only while still standalone.
+\end{proof}
+\END
+\end{document}

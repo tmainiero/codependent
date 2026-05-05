@@ -1,0 +1,53 @@
+%% TEST-NAME: integ-proofauto-forward-ref
+%% TEST-WHAT: A proof heading that names a later theorem settles through the deferred proof-of queue.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST
+%% TEST-LOG-NOT: codepproofof: unknown label
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 1
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:3.1}{codep-proof:a
+%% TEST-PDF-STEXT: (?s)Proof of theorem 3\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{Context}\label{sec:forward-context}
+\begin{theorem}\label{thm:forward-context}
+  Context theorem referring to Section~\ref{sec:forward-context}.
+\end{theorem}
+\section{Early proof}\label{sec:forward-early}
+\begin{proof}[Proof of \cref{thm:forward-later}]
+  The target theorem is declared later in the document.
+\end{proof}
+\section{Later result}\label{sec:forward-later}
+\begin{theorem}\label{thm:forward-later}
+  Later theorem.
+\end{theorem}
+\begin{lemma}\label{lem:forward-helper}
+  Helper lemma for the forward proof.
+\end{lemma}
+\END
+\end{document}

@@ -1,0 +1,118 @@
+{
+  "atomref": {
+    "count": [
+      3,
+      3,
+      3
+    ],
+    "keys": [
+      [
+        "lemma:1.2||sec:adj-first",
+        "proof:3.1||thm:adj-auto",
+        "proof:3.1||thm:adjacent-owner"
+      ],
+      [
+        "lemma:1.2||sec:adj-first",
+        "proof:3.1||thm:adj-auto",
+        "proof:3.1||thm:adjacent-owner"
+      ],
+      [
+        "lemma:1.2||sec:adj-first",
+        "proof:3.1||thm:adj-auto",
+        "proof:3.1||thm:adjacent-owner"
+      ]
+    ]
+  },
+  "measures": {
+    "atomref_gap": 0,
+    "page_bearing_diff_pass2_to_pass3": 0,
+    "renderlist_first_appearance_after_pass2": 0
+  },
+  "page_bearing": {
+    "count": [
+      15,
+      15,
+      15
+    ],
+    "diff": [
+      [],
+      []
+    ],
+    "diff_count": [
+      0,
+      0
+    ],
+    "lines": [
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}First}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Separated auto proof}{1}{section.4}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Adjacent theorem}{1}{section.5}\\protected@file@percent }",
+        "\\newlabel{lem:adj-context@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:adj-context}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:adj-first@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-first}{{1}{1}{First}{section.1}{}}",
+        "\\newlabel{sec:adj-separated@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-separated}{{2}{1}{Separated auto proof}{section.4}{}}",
+        "\\newlabel{sec:adj-theorem@cref}{{[section][3][]3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-theorem}{{3}{1}{Adjacent theorem}{section.5}{}}",
+        "\\newlabel{thm:adj-auto@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:adj-auto}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{thm:adjacent-owner@cref}{{[theorem][1][]3.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:adjacent-owner}{{3.1}{1}{}{theorem.6}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}First}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Separated auto proof}{1}{section.4}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Adjacent theorem}{1}{section.5}\\protected@file@percent }",
+        "\\newlabel{lem:adj-context@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:adj-context}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:adj-first@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-first}{{1}{1}{First}{section.1}{}}",
+        "\\newlabel{sec:adj-separated@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-separated}{{2}{1}{Separated auto proof}{section.4}{}}",
+        "\\newlabel{sec:adj-theorem@cref}{{[section][3][]3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-theorem}{{3}{1}{Adjacent theorem}{section.5}{}}",
+        "\\newlabel{thm:adj-auto@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:adj-auto}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{thm:adjacent-owner@cref}{{[theorem][1][]3.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:adjacent-owner}{{3.1}{1}{}{theorem.6}{}}"
+      ],
+      [
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {1}First}{1}{section.1}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Separated auto proof}{1}{section.4}\\protected@file@percent }",
+        "\\@writefile{toc}{\\contentsline {section}{\\numberline {3}Adjacent theorem}{1}{section.5}\\protected@file@percent }",
+        "\\newlabel{lem:adj-context@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{lem:adj-context}{{1.2}{1}{}{theorem.3}{}}",
+        "\\newlabel{sec:adj-first@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-first}{{1}{1}{First}{section.1}{}}",
+        "\\newlabel{sec:adj-separated@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-separated}{{2}{1}{Separated auto proof}{section.4}{}}",
+        "\\newlabel{sec:adj-theorem@cref}{{[section][3][]3}{[1][1][]1}{}{}{}}",
+        "\\newlabel{sec:adj-theorem}{{3}{1}{Adjacent theorem}{section.5}{}}",
+        "\\newlabel{thm:adj-auto@cref}{{[theorem][1][]1.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:adj-auto}{{1.1}{1}{}{theorem.2}{}}",
+        "\\newlabel{thm:adjacent-owner@cref}{{[theorem][1][]3.1}{[1][1][]1}{}{}{}}",
+        "\\newlabel{thm:adjacent-owner}{{3.1}{1}{}{theorem.6}{}}"
+      ]
+    ]
+  },
+  "passes": 3,
+  "renderlist": {
+    "count": [
+      0,
+      2,
+      2
+    ],
+    "keys": [
+      [],
+      [
+        "theorem:1.1",
+        "theorem:3.1"
+      ],
+      [
+        "theorem:1.1",
+        "theorem:3.1"
+      ]
+    ]
+  }
+}

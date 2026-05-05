@@ -1,0 +1,59 @@
+%% TEST-NAME: integ-proofauto-adjacent-no-leak
+%% TEST-WHAT: Auto pending state does not leak into a later adjacent proof whose heading has a ref.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 2
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:3.1}{codep-proof:3.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:3.1}{proof:1.1}
+%% TEST-PDF-STEXT: (?s)Proof of theorem 1\.1
+%% TEST-PDF-STEXT: (?s)Adjacent proof mentioning Theorem 1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{First}\label{sec:adj-first}
+\begin{theorem}\label{thm:adj-auto}
+  Auto-detected target.
+\end{theorem}
+\begin{lemma}\label{lem:adj-context}
+  Context lemma referring to Section~\ref{sec:adj-first}.
+\end{lemma}
+\section{Separated auto proof}\label{sec:adj-separated}
+\begin{proof}[Proof of \cref{thm:adj-auto}]
+  This proof is separated and auto-detected.
+\end{proof}
+\section{Adjacent theorem}\label{sec:adj-theorem}
+\begin{theorem}\label{thm:adjacent-owner}
+  The adjacent owner theorem.
+\end{theorem}
+\begin{proof}[Adjacent proof mentioning Theorem~\ref{thm:adj-auto}]
+  This proof must remain adjacent to \cref{thm:adjacent-owner}.
+\end{proof}
+\END
+\end{document}

@@ -1,0 +1,55 @@
+%% TEST-NAME: integ-proofauto-nested
+%% TEST-WHAT: Nested proof headings save and restore independent auto-detected targets.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-INNER, B-LINK-PROOF-DEST
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 2
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.2}{codep-proof:a
+%% TEST-PDF-STEXT: (?s)Proof of theorem 1\.1
+%% TEST-PDF-STEXT: (?s)Proof of theorem 1\.2
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{Statements}\label{sec:nested-statements}
+\begin{theorem}\label{thm:nested-outer}
+  Outer theorem.
+\end{theorem}
+\begin{lemma}\label{lem:nested-inner}
+  Inner lemma referring to Section~\ref{sec:nested-statements}.
+\end{lemma}
+\section{Proofs}\label{sec:nested-proofs}
+\begin{proof}[Proof of \cref{thm:nested-outer}]
+  The outer proof opens first.
+  \begin{proof}[Proof of \cref{lem:nested-inner}]
+    The inner proof has its own heading target.
+  \end{proof}
+  The outer proof resumes after the nested proof.
+\end{proof}
+\END
+\end{document}

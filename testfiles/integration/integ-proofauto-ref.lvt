@@ -1,0 +1,49 @@
+%% TEST-NAME: integ-proofauto-ref
+%% TEST-WHAT: A standalone proof heading containing a single \ref auto-binds silently.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-CENSUS: enabled
+%% TEST-CENSUS-PASS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 1
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-PDF-STEXT: (?s)Proof of Theorem 1\.1
+%% TEST-PDF-DEST-EXISTS: codep-proof:a[0-9]+
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+\section{Statements}\label{sec:ref-one}
+\begin{theorem}\label{thm:ref-target}
+  Main result for ref auto detection.
+\end{theorem}
+\begin{lemma}\label{lem:ref-witness}
+  A witness lemma that references Section~\ref{sec:ref-one}.
+\end{lemma}
+\section{Proofs}\label{sec:ref-two}
+\begin{proof}[Proof of Theorem~\ref{thm:ref-target}]
+  The proof body cites \cref{lem:ref-witness} for package-interaction coverage.
+\end{proof}
+\END
+\end{document}

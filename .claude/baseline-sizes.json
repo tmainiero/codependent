@@ -58,17 +58,77 @@
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
     },
+    "integ-proofauto-adjacent-no-leak": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-autoref": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-cref-single": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-explicit-wins-different": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-explicit-wins-same": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-forward-ref": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-multiref-decline": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-nested": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-no-ref": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-ref": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-repeated-explicit": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
+    "integ-proofauto-switch-off": {
+      "atomref_gap": 0,
+      "page_bearing_diff_pass2_to_pass3": 0,
+      "renderlist_first_appearance_after_pass2": 0
+    },
     "integ-stress-all-features": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
     },
-    "test-proofof-deep-callsite": {
+    "test-integration-kitchen-sink": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
     },
-    "test-integration-kitchen-sink": {
+    "test-proofof-deep-callsite": {
       "atomref_gap": 0,
       "page_bearing_diff_pass2_to_pass3": 0,
       "renderlist_first_appearance_after_pass2": 0
