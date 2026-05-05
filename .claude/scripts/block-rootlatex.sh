@@ -9,8 +9,10 @@ CMD=$(printf '%s' "$INPUT" | python3 -c 'import json,sys; d=json.load(sys.stdin)
 
 [ -z "$CMD" ] && exit 0
 
-# Strip comments / strings is overkill — match the engine token as a word.
-if printf '%s' "$CMD" | grep -qE '(^|[;&|`( ])(pdflatex|lualatex|xelatex|latex)( |$)'; then
+# Match an actual engine invocation: command-start prefix + engine word + an
+# argument that looks like a flag or .tex file. This filters out bare tokens
+# inside commit messages, echo strings, or doc text.
+if printf '%s' "$CMD" | grep -qE '(^|[;&|`( ])(pdflatex|lualatex|xelatex|latex)[[:space:]]+(-[^[:space:]]+|[^[:space:]]+\.tex)'; then
   # latexmk is the blessed entrypoint (reads .latexmkrc → texbuild/, pdf-out/).
   if printf '%s' "$CMD" | grep -qE '(^|[;&|`( ])latexmk( |$)'; then
     exit 0

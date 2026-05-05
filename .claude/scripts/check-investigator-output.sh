@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # check-investigator-output.sh — pre-dispatch gate for waves that require an
 # investigator report to exist before a coder agent can be dispatched.
 #
