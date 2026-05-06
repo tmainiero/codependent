@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 DRY_RUN=0
@@ -22,10 +22,10 @@ TEXBUILD_EXTS=(aux log fls fdb_latexmk out cdp toc synctex.gz nav snm bbl blg id
 PDF_EXTS=(pdf)
 
 # Directories to search
-SEARCH_DIRS=("$REPO_ROOT" "$REPO_ROOT/testfiles")
+SEARCH_DIRS=("$REPO_ROOT" "$REPO_ROOT/testfiles" "$REPO_ROOT/testfiles/compiled-examples")
 
 # Directories to exclude from search
-EXCLUDE_DIRS=("$REPO_ROOT/texbuild" "$REPO_ROOT/pdf-out" "$REPO_ROOT/build" "$REPO_ROOT/.git" "$REPO_ROOT/.claude" "$REPO_ROOT/testfiles/compiled-examples")
+EXCLUDE_DIRS=("$REPO_ROOT/texbuild" "$REPO_ROOT/pdf-out" "$REPO_ROOT/build" "$REPO_ROOT/.git" "$REPO_ROOT/.claude" "$REPO_ROOT/testfiles/output" "$REPO_ROOT/testfiles/tmp")
 
 # Function to check if a path is in excluded dirs
 is_excluded() {
@@ -38,6 +38,11 @@ is_excluded() {
   return 1
 }
 
+# Function to check if a file is tracked in git (skip tracked files)
+is_tracked() {
+  git ls-files --error-unmatch "$1" >/dev/null 2>&1
+}
+
 texbuild_count=0
 pdf_count=0
 
@@ -45,6 +50,9 @@ pdf_count=0
 for ext in "${TEXBUILD_EXTS[@]}"; do
   while IFS= read -r file; do
     if is_excluded "$file"; then
+      continue
+    fi
+    if is_tracked "$file"; then
       continue
     fi
     if [[ -f "$file" ]]; then
@@ -70,15 +78,10 @@ for ext in "${PDF_EXTS[@]}"; do
     if is_excluded "$file"; then
       continue
     fi
+    if is_tracked "$file"; then
+      continue
+    fi
     if [[ -f "$file" ]]; then
-      # Check if tracked in git (skip tracked files, process untracked ones)
-      if ! git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
-        # File is untracked, process it
-        true
-      else
-        # File is tracked, skip it
-        continue
-      fi
       if [[ $PURGE -eq 1 ]]; then
         if [[ $DRY_RUN -eq 0 ]]; then
           rm "$file"
