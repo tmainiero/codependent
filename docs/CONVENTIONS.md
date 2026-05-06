@@ -211,6 +211,18 @@ python3 .claude/scripts/lint_traceability.py --update-baseline  # regenerate
 The linter runs automatically via PostToolUse (on .sty edits) and
 PreCommit hooks.
 
+## Stress Test
+
+The stress fixture is `testfiles/compiled-examples/test-ta-style.tex`. It is the integration ground truth and also a visual contract.
+
+### Non-default override sentinels
+
+Any `\codepsetup` value in `testfiles/compiled-examples/test-ta-style.tex` that deviates from the package default MUST:
+1. Carry an inline `%%NONDEFAULT-OVERRIDE%%` sentinel on the line of the override.
+2. Be listed in the `%% Active non-default overrides:` block at the top of the fixture.
+
+Rationale: the stress fixture is also a visual contract. When a renderer regression appears, a reviewer must be able to distinguish "package default behavior changed" from "fixture is exercising a non-default code path". The sentinel + index block make this distinguishable without searching `git log`.
+
 ## Build output location
 
 Manual LaTeX compiles MUST route output into `texbuild/` (aux/log/intermediates) and `pdf-out/` (PDFs). This matches the project `.latexmkrc` and the user's vimtex config.

@@ -1,5 +1,9 @@
 \def\START{}\def\END{}
 \documentclass{article}
+%% Active non-default overrides:
+%%   - line 22: appendix/pagenum-format={##1~\textemdash~p.~##2}
+%%              exercises the API; default is {##1~(p.\@~##2)}
+%% (Sentinels: lines tagged %%NONDEFAULT-OVERRIDE%% deviate from package defaults.)
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
 \usepackage{mathtools}
@@ -15,7 +19,7 @@
 %% codependent in appendix mode (W04: exercises appendix bidir + page numbers)
 \usepackage[backrefs=appendix,backref-color=gray]{codependent}
 %% W04-P04: page-number format override — uses non-default value to exercise the API
-\codepsetup{appendix/pagenum-format={##1~\textemdash~p.~##2}}
+\codepsetup{appendix/pagenum-format={##1~\textemdash~p.~##2}}  %%NONDEFAULT-OVERRIDE%%
 \codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
 
 %% Multi-file compatibility check: load subfiles and standalone.

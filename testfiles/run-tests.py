@@ -2781,11 +2781,33 @@ def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool
                 if r.skipped:
                     print(f"  {r.fixture.name}: {r.skip_reason}")
 
+    # Identify passing integ-*.lvt fixtures that lack any TEST-PDF-* directive.
+    def _has_pdf_directives(path: Path) -> bool:
+        try:
+            with path.open("r", encoding="utf-8") as _f:
+                return any(
+                    line.startswith("%%") and "TEST-PDF-" in line
+                    for line in _f
+                )
+        except OSError:
+            return True  # assume covered on read error; avoid false-alarm
+
+    no_pdf_fixtures = [
+        r for r in results
+        if r.passed
+        and not r.skipped
+        and r.fixture.path.name.startswith("integ-")
+        and r.fixture.path.suffix == ".lvt"
+        and not _has_pdf_directives(r.fixture.path)
+    ]
+    n_no_pdf = len(no_pdf_fixtures)
+
     print()
     print("=" * 72)
     print(
         f"TOTAL: {total}  passed={passed}  failed={failed}  "
-        f"skipped={skipped}  pinned-broken={pinned_broken}"
+        f"skipped={skipped}  pinned-broken={pinned_broken}  "
+        f"no-pdf-assertions={n_no_pdf}"
     )
     print("=" * 72)
 
@@ -2797,6 +2819,12 @@ def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool
             f"exit code. They flag intentional hazards documented in the "
             f"design, and will need to be "
             f"rewritten when the underlying issue is fixed."
+        )
+
+    if n_no_pdf > 0:
+        print(
+            f"\nWARNING: {n_no_pdf} passing integration fixture(s) have no "
+            f"TEST-PDF-* assertions — visible-output regressions may be invisible."
         )
 
     # Exit code: non-zero only on real failures.
