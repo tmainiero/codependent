@@ -20,7 +20,7 @@ or `~/texmf/` tree.
 
 | File | License | Upstream | Vendored | Used by |
 |------|---------|----------|----------|---------|
-| `sty-theorems-ta.sty` | LPPL 1.3c | `~/Documents/research-noai/mps/three-avatars/sty-theorems-ta.sty` (commit `14df94d`, 2025-07-29) | 2026-05-06 | `testfiles/compiled-examples/{stress-ta-*,test-ta-*}.tex` |
+| `sty-theorems-ta.sty` | LPPL 1.3c | `~/Documents/research-noai/mps/three-avatars/sty-theorems-ta.sty` (commit `14df94d`, 2025-07-29) | 2026-05-06 | `testfiles/compiled-examples/stress-ta-*.tex` |
 
 ## Reachability
 

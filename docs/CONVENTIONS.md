@@ -213,11 +213,17 @@ PreCommit hooks.
 
 ## Stress Test
 
-The stress fixture is `testfiles/compiled-examples/test-ta-style.tex`. It is the integration ground truth and also a visual contract.
+The canonical stress fixture is `testfiles/compiled-examples/stress-ta-appendix-gray.tex`. It is the integration ground truth and also a visual contract.
+
+Retained LIVE stress fixtures:
+
+- `stress-ta-appendix-gray.tex` — appendix mode, gray backrefs, and non-default appendix page-number format.
+- `stress-ta-inline.tex` — plain/default-color inline rendering path.
+- `stress-ta-inline-gray.tex` — inline rendering path with gray backrefs.
 
 ### Non-default override sentinels
 
-Any `\codepsetup` value in `testfiles/compiled-examples/test-ta-style.tex` that deviates from the package default MUST:
+Any `\codepsetup` value in `testfiles/compiled-examples/stress-ta-appendix-gray.tex` that deviates from the package default MUST:
 1. Carry an inline `%%NONDEFAULT-OVERRIDE%%` sentinel on the line of the override.
 2. Be listed in the `%% Active non-default overrides:` block at the top of the fixture.
 

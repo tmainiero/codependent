@@ -22,6 +22,9 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 .claude/scripts/lint-tests.sh                          # test convention linter
 ```
 
+**Dev iteration**: `nix develop --command python3 testfiles/run-tests.py ...` (above).
+**CI / wave-close reproducibility**: `nix flake check` (runs the equivalent inside the flake build sandbox).
+
 ## Key Files
 
 - `codependent.sty` — the package (~2500 lines)
@@ -59,11 +62,11 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 
 ## Testing policy
 
-**Every feature must be exercised in the stress test** (`testfiles/compiled-examples/test-ta-style.tex`). Unit tests (`.lvt`) are necessary but NOT sufficient. The stress test is the integration ground truth — it uses real theorem styles, hyperref, cleveref, tikz-cd, concept macros, and cross-section references together. If a feature isn't in the stress test, it's not tested.
+**Every feature must be exercised in the stress test** (`testfiles/compiled-examples/stress-ta-appendix-gray.tex`). Unit tests (`.lvt`) are necessary but NOT sufficient. The stress test is the integration ground truth — it uses real theorem styles, hyperref, cleveref, tikz-cd, concept macros, and cross-section references together. If a feature isn't in the stress test, it's not tested.
 
 When implementing a feature:
 1. Write unit tests for the specific mechanism
-2. Add the feature to `test-ta-style.tex` with realistic usage
+2. Add the feature to `stress-ta-appendix-gray.tex` with realistic usage
 3. Add corresponding assertions to `testfiles/integration/trinity-test.lvt`
 4. Compile the stress test and visually verify the PDF
 
