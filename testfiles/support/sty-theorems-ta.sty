@@ -1,0 +1,195 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% sty-theorems-ta.sty — vendored support package for codependent CI
+%
+% Copyright (c) 2024-2026 Tristan Mainiero
+%
+% This work may be distributed and/or modified under the conditions of
+% the LaTeX Project Public License, either version 1.3c of this license
+% or (at your option) any later version. The latest version of this
+% license is in https://www.latex-project.org/lppl.txt and version
+% 1.3c or later is part of all distributions of LaTeX version
+% 2008-05-04 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+% Maintainer: Tristan Mainiero.
+%
+% Upstream: ~/Documents/research-noai/mps/three-avatars/sty-theorems-ta.sty
+% Vendored into codependent at: testfiles/support/sty-theorems-ta.sty
+% Vendor date: 2026-05-06
+% Upstream commit at vendor time: 14df94d (2025-07-29 refactor: universal counter)
+% Re-vendor by re-copying when upstream changes; update this header.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           Custom Theorems                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Adds beginning and endmarks to theorems; if using amsthm instead of
+% ntheorem, endmarks must be manually tweaked for displaymath and item
+% with \qedhere; ignores \qedhere's with ntheorem
+% NOTE: amsthm has better spacing and fewer overflow/underfull hbox issues
+
+% WARNING: This will currently throw errors if using ntheorem, as it uses
+% the keys notefont and notebraces; just delete these keys to use ntheorem
+
+%%%%%%%%%%%%%%%%%%
+%  DEPENDENCIES  %
+%%%%%%%%%%%%%%%%%%
+% THEOREMS
+\RequirePackage{amsthm}
+
+% Alternative (see warning above)
+%\usepackage[amsmath,thmmarks]{ntheorem}
+
+% OTHER
+\RequirePackage{thmtools} %\declaretheorem, \declaretheoremstyle
+\RequirePackage{xparse} %\NewDocumentCommand, \IfValueTF
+
+% Symbols Used
+\RequirePackage{fontawesome}
+\RequirePackage{xcolor}
+
+% Boldface symbol wrapper (if needed)
+% \newcommand*{\symf}[1]{\ensuremath{\boldsymbol{#1}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Special Imported Symbols  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Imported arev symbols (if needed)
+% \DeclareSymbolFont{extraup}{U}{zavm}{m}{n}
+% \DeclareMathSymbol{\varheart}{\mathalpha}{extraup}{86}
+% \DeclareMathSymbol{\varspade}{\mathalpha}{extraup}{85} 
+% \DeclareMathSymbol{\vardiamond}{\mathalpha}{extraup}{87}
+
+
+% Scalebox throws an error for the following symbol
+% depending on the version of latex
+% The following is a workaround
+\newsavebox{\rescaleBlueSpock}
+\savebox{\rescaleBlueSpock}{\scalebox{0.9}{\textcolor{blue}{\normalfont\faHandSpockO}}}
+
+%%%%%%%%%%%%%%%%%%%%%
+%  Symbol synonyms  %
+%%%%%%%%%%%%%%%%%%%%%
+
+% Note symbol (from fontawesome)
+\newcommand{\notesymbol}{\textcolor{blue}{\text{{\normalfont\faPencilSquareO}}}}
+
+% Terminology symbols
+\newcommand{\termsymbolLeft}{\scalebox{-1}[1]{\usebox{\rescaleBlueSpock}}}
+\newcommand{\termsymbolRight}{\usebox{\rescaleBlueSpock}}
+
+% Definition symbols
+\newcommand{\defsymbolLeft}{\textcolor{blue}{\blacktriangleright}}
+\newcommand{\defsymbolRight}{\textcolor{blue}{\blacktriangleleft}}
+
+% Theorem Symbol
+% \definecolor{BrickRed}{HTML}{671800}
+\definecolor{thmcolor}{RGB}{3,105,79}
+\newcommand{\thmsymbol}{\textcolor{thmcolor}{\blacklozenge}}
+% \newcommand{\thmsymbol}{\textcolor{BrickRed}{\diamondsuit}}
+
+% Proposition Symbol
+\newcommand{\propsymbol}{\lozenge}
+
+% Lemma symbol
+\newcommand{\lemsymbol}{\heartsuit}
+
+% Corollary symbol
+\newcommand{\corsymbol}{\vartriangle}
+
+%%%%%%%%%%%%%%%%%%%%
+%  Macro Creators  %
+%%%%%%%%%%%%%%%%%%%%
+% Usage \newdefinitionlikeenv{env-name}{display name}{begin symbol}{end symbol}[counter (optional)]
+\NewDocumentCommand{\makeDefinitionEnv}{mmmmo}{%
+	\declaretheoremstyle[
+	spaceabove=6pt, 
+	spacebelow=6pt,
+	headfont=\normalfont\bfseries,
+	qed=$#4$,
+	bodyfont=\normalfont,
+	notefont=\mdseries\bfseries, %amsthm only
+	notebraces={(}{)},           %amsthm only
+	]{#1style}
+	\IfValueTF{#5}{
+		\declaretheorem[
+		name = {$#3$ #2},
+		style=#1style,
+		sibling=#5
+		]{#1}
+	}{%
+		\declaretheorem[
+		name = {$#3$ #2},
+		style=#1style,
+		numberwithin=section
+		]{#1}
+	}
+}
+
+% Usage \newtheoremlikeenv{env-name}{display-name}{begin-symbol}{end-symbol}[counter (optional)]
+% slant body format
+\NewDocumentCommand{\makeTheoremEnv}{mmmmo}{%
+	\declaretheoremstyle[
+	spaceabove=6pt, 
+	spacebelow=6pt,
+	headfont=\normalfont\bfseries,
+	qed=$#4$,
+	bodyfont=\slshape,
+	notefont=\mdseries\bfseries,   %amsthm only
+	notebraces={(}{)},             %amsthm only
+	]{#1style}
+	\IfValueTF{#5}{
+		\declaretheorem[
+		name = {$#3$ #2},
+		style=#1style,
+		sibling=#5
+		]{#1}
+	}{%
+		\declaretheorem[
+		name = {$#3$ #2},
+		style=#1style,
+		numberwithin=section
+		]{#1}
+	}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Theorem Style Instantiation  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Theorem-like/provable environments: all use the same counter named theorem
+\makeTheoremEnv{theorem}{Theorem}{\thmsymbol}{\thmsymbol}
+\makeTheoremEnv{proposition}{Proposition}{\propsymbol}{\propsymbol}[theorem]
+\makeTheoremEnv{lemma}{Lemma}{\lemsymbol}{\lemsymbol}[theorem]
+\makeTheoremEnv{corollary}{Corollary}{\corsymbol}{\corsymbol}[theorem]
+
+% Definition environments: use the theorem counter
+\makeDefinitionEnv{definition}{Definition}{\defsymbolLeft}{\defsymbolRight}[theorem]
+\makeDefinitionEnv{notation}{Notation}{\notesymbol}{\notesymbol}[theorem]
+\makeDefinitionEnv{terminology}{Terminology}{\termsymbolLeft}{\termsymbolRight}[theorem]
+
+% Examples/Remarks, etc.: still use the theorem counter
+\makeDefinitionEnv{example}{Example}{\clubsuit}{\clubsuit}[theorem]
+\makeDefinitionEnv{remark}{Remark}{\triangleright}{\triangleleft}[theorem]
+\makeDefinitionEnv{question}{Question}{\boxed{?}}{\boxed{?}}[theorem]
+
+% Proof Appearance (Assumes using either amsthm or ntheorem)
+\@ifpackageloaded{amsthm}{%
+	% Proof appearance for amsthm
+	\expandafter\let\expandafter\oldproof\csname\string\proof\endcsname
+	\let\oldendproof\endproof
+	\renewenvironment{proof}[1][\proofname]{%
+	  \oldproof[\sc #1:]%
+	}{\oldendproof}
+}{
+	%Proof Appearance for ntheorem
+	\theoremheaderfont{\sc}\theorembodyfont{\upshape}
+	\theoremstyle{nonumberplain}
+	\theoremseparator{:}
+	\theoremsymbol{\rule{1ex}{1ex}}
+	\newtheorem{proof}{Proof}
+	% Ignore \qedhere's
+	\newcommand{\qedhere}{}
+}
+

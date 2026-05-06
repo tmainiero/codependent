@@ -1,3 +1,4 @@
-# Find codependent.sty from the canonical location (tools/codependent/)
-# instead of requiring a local copy in this directory.
+# Find codependent.sty from the canonical location (../../codependent.sty)
+# and vendored support files from testfiles/support/.
 ensure_path('TEXINPUTS', '../../');
+ensure_path('TEXINPUTS', '../support/');
