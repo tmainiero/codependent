@@ -109,6 +109,11 @@ for FILE in "${FILES[@]}"; do
 
 done
 
+# Run drift linter: no legacy sbl symbols in active code.
+if ! python3 .claude/scripts/lint_no_sbl.py; then
+  ERRORS=$((ERRORS + 1))
+fi
+
 echo >&2
 if [ $ERRORS -gt 0 ]; then
   echo "FAILED: $ERRORS error(s), $WARNINGS warning(s) across ${#FILES[@]} files" >&2

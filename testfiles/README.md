@@ -92,7 +92,7 @@ Each fixture is a `.lvt` file with two layers:
 | `TEST-CDP-LAST-RECORD` | 1 | substring that MUST appear in the LAST non-empty line of `.cdp` (stronger than `CONTAINS`; used to pin the end-marker sentinel position) |
 | `TEST-AUX-CONTAINS` | * | substring that MUST appear in `.aux` |
 | `TEST-AUX-NOT-CONTAINS` | * | substring that must NOT appear in `.aux` |
-| `TEST-ATOMS-MIN` | 1 | minimum count of `\codep@sbl@atom{` records |
+| `TEST-ATOMS-MIN` | 1 | minimum count of `\codep@cdp@atom{` records |
 | `TEST-PACKAGES` | 1 | comma-separated list of packages this fixture loads |
 | `TEST-RERUN` | 1 | number of `pdflatex` passes (default 2 for backref population) |
 | `TEST-PINS-KNOWN-BROKEN` | 1 | `yes` marks intentional hazard pin (exempted from exit code) |
@@ -108,7 +108,7 @@ Repeating keys may appear multiple times in the header.
 %% TEST-SECTION: docs/DESIGN.md §8a.0
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error
-%% TEST-CDP-CONTAINS: \codep@sbl@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-AUX-CONTAINS: \codep@atomref{1.2}{thm:A}
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2

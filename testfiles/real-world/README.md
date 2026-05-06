@@ -113,7 +113,7 @@ The top-level test harness is expected to:
    **twice** (the dpmac port requires a rerun for backref population).
 4. Collect per-paper metrics:
    - pdflatex exit code,
-   - presence of `\codep@sbl@end{OK}` sentinel in the generated
+   - presence of `\codep@cdp@end{OK}` sentinel in the generated
      `.cdp` file,
    - atom-count stability between the two passes,
    - log lines matching `Warning|Error|codependent`.

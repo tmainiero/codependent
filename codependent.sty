@@ -3508,7 +3508,7 @@
   {codependent/backref/install}{before}{hyperref}
 
 % Internal dependency: sbl open sees the backref install.
-\DeclareHookRule{begindocument/before}{codependent/sbl/open}%
+\DeclareHookRule{begindocument/before}{codependent/cdp/open}%
                 {after}{codependent/backref/install}
 
 % Concept install fires AFTER backref install (needs
@@ -3748,7 +3748,7 @@
 %% Per REVIEW_C finding #5, the stream opens at begindocument/before
 %% (before any \AtBeginDocument hook), so atoms emitted from user
 %% hooks are never silently dropped.
-\AddToHook{begindocument/before}[codependent/sbl/open]{%
+\AddToHook{begindocument/before}[codependent/cdp/open]{%
   \if@filesw
     \newwrite\codep@cdpout
     \immediate\openout\codep@cdpout=\jobname.cdp\relax
@@ -3780,7 +3780,7 @@
 %% Installed at begindocument/before so we capture \label BEFORE
 %% cleveref's \AtBeginDocument wrapper installs around us (see
 %% docs/DESIGN.md §9a "Label wrap" double-wrap explanation).
-\AddToHook{begindocument/before}[codependent/sbl/labelwrap]{%
+\AddToHook{begindocument/before}[codependent/cdp/labelwrap]{%
   \let\codep@orig@label\label
   \@ifpackageloaded{cleveref}{%
     %% cleveref path: \label[type]{key}, optional arg.
@@ -3893,13 +3893,13 @@
 }
 
 % Flush deferred sbl writes after the stream opens.
-\AddToHook{begindocument/before}[codependent/sbl/cmddef]{%
+\AddToHook{begindocument/before}[codependent/cdp/cmddef]{%
   \codep@cdp@deferred
   \global\let\codep@cdp@deferred\@empty
 }
 % Must run AFTER the sbl open hook.
-\DeclareHookRule{begindocument/before}{codependent/sbl/cmddef}%
-                {after}{codependent/sbl/open}
+\DeclareHookRule{begindocument/before}{codependent/cdp/cmddef}%
+                {after}{codependent/cdp/open}
 
 % \codep@emit@def{name}
 %   Star-branch handler: fires when \cmd* is used (defining site).

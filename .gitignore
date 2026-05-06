@@ -1,4 +1,6 @@
 # Build artifacts
+# legacy .sbl sidecars (now .cdp)
+*.sbl
 *.aux
 *.log
 *.out

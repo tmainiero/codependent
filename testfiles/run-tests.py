@@ -75,10 +75,10 @@ METADATA_KEYS = {
     "TEST-EXIT": "exit_code",
     "TEST-LOG-NOT": "log_not",  # may repeat
     "TEST-LOG-CONTAINS": "log_contains",  # may repeat
-    "TEST-CDP-CONTAINS": "sbl_contains",  # may repeat
-    "TEST-CDP-NOT-CONTAINS": "sbl_not_contains",  # may repeat
-    "TEST-CDP-COUNT": "sbl_count",  # "<pattern> = <n>", may repeat
-    "TEST-CDP-LAST-RECORD": "sbl_last_record",  # last non-empty line must contain this
+    "TEST-CDP-CONTAINS": "cdp_contains",  # may repeat
+    "TEST-CDP-NOT-CONTAINS": "cdp_not_contains",  # may repeat
+    "TEST-CDP-COUNT": "cdp_count",  # "<pattern> = <n>", may repeat
+    "TEST-CDP-LAST-RECORD": "cdp_last_record",  # last non-empty line must contain this
     "TEST-AUX-CONTAINS": "aux_contains",  # may repeat
     "TEST-AUX-NOT-CONTAINS": "aux_not_contains",  # may repeat
     "TEST-ATOMS-MIN": "atoms_min",
@@ -132,7 +132,7 @@ METADATA_KEYS = {
 
 REPEATING_KEYS = {
     "log_not", "log_contains",
-    "sbl_contains", "sbl_not_contains", "sbl_count",
+    "cdp_contains", "cdp_not_contains", "cdp_count",
     "aux_contains", "aux_not_contains",
     "pdf_contains", "pdf_not",
     "pdf_stext", "pdf_stext_not",
@@ -195,10 +195,10 @@ class Fixture:
     exit_code: int = 0
     log_not: list = dataclasses.field(default_factory=list)
     log_contains: list = dataclasses.field(default_factory=list)
-    sbl_contains: list = dataclasses.field(default_factory=list)
-    sbl_not_contains: list = dataclasses.field(default_factory=list)
-    sbl_count: list = dataclasses.field(default_factory=list)
-    sbl_last_record: str = ""
+    cdp_contains: list = dataclasses.field(default_factory=list)
+    cdp_not_contains: list = dataclasses.field(default_factory=list)
+    cdp_count: list = dataclasses.field(default_factory=list)
+    cdp_last_record: str = ""
     aux_contains: list = dataclasses.field(default_factory=list)
     aux_not_contains: list = dataclasses.field(default_factory=list)
     atoms_min: int = 0
@@ -1927,11 +1927,11 @@ def _run_assertions(
     """Evaluate fix's assertions against current artifacts in tmp_path."""
     log_file = tmp_path / f"{fix.name}.log"
     aux_file = tmp_path / f"{fix.name}.aux"
-    sbl_file = tmp_path / f"{fix.name}.cdp"
+    cdp_file = tmp_path / f"{fix.name}.cdp"
 
     log_text = log_file.read_text(encoding="utf-8", errors="replace") if log_file.exists() else ""
     aux_text = aux_file.read_text(encoding="utf-8", errors="replace") if aux_file.exists() else ""
-    sbl_text = sbl_file.read_text(encoding="utf-8", errors="replace") if sbl_file.exists() else ""
+    cdp_text = cdp_file.read_text(encoding="utf-8", errors="replace") if cdp_file.exists() else ""
 
     def fail(msg: str) -> None:
         result.failures.append(f"{prefix}{msg}")
@@ -1968,15 +1968,15 @@ def _run_assertions(
             )
 
     # 4. CDP assertions.
-    for s in fix.sbl_contains:
-        if s not in sbl_text:
+    for s in fix.cdp_contains:
+        if s not in cdp_text:
             fail(f"cdp missing required string: {s}")
-    for s in fix.sbl_not_contains:
-        if s in sbl_text:
+    for s in fix.cdp_not_contains:
+        if s in cdp_text:
             fail(f"cdp contains forbidden string: {s}")
 
     # 5. CDP counts: format "<pattern> = <n>".
-    for spec in fix.sbl_count:
+    for spec in fix.cdp_count:
         try:
             pat, expected = spec.rsplit("=", 1)
             pat = pat.strip()
@@ -1984,7 +1984,7 @@ def _run_assertions(
         except ValueError:
             fail(f"malformed TEST-CDP-COUNT: {spec}")
             continue
-        actual = sbl_text.count(pat)
+        actual = cdp_text.count(pat)
         if actual != expected_n:
             fail(f"cdp count for {pat!r}: expected {expected_n}, got {actual}")
 
@@ -1998,18 +1998,18 @@ def _run_assertions(
 
     # 7. atoms_min: count \codep@cdp@atom records.
     if fix.atoms_min > 0:
-        atom_count = sbl_text.count("\\codep@cdp@atom{")
+        atom_count = cdp_text.count("\\codep@cdp@atom{")
         if atom_count < fix.atoms_min:
             fail(f"atom count: expected >= {fix.atoms_min}, got {atom_count}")
 
-    # 8. sbl_last_record: last NON-EMPTY line of .cdp must contain this string.
-    if fix.sbl_last_record:
-        non_empty_lines = [ln for ln in sbl_text.splitlines() if ln.strip()]
+    # 8. cdp_last_record: last NON-EMPTY line of .cdp must contain this string.
+    if fix.cdp_last_record:
+        non_empty_lines = [ln for ln in cdp_text.splitlines() if ln.strip()]
         if not non_empty_lines:
-            fail(f"cdp last-record check: file is empty, expected {fix.sbl_last_record!r}")
-        elif fix.sbl_last_record not in non_empty_lines[-1]:
+            fail(f"cdp last-record check: file is empty, expected {fix.cdp_last_record!r}")
+        elif fix.cdp_last_record not in non_empty_lines[-1]:
             fail(
-                f"cdp last-record: expected {fix.sbl_last_record!r}, "
+                f"cdp last-record: expected {fix.cdp_last_record!r}, "
                 f"got last non-empty line: {non_empty_lines[-1]!r}"
             )
 
