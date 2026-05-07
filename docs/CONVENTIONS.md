@@ -281,4 +281,35 @@ Manual LaTeX compiles MUST route output into `texbuild/` (aux/log/intermediates)
 - **pdflatex direct**: `pdflatex -output-directory=texbuild foo.tex`, then `mv texbuild/foo.pdf pdf-out/`.
 - **If artifacts end up in the repo root anyway**: run `scripts/clean-build.sh` to relocate them (or `--purge` to delete).
 
-`texbuild/` and `pdf-out/` are gitignored. The test runner uses tempdirs and is unaffected.
+`texbuild/` and `pdf-out/runs/` are gitignored. `pdf-out/goldens/*.pdf` and
+`pdf-out/goldens/*-manifest.json` are **versioned** — they are the committed visual
+golden PDFs and their approval manifests. The test runner uses tempdirs and is unaffected.
+
+### Visual golden workflow
+
+```
+scripts/run-stress.sh [--filter REGEX]
+```
+Compiles stress fixtures through the runner (preserving `TEST-PDF` assertion machinery),
+archives each run under `pdf-out/runs/<UTC>-<BRANCH>-<SHA>-<fixture>-stress.pdf`, and
+writes a per-run `manifest.json`. Does not modify committed goldens.
+
+```
+scripts/promote-golden.sh <run-id> <fixture> --approver=NAME --comment="STRING"
+```
+Promotes one artifact to `pdf-out/goldens/`. Writes atomically via `.pdf.tmp` + rename.
+Requires `--approver` and `--comment` (refuses without). Prints paths for `git add`.
+
+```
+scripts/check-goldens.sh
+```
+For each committed golden: recompiles the fixture, normalizes both PDFs via
+`scripts/normalize-pdf-json.py` (strips volatile metadata fields), and diffs the
+normalized JSON + extracted text. Exits non-zero on drift.
+
+**User-approval workflow**:
+1. `scripts/run-stress.sh` — compile and archive
+2. Visually inspect `pdf-out/runs/<run-id>-<fixture>-stress.pdf`
+3. `scripts/promote-golden.sh <run-id> <fixture> --approver=NAME --comment="..."`
+4. `git add pdf-out/goldens/<fixture>.pdf pdf-out/goldens/<fixture>-manifest.json`
+5. `git commit`

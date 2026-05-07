@@ -17,6 +17,13 @@ build/
 texbuild/
 pdf-out/
 
+# Keep pdf-out ignored except committed visual goldens.
+!pdf-out/
+pdf-out/*
+!pdf-out/goldens/
+!pdf-out/goldens/*.pdf
+!pdf-out/goldens/*-manifest.json
+
 # Ephemeral agent state (findings, comms, candidate claims, wave tracker, locks)
 .claude/agent_memory/
 .claude/comms/
