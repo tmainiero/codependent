@@ -14,9 +14,10 @@ once the implementation lands and we can lock in golden output.
 Usage:
 
     python3 run-tests.py [--filter PATTERN] [--engine pdflatex|lualatex|xelatex]
-                         [--keep-temp] [--verbose] [--unit-only]
-                         [--integration-only] [--real-world] [--check-test-index]
-                         [--full]
+                         [--keep-temp] [--verbose]
+                         [--unit] [--integration] [--visual] [--full]
+                         [--unit-only] [--integration-only]
+                         [--real-world] [--check-test-index]
 
 System-wide texlive-full is used during the design/test phase per
 user direction 2026-04-09 (the project's Nix flake does not yet
@@ -54,6 +55,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent  # tools/codependent/
 UNIT_DIR = SCRIPT_DIR / "unit"
 INTEGRATION_DIR = SCRIPT_DIR / "integration"
+COMPILED_EXAMPLES_DIR = SCRIPT_DIR / "compiled-examples"
 REAL_WORLD_DIR = SCRIPT_DIR / "real-world" / "wrappers"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 
@@ -117,6 +119,7 @@ METADATA_KEYS = {
     "TEST-PDF-LINK-Y-NEAR": "pdf_link_y_near",   # may repeat; "<source-text> | <anchor-text> | within=<Δpt>"
     "TEST-PDF-LINK-Y-BETWEEN": "pdf_link_y_between",  # may repeat; "<source-text> | <top-text> | <bottom-text>"
     "TEST-PDF-DEST-PAGE": "pdf_dest_page",         # may repeat; "<dest-name> | <anchor-text>"
+    "TEST-PDF-PAGES": "pdf_pages",                 # exact PDF page count
     # Package error/warning assertions
     "TEST-EXPECT-PACKAGE-WARNING": "expect_package_warning",  # may repeat; regex on "Package codependent Warning:" line
     "TEST-EXPECT-PACKAGE-ERROR": "expect_package_error",      # may repeat; regex on "Package codependent Error:" line; also drops -halt-on-error
@@ -284,6 +287,7 @@ class Fixture:
     pdf_link_y_near: list = dataclasses.field(default_factory=list)
     pdf_link_y_between: list = dataclasses.field(default_factory=list)
     pdf_dest_page: list = dataclasses.field(default_factory=list)
+    pdf_pages: int = -1
     # Package error/warning assertions
     expect_package_warning: list = dataclasses.field(default_factory=list)
     expect_package_error: list = dataclasses.field(default_factory=list)
@@ -308,16 +312,16 @@ class Fixture:
 
 
 def parse_fixture(path: Path) -> Fixture:
-    """Parse the TEST-* header comment metadata from a .lvt file."""
+    """Parse the TEST-* header comment metadata from a fixture source file."""
     fix = Fixture(path=path, name=path.stem)
     # Optional [phase] qualifier: TEST-FOO[cold]: val or TEST-FOO: val
     header_re = re.compile(
-        r"^%%\s+(TEST-[A-Z-]+)(?:\[(cold|warm|warm_changed)\])?:\s*(.*)$"
+        r"^%{1,2}\s+(TEST-[A-Z0-9-]+)(?:\[(cold|warm|warm_changed)\])?:\s*(.*)$"
     )
     with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.rstrip("\n")
-            if not line.startswith("%%"):
+            if not line.startswith("%"):
                 # First non-metadata line ends the header. We allow blank
                 # comment lines but stop on actual LaTeX content.
                 if line.strip().startswith("\\") or not line.strip().startswith("%"):
@@ -361,6 +365,11 @@ def parse_fixture(path: Path) -> Fixture:
             elif attr == "pdf_link_count":
                 try:
                     fix.pdf_link_count = int(value)
+                except ValueError:
+                    pass
+            elif attr == "pdf_pages":
+                try:
+                    fix.pdf_pages = int(value)
                 except ValueError:
                     pass
             elif attr == "atoms_min":
@@ -753,6 +762,27 @@ def _count_pdf_links(pdf_path: Path) -> int | None:
                 return proc2.stdout.count("/Link")
             return proc.stdout.count("/Link")
     except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
+def _count_pdf_pages(pdf_path: Path) -> int | None:
+    """Return the exact page count using qpdf, or None if unavailable."""
+    if PDF_QPDF_TOOL is None:
+        return None
+    try:
+        proc = subprocess.run(
+            [PDF_QPDF_TOOL, "--show-npages", str(pdf_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    try:
+        return int(proc.stdout.strip())
+    except ValueError:
         return None
 
 
@@ -1540,6 +1570,41 @@ def _prepare_fixture_workspace(fix: "Fixture", tmp_path: Path) -> None:
         shutil.copy(LTXML_FILE, tmp_path / "codependent.ltxml")
 
 
+def _copy_project_style_files(target_root: Path) -> None:
+    """Copy package files needed by isolated fixture compiles."""
+    shutil.copy(STY_FILE, target_root / "codependent.sty")
+    if RENDER_STY_FILE.exists():
+        shutil.copy(RENDER_STY_FILE, target_root / "codependent-render.sty")
+    if LTXML_FILE.exists():
+        shutil.copy(LTXML_FILE, target_root / "codependent.ltxml")
+
+
+def _prepare_stress_workspace(fix: "Fixture", tmp_path: Path) -> Path:
+    """Create a temp tree that preserves compiled-examples/.latexmkrc paths."""
+    compiled_dir = tmp_path / "testfiles" / "compiled-examples"
+    compiled_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy(fix.path, compiled_dir / fix.path.name)
+    shutil.copy(COMPILED_EXAMPLES_DIR / ".latexmkrc", compiled_dir / ".latexmkrc")
+    support_src = SCRIPT_DIR / "support"
+    if support_src.exists():
+        shutil.copytree(support_src, tmp_path / "testfiles" / "support")
+    _copy_project_style_files(tmp_path)
+    return compiled_dir
+
+
+def _copy_stress_artifacts_to_assertion_root(fix: "Fixture", tmp_path: Path) -> None:
+    """Expose latexmk's aux/pdf outputs at the paths _run_assertions expects."""
+    artifact_sources = {
+        ".aux": tmp_path / "texbuild" / f"{fix.name}.aux",
+        ".cdp": tmp_path / "texbuild" / f"{fix.name}.cdp",
+        ".log": tmp_path / "texbuild" / f"{fix.name}.log",
+        ".pdf": tmp_path / "pdf-out" / f"{fix.name}.pdf",
+    }
+    for suffix, source in artifact_sources.items():
+        if source.exists():
+            shutil.copy(source, tmp_path / f"{fix.name}{suffix}")
+
+
 def _run_census(
     fix: "Fixture",
     engine_bin: Path,
@@ -2079,6 +2144,7 @@ def _run_assertions(
         or fix.pdf_all_backrefs_linked or fix.pdf_backref_targets
         or fix.pdf_backref_sources_rendered
         or fix.pdf_vspace_between
+        or fix.pdf_pages >= 0
     )
     if has_pdf_checks:
         pdf_file = tmp_path / f"{fix.name}.pdf"
@@ -2129,6 +2195,21 @@ def _run_assertions(
                         fail(f"pdf link counting failed (tool: {PDF_LINK_TOOL})")
                     elif link_count < fix.pdf_links:
                         fail(f"pdf links: expected >= {fix.pdf_links}, got {link_count}")
+
+            if fix.pdf_pages >= 0:
+                if PDF_QPDF_TOOL is None:
+                    fail(
+                        "TEST-PDF-PAGES requires qpdf "
+                        "(not on PATH). Run inside 'nix develop'."
+                    )
+                else:
+                    page_count = _count_pdf_pages(pdf_file)
+                    if page_count is None:
+                        fail(f"pdf page counting failed (tool: {PDF_QPDF_TOOL})")
+                    elif page_count != fix.pdf_pages:
+                        fail(
+                            f"pdf pages: expected {fix.pdf_pages}, got {page_count}"
+                        )
 
             # 10. Structured text assertions.
             if fix.pdf_stext or fix.pdf_stext_not or fix.pdf_vspace_between:
@@ -2638,6 +2719,56 @@ class TestResult:
     log_excerpt: str = ""
 
 
+def _is_direct_stress_fixture(fix: "Fixture") -> bool:
+    return fix.path.suffix == ".tex" and fix.kind == "stress"
+
+
+def _run_stress_fixture(
+    fix: "Fixture",
+    result: "TestResult",
+    tmp_path: Path,
+    verbose: bool,
+) -> None:
+    """Compile a LIVE stress .tex fixture through latexmk and assert artifacts."""
+    latexmk_bin = shutil.which("latexmk")
+    if latexmk_bin is None:
+        result.failures.append("latexmk not found on PATH; run inside 'nix develop'")
+        return
+
+    compiled_dir = _prepare_stress_workspace(fix, tmp_path)
+    cmd = [
+        latexmk_bin,
+        "-pdf",
+        "-interaction=nonstopmode",
+        "-halt-on-error",
+        fix.path.name,
+    ]
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=compiled_dir,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired:
+        result.failures.append("latexmk stress compile: TIMEOUT after 300s")
+        return
+
+    if verbose:
+        sys.stderr.write(f"  latexmk stress compile: exit {proc.returncode}\n")
+    _copy_stress_artifacts_to_assertion_root(fix, tmp_path)
+    if proc.returncode != fix.exit_code:
+        log_file = tmp_path / f"{fix.name}.log"
+        log_text = (
+            log_file.read_text(encoding="utf-8", errors="replace")
+            if log_file.exists()
+            else ""
+        )
+        result.log_excerpt = "\n".join(log_text.splitlines()[-30:])
+    _run_assertions(fix, result, tmp_path, proc.returncode, prefix="")
+
+
 def run_fixture(
     fix: "Fixture",
     engine_bin: Path,
@@ -2663,32 +2794,34 @@ def run_fixture(
 
     with tempfile.TemporaryDirectory(prefix=f"codep-test-{fix.name}-") as tmp:
         tmp_path = Path(tmp)
-        _prepare_fixture_workspace(fix, tmp_path)
-
-        if _is_multi_phase(fix):
-            _run_multi_phase(fix, result, engine_bin, tmp_path, verbose)
+        if _is_direct_stress_fixture(fix):
+            _run_stress_fixture(fix, result, tmp_path, verbose)
         else:
-            # Single-phase: compile `rerun` times then check assertions once.
-            run_log = []
-            for pass_num in range(1, fix.rerun + 1):
-                cmd = [str(engine_bin), "-interaction=nonstopmode"]
-                if not fix.expect_package_error:
-                    cmd.append("-halt-on-error")
-                cmd.append(f"{fix.name}.tex")
-                try:
-                    proc = subprocess.run(
-                        cmd, cwd=tmp_path, capture_output=True, text=True, timeout=120,
-                    )
-                except subprocess.TimeoutExpired:
-                    result.failures.append(f"pass {pass_num}: TIMEOUT after 120s")
-                    result.duration_ms = int((time.time() - t0) * 1000)
-                    return result
-                run_log.append(("pass", pass_num, proc.returncode))
-                if verbose:
-                    sys.stderr.write(f"  pass {pass_num}: exit {proc.returncode}\n")
+            _prepare_fixture_workspace(fix, tmp_path)
+            if _is_multi_phase(fix):
+                _run_multi_phase(fix, result, engine_bin, tmp_path, verbose)
+            else:
+                # Single-phase: compile `rerun` times then check assertions once.
+                run_log = []
+                for pass_num in range(1, fix.rerun + 1):
+                    cmd = [str(engine_bin), "-interaction=nonstopmode"]
+                    if not fix.expect_package_error:
+                        cmd.append("-halt-on-error")
+                    cmd.append(f"{fix.name}.tex")
+                    try:
+                        proc = subprocess.run(
+                            cmd, cwd=tmp_path, capture_output=True, text=True, timeout=120,
+                        )
+                    except subprocess.TimeoutExpired:
+                        result.failures.append(f"pass {pass_num}: TIMEOUT after 120s")
+                        result.duration_ms = int((time.time() - t0) * 1000)
+                        return result
+                    run_log.append(("pass", pass_num, proc.returncode))
+                    if verbose:
+                        sys.stderr.write(f"  pass {pass_num}: exit {proc.returncode}\n")
 
-            last_exit = run_log[-1][2] if run_log else -1
-            _run_assertions(fix, result, tmp_path, last_exit, prefix="")
+                last_exit = run_log[-1][2] if run_log else -1
+                _run_assertions(fix, result, tmp_path, last_exit, prefix="")
 
         if keep_temp:
             persistent = SCRIPT_DIR / "tmp" / fix.name
@@ -2722,26 +2855,100 @@ def run_fixture(
 # ----------------------------------------------------------------------
 
 
-def discover_fixtures(unit: bool, integration: bool, real_world: bool, pattern: str | None) -> list[Fixture]:
-    fixtures = []
-    dirs = []
-    if unit:
-        dirs.append(UNIT_DIR)
-    if integration:
-        dirs.append(INTEGRATION_DIR)
+DISCOVERY_SKIP_DIRS = {"output", "tmp", "corpus", "__pycache__"}
+
+
+def _is_active_fixture_path(path: Path, real_world: bool) -> bool:
+    parts = set(path.parts)
+    if parts & DISCOVERY_SKIP_DIRS:
+        return False
+    if not real_world and "real-world" in parts:
+        return False
+    return True
+
+
+def _matches_filter(path: Path, pattern: str | None) -> bool:
+    return pattern is None or re.search(pattern, path.name) is not None
+
+
+def _parse_fixture_for_discovery(path: Path) -> Fixture | None:
+    try:
+        return parse_fixture(path)
+    except Exception as e:
+        sys.stderr.write(f"WARN: failed to parse {path}: {e}\n")
+        return None
+
+
+def _fixture_headers(path: Path) -> dict:
+    return parse_test_kind_headers(path).get("headers", {})
+
+
+def _discover_lvt_fixtures(
+    selected_kinds: set[str],
+    real_world: bool,
+    pattern: str | None,
+) -> list[Fixture]:
+    fixtures: list[Fixture] = []
+    active_dirs = [UNIT_DIR, INTEGRATION_DIR]
     if real_world:
-        dirs.append(REAL_WORLD_DIR)
-    for d in dirs:
-        if not d.exists():
+        active_dirs.append(REAL_WORLD_DIR)
+    for directory in active_dirs:
+        if not directory.exists():
             continue
-        for path in sorted(d.glob("*.lvt")):
-            if pattern and not re.search(pattern, path.name):
+        for path in sorted(directory.glob("*.lvt")):
+            if (
+                not _is_active_fixture_path(path, real_world)
+                or not _matches_filter(path, pattern)
+            ):
                 continue
             try:
-                fixtures.append(parse_fixture(path))
+                kind = _fixture_headers(path).get("TEST-KIND", "").strip()
             except Exception as e:
                 sys.stderr.write(f"WARN: failed to parse {path}: {e}\n")
+                continue
+            if kind not in selected_kinds:
+                continue
+            fix = _parse_fixture_for_discovery(path)
+            if fix is not None:
+                fixtures.append(fix)
     return fixtures
+
+
+def _discover_live_stress_tex_fixtures(
+    selected_kinds: set[str],
+    pattern: str | None,
+) -> list[Fixture]:
+    if "stress" not in selected_kinds or not COMPILED_EXAMPLES_DIR.exists():
+        return []
+    fixtures: list[Fixture] = []
+    for path in sorted(COMPILED_EXAMPLES_DIR.glob("*.tex")):
+        if not _matches_filter(path, pattern):
+            continue
+        try:
+            headers = _fixture_headers(path)
+        except Exception as e:
+            sys.stderr.write(f"WARN: failed to parse {path}: {e}\n")
+            continue
+        if (
+            headers.get("TEST-KIND", "").strip() == "stress"
+            and headers.get("TEST-STATUS", "").strip() == "LIVE"
+        ):
+            fix = _parse_fixture_for_discovery(path)
+            if fix is not None:
+                fixtures.append(fix)
+    return fixtures
+
+
+def discover_fixtures(
+    selected_kinds: set[str],
+    real_world: bool,
+    pattern: str | None,
+) -> list[Fixture]:
+    """Discover selected .lvt fixtures plus LIVE stress .tex fixtures."""
+    return [
+        *_discover_lvt_fixtures(selected_kinds, real_world, pattern),
+        *_discover_live_stress_tex_fixtures(selected_kinds, pattern),
+    ]
 
 
 # ----------------------------------------------------------------------
@@ -2835,24 +3042,24 @@ def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool
                 if r.skipped:
                     print(f"  {r.fixture.name}: {r.skip_reason}")
 
-    # Identify passing integ-*.lvt fixtures that lack any TEST-PDF-* directive.
-    def _has_pdf_directives(path: Path) -> bool:
+    # Identify passing LIVE integration/stress fixtures that lack TEST-PDF-*.
+    def _has_pdf_directives(fix: Fixture) -> bool:
         try:
-            with path.open("r", encoding="utf-8") as _f:
-                return any(
-                    line.startswith("%%") and "TEST-PDF-" in line
-                    for line in _f
-                )
-        except OSError:
-            return True  # assume covered on read error; avoid false-alarm
+            parsed = parse_test_kind_headers(fix.path)
+        except Exception:
+            return True  # assume covered on parse/read error; avoid false-alarm
+        return any(
+            entry.get("key", "").startswith("TEST-PDF-")
+            for entry in parsed.get("entries", [])
+        )
 
     no_pdf_fixtures = [
         r for r in results
         if r.passed
         and not r.skipped
-        and r.fixture.path.name.startswith("integ-")
-        and r.fixture.path.suffix == ".lvt"
-        and not _has_pdf_directives(r.fixture.path)
+        and r.fixture.kind in {"integration", "stress"}
+        and r.fixture.status == "LIVE"
+        and not _has_pdf_directives(r.fixture)
     ]
     n_no_pdf = len(no_pdf_fixtures)
 
@@ -2877,9 +3084,15 @@ def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool
 
     if n_no_pdf > 0:
         print(
-            f"\nWARNING: {n_no_pdf} passing integration fixture(s) have no "
+            f"\nWARNING: {n_no_pdf} passing integration/stress fixture(s) have no "
             f"TEST-PDF-* assertions — visible-output regressions may be invisible."
         )
+        for r in no_pdf_fixtures:
+            try:
+                rel_path = r.fixture.path.relative_to(PROJECT_ROOT)
+            except ValueError:
+                rel_path = r.fixture.path
+            print(f"  - {rel_path}")
 
     # Exit code: non-zero only on real failures.
     real_failures = failed - pinned_broken
@@ -2908,10 +3121,13 @@ def main():
     parser.add_argument("--keep-temp", action="store_true", help="copy temp dirs to testfiles/tmp/<name>/ for inspection")
     parser.add_argument("--verbose", "-v", action="store_true", help="show pass-by-pass output and log tails")
     parser.add_argument("--brief", action="store_true", help="emit only failing/skipped fixtures (no PASS lines); ~80%% token savings for agent sessions")
-    parser.add_argument("--unit-only", action="store_true", help="only run unit fixtures")
-    parser.add_argument("--integration-only", action="store_true", help="only run integration fixtures")
+    parser.add_argument("--unit", action="store_true", help="run TEST-KIND: unit fixtures (additive with --integration/--visual)")
+    parser.add_argument("--integration", action="store_true", help="run TEST-KIND: integration fixtures (additive with --unit/--visual)")
+    parser.add_argument("--visual", action="store_true", help="run TEST-KIND: stress fixtures (additive with --unit/--integration)")
+    parser.add_argument("--unit-only", action="store_true", help="deprecated alias for --unit")
+    parser.add_argument("--integration-only", action="store_true", help="deprecated alias for --integration")
     parser.add_argument("--real-world", action="store_true", help="include real-world arxiv-corpus fixtures")
-    parser.add_argument("--full", action="store_true", help="run the full fixture suite (currently the default; CI-friendly with --check-test-index)")
+    parser.add_argument("--full", action="store_true", help="run unit + integration + stress fixtures (default when no kind flag is specified)")
     parser.add_argument("--check-test-index", action="store_true", help="CI mode: fail if generated testfiles/test-index.md is stale; do not repair it")
     parser.add_argument(
         "--census",
@@ -2968,16 +3184,25 @@ def main():
         )
     sys.stderr.write("\n")
 
-    # Discover fixtures.
+    # Discover fixtures. Kind flags are additive; --full/no kind flag means all.
     if args.unit_only:
-        unit, integration, real_world = True, False, False
-    elif args.integration_only:
-        unit, integration, real_world = False, True, False
-    else:
-        unit, integration = True, True
-        real_world = args.real_world
+        sys.stderr.write("WARNING: --unit-only is deprecated, use --unit\n")
+        args.unit = True
+    if args.integration_only:
+        sys.stderr.write("WARNING: --integration-only is deprecated, use --integration\n")
+        args.integration = True
 
-    fixtures = discover_fixtures(unit, integration, real_world, args.filter)
+    selected_kinds = set()
+    if args.unit:
+        selected_kinds.add("unit")
+    if args.integration:
+        selected_kinds.add("integration")
+    if args.visual:
+        selected_kinds.add("stress")
+    if args.full or not selected_kinds:
+        selected_kinds = {"unit", "integration", "stress"}
+
+    fixtures = discover_fixtures(selected_kinds, args.real_world, args.filter)
     if args.census:
         fixtures = [fix for fix in fixtures if fix.census]
 

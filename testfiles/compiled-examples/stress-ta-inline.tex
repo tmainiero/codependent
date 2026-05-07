@@ -4,6 +4,8 @@
 %% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN
 %% TEST-STATUS: LIVE
 %% TEST-RENDER-MODES: inline, default-color
+%% TEST-PDF-PAGES: 2
+%% TEST-PDF-STEXT: Stress fixture inline default
 
 \def\START{}\def\END{}
 \documentclass{article}
@@ -22,7 +24,12 @@
 \usepackage[hypertexnames=false]{hyperref}
 \usepackage{cleveref}
 
-\title{Codependent + sty-theorems-ta stress test}
+%% cleveref names for custom envs that thmtools doesn't auto-register
+\crefname{notation}{Notation}{Notations}
+\crefname{terminology}{Terminology}{Terminologies}
+\crefname{question}{Question}{Questions}
+
+\title{Stress fixture inline default}
 \author{Test}
 \date{}
 

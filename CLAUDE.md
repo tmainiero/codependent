@@ -17,6 +17,10 @@ LaTeX package for automatic semantic dependency tracking and backreference rende
 ```sh
 nix develop --command python3 testfiles/run-tests.py   # full suite (94 tests) — MUST use nix develop
 nix develop --command python3 testfiles/run-tests.py --filter X  # subset
+nix develop --command python3 testfiles/run-tests.py --unit         # unit only
+nix develop --command python3 testfiles/run-tests.py --integration  # integration only
+nix develop --command python3 testfiles/run-tests.py --visual       # stress only
+nix develop --command python3 testfiles/run-tests.py --full         # all (default)
 python3 .claude/scripts/lint_sty_structural.py         # structural TeX linter
 python3 .claude/scripts/lint_traceability.py           # behavioral traceability check
 .claude/scripts/lint-tests.sh                          # test convention linter

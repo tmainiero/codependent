@@ -242,6 +242,19 @@ Regenerate it with `python3 .claude/scripts/regenerate_test_index.py`; CI checks
 it with `python3 testfiles/run-tests.py --check-test-index --full`. Edit fixture
 headers, not the generated index.
 
+### Runner kind flags
+
+`testfiles/run-tests.py` selects fixtures from parsed metadata within the
+active fixture roots: `--unit` maps to `TEST-KIND: unit`, `--integration` maps
+to `TEST-KIND: integration`, and `--visual` maps to `TEST-KIND: stress`. These
+flags are additive when stacked; `--full` (also the no-flag default) runs all
+three kinds, and `--filter` applies orthogonally on top of the kind selection.
+
+LIVE stress fixtures are scanned directly from
+`testfiles/compiled-examples/*.tex`; do not add sibling `.lvt` wrappers for
+visual stress coverage. A compiled `.tex` fixture is runnable through the
+stress path only when it declares `TEST-KIND: stress` and `TEST-STATUS: LIVE`.
+
 ## Stress Test
 
 The canonical stress fixture is `testfiles/compiled-examples/stress-ta-appendix-gray.tex`. It is the integration ground truth and also a visual contract.
