@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codependenttag
+%% TEST-PURPOSE: Verify \codeptag{kind}{value} emits a flat
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \codeptag{kind}{value} emits a flat
 %%            \codep@cdp@tag record carrying the current atom number,
 %%            kind, and value, with no visible typeset effect.

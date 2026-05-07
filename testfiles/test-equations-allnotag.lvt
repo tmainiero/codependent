@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-allnotag
+%% TEST-PURPOSE: Track 2: align where all lines have \notag. No equation
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-NOTAG, B-EDGE-NOTAG
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Track 2: align where all lines have \notag.  No equation
 %%            source is produced; refs fall through to the containing
 %%            theorem's atom number.

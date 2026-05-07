@@ -1,4 +1,8 @@
 %% TEST-NAME: test-numbering-depth2
+%% TEST-PURPOSE: depth=2 option produces section.subsection.atom display
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-DEPTH2
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: depth=2 option produces section.subsection.atom display
 %%            numbers (e.g. "1.2.1") under the default article class.
 %% TEST-SOURCE: docs/DESIGN.md §Numbering "Depth"

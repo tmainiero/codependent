@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-eqref
+%% TEST-PURPOSE: Verify amsmath's \eqref{eq:later} still emits
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-TRACK1, B-DISP-EQ, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify amsmath's \eqref{eq:later} still emits
 %%            \codep@atomref{theorem:1.1}{eq:later} on pass 1 after
 %%            backend wrapper removal.
@@ -15,7 +19,6 @@
 %% This fixture intentionally stays on the unresolved forward-ref pass so the
 %% recorded edge proves \eqref capture works without any resolved backend path.
 %% TEST-ALLOW-UNDEFINED-REFS: yes
-%% TEST-BEHAVIOR: B-EQ-TRACK1, B-DISP-EQ, B-FRONTEDGE-CAPTURE
 %%
 %% Single-pass forward ref proves \eqref still captures through the
 %% front-edge path alone: the theorem cites an equation declared later

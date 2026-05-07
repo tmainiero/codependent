@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-no-hyperref
+%% TEST-PURPOSE: Graceful degradation when hyperref is absent. Verifies that
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Graceful degradation when hyperref is absent.  Verifies that
 %%            codependent backrefs render as plain text, no hyperref-related
 %%            errors or missing-anchor warnings are emitted, and the package
@@ -32,7 +36,6 @@
 %% TEST-WARM-MUTATION: sed -i '1s/$/ [warm-changed]/' testfiles/integration/integ-no-hyperref.lvt
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-BEHAVIOR: B-REND-INLINE
 %% Backref list on def:group must cite the proof of cor:unique-inverse
 %% with its own display number (1.4*), not the target's (1.1*).  Locks
 %% in the \codep@graph@getdisplay snapshot semantics: equation/proof

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-newcommand-tracking
+%% TEST-PURPOSE: Verify \codepnewcommand{\Hom}[2]{...} emits the expected
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-EDGES, B-CONC-DEFSITE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \codepnewcommand{\Hom}[2]{...} emits the expected
 %%            \codep@cdp@cmddef records (kind=newcommand, arity, src)
 %%            and that the defined \Hom command works in the body.

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proof-spacing-invariant
+%% TEST-PURPOSE: Adjacent tracked theorem/proof spacing stays at the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Adjacent tracked theorem/proof spacing stays at the
 %%            amsthm baseline; proof-adjacency bookkeeping must not
 %%            inject extra vertical space into the theorem→proof gap.
@@ -11,7 +15,6 @@
 %% TEST-PDF-VSPACE-BETWEEN: "^Theorem\\s+1\\.1\\." "^Proof\\." 14.0
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-ADJ
 
 \documentclass{article}
 \usepackage{amsthm}

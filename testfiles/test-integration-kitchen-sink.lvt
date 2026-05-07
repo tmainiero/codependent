@@ -1,4 +1,8 @@
 %% TEST-NAME: test-integration-kitchen-sink
+%% TEST-PURPOSE: Exercise every codependent.sty feature in a single document that
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Exercise every codependent.sty feature in a single document that
 %%            loads the full common package stack (amsthm, amsmath,
 %%            mathtools, hyperref, cleveref, thmtools, enumitem, tcolorbox,

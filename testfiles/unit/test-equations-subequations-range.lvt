@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-subequations-range
+%% TEST-PURPOSE: A subequations-wrapped align block is tracked as one
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-DISP-EQRANGE, B-EQ-SUBEQ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A subequations-wrapped align block is tracked as one
 %%            parenthesized visible range using subequation letters.
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-DISP-EQRANGE, B-EQ-SUBEQ
@@ -9,7 +13,6 @@
 %% TEST-PDF-STEXT: (?s)Used in \(1a&#x2013;1c\)\.
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-DISP-EQRANGE, B-EQ-SUBEQ
 
 \documentclass{article}
 \usepackage{amsmath}

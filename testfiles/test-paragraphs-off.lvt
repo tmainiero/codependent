@@ -1,4 +1,8 @@
 %% TEST-NAME: test-paragraphs-off
+%% TEST-PURPOSE: paragraphs=off disables bare-paragraph atom tracking;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-PARA
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: paragraphs=off disables bare-paragraph atom tracking;
 %%            theorems are still numbered normally.
 %% TEST-SOURCE: docs/DESIGN.md §Options

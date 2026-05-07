@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-allnotag
+%% TEST-PURPOSE: Track 2: align where all lines have \notag. No equation
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-NOTAG, B-EDGE-NOTAG
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Track 2: align where all lines have \notag.  No equation
 %%            source is produced; refs fall through to the containing
 %%            theorem's atom number.
@@ -17,7 +21,6 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsmath,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EQ-NOTAG, B-EDGE-NOTAG
 %%
 %% An align inside a definition where all lines have \notag.  The
 %% equation counter doesn't advance, so no equation range is produced.

@@ -1,4 +1,7 @@
 %% TEST-NAME: test-label-kernel
+%% TEST-PURPOSE: Verify a plain \label{key} inside a tracked atom produces
+%% TEST-KIND: unit
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a plain \label{key} inside a tracked atom produces
 %%            a \codep@cdp@label{<num>}{key} record in the sidecar.
 %% TEST-SOURCE: docs/DESIGN.md §9a "Label wrap" emission site

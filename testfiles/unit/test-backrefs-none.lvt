@@ -1,4 +1,7 @@
 %% TEST-NAME: test-backrefs-none
+%% TEST-PURPOSE: With backrefs=none, tracking (.cdp and .aux records) still
+%% TEST-KIND: unit
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: With backrefs=none, tracking (.cdp and .aux records) still
 %%            works, but codependent-render.sty is NOT loaded and no
 %%            "Used in" text appears.

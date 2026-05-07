@@ -1,3 +1,8 @@
+%% TEST-NAME: test-starred
+%% TEST-PURPOSE: \codeptrack{definition} auto-registers both "definition" and "definition*" (the starred variant amsthm creates…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-STARRED
+%% TEST-STATUS: LIVE
 % test-starred.lvt
 % Verifies: \codeptrack{definition} auto-registers both "definition"
 % and "definition*" (the starred variant amsthm creates automatically).

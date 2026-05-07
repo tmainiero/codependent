@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codepbackrefs-theorem
+%% TEST-PURPOSE: \codepbackrefs called inside a theorem body emits the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepbackrefs called inside a theorem body emits the
 %%            theorem's "Used in ..." refs at the call site, and the
 %%            auto-flush at end-of-theorem is suppressed (exactly one
@@ -19,7 +23,6 @@
 %% --- one from \codepbackrefs inside body, auto-flush suppressed.
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REND-INLINE
 %%
 %% Theorem 1.1 includes \codepbackrefs in its body; theorem 1.2 refs
 %% thm:source. At pass 2 the edge is known, and \codepbackrefs emits

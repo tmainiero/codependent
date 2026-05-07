@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-forward-ref
+%% TEST-PURPOSE: Verify \Hom in the intro paragraph + \Hom* in a later
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-FWDREF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \Hom in the intro paragraph + \Hom* in a later
 %%            definition produces the expected concept records:
 %%            \codep@concept{Hom}{<def-atom>} in .aux (once),

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-def-site-required
+%% TEST-PURPOSE: Verify that using \Hom without any \Hom* definition
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-NODEF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that using \Hom without any \Hom* definition
 %%            site anywhere in the document produces a
 %%            PackageWarning at \AtEndDocument, but does NOT halt

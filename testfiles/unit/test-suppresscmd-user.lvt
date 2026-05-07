@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppresscmd-user
+%% TEST-PURPOSE: \codepsuppresscmd{\mycmd} patches a user command so that
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-EXTEND
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepsuppresscmd{\mycmd} patches a user command so that
 %%            any paragraphs opened INSIDE the command body see
 %%            codep@nestlevel > 0 and are suppressed.  Also verifies
@@ -20,7 +24,6 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-SUPP-EXTEND
 %%
 %% \codepsuppresscmd delegates to \codep@suppresscmd, which uses
 %% \pretocmd / \apptocmd to increment/decrement codep@nestlevel

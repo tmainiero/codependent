@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofof-deep-callsite
+%% TEST-PURPOSE: A separated proof whose \codepproofof call appears deep
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ANCHOR-NEAR-HEADING, B-LINK-PROOF-DEST
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A separated proof whose \codepproofof call appears deep
 %%            inside the proof body still routes the post-rebind
 %%            proof key to the proof-begin anchor.  The 1.1* backref
@@ -17,7 +21,6 @@
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:1.1}
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ANCHOR-NEAR-HEADING, B-LINK-PROOF-DEST
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%

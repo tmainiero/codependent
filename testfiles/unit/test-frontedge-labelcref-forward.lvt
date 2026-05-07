@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-labelcref-forward
+%% TEST-PURPOSE: Verify that \labelcref{thm:later} (forward reference: the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that \labelcref{thm:later} (forward reference: the
 %%            target theorem is declared AFTER the \labelcref call) still
 %%            emits \codep@atomref{theorem:1.1}{thm:later} on pass 1.
@@ -17,7 +21,6 @@
 %% This fixture intentionally stops after the unresolved forward-reference
 %% pass so it can assert pass-1 front-edge capture before the target exists.
 %% TEST-ALLOW-UNDEFINED-REFS: yes
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% TEST-RERUN: 1 forces a single pass so we directly observe the pass-1
 %% aux contents.  The wrapper fires \codep@frontedge@emit{thm:later}

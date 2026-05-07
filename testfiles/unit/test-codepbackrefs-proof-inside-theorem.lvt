@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codepbackrefs-proof-inside-theorem
+%% TEST-PURPOSE: Proof-inside-theorem dual-emit: theorem body calls
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE, B-PROOF-ADJ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Proof-inside-theorem dual-emit: theorem body calls
 %%            \codepbackrefs, AND inner proof body also calls
 %%            \codepbackrefs. Distinct atom keys → distinct flags;
@@ -19,7 +23,6 @@
 %% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2[^0-9].*Used in 1\.2
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REND-INLINE, B-PROOF-ADJ
 %%
 %% Sub-case 3: theorem 1.1 (label thm:src) body calls \codepbackrefs;
 %% its adjacent proof 1.1* (label prf:inside) body also calls

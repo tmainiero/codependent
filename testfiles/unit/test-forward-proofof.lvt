@@ -1,4 +1,8 @@
 %% TEST-NAME: test-forward-proofof
+%% TEST-PURPOSE: \codepproofof fires BEFORE the referenced label is
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-SEP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepproofof fires BEFORE the referenced label is
 %%            assigned, but resolves in the same run via the
 %%            enddoc drain against the now-complete in-memory
@@ -17,8 +21,6 @@
 %% TEST-AUX-CONTAINS: \codep@lblentity{thm:later}{theorem:1.2}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-PROOF-SEP
-%% TEST-BEHAVIOR: B-PASS-ONE
 %%
 %% Forward-ref scenario: the \codepproofof call happens textually
 %% BEFORE the \label it references.  Under pre-P03 code this would

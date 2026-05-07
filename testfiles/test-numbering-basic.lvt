@@ -1,4 +1,8 @@
 %% TEST-NAME: test-numbering-basic
+%% TEST-PURPOSE: Minimal atom counter sanity: one plain paragraph + one tracked
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-NUM-SEQ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Minimal atom counter sanity: one plain paragraph + one tracked
 %%            theorem produces exactly two atoms.
 %% TEST-SOURCE: docs/DESIGN.md §Numbering "Shared counter", REVIEW_F baseline

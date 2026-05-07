@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-align
+%% TEST-PURPOSE: Track 2: align environment records equation range as
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-TRACK2
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Track 2: align environment records equation range as
 %%            backref source.  Two numbered lines produce a single
 %%            range source (2--3), not per-line numbers.  The equation

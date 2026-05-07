@@ -1,4 +1,8 @@
 %% TEST-NAME: test-backref-style-inline
+%% TEST-PURPOSE: Verify that backref-style=inline works as a package option
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that backref-style=inline works as a package option
 %%            passed to \usepackage, and that backrefs render without error.
 %% TEST-SOURCE: docs/DESIGN.md \codepsetup key-value API, package options

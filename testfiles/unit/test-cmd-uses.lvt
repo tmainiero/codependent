@@ -1,4 +1,8 @@
 %% TEST-NAME: test-cmd-uses
+%% TEST-PURPOSE: Verify a wrapped command (defined via \codepnewcommand)
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-USEDIN, B-CONC-EDGES
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a wrapped command (defined via \codepnewcommand)
 %%            emits one \codep@cdp@use record per invocation INSIDE
 %%            an atom, and ZERO use records when invoked outside any
@@ -11,7 +15,6 @@
 %% TEST-CDP-COUNT: \codep@cdp@use{1.1}{Hom} = 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-CONC-USEDIN, B-CONC-EDGES
 %%
 %% The wrapper guards on \ifx\codep@currentatom\@empty:
 %%   - Inside an atom (paragraph 1.1 below): each \Hom call

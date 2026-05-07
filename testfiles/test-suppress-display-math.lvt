@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppress-display-math
+%% TEST-PURPOSE: Verify display math environments (equation, align, etc.)
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-MATH
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify display math environments (equation, align, etc.)
 %%            do NOT produce spurious atom margin numbers.
 %% TEST-SOURCE: Pickup doc bug #2 (display equations get margin numbers)

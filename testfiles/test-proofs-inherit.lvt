@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-inherit
+%% TEST-PURPOSE: Adjacent proofs inherit theorem atom number with star suffix;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-PROOF-NONADJ, B-PROOF-ADJRULE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Adjacent proofs inherit theorem atom number with star suffix;
 %%            non-adjacent proofs get independent atom numbers.
 %% TEST-SOURCE: docs/DESIGN.md Proof adjacency, Pavlov-style numbering

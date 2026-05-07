@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-eqref
+%% TEST-PURPOSE: Verify amsmath's \eqref{eq:A} produces a \codep@atomref
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-TRACK1, B-DISP-EQ, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify amsmath's \eqref{eq:A} produces a \codep@atomref
 %%            edge. \eqref is implemented as \textup{(\ref{...})} in
 %%            amsmath, so it routes through the kernel \@setref patch.

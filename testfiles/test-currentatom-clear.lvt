@@ -1,4 +1,8 @@
 %% TEST-NAME: test-currentatom-clear
+%% TEST-PURPOSE: Verify a \ref AFTER an atom but BEFORE the next atom does
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EDGE-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a \ref AFTER an atom but BEFORE the next atom does
 %%            NOT get attributed to the just-ended atom. The \ref fires
 %%            in a between-atoms gap (e.g., section heading, caption,

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codepbackrefs-out-of-scope
+%% TEST-PURPOSE: \codepbackrefs called outside any tracked atom emits a
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepbackrefs called outside any tracked atom emits a
 %%            package warning and produces no "Used in" rendering.
 %% TEST-SOURCE: wave3-plan-v11.md P01(A2) out-of-scope contract
@@ -10,7 +14,6 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REND-INLINE
 %%
 %% \codepbackrefs called at the top of the document body, before any
 %% tracked env and with paragraphs=off so no paragraph atom is live.

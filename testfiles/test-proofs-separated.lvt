@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-separated
+%% TEST-PURPOSE: \codepproofof associates a separated proof with its theorem;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-SEP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepproofof associates a separated proof with its theorem;
 %%            the proof gets the theorem's starred atom number.
 %% TEST-SOURCE: docs/DESIGN.md §Proof environments, \codepproofof command

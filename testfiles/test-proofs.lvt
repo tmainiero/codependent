@@ -1,3 +1,8 @@
+%% TEST-NAME: test-proofs
+%% TEST-PURPOSE: proof environments (amsthm's non-\newtheorem environment) with Pavlov-style adjacency detection. Adjacent proofs…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-DISP-PROOF
+%% TEST-STATUS: LIVE
 % test-proofs.lvt
 % Verifies: proof environments (amsthm's non-\newtheorem environment)
 % with Pavlov-style adjacency detection.  Adjacent proofs inherit the

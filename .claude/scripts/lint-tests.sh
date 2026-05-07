@@ -114,6 +114,11 @@ if ! python3 .claude/scripts/lint_no_sbl.py; then
   ERRORS=$((ERRORS + 1))
 fi
 
+# Validate TEST-KIND metadata and generated test-index freshness.
+if ! python3 .claude/scripts/lint_test_kind.py --check; then
+  ERRORS=$((ERRORS + 1))
+fi
+
 echo >&2
 if [ $ERRORS -gt 0 ]; then
   echo "FAILED: $ERRORS error(s), $WARNINGS warning(s) across ${#FILES[@]} files" >&2

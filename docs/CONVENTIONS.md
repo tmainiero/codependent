@@ -211,6 +211,37 @@ python3 .claude/scripts/lint_traceability.py --update-baseline  # regenerate
 The linter runs automatically via PostToolUse (on .sty edits) and
 PreCommit hooks.
 
+## Test fixture metadata
+
+Every committed `.lvt` fixture and every `testfiles/compiled-examples/*.tex`
+fixture must carry a top-of-file `TEST-*` metadata block. Parsers accept both
+`%% TEST-*` and `% TEST-*`, but new fixtures should use `%%`. For compiled
+`.tex` fixtures, the metadata block must appear before executable TeX content
+(such as `\def`, `\input`, or `\documentclass`); a leading pure-comment
+license/provenance block may remain above it.
+
+Required fields:
+
+```tex
+%% TEST-NAME: <stable fixture name>
+%% TEST-PURPOSE: <one-line purpose, <= 120 characters>
+%% TEST-KIND: unit | integration | stress
+%% TEST-BEHAVIOR: B-XXX[, B-YYY, ...]
+%% TEST-STATUS: LIVE | PROBE | STALE
+%% TEST-RENDER-MODES: <comma-list>  % stress fixtures only
+```
+
+`TEST-BEHAVIOR` values must cite existing IDs from `docs/BEHAVIOR.md`; do not
+invent behavior IDs for test-runner infrastructure. The only path-level
+exceptions are grandfathered in `.test-behavior-baseline`, which may shrink but
+must not grow. `TEST-RENDER-MODES` is required exactly for `TEST-KIND: stress`
+fixtures and forbidden for unit/integration fixtures.
+
+The generated index `testfiles/test-index.md` is the canonical fixture index.
+Regenerate it with `python3 .claude/scripts/regenerate_test_index.py`; CI checks
+it with `python3 testfiles/run-tests.py --check-test-index --full`. Edit fixture
+headers, not the generated index.
+
 ## Stress Test
 
 The canonical stress fixture is `testfiles/compiled-examples/stress-ta-appendix-gray.tex`. It is the integration ground truth and also a visual contract.

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-book-class
+%% TEST-PURPOSE: codependent works with \documentclass{book} and depth=1,
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-DEPTH1
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: codependent works with \documentclass{book} and depth=1,
 %%            producing chapter.atom numbering (e.g. "1.1", "2.1").
 %%            The atom counter resets at each \chapter boundary.
@@ -16,7 +20,6 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-DEPTH1
 %%
 %% With book class and depth=1, \codep@configuredepth@book activates
 %% the chapter-level path:

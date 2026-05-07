@@ -1,4 +1,8 @@
 %% TEST-NAME: test-trinity-stripped
+%% TEST-PURPOSE: Stripped integration fixture modelled on a real category-theory
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Stripped integration fixture modelled on a real category-theory
 %%            monograph (~16 000 lines). Exercises the full codependent.sty
 %%            feature surface against the package stack found in real math

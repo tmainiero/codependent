@@ -1,4 +1,8 @@
 %% TEST-NAME: test-section-koma
+%% TEST-PURPOSE: Verify a \section{Foo} heading in a KOMA-Script scrbook
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-SECTION
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a \section{Foo} heading in a KOMA-Script scrbook
 %%            document is NOT numbered as an atom (the heading paragraph
 %%            should be suppressed; only content paragraphs that follow
@@ -14,7 +18,6 @@
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
 %% TEST-PACKAGES: scrbook,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-SUPP-SECTION
 %%
 %% The original v0.1 design wrapped \@startsection. KOMA-Script
 %% replaces \@startsection with \scr@startsection at scrbook.cls

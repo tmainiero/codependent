@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proof-bind-overwrite-warn
+%% TEST-PURPOSE: Asserts the single-slot proof-binding overwrite warn
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-WARN-ENDDOC
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Asserts the single-slot proof-binding overwrite warn
 %%            (commit 102df07). Synthetically populate the pending proof
 %%            binding slot via \makeatletter/\gdef (since \codepproofin
@@ -13,7 +17,6 @@
 %% TEST-LOG-NOT: codependent.*Error
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-WARN-ENDDOC
 %% TEST-PDF-CONTAINS: A theorem
 %%
 %% Synthetically populate the proof binding slot before starting a proof.

@@ -16,3 +16,6 @@ traceability_baseline = ".traceability-baseline"
 # Files listed in this baseline are exempted from the TEST-BEHAVIOR rule —
 # grandfather for pre-rule tests while they get backfilled with behavior IDs.
 behavior_baseline = ".test-behavior-baseline"
+
+[scripts]
+test_index = "testfiles/test-index.md"

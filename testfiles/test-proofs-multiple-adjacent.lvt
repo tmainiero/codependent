@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-multiple-adjacent
+%% TEST-PURPOSE: Multiple theorems with adjacent proofs in sequence; each
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-PROOF-ADJRULE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Multiple theorems with adjacent proofs in sequence; each
 %%            proof inherits the correct theorem's atom number.
 %% TEST-SOURCE: docs/DESIGN.md §Proof adjacency

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-outside-ignored
+%% TEST-PURPOSE: Concept invocations outside any tracked atom, including in
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-OUTSIDE, B-EDGE-CONC-OUTSIDE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Concept invocations outside any tracked atom, including in
 %%            headings, captions, and footnotes, are silently ignored and
 %%            do not produce visible backrefs.
@@ -11,7 +15,6 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-CONC-OUTSIDE, B-EDGE-CONC-OUTSIDE
 
 \documentclass{article}
 \usepackage{amsthm}

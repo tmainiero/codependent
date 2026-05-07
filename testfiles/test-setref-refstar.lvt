@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-refstar
+%% TEST-PURPOSE: Verify \ref*{thm:A} produces a \codep@atomref edge via
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \ref*{thm:A} produces a \codep@atomref edge via
 %%            the hyperref \HyRef@@StarSetRef patch site (NOT \@setref,
 %%            because \ref* uses the saved \real@setref copy).

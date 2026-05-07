@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codepbackrefs-paragraph
+%% TEST-PURPOSE: \codepbackrefs called inside a paragraph body (outside
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE, B-NUM-PARA
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepbackrefs called inside a paragraph body (outside
 %%            any tracked env) emits the paragraph atom's refs; no
 %%            auto-flush collision (paragraphs don't auto-flush).
@@ -16,7 +20,6 @@
 %% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REND-INLINE, B-NUM-PARA
 %%
 %% Intro paragraph is atom 1.1 and calls \codepbackrefs in its body
 %% with \label{par:intro}. Theorem 1.2 refs par:intro. At pass 2,

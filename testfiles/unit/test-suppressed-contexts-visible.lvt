@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppressed-contexts-visible
+%% TEST-PURPOSE: Refs in quote environments, floats, tabular content, and
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-QUOTE, B-SUPP-FLOATS, B-SUPP-TABLES, B-EDGE-FOOTNOTE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Refs in quote environments, floats, tabular content, and
 %%            footnotes are suppressed and produce no visible backref row.
 %% TEST-PINS-KNOWN-BROKEN: yes
@@ -10,7 +14,6 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-SUPP-QUOTE, B-SUPP-FLOATS, B-SUPP-TABLES, B-EDGE-FOOTNOTE
 
 \documentclass{article}
 \usepackage{amsthm}

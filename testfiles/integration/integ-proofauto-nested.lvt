@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-proofauto-nested
+%% TEST-PURPOSE: Nested proof headings save and restore independent auto-detected targets.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-INNER, B-LINK-PROOF-DEST
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Nested proof headings save and restore independent auto-detected targets.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
@@ -7,7 +11,6 @@
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-INNER, B-LINK-PROOF-DEST
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}

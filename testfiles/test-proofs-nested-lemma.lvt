@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-nested-lemma
+%% TEST-PURPOSE: A lemma inside a proof gets its own atom number; the proof
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-INNER
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A lemma inside a proof gets its own atom number; the proof
 %%            inherits the theorem number; the lemma is independent because
 %%            proofs are not tracked envs (only nestlevel, not trackedlevel).

@@ -1,3 +1,8 @@
+%% TEST-NAME: test-basic
+%% TEST-PURPOSE: atom counter advances through paragraphs, definitions, and theorems in the correct order. No back-refs, no hyperref.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-NUM-SEQ, B-NUM-PARA
+%% TEST-STATUS: LIVE
 % test-basic.lvt
 % Verifies: atom counter advances through paragraphs, definitions, and
 % theorems in the correct order.  No back-refs, no hyperref.

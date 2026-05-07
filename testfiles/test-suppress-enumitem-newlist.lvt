@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppress-enumitem-newlist
+%% TEST-PURPOSE: Verify a user-declared \newlist{mylist}{itemize}{1} environment
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-LISTS
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a user-declared \newlist{mylist}{itemize}{1} environment
 %%            auto-suppresses atom numbering for paragraphs inside it.
 %% TEST-SOURCE: REVIEW_E #10 (MINOR)

@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-no-hyperref
+%% TEST-PURPOSE: Graceful degradation when hyperref is absent. Verifies that
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Graceful degradation when hyperref is absent.  Verifies that
 %%            codependent backrefs render as plain text, no hyperref-related
 %%            errors or missing-anchor warnings are emitted, and the package

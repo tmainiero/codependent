@@ -1,4 +1,8 @@
 %% TEST-NAME: test-trackeq-user
+%% TEST-PURPOSE: \codeptrackeq{myequation} registers a custom single-number
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-TRACK1
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codeptrackeq{myequation} registers a custom single-number
 %%            equation environment for Track 1 tracking.  A \ref inside
 %%            the custom environment creates a \codep@atomref{equation:N}
@@ -15,7 +19,6 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsmath,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EQ-TRACK1
 %%
 %% \codeptrackeq delegates to \codep@trackeqenv, which installs
 %% AtBeginEnvironment / AtEndEnvironment / AfterEndEnvironment hooks.

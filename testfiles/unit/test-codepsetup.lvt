@@ -1,4 +1,7 @@
 %% TEST-NAME: test-codependentsetup
+%% TEST-PURPOSE: Verify that \codepsetup accepts all rendering configuration
+%% TEST-KIND: unit
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that \codepsetup accepts all rendering configuration
 %%            keys without error, and that a document with backrefs still
 %%            compiles correctly after changing every key.

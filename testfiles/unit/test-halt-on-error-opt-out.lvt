@@ -1,4 +1,8 @@
 %% TEST-NAME: test-halt-on-error-opt-out
+%% TEST-PURPOSE: Verify that the test runner correctly drops -halt-on-error
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that the test runner correctly drops -halt-on-error
 %%            when TEST-EXPECT-PACKAGE-ERROR is specified (v12 A1 closure).
 %%            This is a runner-mechanism regression test: when an error is
@@ -12,7 +16,6 @@
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-ERROR-ENDDOC
 %% TEST-PDF-NOT: Used in
 %%
 %% Synthetically trigger a fatal orchestrator error. The runner receives

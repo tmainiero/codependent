@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-cref-csv-divergence
+%% TEST-PURPOSE: Pin the ACTUAL (divergent) front-edge behaviour for the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Pin the ACTUAL (divergent) front-edge behaviour for the
 %%            malformed input \cref{thm:A,{thm:B,thm:C},thm:D} where the
 %%            second element is a brace-wrapped comma-containing string.
@@ -23,7 +27,6 @@
 %% TEST-ATOMS-MIN: 5
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% NOTE: In commit-2 both front-edge wrappers and backend patches are live.
 %% The backend (\cref@getlabel patch) also emits individual thm:B and thm:C

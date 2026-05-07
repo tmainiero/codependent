@@ -1,4 +1,8 @@
 %% TEST-NAME: test-aux-record-roundtrip
+%% TEST-PURPOSE: The four W03-P03 .aux record types (\codep@lblentity,
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-PROOF-SEP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: The four W03-P03 .aux record types (\codep@lblentity,
 %%            \codep@entitymeta, \codep@keymap, \codep@renderlist)
 %%            are written at enddoc and round-trip to the next pass.
@@ -40,7 +44,6 @@
 %% TEST-AUX-CONTAINS: \codep@keymap{proof:2.1}{proof:1.1}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PASS-ONE, B-PROOF-SEP
 %%
 %% Roundtrip scenario: a small mix of tracked entities produces
 %% one \codep@lblentity per \label-in-tracked-env and one

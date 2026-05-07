@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-proofauto-adjacent-no-leak
+%% TEST-PURPOSE: Auto pending state does not leak into a later adjacent proof whose heading has a ref.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Auto pending state does not leak into a later adjacent proof whose heading has a ref.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
@@ -7,7 +11,6 @@
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}

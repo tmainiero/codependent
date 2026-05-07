@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-duplicate-def-site
+%% TEST-PURPOSE: Verify that two \Hom* calls in different atoms produce
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-DUPDEF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that two \Hom* calls in different atoms produce
 %%            a PackageError at the SECOND firing, halting the build
 %%            with a nonzero exit code. The error message names both

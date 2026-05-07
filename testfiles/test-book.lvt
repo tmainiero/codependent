@@ -1,3 +1,8 @@
+%% TEST-NAME: test-book
+%% TEST-PURPOSE: book document class with chapters. With depth=1, atom numbers should be chapter.atom (e.g., 1.1). Auto-detection of…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-DEPTH1, B-NUM-RESET
+%% TEST-STATUS: LIVE
 % test-book.lvt
 % Verifies: book document class with chapters.  With depth=1,
 % atom numbers should be chapter.atom (e.g., 1.1).

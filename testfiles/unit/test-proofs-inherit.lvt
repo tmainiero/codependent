@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-inherit
+%% TEST-PURPOSE: Adjacent proofs inherit theorem atom number with star suffix;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-PROOF-NONADJ, B-PROOF-ADJRULE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Adjacent proofs inherit theorem atom number with star suffix;
 %%            non-adjacent proofs use an opaque proof-id key (no shared-counter
 %%            slot) and are suppressed from rendered source-token output.
@@ -18,7 +22,6 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-ADJ, B-PROOF-NONADJ, B-PROOF-ADJRULE
 %%
 %% Tests three scenarios:
 %% 1. Theorem + adjacent proof -> proof inherits theorem's number (1.1*)

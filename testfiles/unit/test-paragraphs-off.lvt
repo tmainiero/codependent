@@ -1,4 +1,8 @@
 %% TEST-NAME: test-paragraphs-off
+%% TEST-PURPOSE: paragraphs=off disables bare-paragraph atom tracking;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-PARA
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: paragraphs=off disables bare-paragraph atom tracking;
 %%            theorems are still numbered normally.
 %% TEST-SOURCE: docs/DESIGN.md §Options
@@ -10,7 +14,6 @@
 %% TEST-CDP-NOT-CONTAINS: {paragraph}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-PARA
 %%
 %% With paragraphs=off, bare paragraphs get no atom numbers, no margin
 %% numbers, no SBL records.  Theorem tracking is unaffected; the first

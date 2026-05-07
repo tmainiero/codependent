@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codeptrack-called-twice-error
+%% TEST-PURPOSE: Calling \codeptrack twice is a package error and does not
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EDGE-TRACK-TWICE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Calling \codeptrack twice is a package error and does not
 %%            produce visible backref output.
 %% TEST-PINS-KNOWN-BROKEN: yes
@@ -10,7 +14,6 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-EDGE-TRACK-TWICE
 
 \documentclass{article}
 \usepackage{amsthm}

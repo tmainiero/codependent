@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppress-maketitle
+%% TEST-PURPOSE: Verify \maketitle does NOT produce a spurious atom number.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-CMDS
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \maketitle does NOT produce a spurious atom number.
 %%            The first real atom should be 1.1, not 0.1.
 %% TEST-SOURCE: Pickup doc (maketitle gets margin atom number)

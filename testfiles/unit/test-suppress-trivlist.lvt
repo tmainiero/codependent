@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppress-trivlist
+%% TEST-PURPOSE: Verify paragraphs inside trivlist-based environments
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-WRAPPERS
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify paragraphs inside trivlist-based environments
 %%            (center, flushleft, verbatim) are NOT numbered as atoms.
 %% TEST-SOURCE: REVIEW_E #7 (MAJOR), REVIEW_F J4 (verified)
@@ -20,7 +24,6 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-SUPP-WRAPPERS
 %%
 %% REVIEW_E finding #7, REVIEW_F judgement call J4 verified.
 %% The trivlist machinery in latex.ltx underlies center,

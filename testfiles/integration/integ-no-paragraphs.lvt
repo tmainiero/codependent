@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-no-paragraphs
+%% TEST-PURPOSE: Integration test with paragraphs=off. Verifies that
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-EDGE-PARAOFF-EQ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Integration test with paragraphs=off. Verifies that
 %%            equation tracking and theorem backrefs still work when
 %%            paragraph atoms are disabled. No bare-paragraph atoms
@@ -35,7 +39,6 @@
 %% TEST-RERUN: 3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-BEHAVIOR: B-EDGE-PARAOFF-EQ
 
 %%
 %% Paragraphs=off integration test.

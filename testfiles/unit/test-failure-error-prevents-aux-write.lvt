@@ -1,4 +1,8 @@
 %% TEST-NAME: test-failure-error-prevents-aux-write
+%% TEST-PURPOSE: Verify that when orchestrator's pre-drain evaluator detects
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that when orchestrator's pre-drain evaluator detects
 %%            fatal state (\codep@abortfinalize), the halt branch executes
 %%            WITHOUT writing stale \codep@renderlist / \codep@entitymeta
@@ -16,7 +20,6 @@
 %% TEST-AUX-NOT-CONTAINS: codep@renderlist
 %% TEST-AUX-NOT-CONTAINS: codep@entitymeta
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-ERROR-ENDDOC
 %%
 %% Synthetically set fatal pre-drain state. Orchestrator detects this,
 %% halts, and does NOT flush renderlist or entitymeta records. The .aux

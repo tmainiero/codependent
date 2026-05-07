@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppress-trivlist
+%% TEST-PURPOSE: Verify paragraphs inside trivlist-based environments
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-WRAPPERS
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify paragraphs inside trivlist-based environments
 %%            (center, flushleft, verbatim) are NOT numbered as atoms.
 %% TEST-SOURCE: REVIEW_E #7 (MAJOR), REVIEW_F J4 (verified)

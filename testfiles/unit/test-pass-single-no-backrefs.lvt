@@ -1,4 +1,8 @@
 %% TEST-NAME: test-pass-single-no-backrefs
+%% TEST-PURPOSE: A single-pass build still produces a numbered document but
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-SINGLE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A single-pass build still produces a numbered document but
 %%            does not yet render visible "Used in" annotations.
 %% TEST-PINS-KNOWN-BROKEN: yes
@@ -10,7 +14,6 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-PASS-SINGLE
 
 \documentclass{article}
 \usepackage{amsthm}

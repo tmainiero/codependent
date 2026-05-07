@@ -1,4 +1,7 @@
 %% TEST-NAME: test-sbl-version-source
+%% TEST-PURPOSE: Verify the first two records of the .cdp sidecar are
+%% TEST-KIND: unit
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify the first two records of the .cdp sidecar are
 %%            \codep@cdp@version{1} and \codep@cdp@source{<jobname>.tex},
 %%            written from the begindocument/before hook.

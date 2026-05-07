@@ -1,3 +1,8 @@
+%% TEST-NAME: test-options
+%% TEST-PURPOSE: package options depth=2, backrefs=none all load without error and produce output. Each sub-test is in a group to…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-DEPTH2, B-ZERO-REF
+%% TEST-STATUS: LIVE
 % test-options.lvt
 % Verifies: package options depth=2, backrefs=none all load
 % without error and produce output.

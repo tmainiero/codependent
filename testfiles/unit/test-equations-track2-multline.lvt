@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-track2-multline
+%% TEST-PURPOSE: Track 2: multline produces a single equation number (last
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-TRACK2
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Track 2: multline produces a single equation number (last
 %%            line only).  Start and end counters are equal, so the key
 %%            is equation:1, not a range.  A \ref inside the body is
@@ -17,7 +21,6 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EQ-TRACK2
 %%
 %% multline numbers only the last line, so \c@equation advances by 1.
 %% \codep@flusheqrange@numbered sees start==end and builds equation:1

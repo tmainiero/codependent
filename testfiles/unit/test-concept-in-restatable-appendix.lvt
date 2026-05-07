@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-in-restatable-appendix
+%% TEST-PURPOSE: Verify the opposite pattern to the intro-teaser case:
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REST-CONCEPT
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify the opposite pattern to the intro-teaser case:
 %%            \restatable{theorem}{thm:main}{body with \Hom*} in
 %%            the main body (fires first, alias intact), then
@@ -20,7 +24,6 @@
 %% TEST-AUX-NOT-CONTAINS: \codep@concept{Hom}{2.1}
 %% TEST-PACKAGES: thmtools,hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REST-CONCEPT
 %%
 %% Section 1 (main) declares the restatable theorem. First firing,
 %% alias intact, normal hook body: \codep@currentatom = 1.1

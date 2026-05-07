@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-in-caption
+%% TEST-PURPOSE: Verify \ref inside a \caption (moving arg, outside any
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE, B-EDGE-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \ref inside a \caption (moving arg, outside any
 %%            tracked atom) does NOT produce a spurious atomref record,
 %%            while \ref inside a theorem (inside a tracked atom) DOES.
@@ -13,7 +17,6 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE, B-EDGE-HEADING
 %%
 %% Captions are typeset outside any theorem atom. \codep@currentatom
 %% is \@empty at that point, so \codep@frontedge@emit short-circuits

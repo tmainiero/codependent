@@ -1,4 +1,8 @@
 %% TEST-NAME: trinity-test
+%% TEST-PURPOSE: Enriched integration fixture combining the trinity-stripped
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Enriched integration fixture combining the trinity-stripped
 %%            scenario with the user's real theorem style (sty-theorems-ta).
 %%            Exercises all 10 theorem env types with custom endmarks,

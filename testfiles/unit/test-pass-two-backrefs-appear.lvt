@@ -1,4 +1,8 @@
 %% TEST-NAME: test-pass-two-backrefs-appear
+%% TEST-PURPOSE: On the second pass the visible "Used in" annotation
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-TWO
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: On the second pass the visible "Used in" annotation
 %%            appears with the final source number.
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-PASS-TWO
@@ -9,7 +13,6 @@
 %% TEST-PDF-CONTAINS: Used in 1.2
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PASS-TWO
 
 \documentclass{article}
 \usepackage{amsthm}

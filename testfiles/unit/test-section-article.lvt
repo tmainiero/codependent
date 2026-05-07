@@ -1,4 +1,8 @@
 %% TEST-NAME: test-section-article
+%% TEST-PURPOSE: Verify \section{Foo} heading paragraph is NOT numbered as an
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-SECTION
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \section{Foo} heading paragraph is NOT numbered as an
 %%            atom under the standard article class (baseline).
 %% TEST-SOURCE: docs/DESIGN.md §Paragraph numbering, §Section 8a.6 sectioning
@@ -13,7 +17,6 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-SUPP-SECTION
 %%
 %% Baseline: under vanilla article, \section{Foo} must NOT fire the
 %% para/begin hook in numbering mode. Only the body paragraph below

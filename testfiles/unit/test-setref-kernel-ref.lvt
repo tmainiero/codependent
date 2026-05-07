@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-kernel-ref
+%% TEST-PURPOSE: Verify plain \ref{thm:later} still emits
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify plain \ref{thm:later} still emits
 %%            \codep@atomref{theorem:1.1}{thm:later} on pass 1 after
 %%            the resolved-backend wrappers are removed.
@@ -15,7 +19,6 @@
 %% This fixture intentionally inspects the unresolved forward-ref pass because
 %% that is the evidence that plain \ref capture survives wrapper removal.
 %% TEST-ALLOW-UNDEFINED-REFS: yes
-%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
 %%
 %% Commit-3 regression guard: the theorem references a label defined
 %% later in the same run, so the old resolved-backend path cannot be

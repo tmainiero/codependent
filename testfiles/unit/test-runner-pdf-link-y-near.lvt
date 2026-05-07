@@ -1,4 +1,8 @@
 %% TEST-NAME: test-runner-pdf-link-y-near
+%% TEST-PURPOSE: Self-test for TEST-PDF-LINK-Y-NEAR assertion type.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-LINK-PROOF-DEST, B-LINK-CORRECT
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Self-test for TEST-PDF-LINK-Y-NEAR assertion type.
 %%            A \hyperlink jumps to a \hypertarget placed immediately
 %%            before anchor text.  The assertion verifies the named
@@ -15,7 +19,6 @@
 %% TEST-PDF-LINK-Y-NEAR: go to proof | Proof body text here | within=30
 %% TEST-PACKAGES: hyperref
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-LINK-PROOF-DEST, B-LINK-CORRECT
 %%
 %% Verifies that _check_pdf_link_y_near correctly identifies that a
 %% hyperlink destination lands within 30pt of the target text.  The

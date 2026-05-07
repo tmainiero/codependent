@@ -1,4 +1,8 @@
 %% TEST-NAME: test-sbl-end-marker
+%% TEST-PURPOSE: Verify the last record of the .cdp sidecar is the sentinel
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify the last record of the .cdp sidecar is the sentinel
 %%            \codep@cdp@end{OK}, written from \AtEndDocument.
 %% TEST-SOURCE: REVIEW_C #7, docs/DESIGN.md §9a "Close timing"

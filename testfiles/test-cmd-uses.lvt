@@ -1,4 +1,8 @@
 %% TEST-NAME: test-cmd-uses
+%% TEST-PURPOSE: Verify a wrapped command (defined via \codepnewcommand)
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-USEDIN, B-CONC-EDGES
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a wrapped command (defined via \codepnewcommand)
 %%            emits one \codep@cdp@use record per invocation INSIDE
 %%            an atom, and ZERO use records when invoked outside any

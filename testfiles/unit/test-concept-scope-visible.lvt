@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-scope-visible
+%% TEST-PURPOSE: Concept-use edges render only on the definition atom's row,
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-SCOPE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Concept-use edges render only on the definition atom's row,
 %%            not on unrelated referenced atoms.
 %% TEST-PINS-KNOWN-BROKEN: yes
@@ -13,7 +17,6 @@
 %% TEST-PDF-STEXT-NOT: Used in 1\.4, 1\.3
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-CONC-SCOPE
 
 \documentclass{article}
 \usepackage{amsthm}

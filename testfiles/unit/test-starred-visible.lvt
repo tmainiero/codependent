@@ -1,4 +1,8 @@
 %% TEST-NAME: test-starred-visible
+%% TEST-PURPOSE: Starred theorem-like environments are tracked, numbered from
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-STARRED
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Starred theorem-like environments are tracked, numbered from
 %%            the shared atom counter, and can appear as visible backref
 %%            targets just like their unstarred counterparts.
@@ -13,7 +17,6 @@
 %% TEST-PDF-STEXT: (?s)Used in 1\.5\.
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-STARRED
 
 \documentclass{article}
 \usepackage{amsthm}

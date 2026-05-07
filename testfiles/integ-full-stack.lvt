@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-full-stack
+%% TEST-PURPOSE: Full-stack integration: amsmath, amsthm, thmtools, hyperref,
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-EQ-TRACK1, B-EQ-TRACK2, B-PROOF-SEP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Full-stack integration: amsmath, amsthm, thmtools, hyperref,
 %%            cleveref, tikz-cd, codependent with all features on.
 %%            Verifies: inline backrefs, paragraph numbering, equation

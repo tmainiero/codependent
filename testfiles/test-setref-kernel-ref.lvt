@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-kernel-ref
+%% TEST-PURPOSE: Verify plain \ref{thm:A} produces a \codep@atomref edge
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify plain \ref{thm:A} produces a \codep@atomref edge
 %%            via the kernel \@setref patch site.
 %% TEST-SOURCE: docs/DESIGN.md §8a.0 patch site 1 (kernel \@setref)

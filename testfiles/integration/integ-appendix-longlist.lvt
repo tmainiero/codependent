@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-appendix-longlist
+%% TEST-PURPOSE: Integration stress test for appendix mode long-list wrapping,
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Integration stress test for appendix mode long-list wrapping,
 %%            pgfkey page-number formatting, render-time template expansion,
 %%            and anchor-start page capture.
@@ -21,7 +25,6 @@
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
 %% TEST-STABLE-AT: 2
-%% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-LINK-APPENDIX-BIDIR
 
 \documentclass{article}
 

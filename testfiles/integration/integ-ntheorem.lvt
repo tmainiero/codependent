@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-ntheorem [warm-changed]
+%% TEST-PURPOSE: Verify codependent works with ntheorem as the theorem backend
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify codependent works with ntheorem as the theorem backend
 %%            instead of amsthm.  ntheorem and amsthm are mutually exclusive;
 %%            this fixture loads ntheorem only.  Tests that \codeptrack wires
@@ -35,7 +39,6 @@
 %% TEST-PASS-COUNT-WARM: 1
 %% TEST-PASS-COUNT-WARM-CHANGED: 2
 %% TEST-WARM-MUTATION: sed -i '1s/$/ [warm-changed]/' testfiles/integration/integ-ntheorem.lvt
-%% TEST-BEHAVIOR: B-NUM-SHARED
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 

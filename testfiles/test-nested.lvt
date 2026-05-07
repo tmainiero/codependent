@@ -1,3 +1,8 @@
+%% TEST-NAME: test-nested
+%% TEST-PURPOSE: a tracked environment nested inside another tracked environment does NOT advance the atom counter. The inner…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-NESTED, B-EDGE-NESTED
+%% TEST-STATUS: LIVE
 % test-nested.lvt
 % Verifies: a tracked environment nested inside another tracked
 % environment does NOT advance the atom counter.  The inner

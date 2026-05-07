@@ -1,4 +1,8 @@
 %% TEST-NAME: test-restatable-inert-visible
+%% TEST-PURPOSE: A restated theorem body is inert for tracking, so a ref in
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EDGE-RESTATE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A restated theorem body is inert for tracking, so a ref in
 %%            the original declaration yields exactly one visible backref
 %%            entry and the restatement adds no duplicate.
@@ -11,7 +15,6 @@
 %% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
 %% TEST-PACKAGES: thmtools,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EDGE-RESTATE
 
 \documentclass{article}
 \usepackage{thmtools}

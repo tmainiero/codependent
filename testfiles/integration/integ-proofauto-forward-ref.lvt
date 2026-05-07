@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-proofauto-forward-ref
+%% TEST-PURPOSE: A proof heading that names a later theorem settles through the deferred proof-of queue.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A proof heading that names a later theorem settles through the deferred proof-of queue.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
@@ -7,7 +11,6 @@
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST
 %% TEST-LOG-NOT: codepproofof: unknown label
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}

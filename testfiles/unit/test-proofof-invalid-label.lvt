@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofof-invalid-label
+%% TEST-PURPOSE: \codepproofof with a nonexistent label produces a warning
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EDGE-BADLABEL
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepproofof with a nonexistent label produces a warning
 %%            (not a crash); compilation succeeds.  The proof falls
 %%            through to STANDALONE materialization (opaque proof-id
@@ -16,7 +20,6 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EDGE-BADLABEL
 %%
 %% When \codepproofof references a label that does not exist,
 %% the package emits a warning via \PackageWarning but does not

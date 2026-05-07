@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-off
+%% TEST-PURPOSE: equations=off disables equation backref tracking;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-OFF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: equations=off disables equation backref tracking;
 %%            \ref inside a standalone equation is silently dropped
 %%            (no active atom, no equation source).  \ref inside an
@@ -16,7 +20,6 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: amsmath,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EQ-OFF
 %%
 %% With equations=off, numbered equations do not capture the
 %% equation number as backref source. Any \ref inside a standalone

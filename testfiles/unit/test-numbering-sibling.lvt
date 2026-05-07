@@ -1,4 +1,8 @@
 %% TEST-NAME: test-numbering-sibling
+%% TEST-PURPOSE: thmtools sibling=theorem envs get correct atom numbering.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-SEQ, B-NUM-RESET
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: thmtools sibling=theorem envs get correct atom numbering.
 %%            With depth=2, all tracked envs (theorem, corollary,
 %%            definition) must display section.subsection.atom format
@@ -20,7 +24,6 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: thmtools,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-SEQ, B-NUM-RESET
 %%
 %% Pins sibling counter-sharing: thmtools' sibling=theorem makes
 %% corollary and definition share theorem's counter register.

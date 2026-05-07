@@ -1,4 +1,8 @@
 %% TEST-NAME: test-runner-pdf-dest-page
+%% TEST-PURPOSE: Self-test for TEST-PDF-DEST-PAGE assertion type.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-LINK-NO-ORPHAN
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Self-test for TEST-PDF-DEST-PAGE assertion type.
 %%            A \hypertarget on page two and anchor text on the same
 %%            page.  The assertion verifies the named destination
@@ -15,7 +19,6 @@
 %% TEST-PDF-DEST-PAGE: page-two-anchor | Appendix section text
 %% TEST-PACKAGES: hyperref
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-LINK-NO-ORPHAN
 %%
 %% Verifies that _check_pdf_dest_page correctly resolves a named
 %% destination to the page where anchor text appears.  A \hyperlink

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-autoref
+%% TEST-PURPOSE: Verify \autoref{thm:A} produces a \codep@atomref edge via
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \autoref{thm:A} produces a \codep@atomref edge via
 %%            the hyperref \HyRef@autosetref patch site (NOT \@setref).
 %% TEST-SOURCE: REVIEW_E #2 (BLOCKER), docs/DESIGN.md §8a.0 patch site 3

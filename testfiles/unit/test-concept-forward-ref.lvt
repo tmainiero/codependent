@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-forward-ref
+%% TEST-PURPOSE: Verify \Hom in the intro paragraph + \Hom* in a later
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-FWDREF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \Hom in the intro paragraph + \Hom* in a later
 %%            definition produces the expected concept records:
 %%            \codep@concept{Hom}{<def-atom>} in .aux (once),
@@ -20,7 +24,6 @@
 %% TEST-AUX-CONTAINS: \codep@conceptref{1.1}{Hom}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-CONC-FWDREF
 %%
 %% This is the baseline forward-reference test. The intro paragraph
 %% is atom 1.1 (first paragraph atom under "Introduction"). The

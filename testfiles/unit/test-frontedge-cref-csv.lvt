@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-cref-csv
+%% TEST-PURPOSE: Verify \cref{thm:A,thm:B,thm:C} (comma-separated list)
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \cref{thm:A,thm:B,thm:C} (comma-separated list)
 %%            from theorem 1.4 produces three separate atomref records,
 %%            one per label: thm:A, thm:B, and thm:C.
@@ -14,7 +18,6 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: hyperref,cleveref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% When cleveref receives a comma-separated list, it iterates over
 %% each label. The front-edge wrapper intercepts the comma-separated

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-warnings-off
+%% TEST-PURPOSE: proof-warnings=off suppresses the "Proof not adjacent"
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-NONADJ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: proof-warnings=off suppresses the "Proof not adjacent"
 %%            warning for non-adjacent (standalone) proofs.
 %% TEST-SOURCE: docs/DESIGN.md §Options, proof-warnings
@@ -10,7 +14,6 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{proof}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-NONADJ
 %%
 %% With proof-warnings=off, a non-adjacent proof becomes STANDALONE
 %% (opaque proof-id key, no shared-counter slot) but no warning is

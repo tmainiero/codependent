@@ -1,4 +1,8 @@
 %% TEST-NAME: test-two-tier-evaluator-postdrain
+%% TEST-PURPOSE: Exercise post-drain residual state (commit 36b9fca).
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-WARN-ENDDOC
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Exercise post-drain residual state (commit 36b9fca).
 %%            Synthetically set the proofof subsystem counters to partial-fail
 %%            state (total=2, failed=1). Post-drain evaluator detects this
@@ -12,7 +16,6 @@
 %% TEST-PDF-CONTAINS: Theorem 1.1. A theorem. Used in 1.2.
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-WARN-ENDDOC
 %%
 %% Synthetically set the proofof subsystem to partial-fail state:
 %% total=2, failed=1 (some but not all operations failed). The post-drain

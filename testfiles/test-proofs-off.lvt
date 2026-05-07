@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-off
+%% TEST-PURPOSE: proofs=off disables all proof tracking; no atom numbers,
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-OFF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: proofs=off disables all proof tracking; no atom numbers,
 %%            no SBL records, no adjacency detection.
 %% TEST-SOURCE: docs/DESIGN.md §Proof environments

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-paragraph-breaks-adjacency
+%% TEST-PURPOSE: A paragraph between theorem and proof breaks adjacency;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A paragraph between theorem and proof breaks adjacency;
 %%            the proof becomes STANDALONE (opaque proof-id key,
 %%            no shared-counter slot, suppressed from source-token output).
@@ -15,7 +19,6 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-ADJRULE
 %%
 %% The paragraph of text between theorem and proof clears
 %% \codep@lasttheorematom, so the proof falls through to the

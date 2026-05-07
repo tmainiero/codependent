@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-proofauto-repeated-explicit
+%% TEST-PURPOSE: Two explicit \codepproofof* calls in one proof are silent joint attribution.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Two explicit \codepproofof* calls in one proof are silent joint attribution.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
@@ -7,7 +11,6 @@
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-LOG-NOT: codepproofof: unknown label|joint attribution|last-write
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}

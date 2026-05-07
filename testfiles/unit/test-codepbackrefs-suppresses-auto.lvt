@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codepbackrefs-suppresses-auto
+%% TEST-PURPOSE: Single-theorem double-emit scenario: theorem body calls
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Single-theorem double-emit scenario: theorem body calls
 %%            \codepbackrefs; auto-flush at theorem-end must NOT
 %%            re-emit. PDF contains exactly one "Used in" line for
@@ -17,7 +21,6 @@
 %% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REND-INLINE
 %%
 %% Sub-case 1 of the four suppression scenarios: single theorem calls
 %% \codepbackrefs in body. At pass 2, the call-site emission fires

@@ -1,3 +1,8 @@
+%% TEST-NAME: test-backrefs
+%% TEST-PURPOSE: "Used in" text appears when a .sbr file is present. The .sbr file is written inline in the test via \write. Tests…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 % test-backrefs.lvt
 % Verifies: "Used in" text appears when a .sbr file is present.
 % The .sbr file is written inline in the test via \write.

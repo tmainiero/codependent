@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppress-tikz-inline
+%% TEST-PURPOSE: Verify an inline \tikz{\node ...;} call does NOT inject
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-CMDS
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify an inline \tikz{\node ...;} call does NOT inject
 %%            an atom number into the surrounding paragraph flow.
 %% TEST-SOURCE: REVIEW_E #9 (MINOR)

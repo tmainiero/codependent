@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-as-backref-target
+%% TEST-PURPOSE: A label placed inside an adjacent proof body becomes a backref
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-DISP-PROOF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A label placed inside an adjacent proof body becomes a backref
 %%            target; a later theorem referencing that label generates an
 %%            atomref record with the proof's atom key as the target.
@@ -25,7 +29,6 @@
 %%
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-ADJ, B-DISP-PROOF
 %%
 %% Places a \label inside an adjacent proof body.  A later theorem
 %% \ref's that label, generating a backref edge where the proof atom

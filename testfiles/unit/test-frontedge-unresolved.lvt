@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-unresolved
+%% TEST-PURPOSE: Verify that \ref{thm:MISSING} (an undefined label that
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that \ref{thm:MISSING} (an undefined label that
 %%            renders as "??") STILL emits \codep@atomref{theorem:1.1}{thm:MISSING}
 %%            on pass 1. This is the load-bearing behaviour of front-edge
@@ -14,7 +18,6 @@
 %% This fixture intentionally references a missing label because the test's
 %% point is that front-edge capture still records the edge on the warning path.
 %% TEST-ALLOW-UNDEFINED-REFS: yes
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% The front-edge wrapper fires \codep@frontedge@emit{label} BEFORE
 %% calling the saved original \ref. The emit step writes the edge to

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-warnings-off
+%% TEST-PURPOSE: proof-warnings=off suppresses the "Proof not adjacent"
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-NONADJ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: proof-warnings=off suppresses the "Proof not adjacent"
 %%            warning for non-adjacent proofs.
 %% TEST-SOURCE: docs/DESIGN.md §Options, proof-warnings

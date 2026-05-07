@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-supp-tracked-env
+%% TEST-PURPOSE: Verify paragraph numbering is suppressed inside tracked
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-SUPP-TRACKED
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify paragraph numbering is suppressed inside tracked
 %%            environments. Multiple paragraph breaks and duplicate refs
 %%            inside one tracked theorem must still render as a single
@@ -18,7 +22,6 @@
 %% TEST-PDF-STEXT-NOT: (?s)Used in 1\.2, 1\.3\.
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
-%% TEST-BEHAVIOR: B-SUPP-TRACKED
 
 \documentclass{article}
 

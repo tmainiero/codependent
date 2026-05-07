@@ -1,4 +1,8 @@
 %% TEST-NAME: test-replay-guard-aux-records
+%% TEST-PURPOSE: \restatable-replay must not duplicate P03 aux records.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REST-NODUP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \restatable-replay must not duplicate P03 aux records.
 %%            A labelled restatable theorem with a restate site
 %%            produces exactly ONE \codep@lblentity and ONE
@@ -17,8 +21,6 @@
 %% TEST-AUX-NOT-CONTAINS: {theorem}\codep@entitymeta{theorem:1.1}{theorem}
 %% TEST-PACKAGES: thmtools,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REST-NODUP
-%% TEST-BEHAVIOR: B-PASS-ONE
 %%
 %% Replay-guard scenario: \restatable wraps the theorem body; the
 %% first occurrence runs with \codep@replaydepth=0 (normal) and

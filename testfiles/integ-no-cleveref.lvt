@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-no-cleveref
+%% TEST-PURPOSE: Correct patch-site selection when cleveref is absent.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Correct patch-site selection when cleveref is absent.
 %%            Verifies that codependent patches \@setref and hyperref's
 %%            \HyRef@autosetref / \HyRef@@StarSetRef but does NOT attempt

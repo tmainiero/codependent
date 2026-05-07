@@ -1,4 +1,8 @@
 %% TEST-NAME: test-restatable-single
+%% TEST-PURPOSE: Verify \restatable{theorem}{thm:foo}{...} + \restate{thm:foo}
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REST-FIRST, B-REST-NODUP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \restatable{theorem}{thm:foo}{...} + \restate{thm:foo}
 %%            does NOT double-emit \codep@cdp@atom records and does NOT
 %%            misattribute backref edges to the wrong (previous) atom.

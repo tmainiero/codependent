@@ -1,4 +1,8 @@
 %% TEST-NAME: test-two-tier-evaluator-predrain
+%% TEST-PURPOSE: Exercise pre-drain fatal state (commit 36b9fca).
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-ERROR-ENDDOC
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Exercise pre-drain fatal state (commit 36b9fca).
 %%            Synthetically populate the proof binding slot and set the
 %%            proofof subsystem counters to all-failed (total=1, failed=1).
@@ -12,7 +16,6 @@
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-ERROR-ENDDOC
 %% TEST-PDF-NOT: Used in
 %% TEST-PDF-NOT: Codependent
 %%

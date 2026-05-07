@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codepbackrefs-proof
+%% TEST-PURPOSE: \codepbackrefs called inside a STANDALONE proof body emits
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE, B-PROOF-NONADJ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepbackrefs called inside a STANDALONE proof body emits
 %%            the proof atom's refs (not the parent theorem's), and the
 %%            proof auto-flush at \AfterEndEnvironment{proof} is suppressed.
@@ -17,7 +21,6 @@
 %% TEST-PDF-STEXT-NOT: Used in 1\.3[^0-9].*Used in 1\.3
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REND-INLINE, B-PROOF-NONADJ
 %%
 %% Uses a STANDALONE proof (separated from thm:src by an intervening
 %% paragraph atom) so the proof has an OPAQUE proof-id key

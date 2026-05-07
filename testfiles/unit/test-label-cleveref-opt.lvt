@@ -1,4 +1,7 @@
 %% TEST-NAME: test-label-cleveref-opt
+%% TEST-PURPOSE: Verify \label[theorem]{thm:foo} (cleveref optional-arg form)
+%% TEST-KIND: unit
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \label[theorem]{thm:foo} (cleveref optional-arg form)
 %%            is correctly wrapped and emits \codep@cdp@label{<num>}{thm:foo}
 %%            with the CLEAN key (no square-bracket type prefix).

@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-equations-all
+%% TEST-PURPOSE: Verify that equations=all causes equations INSIDE tracked theorem
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-EQ-ALL
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that equations=all causes equations INSIDE tracked theorem
 %%            environments to be tracked as equation-sourced atomrefs, not just
 %%            standalone (outer-mode) equations.
@@ -44,7 +48,6 @@
 %% TEST-ATOMS-MIN: 4
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EQ-ALL
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-PINS-KNOWN-BROKEN: yes

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-pass-three-toc-floor
+%% TEST-PURPOSE: A document whose base TOC machinery requires a third pass
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-THREE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A document whose base TOC machinery requires a third pass
 %%            still settles within that same three-pass budget while
 %%            rendering the final visible backref row.
@@ -11,7 +15,6 @@
 %% TEST-PDF-CONTAINS: Contents
 %% TEST-PDF-CONTAINS: Used in 2.1
 %% TEST-PACKAGES: amsthm,hyperref,codependent
-%% TEST-BEHAVIOR: B-PASS-THREE
 
 \documentclass{article}
 \usepackage{amsthm}

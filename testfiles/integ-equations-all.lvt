@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-equations-all
+%% TEST-PURPOSE: Verify that equations=all causes equations INSIDE tracked theorem
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-EQ-ALL
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that equations=all causes equations INSIDE tracked theorem
 %%            environments to be tracked as equation-sourced atomrefs, not just
 %%            standalone (outer-mode) equations.

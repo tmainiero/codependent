@@ -1,4 +1,8 @@
 %% TEST-NAME: test-load-cleveref-after-codependent
+%% TEST-PURPOSE: Verify cleveref loaded AFTER codependent still has all its
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify cleveref loaded AFTER codependent still has all its
 %%            \cref calls tracked: the \cref@getlabel patch (§8a.0
 %%            site 2) installs at begindocument/before, after

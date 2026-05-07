@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-paragraph-breaks-adjacency
+%% TEST-PURPOSE: A paragraph between theorem and proof breaks adjacency;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A paragraph between theorem and proof breaks adjacency;
 %%            the proof gets its own standalone atom number.
 %% TEST-SOURCE: docs/DESIGN.md §Proof adjacency

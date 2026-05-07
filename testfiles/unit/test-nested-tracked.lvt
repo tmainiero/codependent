@@ -1,4 +1,8 @@
 %% TEST-NAME: test-nested-tracked
+%% TEST-PURPOSE: A tracked env nested inside another tracked env must NOT
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-NESTED, B-EDGE-NESTED
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A tracked env nested inside another tracked env must NOT
 %%            produce its own atom record.  Only the outermost tracked
 %%            env gets an SBL atom entry; the inner env is suppressed
@@ -18,7 +22,6 @@
 %% TEST-ATOMS-MIN: 3
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-NUM-NESTED, B-EDGE-NESTED
 %%
 %% Regression test for BLOCKER #2: when a tracked environment (corollary)
 %% is nested inside another tracked environment (theorem), the inner

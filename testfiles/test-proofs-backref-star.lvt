@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-backref-star
+%% TEST-PURPOSE: Cross-references from inside adjacent proofs produce starred
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-DISP-PROOF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Cross-references from inside adjacent proofs produce starred
 %%            atom numbers in aux records (e.g. codep@atomref{1.1*}{...}).
 %% TEST-SOURCE: docs/DESIGN.md §Proof adjacency, §Back-reference graph

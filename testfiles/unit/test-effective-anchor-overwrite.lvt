@@ -1,4 +1,8 @@
 %% TEST-NAME: test-effective-anchor-overwrite
+%% TEST-PURPOSE: When a theorem body installs a same-typed, same-display
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-LINK-EFFECTIVE-ANCHOR
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: When a theorem body installs a same-typed, same-display
 %%            label later in the body, visible backref links target that
 %%            overwritten effective anchor rather than the heading anchor.
@@ -11,7 +15,6 @@
 %% TEST-PDF-BACKREF-ENTRY-TARGET: section\*\.[0-9]+ | 1.2 = section\*\.[0-9]+
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-LINK-EFFECTIVE-ANCHOR
 
 \documentclass{article}
 \usepackage{amsthm}

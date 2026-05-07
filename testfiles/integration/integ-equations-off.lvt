@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-equations-off
+%% TEST-PURPOSE: Verify that equations=off fully suppresses equation tracking:
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-EQ-OFF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that equations=off fully suppresses equation tracking:
 %%            no equation-sourced atomrefs appear in the .aux, and references
 %%            made inside equation environments fall through to the containing
@@ -39,7 +43,6 @@
 %% TEST-ATOMS-MIN: 5
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EQ-OFF
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-PINS-KNOWN-BROKEN: yes

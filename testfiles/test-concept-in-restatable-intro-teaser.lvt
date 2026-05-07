@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-in-restatable-intro-teaser
+%% TEST-PURPOSE: Verify the intro-teaser pattern: restatable* (teaser,
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REST-CONCEPT
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify the intro-teaser pattern: restatable* (teaser,
 %%            non-primary) in the intro, then restatable (primary)
 %%            in the main body. The def site for \Hom* MUST be the

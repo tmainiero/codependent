@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-separated
+%% TEST-PURPOSE: \codepproofof associates a separated proof with its theorem;
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-SEP
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \codepproofof associates a separated proof with its theorem;
 %%            the proof gets the theorem's starred atom number.
 %% TEST-SOURCE: docs/DESIGN.md §Proof environments, \codepproofof command
@@ -15,7 +19,6 @@
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:2.1}{thm:main}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-SEP
 %%
 %% Tests two scenarios:
 %% 1. Theorem in section 1, proof in section 2 with \codepproofof{thm:main}

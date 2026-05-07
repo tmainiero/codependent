@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-backref
+%% TEST-PURPOSE: Default equations=outer: \ref inside a numbered equation
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-TRACK1, B-DISP-EQ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Default equations=outer: \ref inside a numbered equation
 %%            outside a theorem uses the parenthesized equation number
 %%            as the backref source.  Inside a theorem, falls through

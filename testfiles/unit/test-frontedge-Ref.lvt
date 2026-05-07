@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-Ref
+%% TEST-PURPOSE: Verify \Ref{thm:A} (capital-R, from nameref package)
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \Ref{thm:A} (capital-R, from nameref package)
 %%            from theorem 1.2 emits \codep@atomref{theorem:1.2}{thm:A}
 %%            via the front-edge wrapper.
@@ -12,7 +16,6 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,nameref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% nameref defines \Ref as a capitalised variant of \ref that also
 %% expands the cross-reference name. It routes through NR@setref

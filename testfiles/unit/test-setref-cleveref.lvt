@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-cleveref
+%% TEST-PURPOSE: Verify \cref{thm:later} still emits
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \cref{thm:later} still emits
 %%            \codep@atomref{theorem:1.1}{thm:later} on pass 1 after
 %%            backend wrapper removal.
@@ -15,7 +19,6 @@
 %% This fixture intentionally inspects the single unresolved forward-ref pass
 %% so the aux edge must come from the front-edge \cref wrapper alone.
 %% TEST-ALLOW-UNDEFINED-REFS: yes
-%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
 %%
 %% This is the commit-3 regression guard for cleveref. The only pass is
 %% a forward ref, so the old \cref@getlabel backend path cannot be the

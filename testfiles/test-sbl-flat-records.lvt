@@ -1,4 +1,8 @@
 %% TEST-NAME: test-sbl-flat-records
+%% TEST-PURPOSE: Verify \codeptag{key}{value with spaces} produces a flat
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \codeptag{key}{value with spaces} produces a flat
 %%            3-argument \codep@cdp@tag record, NOT a kv blob embedded
 %%            in a single argument.

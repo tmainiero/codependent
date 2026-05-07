@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codeptrack-before-newtheorem-error
+%% TEST-PURPOSE: Calling \codeptrack before the theorem environment exists
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EDGE-TRACK-ORDER
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Calling \codeptrack before the theorem environment exists
 %%            is a package error and produces no visible backrefs.
 %% TEST-PINS-KNOWN-BROKEN: yes
@@ -10,7 +14,6 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 1
-%% TEST-BEHAVIOR: B-EDGE-TRACK-ORDER
 
 \documentclass{article}
 \usepackage{amsthm}

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-unnumbered-no-backref
+%% TEST-PURPOSE: Unnumbered equation environments do not create equation
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-UNNUM
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Unnumbered equation environments do not create equation
 %%            backref sources, so visible "Used in" text never appears.
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-EQ-UNNUM
@@ -9,7 +13,6 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EQ-UNNUM
 
 \documentclass{article}
 \usepackage{amsmath}

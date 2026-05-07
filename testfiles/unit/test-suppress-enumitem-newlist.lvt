@@ -1,4 +1,8 @@
 %% TEST-NAME: test-suppress-enumitem-newlist
+%% TEST-PURPOSE: Verify a user-declared \newlist{mylist}{itemize}{1} environment
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-LISTS
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a user-declared \newlist{mylist}{itemize}{1} environment
 %%            auto-suppresses atom numbering for paragraphs inside it.
 %% TEST-PINS-KNOWN-BROKEN: yes
@@ -14,7 +18,6 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: enumitem,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-SUPP-LISTS
 %%
 %% REVIEW_E finding #10. enumitem's \newlist creates new list
 %% environments on the fly. The codependent suppression registry

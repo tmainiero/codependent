@@ -1,4 +1,8 @@
 %% TEST-NAME: test-currentatom-clear
+%% TEST-PURPOSE: Verify a \ref AFTER an atom but BEFORE the next atom does
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EDGE-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a \ref AFTER an atom but BEFORE the next atom does
 %%            NOT get attributed to the just-ended atom. The \ref fires
 %%            in a between-atoms gap (e.g., section heading, caption,
@@ -13,7 +17,6 @@
 %% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1.2}{thm:A}
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EDGE-HEADING
 %%
 %% Current codependent.sty (v0.1, lines 244-255 area) sets
 %% \codep@currentatom on theorem-begin and on para/begin but

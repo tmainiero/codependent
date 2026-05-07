@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-autorefstar
+%% TEST-PURPOSE: Verify \autoref*{thm:A} (star variant, no hyperlink) from
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \autoref*{thm:A} (star variant, no hyperlink) from
 %%            theorem 1.2 still emits \codep@atomref{theorem:1.2}{thm:A}.
 %% TEST-SOURCE: docs/SW5c.md §2.2 primitive list (row 8: \autoref*)
@@ -11,7 +15,6 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% hyperref defines \autoref* as the no-hyperlink form of \autoref.
 %% The front-edge wrapper uses \@ifstar so that both the starred and

@@ -1,4 +1,8 @@
 %% TEST-NAME: test-concept-in-restatable-appendix
+%% TEST-PURPOSE: Verify the opposite pattern to the intro-teaser case:
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REST-CONCEPT
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify the opposite pattern to the intro-teaser case:
 %%            \restatable{theorem}{thm:main}{body with \Hom*} in
 %%            the main body (fires first, alias intact), then

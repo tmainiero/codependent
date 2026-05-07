@@ -1,3 +1,8 @@
+%% TEST-NAME: test-hyperref
+%% TEST-PURPOSE: hyperref + codependent coexist without conflict. hyperref is loaded BEFORE codependent per the standard load-order rule…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-LINK-CLICKABLE
+%% TEST-STATUS: LIVE
 % test-hyperref.lvt
 % Verifies: hyperref + codependent coexist without conflict.
 % hyperref is loaded BEFORE codependent per the standard load-order rule

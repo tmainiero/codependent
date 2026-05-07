@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-autoref
+%% TEST-PURPOSE: Verify \autoref{thm:later} still emits
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \autoref{thm:later} still emits
 %%            \codep@atomref{theorem:1.1}{thm:later} on pass 1 after
 %%            backend wrapper removal.
@@ -15,7 +19,6 @@
 %% This fixture intentionally inspects the single unresolved forward-ref pass
 %% to prove front-edge capture works before \autoref can resolve the target.
 %% TEST-ALLOW-UNDEFINED-REFS: yes
-%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
 %%
 %% This is the autoref variant of the commit-3 regression guard. The
 %% only pass is a forward ref, so the old \HyRef@autosetref backend

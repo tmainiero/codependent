@@ -1,4 +1,8 @@
 %% TEST-NAME: test-load-hyperref-then-codependent
+%% TEST-PURPOSE: Verify hyperref loaded BEFORE codependent works cleanly (the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify hyperref loaded BEFORE codependent works cleanly (the
 %%            recommended load order); backref edges and the .cdp end
 %%            marker both land.

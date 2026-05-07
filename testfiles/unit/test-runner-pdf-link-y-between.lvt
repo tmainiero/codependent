@@ -1,4 +1,8 @@
 %% TEST-NAME: test-runner-pdf-link-y-between
+%% TEST-PURPOSE: Self-test for TEST-PDF-LINK-Y-BETWEEN assertion type.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-LINK-CORRECT
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Self-test for TEST-PDF-LINK-Y-BETWEEN assertion type.
 %%            A \hyperlink destination (\hypertarget) is placed between
 %%            two reference texts vertically.  The assertion verifies
@@ -15,7 +19,6 @@
 %% TEST-PDF-LINK-Y-BETWEEN: reference here | Above the destination | Below the destination
 %% TEST-PACKAGES: hyperref
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-LINK-CORRECT
 %%
 %% Verifies that _check_pdf_link_y_between correctly identifies that
 %% a hyperlink destination y lies strictly between the y-coordinates

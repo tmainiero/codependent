@@ -1,4 +1,8 @@
 %% TEST-NAME: test-codepbackrefs-marginpar
+%% TEST-PURPOSE: \marginpar{\codepbackrefs} inside a theorem body emits the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-REND-INLINE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: \marginpar{\codepbackrefs} inside a theorem body emits the
 %%            THEOREM's refs (not a new atom): marginpar content
 %%            expands in the current group, so \codep@getcurrentatomkey
@@ -18,7 +22,6 @@
 %% TEST-PDF-STEXT-NOT: Used in 1\.2[^0-9].*Used in 1\.2
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-REND-INLINE
 %%
 %% Theorem 1.1 has \marginpar{\codepbackrefs} in its body. The marginpar
 %% content expands in the theorem's group, so \codepbackrefs sees

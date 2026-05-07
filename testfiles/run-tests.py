@@ -15,7 +15,8 @@ Usage:
 
     python3 run-tests.py [--filter PATTERN] [--engine pdflatex|lualatex|xelatex]
                          [--keep-temp] [--verbose] [--unit-only]
-                         [--integration-only] [--real-world]
+                         [--integration-only] [--real-world] [--check-test-index]
+                         [--full]
 
 System-wide texlive-full is used during the design/test phase per
 user direction 2026-04-09 (the project's Nix flake does not yet
@@ -29,6 +30,7 @@ Standard library only. No PyYAML, no requests, no third-party deps.
 import argparse
 import dataclasses
 import difflib
+import importlib.util
 import json
 import os
 import re
@@ -72,6 +74,10 @@ METADATA_KEYS = {
     "TEST-SOURCE": "source",
     "TEST-SECTION": "section",
     "TEST-BEHAVIOR": "behavior_ids",  # comma-separated B-* IDs from docs/BEHAVIOR.md
+    "TEST-PURPOSE": "purpose",
+    "TEST-KIND": "kind",
+    "TEST-STATUS": "status",
+    "TEST-RENDER-MODES": "render_modes",
     "TEST-EXIT": "exit_code",
     "TEST-LOG-NOT": "log_not",  # may repeat
     "TEST-LOG-CONTAINS": "log_contains",  # may repeat
@@ -184,6 +190,50 @@ def _load_max_pass_counts() -> dict:
 MAX_PASS_COUNTS: dict = _load_max_pass_counts()
 
 
+def parse_test_kind_headers(path: Path) -> dict:
+    """Parse shared TEST-KIND metadata via test_header_parser.py.
+
+    Kept as a runner-level entry point for importlib consumers while the
+    implementation lives in a tiny shared module.
+    """
+
+    parser_path = SCRIPT_DIR / "test_header_parser.py"
+    spec = importlib.util.spec_from_file_location("codep_test_header_parser", parser_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load TEST-* parser from {parser_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.parse_test_kind_headers(path)
+
+
+def _load_test_index_regenerator():
+    """Load .claude/scripts/regenerate_test_index.py without package imports."""
+
+    regenerator_path = PROJECT_ROOT / ".claude" / "scripts" / "regenerate_test_index.py"
+    spec = importlib.util.spec_from_file_location("codep_regenerate_test_index", regenerator_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load test-index regenerator from {regenerator_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def sync_test_index(check: bool = False) -> int:
+    """Run the generated index preflight.
+
+    Normal dev invocations repair testfiles/test-index.md on drift. CI invokes
+    this with check=True, which reports the diff and exits before fixture
+    execution without writing.
+    """
+
+    try:
+        regenerator = _load_test_index_regenerator()
+    except Exception as exc:
+        sys.stderr.write(f"FATAL: failed to load test-index regenerator: {exc}\n")
+        return 2
+    return regenerator.regenerate(check=check)
+
+
 @dataclasses.dataclass
 class Fixture:
     path: Path
@@ -192,6 +242,10 @@ class Fixture:
     source: str = ""
     section: str = ""
     behavior_ids: list = dataclasses.field(default_factory=list)
+    purpose: str = ""
+    kind: str = ""
+    status: str = ""
+    render_modes: str = ""
     exit_code: int = 0
     log_not: list = dataclasses.field(default_factory=list)
     log_contains: list = dataclasses.field(default_factory=list)
@@ -2857,12 +2911,18 @@ def main():
     parser.add_argument("--unit-only", action="store_true", help="only run unit fixtures")
     parser.add_argument("--integration-only", action="store_true", help="only run integration fixtures")
     parser.add_argument("--real-world", action="store_true", help="include real-world arxiv-corpus fixtures")
+    parser.add_argument("--full", action="store_true", help="run the full fixture suite (currently the default; CI-friendly with --check-test-index)")
+    parser.add_argument("--check-test-index", action="store_true", help="CI mode: fail if generated testfiles/test-index.md is stale; do not repair it")
     parser.add_argument(
         "--census",
         action="store_true",
         help="run only TEST-CENSUS fixtures and emit testfiles/output/*.census.json",
     )
     args = parser.parse_args()
+
+    index_rc = sync_test_index(check=args.check_test_index)
+    if index_rc != 0:
+        return index_rc
 
     # Engine binary.
     engine_bin = assert_engine_available(args.engine)

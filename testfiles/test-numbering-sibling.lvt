@@ -1,4 +1,8 @@
 %% TEST-NAME: test-numbering-sibling
+%% TEST-PURPOSE: thmtools sibling=theorem envs get correct atom numbering.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-SEQ, B-NUM-RESET
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: thmtools sibling=theorem envs get correct atom numbering.
 %%            With depth=2, all tracked envs (theorem, corollary,
 %%            definition) must display section.subsection.atom format

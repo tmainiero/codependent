@@ -1,4 +1,8 @@
 %% TEST-NAME: test-hyperref-manual-no-edge
+%% TEST-PURPOSE: A manual \hyperref link still renders as a link in the PDF
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EDGE-HYPERREF
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A manual \hyperref link still renders as a link in the PDF
 %%            but does not create a semantic backref edge.
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-EDGE-HYPERREF
@@ -10,7 +14,6 @@
 %% TEST-PDF-LINKS: 1
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-EDGE-HYPERREF
 
 \documentclass{article}
 \usepackage{amsthm}

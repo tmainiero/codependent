@@ -1,3 +1,8 @@
+%% TEST-NAME: test-depth
+%% TEST-PURPOSE: depth=2 produces section.subsection.atom format and the counter resets at the subsection boundary (not the section…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-DEPTH2, B-NUM-RESET
+%% TEST-STATUS: LIVE
 % test-depth.lvt
 % Verifies: depth=2 produces section.subsection.atom format and the
 % counter resets at the subsection boundary (not the section boundary).

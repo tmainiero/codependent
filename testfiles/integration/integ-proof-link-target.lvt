@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-proof-link-target
+%% TEST-PURPOSE: Proof-atom link target: clicking N.M* in a "Used in" list
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Proof-atom link target: clicking N.M* in a "Used in" list
 %%            jumps near the proof heading, not the parent theorem.
 %%            The proof emits its anchor at proof-begin, and the
@@ -14,7 +18,6 @@
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.2}
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
-%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%

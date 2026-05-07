@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-after-non-result
+%% TEST-PURPOSE: A proof immediately after a tracked definition inherits the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE, B-EDGE-PROOF-ANY
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: A proof immediately after a tracked definition inherits the
 %%            definition's atom number (current behavior: all tracked envs
 %%            set the adjacency flag, no result-vs-definition distinction).
@@ -17,7 +21,6 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-ADJRULE, B-EDGE-PROOF-ANY
 %%
 %% Documents current behavior: \codep@lasttheorematom is set by ANY
 %% tracked environment's end hook (§6 line 582), not just "result"

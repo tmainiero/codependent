@@ -1,4 +1,7 @@
 %% TEST-NAME: test-numbering-depth3
+%% TEST-PURPOSE: depth=3 option produces section.subsection.subsubsection.atom
+%% TEST-KIND: unit
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: depth=3 option produces section.subsection.subsubsection.atom
 %%            display numbers (e.g. "1.1.2.1") under the article class.
 %% TEST-SOURCE: docs/DESIGN.md §Numbering "Depth"

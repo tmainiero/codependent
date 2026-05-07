@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-all
+%% TEST-PURPOSE: equations=all: equation inside a theorem uses the
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-ALL
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: equations=all: equation inside a theorem uses the
 %%            parenthesized equation number as backref source, NOT
 %%            the theorem atom number.  Standalone equations also

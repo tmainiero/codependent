@@ -1,4 +1,8 @@
 %% TEST-NAME: test-newdoccommand-tracking
+%% TEST-PURPOSE: Verify \codepNewDocumentCommand{\Cite}{s o m}{...} emits
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-CONC-EDGES, B-CONC-DEFSITE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \codepNewDocumentCommand{\Cite}{s o m}{...} emits
 %%            the expected \codep@cdp@cmddef records (kind=NewDocumentCommand,
 %%            argspec, src) and that the defined \Cite command works with
@@ -13,7 +17,6 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Cite}{src}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-CONC-EDGES, B-CONC-DEFSITE
 %%
 %% Parallel test to test-newcommand-tracking but for the
 %% \codepNewDocumentCommand variant. The schema differs in

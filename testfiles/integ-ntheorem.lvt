@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-ntheorem
+%% TEST-PURPOSE: Verify codependent works with ntheorem as the theorem backend
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify codependent works with ntheorem as the theorem backend
 %%            instead of amsthm.  ntheorem and amsthm are mutually exclusive;
 %%            this fixture loads ntheorem only.  Tests that \codeptrack wires

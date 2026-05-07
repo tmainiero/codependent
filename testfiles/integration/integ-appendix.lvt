@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-appendix
+%% TEST-PURPOSE: Integration test for backrefs=appendix mode.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Integration test for backrefs=appendix mode.
 %%            Verifies that inline/below "Used in" lines are suppressed,
 %%            that \codepappendix produces a "Dependency Index" section,
@@ -51,7 +55,6 @@
 %% TEST-STABLE-AT: 2
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-LINK-APPENDIX-BIDIR
 %%
 %% Integration fixture for appendix mode.
 %%

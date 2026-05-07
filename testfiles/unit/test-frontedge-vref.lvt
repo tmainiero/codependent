@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-vref
+%% TEST-PURPOSE: Verify \vref{thm:A} (varioref smart reference) from
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \vref{thm:A} (varioref smart reference) from
 %%            theorem 1.2 emits \codep@atomref{theorem:1.2}{thm:A}
 %%            via delegation through the \ref front-edge wrapper.
@@ -12,7 +16,6 @@
 %% TEST-ATOMS-MIN: 2
 %% TEST-PACKAGES: hyperref,varioref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE
 %%
 %% varioref's \vref produces context-sensitive references ("below",
 %% "on the following page", etc.) by calling \ref internally. With the

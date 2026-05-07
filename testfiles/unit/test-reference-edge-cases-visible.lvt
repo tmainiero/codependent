@@ -1,4 +1,8 @@
 %% TEST-NAME: test-reference-edge-cases-visible
+%% TEST-PURPOSE: Multiple refs from one source deduplicate to one visible
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-DEDUP, B-SELFREF, B-ZERO-REF, B-EDGE-ZERO-REF, B-EDGE-DEDUP, B-EDGE-MULTI-SAME
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Multiple refs from one source deduplicate to one visible
 %%            backref entry, self-refs are ignored, and an atom with no
 %%            inbound refs renders no "Used in" annotation.
@@ -12,7 +16,6 @@
 %% TEST-PDF-STEXT-NOT: Self-referential theorem with zero inbound refs\..*Used in
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-DEDUP, B-SELFREF, B-ZERO-REF, B-EDGE-ZERO-REF, B-EDGE-DEDUP, B-EDGE-MULTI-SAME
 
 \documentclass{article}
 \usepackage{amsthm}

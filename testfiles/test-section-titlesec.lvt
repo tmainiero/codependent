@@ -1,4 +1,8 @@
 %% TEST-NAME: test-section-titlesec
+%% TEST-PURPOSE: Verify \section{Foo} heading paragraph is NOT numbered as
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-SUPP-SECTION
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \section{Foo} heading paragraph is NOT numbered as
 %%            an atom under article + titlesec, which replaces
 %%            \@startsection at load time.

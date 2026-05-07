@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-track2-align
+%% TEST-PURPOSE: Track 2: align with two numbered lines records a range
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-EQ-TRACK2
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Track 2: align with two numbered lines records a range
 %%            source (1--2).  Each \ref in the align is attributed to
 %%            the range.  Anchormap entry written for the range key.

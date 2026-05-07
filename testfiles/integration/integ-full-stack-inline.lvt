@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-full-stack-inline
+%% TEST-PURPOSE: Full-stack integration: amsmath, amsthm, thmtools, hyperref,
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Full-stack integration: amsmath, amsthm, thmtools, hyperref,
 %%            cleveref, tikz-cd, codependent with backref-style=inline.
 %%            Tests the "inline" rendering path, the preferred default style
@@ -76,7 +80,6 @@
 %% TEST-RERUN: 3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
-%% TEST-BEHAVIOR: B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %%
 %% Full-stack integration fixture. All codependent options are on,
 %% with backref-style=inline (renders backrefs inline within the theorem body).

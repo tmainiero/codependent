@@ -1,4 +1,8 @@
 %% TEST-NAME: test-equations-separate
+%% TEST-PURPOSE: Verify the equation counter stays independent of the atom
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-EQINDEP, B-EQ-TRACK1
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify the equation counter stays independent of the atom
 %%            counter; \eqref works; a paragraph-then-equation-then-paragraph
 %%            sequence produces two atoms, not three.

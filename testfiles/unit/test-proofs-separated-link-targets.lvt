@@ -1,4 +1,8 @@
 %% TEST-NAME: test-proofs-separated-link-targets
+%% TEST-PURPOSE: For a rebound proof (\codepproofof, B-PROOF-SEP), backref
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: For a rebound proof (\codepproofof, B-PROOF-SEP), backref
 %%            entries in source-token "Used in" lists for both the
 %%            pre-rebind id 2.1* and post-rebind id 1.1* land near
@@ -23,7 +27,6 @@
 %% TEST-AUX-CONTAINS: \codep@keymap{proof:2.1}{proof:1.1}
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %%
 %% Companion to test-proofs-separated.lvt, which asserts the source-
 %% level rendering ("Used in 2.1*" on thm:main, "Used in 1.1*" on

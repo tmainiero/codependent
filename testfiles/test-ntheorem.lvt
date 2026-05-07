@@ -1,3 +1,8 @@
+%% TEST-NAME: test-ntheorem
+%% TEST-PURPOSE: codependent works with ntheorem as the theorem backend. ntheorem redefines \newtheorem and theorem internals…
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-SHARED
+%% TEST-STATUS: LIVE
 % test-ntheorem.lvt
 % Verifies: codependent works with ntheorem as the theorem backend.
 % ntheorem redefines \newtheorem and theorem internals differently

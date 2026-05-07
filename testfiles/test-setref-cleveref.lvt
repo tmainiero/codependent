@@ -1,4 +1,8 @@
 %% TEST-NAME: test-setref-cleveref
+%% TEST-PURPOSE: Verify \cref{thm:A} produces a backref edge in .cdp, even though
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \cref{thm:A} produces a backref edge in .cdp, even though
 %%            cleveref bypasses \@setref entirely (uses \cref@getlabel directly).
 %% TEST-SOURCE: REVIEW_E #2 (BLOCKER), REVIEW_F J3 (verified)

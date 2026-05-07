@@ -1,4 +1,8 @@
 %% TEST-NAME: integ-no-cleveref [warm-changed]
+%% TEST-PURPOSE: Correct patch-site selection when cleveref is absent.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Correct patch-site selection when cleveref is absent.
 %%            Verifies that codependent patches \@setref and hyperref's
 %%            \HyRef@autosetref / \HyRef@@StarSetRef but does NOT attempt
@@ -33,7 +37,6 @@
 %% TEST-CENSUS-PASS: yes
 %% TEST-PDF-LINKS: 2
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
-%% TEST-BEHAVIOR: B-PASS-ONE
 %% TEST-PINS-KNOWN-BROKEN: yes
 %% NOTE: TEST-PDF-ALL-BACKREFS-LINKED not enabled as a green assertion.
 %% The no-cleveref path has a known linking gap: starred proof atoms

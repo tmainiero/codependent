@@ -1,4 +1,8 @@
 %% TEST-NAME: test-base-counter-custom
+%% TEST-PURPOSE: Verify that codependent works when the base counter is NOT named
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-NUM-SEQ
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify that codependent works when the base counter is NOT named
 %%            "theorem".  Uses \newtheorem{thm}{Theorem}[section] as the
 %%            base, with \newtheorem{defn}[thm]{Definition} as a sibling.

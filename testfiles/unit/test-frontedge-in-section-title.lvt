@@ -1,4 +1,8 @@
 %% TEST-NAME: test-frontedge-in-section-title
+%% TEST-PURPOSE: Verify \ref{thm:A} inside a \section{...} title does not
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE, B-EDGE-HEADING
+%% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify \ref{thm:A} inside a \section{...} title does not
 %%            crash and does not produce a spurious atomref, while \ref
 %%            inside a subsequent theorem DOES produce the atomref.
@@ -13,7 +17,6 @@
 %% TEST-ATOMS-MIN: 1
 %% TEST-PACKAGES: hyperref,amsthm,codependent
 %% TEST-RERUN: 2
-%% TEST-BEHAVIOR: B-FRONTEDGE-CAPTURE, B-EDGE-HEADING
 %%
 %% Section headings are moving arguments written to the .toc. Our
 %% \ref wrapper is declared \protected so it is not expanded inside
