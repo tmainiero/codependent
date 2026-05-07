@@ -13,7 +13,7 @@ from pathlib import Path
 SCRIPT_PATH = Path(__file__).resolve()
 PROJECT_ROOT = SCRIPT_PATH.parents[2]
 ALLOWED_KINDS = {"unit", "integration", "stress"}
-ALLOWED_STATUSES = {"LIVE", "PROBE", "STALE"}
+ALLOWED_STATUSES = {"LIVE", "PROBE", "STALE", "EXPLORATORY"}
 MAX_PURPOSE_CHARS = 120
 
 

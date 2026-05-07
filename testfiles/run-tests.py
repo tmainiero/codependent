@@ -2931,7 +2931,7 @@ def _discover_live_stress_tex_fixtures(
             continue
         if (
             headers.get("TEST-KIND", "").strip() == "stress"
-            and headers.get("TEST-STATUS", "").strip() == "LIVE"
+            and headers.get("TEST-STATUS", "").strip() in {"LIVE", "EXPLORATORY"}
         ):
             fix = _parse_fixture_for_discovery(path)
             if fix is not None:

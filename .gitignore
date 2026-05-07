@@ -23,6 +23,7 @@ pdf-out/*
 !pdf-out/goldens/
 !pdf-out/goldens/*.pdf
 !pdf-out/goldens/*-manifest.json
+!pdf-out/goldens/README.md
 
 # Ephemeral agent state (findings, comms, candidate claims, wave tracker, locks)
 .claude/agent_memory/
