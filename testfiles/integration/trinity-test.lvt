@@ -77,6 +77,54 @@
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%
+%% ====================================================================
+%%  W05-A1 RED gate: auto-detect proof scenarios
+%%  All assertions below FAIL on HEAD 0021ccf (before P02).
+%%  P02 turns them GREEN.  NO new B-IDs.  Reuses B-PROOF-SEP,
+%%  B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE,
+%%  B-PROOF-ANCHOR-NEAR-HEADING.
+%%
+%% Scenario 1 — backward-ref body-cite (proof of thm:autodet-backward 5.1,
+%%   body cites def:enrichment 1.5).
+%%   On HEAD: proofdisplaypending=true during proof body → body cite dropped
+%%   → no atomref{proof:5.1}{def:enrichment} in aux.
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:5.1}{def:enrichment}
+%% TEST-PDF-STEXT: (?s)Used in.*5\.1\*
+%% TEST-PDF-LINK-Y-NEAR: (?s)Used in.*5\.1\* | (?s)Proof of theorem 5\.1 | within=20
+%%
+%% Scenario 2 — forward-ref body-cite (proof of thm:autodet-forward 5.2,
+%%   body cites lem:adjunction 1.3).
+%%   On HEAD: body cite dropped (proofdisplaypending=true even on pass 2).
+%%   After P02: pproof:<N> allocates at scan; migrates to proof:5.2 at drain.
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:5.2}{lem:adjunction}
+%%
+%% Scenario 3 — joint-via-single-cref both-tracked case (a):
+%%   \cref{thm:autodet-joint-x,thm:autodet-joint-y} heading.
+%%   On HEAD: refcount=2 → warns+skips → zero records.
+%%   After P02 (sub-delta-7): TWO independent records (5.3*, 5.4*).
+%%   NOT a single joint atom (A2 deferred).
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.3*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.4*}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.3}{codep-proof:5.3}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.4}{codep-proof:5.4}
+%%
+%% Scenario 4 — joint-via-single-cref mixed-tracking case (b):
+%%   \cref{thm:autodet-mixedtrk,sec:autodet} heading.
+%%   On HEAD: refcount=2 → warns+skips → zero records.
+%%   After P02+P03: ONE record for 5.5; gate silently no-ops sec:autodet.
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.5*}
+%%
+%% Scenario 5 — section-only heading (\autoref{sec:autodet}):
+%%   On HEAD: refcount=1 single-ref path fires; lblnum@sec:autodet=5;
+%%   proofof@resolve creates proof:5 anchormap entry and cdp@proof{5*} record.
+%%   After P02+P03: tracked-entity gate fires (no lblentity for section) →
+%%   ZERO records, no anchormap, no Used-In on sec:autodet.
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{5*}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:5}{codep-proof:a
+%%
+%% Cross-scenario safety check — no pproof:* records survive to final cdp:
+%% TEST-CDP-NOT-CONTAINS: pproof:
+%%
 %% This fixture inlines the theorem declarations from sty-theorems-ta.sty
 %% (the three-avatars monograph's real theorem style) to avoid an external
 %% file dependency in the test runner.  The declarations are a faithful
@@ -435,6 +483,85 @@ A final paragraph referencing multiple labels via cleveref:
 core categorical framework, while
 \cref{cor:equiv,def:enrichment,q:coherence} provide the
 foundational vocabulary.  See also \autoref{not:hom}.
+
+%% ====================================================================
+%%  Section 5: Auto-detect proof scenarios (W05-A1 RED gate)
+%%  Exercises the five canonical scenarios from plan-r5 P01.
+%%  Assertions in the header above FAIL on HEAD 0021ccf.
+%%  P02 turns them GREEN.
+%% ====================================================================
+\section{Auto-detect proof scenarios}%
+\label{sec:autodet}
+
+%% Scenario 1 — backward-ref body-cite.
+%% Proof heading names thm:autodet-backward (5.1); body cites def:enrichment (1.5).
+%% On HEAD: body cite dropped (proofdisplaypending=true during body → owner-id empty).
+%% After P02: body-cite routing attributes the cite under proof:5.1.
+\begin{theorem}\label{thm:autodet-backward}
+  A tracked theorem for backward-ref proof auto-detection.
+\end{theorem}
+
+\begin{proof}[Proof of \cref{thm:autodet-backward}]
+  By \cref{def:enrichment} and the adjunction criterion \cref{lem:adjunction}.
+\end{proof}
+
+%% Scenario 2 — forward-ref body-cite.
+%% Proof heading names thm:autodet-forward (5.2) which is defined LATER.
+%% On HEAD: body cite dropped even on pass 2 (proofdisplaypending=true during body).
+%% After P02: pproof:<N> provisional key allocates at scan time;
+%% body cite migrates to proof:5.2 at enddoc drain; no pproof: survives.
+\begin{proof}[Proof of \cref{thm:autodet-forward}]
+  By the adjunction criterion \cref{lem:adjunction}.
+\end{proof}
+
+%% thm:autodet-forward defined AFTER its proof (forward-ref target).
+\begin{theorem}\label{thm:autodet-forward}
+  The forward-referenced theorem, defined after its proof above.
+\end{theorem}
+
+%% Scenario 3 — joint-via-single-cref BEST-EFFORT-SERIAL case (a):
+%% both heading refs are tracked atoms.
+%% On HEAD: refcount=2 → PackageWarning + skip → zero cdp@proof records.
+%% After P02 (sub-delta-7 per-label iteration): TWO independent records
+%% (5.3* and 5.4*) via best-effort serial attribution.
+%% A2 deferred: NOT a single joint atom.
+\begin{theorem}\label{thm:autodet-joint-x}
+  First joint target for best-effort serial attribution.
+\end{theorem}
+
+\begin{theorem}\label{thm:autodet-joint-y}
+  Second joint target for best-effort serial attribution.
+\end{theorem}
+
+\begin{proof}[Proof of \cref{thm:autodet-joint-x,thm:autodet-joint-y}]
+  Both targets are tracked atoms; after P02 this yields two independent
+  cdp@proof records (best-effort serial).
+  Uses \cref{def:enrichment}.
+\end{proof}
+
+%% Scenario 4 — joint-via-single-cref mixed-tracking case (b):
+%% one tracked atom (5.5) plus one section ref (sec:autodet).
+%% On HEAD: refcount=2 → warns+skips → zero records.
+%% After P02+P03: ONE record for 5.5; tracked-entity gate silently
+%% no-ops sec:autodet (lblnum-only, no lblentity).
+\begin{theorem}\label{thm:autodet-mixedtrk}
+  Tracked target for mixed-tracking joint proof scenario.
+\end{theorem}
+
+\begin{proof}[Proof of \cref{thm:autodet-mixedtrk,sec:autodet}]
+  Tracked atom plus section ref; P03 gate no-ops the section.
+  References \cref{thm:autodet-backward}.
+\end{proof}
+
+%% Scenario 5 — section-only heading: zero records expected.
+%% On HEAD: refcount=1 single-ref path fires; lblnum@sec:autodet=5;
+%% proofof@resolve uses the section number → proof:5 record created WRONGLY.
+%% After P02+P03: auto-flag resolver checks lblentity (absent for sections)
+%% → silently no-ops → ZERO records, no anchormap entry, no Used-In.
+\begin{proof}[Proof of \autoref{sec:autodet}]
+  Section-only heading; tracked-entity gate must produce zero attribution.
+  References \cref{thm:main}.
+\end{proof}
 
 \END
 \end{document}

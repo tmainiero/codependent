@@ -285,6 +285,6 @@ Edit fixture headers, not this file.
 
 | Path | Status | Render modes | Behavior | Purpose |
 |---|---|---|---|---|
-| testfiles/compiled-examples/stress-ta-appendix-gray.tex | LIVE | appendix, gray-backrefs, custom-page-format | B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN | Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting. |
-| testfiles/compiled-examples/stress-ta-inline-gray.tex | LIVE | inline, gray-backrefs | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | Inline TA stress fixture with gray backrefs. |
+| testfiles/compiled-examples/stress-ta-appendix-gray.tex | EXPLORATORY | appendix, gray-backrefs, custom-page-format | B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN | Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting. |
+| testfiles/compiled-examples/stress-ta-inline-gray.tex | EXPLORATORY | inline, gray-backrefs | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | Inline TA stress fixture with gray backrefs. |
 | testfiles/compiled-examples/stress-ta-inline.tex | LIVE | inline, default-color | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | Inline TA stress fixture using default backref color. |

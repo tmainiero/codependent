@@ -4,7 +4,7 @@
 %% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN
 %% TEST-STATUS: EXPLORATORY
 %% TEST-RENDER-MODES: appendix, gray-backrefs, custom-page-format
-%% TEST-PDF-PAGES: 5
+%% TEST-PDF-PAGES: 6
 %% TEST-PDF-STEXT: Stress fixture appendix gray
 
 \def\START{}\def\END{}
@@ -403,6 +403,82 @@ criterion of \cref{def:trace} and the cyclic property of \cref{lem:trace-cyclic}
 The dualisability condition (i) implies (ii) by naturality, and (iii)
 follows from \cref{def:enrichment}.
 \end{proof}
+
+%% ====================================================================
+%%  Section 9: Auto-detect proof scenarios (W05-A1 RED gate)
+%%  Exercises backward-ref body-cite, forward-ref body-cite,
+%%  joint-via-single-cref best-effort-serial (both-tracked + mixed-tracking),
+%%  and section-only heading with tracked-entity gate.
+%%  After P02+P03 these render correctly; on HEAD they expose routing gaps.
+%% ====================================================================
+\section{Auto-detect proof scenarios}
+\label{sec:w05a1}
+
+%% --- 9.1: Backward-ref body-cite ---
+%% Proof heading names thm:s9-backward (defined here); body cites def:trace.
+%% After P02: def:trace gets a Used-In tag attributed to proof:9.1.
+\begin{theorem}\label{thm:s9-backward}
+Every categorical trace (\cref{def:trace}) satisfies the cyclic
+property (\cref{lem:trace-cyclic}).
+\end{theorem}
+
+\begin{proof}[Proof of \cref{thm:s9-backward}]
+By \cref{def:trace} and the cyclic property \cref{lem:trace-cyclic}.
+\end{proof}
+
+%% --- Forward-ref body-cite: proof comes BEFORE the theorem ---
+%% Proof heading names thm:s9-forward-late (defined later); body cites
+%% def:enrichment.  After P02: pproof:<N> allocates at scan time; body
+%% cite migrates to proof:9.2 at drain.  No pproof: survives to final cdp.
+\begin{proof}[Proof of \cref{thm:s9-forward-late}]
+By \cref{def:enrichment} and monoidal coherence (\cref{thm:coherence}).
+\end{proof}
+
+%% thm:s9-forward-late is defined AFTER its proof (forward-ref target).
+\begin{theorem}\label{thm:s9-forward-late}
+The forward-referenced result, combining coherence (\cref{thm:coherence})
+with enrichment (\cref{def:enrichment}).
+\end{theorem}
+
+%% --- 9.3, 9.4: Joint-via-single-cref BEST-EFFORT-SERIAL case (a) ---
+%% Both heading refs are tracked atoms.  After P02 (sub-delta-7): two
+%% independent \codep@cdp@proof records (9.3* and 9.4*).  NOT a single
+%% joint atom — A2 deferred.
+\begin{proposition}\label{prop:s9-joint-a}
+First joint target for best-effort serial proof attribution.
+\end{proposition}
+
+\begin{corollary}\label{cor:s9-joint-b}
+Second joint target for best-effort serial proof attribution.
+Follows from \cref{prop:s9-joint-a}.
+\end{corollary}
+
+\begin{proof}[Proof of \cref{prop:s9-joint-a,cor:s9-joint-b}]
+Both \cref{prop:s9-joint-a} and \cref{cor:s9-joint-b} follow from
+\cref{lem:trace-cyclic} and monoidal coherence.
+\end{proof}
+
+%% --- 9.5: Joint-via-single-cref mixed-tracking case (b) ---
+%% One tracked atom (lem:s9-mixed) and one section ref (sec:w05a1).
+%% After P02+P03: ONE record for 9.5 (tracked target); tracked-entity
+%% gate silently no-ops the section ref.
+\begin{lemma}\label{lem:s9-mixed}
+Tracked target for the mixed-tracking joint proof scenario.
+\end{lemma}
+
+\begin{proof}[Proof of \cref{lem:s9-mixed,sec:w05a1}]
+The tracked lemma follows from \cref{def:trace}; the section ref
+is navigational and triggers the tracked-entity gate.
+\end{proof}
+
+%% --- Section-only heading: zero records expected ---
+%% After P02+P03: tracked-entity gate fires; sec:w05a1 has only
+%% \codep@lblnum, no \codep@lblentity; zero attribution, no cdp@proof.
+\begin{proof}[Proof of \autoref{sec:w05a1}]
+Section-only heading exercises the tracked-entity gate.
+Uses \cref{thm:coherence} in the body (body cite dropped by gate).
+\end{proof}
+
 
 %% ====================================================================
 %%  Dependency Index (appendix mode — W04 closeout)
