@@ -239,7 +239,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (38 fixtures)
+## Integration (39 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -273,6 +273,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-proofauto-ref.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \ref auto-binds silently. |
 | testfiles/integration/integ-proofauto-repeated-explicit.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Two explicit \codepproofof* calls in one proof are silent joint attribution. |
 | testfiles/integration/integ-proofauto-switch-off.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Auto-detected and explicit proof headings remain human-authored visible text. |
+| testfiles/integration/integ-proofauto-tracked-entity-gate.lvt | LIVE | B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof headings ignore section refs before pproof allocation. |
 | testfiles/integration/integ-stress-all-features.lvt | LIVE | B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-RERUN | Wave 3 holistic stress fixture: exercises every codependent feature |
 | testfiles/integration/integ-supp-tracked-env.lvt | LIVE | B-SUPP-TRACKED | Verify paragraph numbering is suppressed inside tracked |
 | testfiles/integration/test-integration-kitchen-sink.lvt | LIVE | B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP | Exercise every codependent.sty feature in a single document that |

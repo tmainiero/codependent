@@ -1437,21 +1437,28 @@
 %   Queue an unresolved heading label through the proof-ref drain rail.
 %% @implements \codep@hookproof
 \def\codep@autoproofof@routeforward#1{%
-  \codep@autoproofof@allocateprov{\codep@tmp@autoproofofprov}%
+  \def\codep@tmp@autoproofofshoulddefer{1}%
   \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax%
+    \expandafter\ifx\csname codep@lblnum@#1\endcsname\relax%
+    \else%
+      \let\codep@tmp@autoproofofshoulddefer\@empty%
+    \fi%
+  \fi%
+  \ifx\codep@tmp@autoproofofshoulddefer\@empty%
   \else%
+    \codep@autoproofof@allocateprov{\codep@tmp@autoproofofprov}%
     \ifcodep@proofdisplaypending%
       \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@autoproofofprov}%
       \global\codep@proofdisplaypendingfalse%
       \global\codep@autoproofof@eligiblefalse%
       \global\let\codep@pendingproofbind\@empty%
     \fi%
+    \edef\codep@tmp@autoproofofdefer{%
+      \noexpand\codep@defer@proofof{\noexpand\codep@autoproofof@resolve}%
+        {\codep@currentproofid}{\unexpanded{#1}}%
+        {\codep@tmp@autoproofofprov}}%
+    \codep@tmp@autoproofofdefer%
   \fi%
-  \edef\codep@tmp@autoproofofdefer{%
-    \noexpand\codep@defer@proofof{\noexpand\codep@autoproofof@resolve}%
-      {\codep@currentproofid}{\unexpanded{#1}}%
-      {\codep@tmp@autoproofofprov}}%
-  \codep@tmp@autoproofofdefer%
 }%
 
 % \codep@autoproofof@dispatchlabel{label}
@@ -2099,7 +2106,14 @@
 }%
 
 % \codep@pproof@flushrefs{pproof-key}{final-proof-key}
-%   Write final-key atomrefs for every provisional source ref.
+%   Live migration path for forward-ref proof-heading body cites.  During
+%   proof body scanning, \codep@dedupwrite intercepts pproof:<N> source
+%   writes and stores their targets in memory through
+%   \codep@pproof@rememberref instead of emitting provisional atomrefs to
+%   the .aux.  When the deferred auto resolver later learns the final
+%   proof:N.M key, this helper mirrors those remembered refs under that
+%   final key in the same aux pass.  The appendbr pproof branch remains as
+%   a defensive backup for any provisional source that reaches replay.
 %% @implements \codep@proofof@resolve
 \def\codep@pproof@flushrefs#1#2{%
   \expandafter\ifx\csname codep@pproofrefs@#1\endcsname\relax%
@@ -3045,6 +3059,9 @@
 %   Performs: self-ref guard, consecutive-dedup, lazy count
 %   init, linked-list node store.
 \def\codep@appendbr@core{%
+  % Defensive fallback: ordinary pproof body refs are migrated earlier by
+  % \codep@pproof@flushrefs.  If a provisional source reaches replay anyway,
+  % rewrite it through the resolved keymap before self-ref/dedup handling.
   \codep@ifpproofkey{\codep@tmp@src}{%
     \expandafter\ifx\csname codep@keymap@\codep@tmp@src\endcsname\relax%
     \else%

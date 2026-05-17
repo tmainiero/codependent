@@ -1,0 +1,89 @@
+%% TEST-NAME: integ-proofauto-tracked-entity-gate
+%% TEST-PURPOSE: Auto proof headings ignore section refs before pproof allocation.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Immediate/deferred section heading refs allocate no pproof; mixed headings attribute only the tracked theorem; explicit section proof fallback remains non-auto.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-CONTAINS: Proof not adjacent to a tracked environment
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{2.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{3*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 2
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{1*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{2*}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{5*}
+%% TEST-CDP-NOT-CONTAINS: pproof:
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.1}{codep-proof:a
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:3}{codep-proof:a
+%% TEST-AUX-CONTAINS: \codep@keymap{pproof:1}{proof:2.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{pproof:2}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{pproof:3}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1}{codep-proof:a
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:2}{codep-proof:a
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:5}{codep-proof:a
+%% TEST-PDF-STEXT: (?s)Tracked mixed theorem\..*Used in 2\.1\*
+%% TEST-PDF-STEXT-NOT: (?s)Immediate section target\..*Used in [0-9]+\*
+%% TEST-PDF-STEXT-NOT: (?s)Deferred section target\..*Used in [0-9]+\*
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\providecommand*{\theoremautorefname}{Theorem}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=on}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+%% Case (i): immediate section ref.  Sections have lblnum but no tracked
+%% lblentity, so auto-detect must no-op before allocating pproof:<N>.
+\section{Immediate section target}\label{sec:gate-immediate}
+\begin{proof}[Proof of \autoref{sec:gate-immediate}]
+  This proof heading references an earlier section only.
+\end{proof}
+
+%% Case (ii): deferred section ref.  The section label is defined later, but
+%% the same tracked-entity gate still runs before provisional allocation.
+\begin{proof}[Proof of \autoref{sec:gate-deferred}]
+  This proof heading references a later section only.
+\end{proof}
+
+\section{Deferred section target}\label{sec:gate-deferred}
+
+%% Case (iii): mixed tracked theorem + section.  The theorem is a deferred
+%% tracked entity and gets the only pproof slot; the section is dropped.
+\begin{proof}[Proof of \cref{thm:gate-mixed,sec:gate-deferred}]
+  The mixed proof body is intentionally small.
+\end{proof}
+
+\begin{theorem}\label{thm:gate-mixed}
+  Tracked mixed theorem.
+\end{theorem}
+
+%% Case (iv): explicit \codepproofof is not the auto path.  Per
+%% B-PROOF-SEP/B-PROOF-NONADJ and test-proofof-invalid-label.lvt's explicit
+%% resolver coverage, it keeps the legacy lblnum fallback for section labels.
+%% The leading sentence deliberately materializes the pre-existing standalone
+%% proof warning before the explicit late binding rewrites it to proof:3.
+\section{Explicit section target}\label{sec:gate-explicit}
+\begin{proof}
+  Introductory proof text before the explicit binding.
+  \codepproofof{sec:gate-explicit}%
+  This explicit proof still uses the legacy section-number fallback.
+\end{proof}
+
+\END
+\end{document}
