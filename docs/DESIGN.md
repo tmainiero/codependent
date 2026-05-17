@@ -561,6 +561,52 @@ cases.
 1. Nothing intervened (no paragraph, no other tracked env)
 2. The preceding environment was registered via `\codeptrack`
 
+### Unresolved-reference allocation (`unresref:<N>`)
+
+When the proof-heading scanner (`\codep@autoproofof@routeforward`) encounters a label in the optional heading argument, it must decide in the same pass whether the label refers to a tracked theorem.  Three cases arise:
+
+1. **Immediate forward-ref**: the label has a `\codep@lblentity` (the tracked entity is already defined earlier in the document and the `.aux` entry is loaded).  Resolution happens immediately; the proof gets a permanent `proof:N.M` key.
+
+2. **Deferred forward-ref**: the label has neither `\codep@lblnum` nor `\codep@lblentity` at scan time.  The scanner cannot tell whether a tracked theorem with this label will be defined later in the document.  A placeholder `unresref:<N>` key is allocated.  A resolver is queued onto Q3 (`\AtEndDocument`) so the final attribution can be written once the full `.aux` is available.
+
+3. **Section-only label**: the label has `\codep@lblnum` but no `\codep@lblentity`.  The tracked-entity gate (installed in W05-A1 P03, commit `3cddc8d`) detects this before allocation: no `unresref:` key is written, no attribution is attempted.
+
+The `unresref:<N>` namespace is **internal and ephemeral**: every allocated key should be resolved or silently discarded before the `.cdp` is finalised.
+
+#### Naming rationale
+
+The prefix "unresref" (unresolved reference) describes what the key represents at the moment of allocation: *a reference inside a proof-of heading scan whose entity-class we couldn't determine yet*.  The previous name `pproof:` ("provisional proof") was replaced in W05-RENAME because it implied the key WOULD become a proof identity, which is false in the orphan case below.
+
+#### Drain-time classification
+
+At drain time (`\AtEndDocument`), `\codep@autoproofof@resolve` pops each queued `unresref:<N>` entry and re-checks the label:
+
+- **Case (a) — forward-ref confirmed**: `\codep@lblentity` is now present.  The resolver computes the final `proof:N.M` key, writes a `\codep@keymap{unresref:<N>}{proof:N.M}` entry to `.aux`, and calls `\codep@unresref@flushrefs` to migrate all body `\codep@atomref` edges from the provisional key to the final key in the same aux pass.
+
+- **Case (b) — truly undefined label**: `\codep@lblentity` is still absent (the label was never defined at all).  The drain-time auto-flag gate silently no-ops: no `.cdp` record, no `\codep@keymap` entry, no migration.  The `\codep@entitymeta{unresref:<N>}` line emitted at allocation time remains in `.aux` as a bookkeeping artefact but has no semantic effect.  The `.cdp` is clean.
+
+Note: cases (a) and (b) are indistinguishable at scan time — both labels have neither `\codep@lblnum` nor `\codep@lblentity` during proof-heading scanning.  The distinguishing check is deferred to drain time.
+
+#### Live migration path
+
+During proof body scanning, `\codep@dedupwrite` intercepts any `\codep@atomref{unresref:<N>}{target}` write (detected via `\codep@ifunresrefkey`) and diverts it to `\codep@unresref@rememberref` instead of emitting a provisional `.aux` line.  At drain time, once the final `proof:N.M` key is known, `\codep@unresref@flushrefs` replays all remembered target labels under the final key.  This means body-cite edges are written exactly once in the `.aux` — under the final permanent key — and no re-processing is needed.
+
+The `\codep@appendbr@core` `unresref:`-prefix branch (`\codep@ifunresrefkey` check with keymap lookup) is a **defensive backup**: it handles any provisional-key edge that somehow reaches the backref replay pass without prior migration.  Under normal operation this branch is never triggered.
+
+#### Sentinel rendering
+
+Any `unresref:*` key that reaches `\codep@graph@getdisplay` (which should not happen under correct operation) produces the marker `?u<N>*` — visible in the PDF, clearly distinct from valid `N.M*` proof entries.  If you see `?u<N>*` in a compiled document, an unresref-to-proof migration was missed.
+
+#### Fixture coverage
+
+`testfiles/integration/integ-proofauto-autoref-undefined.lvt` is the canonical test fixture for this machinery.  It exercises three sub-cases in one document:
+
+- Case (a): `\autoref{thm:never-defined}` — truly undefined label; asserts `TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:1}` (no keymap entry written) and `TEST-CDP-NOT-CONTAINS: unresref:` (clean `.cdp`).
+- Case (b): `\cref{sec:foo-undef}` — section-only label; asserts no `unresref:` entry at all (the tracked-entity gate fires before allocation).
+- Case (c): a proof heading naming a theorem defined **later** in the same document; asserts `TEST-AUX-CONTAINS: \codep@keymap{unresref:2}{proof:3.1}` (successful migration).
+
+`testfiles/integration/integ-proofauto-bodycite-routing.lvt` covers the body-cite migration path specifically: it asserts that `TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:3.1}` and `TEST-CDP-NOT-CONTAINS: unresref:` — confirming both that migration wrote the keymap and that no provisional key survived into the `.cdp`.
+
 ### Environment tracking
 
 Tracked theorem-like environments are registered explicitly via

@@ -100,7 +100,7 @@
 %%   NOTE: atom 5.2 is the intervening paragraph in scenario 1; thm:autodet-forward
 %%   is atom 5.3 because the paragraph shifts numbering.
 %%   On HEAD: body cite dropped (proofdisplaypending=true even on pass 2).
-%%   After P02: pproof:<N> allocates at scan; migrates to proof:5.3 at drain.
+%%   After P02: unresref:<N> allocates at scan; migrates to proof:5.3 at drain.
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:5.3}{lem:adjunction}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.3\*
 %%
@@ -146,12 +146,12 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{5*}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:5}
 %%
-%% Cross-scenario safety check — no pproof:* records survive to final cdp.
-%% This already passes on HEAD (no pproof: machinery yet) and remains as a
-%% no-survivors gate: it will fail if P02 leaves orphan pproof: keys.
-%% A positive keymap assertion (pproof:N → proof:N.M migration) belongs in
+%% Cross-scenario safety check — no unresref:* records survive to final cdp.
+%% This already passes on HEAD (no unresref: machinery yet) and remains as a
+%% no-survivors gate: it will fail if P02 leaves orphan unresref: keys.
+%% A positive keymap assertion (unresref:N → proof:N.M migration) belongs in
 %% the dedicated integ-proofauto-bodycite-routing.lvt fixture from P02.
-%% TEST-CDP-NOT-CONTAINS: pproof:
+%% TEST-CDP-NOT-CONTAINS: unresref:
 %%
 %% This fixture inlines the theorem declarations from sty-theorems-ta.sty
 %% (the three-avatars monograph's real theorem style) to avoid an external
@@ -539,8 +539,8 @@ We recall the basic setup before giving the proof.
 %% Scenario 2 — forward-ref body-cite.
 %% Proof heading names thm:autodet-forward (5.2) which is defined LATER.
 %% On HEAD: body cite dropped even on pass 2 (proofdisplaypending=true during body).
-%% After P02: pproof:<N> provisional key allocates at scan time;
-%% body cite migrates to proof:5.2 at enddoc drain; no pproof: survives.
+%% After P02: unresref:<N> provisional key allocates at scan time;
+%% body cite migrates to proof:5.2 at enddoc drain; no unresref: survives.
 \begin{proof}[Proof of \cref{thm:autodet-forward}]
   By the adjunction criterion \cref{lem:adjunction}.
 \end{proof}

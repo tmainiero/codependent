@@ -247,9 +247,9 @@
 \newcount\codep@autoproofof@refcount
 \codep@autoproofof@refcount=0\relax
 
-% Document-scoped counter for provisional proof identities.
-\newcount\codep@autoproofof@provcount
-\codep@autoproofof@provcount=0\relax
+% Document-scoped counter for unresolved-reference identities.
+\newcount\codep@autoproofof@unresrefcount
+\codep@autoproofof@unresrefcount=0\relax
 
 % Flag: true when the last proof-of resolver call bound a target.
 \newif\ifcodep@proofof@resolved
@@ -1389,12 +1389,12 @@
   \codep@autoproofof@scan@tokens%
 }%
 
-% \codep@autoproofof@allocateprov{macro}
-%   Allocate one provisional proof source key for a forward proof target.
+% \codep@autoproofof@allocateunresref{macro}
+%   Allocate one unresolved-reference source key.
 %% @implements \codep@hookproof
-\def\codep@autoproofof@allocateprov#1{%
-  \global\advance\codep@autoproofof@provcount by 1\relax%
-  \edef#1{pproof:\the\codep@autoproofof@provcount}%
+\def\codep@autoproofof@allocateunresref#1{%
+  \global\advance\codep@autoproofof@unresrefcount by 1\relax%
+  \edef#1{unresref:\the\codep@autoproofof@unresrefcount}%
 }%
 
 % \codep@autoproofof@markheadsuppress{label}
@@ -1446,7 +1446,7 @@
   \fi%
   \ifx\codep@tmp@autoproofofshoulddefer\@empty%
   \else%
-    \codep@autoproofof@allocateprov{\codep@tmp@autoproofofprov}%
+    \codep@autoproofof@allocateunresref{\codep@tmp@autoproofofprov}%
     \ifcodep@proofdisplaypending%
       \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@autoproofofprov}%
       \global\codep@proofdisplaypendingfalse%
@@ -1608,7 +1608,7 @@
   }%
 \endgroup
 \AtBeginDocument{%
-  \global\codep@autoproofof@provcount=0\relax%
+  \global\codep@autoproofof@unresrefcount=0\relax%
   \codep@autoproofof@install@proof%
 }
 
@@ -2084,8 +2084,8 @@
       \csname codep@arw@#1@#2\endcsname\relax
     \global\expandafter\let%
       \csname codep@arw@#1@#2\endcsname\@empty%
-    \codep@ifpproofkey{#1}{%
-      \codep@pproof@rememberref{#1}{#2}%
+    \codep@ifunresrefkey{#1}{%
+      \codep@unresref@rememberref{#1}{#2}%
     }{%
       \protected@write\@auxout{}{%
         \string\codep@atomref{#1}{#2}}%
@@ -2093,36 +2093,36 @@
   \fi
 }
 
-% \codep@pproof@rememberref{pproof-key}{target-label}
+% \codep@unresref@rememberref{unresref-key}{target-label}
 %   Remember atomrefs written under a provisional proof source so drain
 %   can mirror them under the final proof:N.M key in the same aux pass.
 %% @utility
-\def\codep@pproof@rememberref#1#2{%
-  \expandafter\ifx\csname codep@pproofrefs@#1\endcsname\relax%
-    \expandafter\gdef\csname codep@pproofrefs@#1\endcsname{}%
+\def\codep@unresref@rememberref#1#2{%
+  \expandafter\ifx\csname codep@unresrefs@#1\endcsname\relax%
+    \expandafter\gdef\csname codep@unresrefs@#1\endcsname{}%
   \fi%
-  \expandafter\g@addto@macro\csname codep@pproofrefs@#1\endcsname{%
+  \expandafter\g@addto@macro\csname codep@unresrefs@#1\endcsname{%
     \do{#2}}%
 }%
 
-% \codep@pproof@flushrefs{pproof-key}{final-proof-key}
+% \codep@unresref@flushrefs{unresref-key}{final-proof-key}
 %   Live migration path for forward-ref proof-heading body cites.  During
-%   proof body scanning, \codep@dedupwrite intercepts pproof:<N> source
+%   proof body scanning, \codep@dedupwrite intercepts unresref:<N> source
 %   writes and stores their targets in memory through
-%   \codep@pproof@rememberref instead of emitting provisional atomrefs to
+%   \codep@unresref@rememberref instead of emitting provisional atomrefs to
 %   the .aux.  When the deferred auto resolver later learns the final
 %   proof:N.M key, this helper mirrors those remembered refs under that
-%   final key in the same aux pass.  The appendbr pproof branch remains as
+%   final key in the same aux pass.  The appendbr unresref branch remains as
 %   a defensive backup for any provisional source that reaches replay.
 %% @implements \codep@proofof@resolve
-\def\codep@pproof@flushrefs#1#2{%
-  \expandafter\ifx\csname codep@pproofrefs@#1\endcsname\relax%
+\def\codep@unresref@flushrefs#1#2{%
+  \expandafter\ifx\csname codep@unresrefs@#1\endcsname\relax%
   \else%
     \begingroup%
-      \def\codep@tmp@pprooffinal{#2}%
+      \def\codep@tmp@unresreffinal{#2}%
       \def\do##1{%
-        \codep@dedupwrite{\codep@tmp@pprooffinal}{##1}}%
-      \csname codep@pproofrefs@#1\endcsname%
+        \codep@dedupwrite{\codep@tmp@unresreffinal}{##1}}%
+      \csname codep@unresrefs@#1\endcsname%
     \endgroup%
   \fi%
 }%
@@ -3022,18 +3022,18 @@
 }%
 
 %% @utility
-% \codep@ifpproofkey{key}{then}{else}
-%   Branch on the provisional proof-source namespace prefix.
-\def\codep@ifpproofkey#1#2#3{%
-  \edef\codep@tmp@ifpproofkey{#1}%
-  \expandafter\codep@ifpproofkey@aux\codep@tmp@ifpproofkey:\@nil{#2}{#3}%
+% \codep@ifunresrefkey{key}{then}{else}
+%   Branch on the unresolved-reference source namespace prefix.
+\def\codep@ifunresrefkey#1#2#3{%
+  \edef\codep@tmp@ifunresrefkey{#1}%
+  \expandafter\codep@ifunresrefkey@aux\codep@tmp@ifunresrefkey:\@nil{#2}{#3}%
 }%
 
 %% @utility
-% \codep@ifpproofkey@aux key-prefix splitter.
-\def\codep@ifpproofkey@aux#1:#2\@nil#3#4{%
-  \def\codep@tmp@ifpproofprefix{#1}%
-  \ifx\codep@tmp@ifpproofprefix\codep@const@typepproof%
+% \codep@ifunresrefkey@aux key-prefix splitter.
+\def\codep@ifunresrefkey@aux#1:#2\@nil#3#4{%
+  \def\codep@tmp@ifunresrefprefix{#1}%
+  \ifx\codep@tmp@ifunresrefprefix\codep@const@typeunresref%
     #3%
   \else%
     #4%
@@ -3059,10 +3059,10 @@
 %   Performs: self-ref guard, consecutive-dedup, lazy count
 %   init, linked-list node store.
 \def\codep@appendbr@core{%
-  % Defensive fallback: ordinary pproof body refs are migrated earlier by
-  % \codep@pproof@flushrefs.  If a provisional source reaches replay anyway,
+  % Defensive fallback: ordinary unresref body refs are migrated earlier by
+  % \codep@unresref@flushrefs.  If a provisional source reaches replay anyway,
   % rewrite it through the resolved keymap before self-ref/dedup handling.
-  \codep@ifpproofkey{\codep@tmp@src}{%
+  \codep@ifunresrefkey{\codep@tmp@src}{%
     \expandafter\ifx\csname codep@keymap@\codep@tmp@src\endcsname\relax%
     \else%
       \edef\codep@tmp@src{%
@@ -3160,7 +3160,7 @@
 \def\codep@const@typeequation{equation}%
 \def\codep@const@typeproof{proof}%
 %% @utility
-\def\codep@const@typepproof{pproof}%
+\def\codep@const@typeunresref{unresref}%
 
 %% @utility
 % \codep@graph@resolvekey{entity-key}{macro}
@@ -3220,8 +3220,8 @@
     \ifbool{codep@proofsnumbered}%
       {\edef#2{\codep@tmp@num*}}%
       {\let#2\codep@tmp@num}%
-  \else\ifx\codep@tmp@type\codep@const@typepproof%
-    \edef#2{?p\codep@tmp@num*}%
+  \else\ifx\codep@tmp@type\codep@const@typeunresref%
+    \edef#2{?u\codep@tmp@num*}%
   \else%
     \let#2\codep@tmp@num%
   \fi\fi\fi%
@@ -4528,7 +4528,7 @@
 
 % \codep@autoproofof@resolve{proofid}{label}{provisional-key}
 %   Auto-detected proof-heading resolver entry.  The third argument
-%   may carry a pproof:<N> key for a deferred forward-ref binding.
+%   may carry an unresref:<N> key for a deferred forward-ref binding.
 %% @implements \codep@proofof@resolve
 \def\codep@autoproofof@resolve#1#2#3{%
   \codep@proofof@resolve@inner{1}{#1}{#2}{#3}%
@@ -4536,7 +4536,7 @@
 
 % \codep@proofof@resolve@inner{auto-flag}{proofid}{label}{mode-or-prov}
 %   Shared proof-attribution resolver.  auto-flag=1 uses the tracked
-%   lblentity gate and may migrate body refs from a pproof:<N> source.
+%   lblentity gate and may migrate body refs from an unresref:<N> source.
 %% @implements \codep@proofof@resolve
 \def\codep@proofof@resolve@inner#1#2#3#4{%
   \global\codep@proofof@resolvedfalse%
@@ -4574,7 +4574,7 @@
     \codep@proofof@attribcount@get{#2}{\codep@tmp@proofofcount}%
     \codep@atomgetkey{#2}{\codep@tmp@oldproofkey}%
     \ifx\codep@tmp@autoflag\codep@tmp@one%
-      \codep@ifpproofkey{#4}{%
+      \codep@ifunresrefkey{#4}{%
         \edef\codep@tmp@oldproofkey{#4}%
       }{}%
     \fi%
@@ -4633,8 +4633,8 @@
     \global\let\codep@pendingproofbind\@empty%
     \ifx\codep@tmp@autoflag\codep@tmp@one%
       \if@filesw%
-        \codep@ifpproofkey{#4}{%
-          \codep@pproof@flushrefs{#4}{\codep@tmp@proofkey}%
+        \codep@ifunresrefkey{#4}{%
+          \codep@unresref@flushrefs{#4}{\codep@tmp@proofkey}%
         }{}%
         \codep@subsystem@recordtotal{atomref}%
         \codep@dedupwrite{\codep@tmp@proofkey}{#3}%

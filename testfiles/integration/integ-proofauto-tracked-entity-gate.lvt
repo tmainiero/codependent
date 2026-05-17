@@ -1,9 +1,9 @@
 %% TEST-NAME: integ-proofauto-tracked-entity-gate
-%% TEST-PURPOSE: Auto proof headings ignore section refs before pproof allocation.
+%% TEST-PURPOSE: Auto proof headings ignore section refs before unresref allocation.
 %% TEST-KIND: integration
 %% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Immediate/deferred section heading refs allocate no pproof; mixed headings attribute only the tracked theorem; explicit section proof fallback remains non-auto.
+%% TEST-WHAT: Immediate/deferred section heading refs allocate no unresref; mixed headings attribute only the tracked theorem; explicit section proof fallback remains non-auto.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-CONTAINS: Proof not adjacent to a tracked environment
@@ -17,12 +17,12 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{1*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{2*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{5*}
-%% TEST-CDP-NOT-CONTAINS: pproof:
+%% TEST-CDP-NOT-CONTAINS: unresref:
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.1}{codep-proof:a
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:3}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@keymap{pproof:1}{proof:2.1}
-%% TEST-AUX-NOT-CONTAINS: \codep@keymap{pproof:2}
-%% TEST-AUX-NOT-CONTAINS: \codep@keymap{pproof:3}
+%% TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:2.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:2}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:3}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1}{codep-proof:a
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:2}{codep-proof:a
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:5}{codep-proof:a
@@ -49,7 +49,7 @@
 \START
 
 %% Case (i): immediate section ref.  Sections have lblnum but no tracked
-%% lblentity, so auto-detect must no-op before allocating pproof:<N>.
+%% lblentity, so auto-detect must no-op before allocating unresref:<N>.
 \section{Immediate section target}\label{sec:gate-immediate}
 \begin{proof}[Proof of \autoref{sec:gate-immediate}]
   This proof heading references an earlier section only.
@@ -64,7 +64,7 @@
 \section{Deferred section target}\label{sec:gate-deferred}
 
 %% Case (iii): mixed tracked theorem + section.  The theorem is a deferred
-%% tracked entity and gets the only pproof slot; the section is dropped.
+%% tracked entity and gets the only unresref slot; the section is dropped.
 \begin{proof}[Proof of \cref{thm:gate-mixed,sec:gate-deferred}]
   The mixed proof body is intentionally small.
 \end{proof}

@@ -3,7 +3,7 @@
 %% TEST-KIND: integration
 %% TEST-BEHAVIOR: B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Backward proof-heading refs resolve immediately; forward proof-heading refs migrate pproof:<N> body cites to proof:N.M.
+%% TEST-WHAT: Backward proof-heading refs resolve immediately; forward proof-heading refs migrate unresref:<N> body cites to proof:N.M.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
@@ -13,12 +13,12 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 2
-%% TEST-CDP-NOT-CONTAINS: pproof:
+%% TEST-CDP-NOT-CONTAINS: unresref:
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:3.1}{codep-proof:a
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:1.1}{lem:body-tool}
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:3.1}{lem:body-tool}
-%% TEST-AUX-CONTAINS: \codep@keymap{pproof:1}{proof:3.1}
+%% TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:3.1}
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:
 %% TEST-PDF-STEXT: (?s)Backward body-cite target.*Used in 1\.1\*
 %% TEST-PDF-STEXT: (?s)Forward body-cite target.*Used in 3\.1\*

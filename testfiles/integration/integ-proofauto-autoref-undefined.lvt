@@ -3,7 +3,7 @@
 %% TEST-KIND: integration
 %% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Undefined heading ref silently no-ops; section heading ref gates before pproof; forward theorem ref migrates pproof to proof:N.M.
+%% TEST-WHAT: Undefined heading ref silently no-ops; section heading ref gates before unresref allocation; forward theorem ref migrates unresref to proof:N.M.
 %% Waiver: case (a) exercises a truly undefined \autoref label; hyperref emits
 %% its normal first-pass undefined-label warning which is intentional here.
 %% TEST-ALLOW-UNDEFINED-REFS: yes
@@ -17,10 +17,10 @@
 %% TEST-CDP-COUNT: \codep@cdp@proof = 1
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{1*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{2*}
-%% TEST-CDP-NOT-CONTAINS: pproof:
+%% TEST-CDP-NOT-CONTAINS: unresref:
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:3.1}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@keymap{pproof:2}{proof:3.1}
-%% TEST-AUX-NOT-CONTAINS: \codep@keymap{pproof:1}
+%% TEST-AUX-CONTAINS: \codep@keymap{unresref:2}{proof:3.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:1}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1}{codep-proof:a
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:2}{codep-proof:a
 %% TEST-LOG-CONTAINS: Reference.*thm:never-defined.*undefined
@@ -30,13 +30,13 @@
 %% Design note (case a): 'thm:never-defined' has neither \codep@lblentity nor
 %% \codep@lblnum at scan time, so \codep@autoproofof@routeforward cannot
 %% distinguish it from a same-document forward-ref theorem and allocates
-%% pproof:1.  At drain time \codep@autoproofof@resolve (auto-flag) finds
+%% unresref:1.  At drain time \codep@autoproofof@resolve (auto-flag) finds
 %% \codep@lblentity@thm:never-defined still relax and no-ops silently: no
-%% \codep@cdp@proof record, no \codep@keymap{pproof:1} entry.  The entitymeta
-%% record for pproof:1 appears in the .aux as a bookkeeping artefact but has
-%% no semantic effect.  TEST-AUX-NOT-CONTAINS: \codep@keymap{pproof:1}
+%% \codep@cdp@proof record, no \codep@keymap{unresref:1} entry.  The entitymeta
+%% record for unresref:1 appears in the .aux as a bookkeeping artefact but has
+%% no semantic effect.  TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:1}
 %% confirms the no-keymap (no-resolution) behaviour; TEST-CDP-NOT-CONTAINS:
-%% pproof: confirms the .cdp is clean.
+%% unresref: confirms the .cdp is clean.
 %%
 \documentclass{article}
 
@@ -56,7 +56,7 @@
 \START
 
 %% Case (a): truly undefined label.  'thm:never-defined' is never \label-defined
-%% anywhere.  The scanner allocates pproof:1 (indistinguishable from a
+%% anywhere.  The scanner allocates unresref:1 (indistinguishable from a
 %% forward-ref at scan time), but the drain-time auto-flag gate finds no
 %% \codep@lblentity and silently no-ops: no \codep@cdp@proof, no keymap.
 %% hyperref emits its standard first-pass undefined-label warning.
@@ -68,20 +68,20 @@
 %% Case (b): defined section-only label.  sec:foo-undef has \codep@lblnum set
 %% at scan time (the section is already processed before the proof heading),
 %% but no \codep@lblentity.  \codep@autoproofof@routeforward detects lblnum
-%% present and silently no-ops: no pproof allocated, no attribution.
+%% present and silently no-ops: no unresref allocated, no attribution.
 \section{Section target}\label{sec:foo-undef}
 \begin{proof}[Proof of \autoref{sec:foo-undef}]
   Body of proof whose heading names a section, not a tracked theorem.
 \end{proof}
 
 %% Case (c): defined theorem label, forward-ref.  The proof heading appears
-%% BEFORE the theorem definition.  The scanner allocates pproof:2 and queues
+%% BEFORE the theorem definition.  The scanner allocates unresref:2 and queues
 %% \codep@autoproofof@resolve on the Q3 drain rail.  At \enddocument the
 %% theorem has been processed (\codep@lblentity@samerun set), the resolver
-%% fires and writes \codep@keymap{pproof:2}{proof:3.1} to the .aux.
+%% fires and writes \codep@keymap{unresref:2}{proof:3.1} to the .aux.
 \section{Forward theorem}\label{sec:forward-c}
 \begin{proof}[Proof of \autoref{thm:later-defined}]
-  Body of the forward-ref proof, exercising the pproof:2 allocation and
+  Body of the forward-ref proof, exercising the unresref:2 allocation and
   migration rail end-to-end.
 \end{proof}
 
