@@ -247,6 +247,10 @@
 \newcount\codep@autoproofof@refcount
 \codep@autoproofof@refcount=0\relax
 
+% Document-scoped counter for provisional proof identities.
+\newcount\codep@autoproofof@provcount
+\codep@autoproofof@provcount=0\relax
+
 % Flag: true when the last proof-of resolver call bound a target.
 \newif\ifcodep@proofof@resolved
 \codep@proofof@resolvedfalse
@@ -334,13 +338,9 @@
 %% @utility
 \newcommand*{\codep@currentproofid}{}
 
-% Label captured by the proof-heading auto-detect scanner.
+% Labels captured by the proof-heading auto-detect scanner.
 %% @utility
-\newcommand*{\codep@autoproofof@label}{}
-
-% Pending proof-heading label awaiting end-of-proof auto resolution.
-%% @utility
-\newcommand*{\codep@autoproofof@pendinglabel}{}
+\newcommand*{\codep@autoproofof@pendinglist}{}
 
 % Saved nested-proof state.
 \newtoks\codep@proofneststack
@@ -775,6 +775,7 @@
         % call and is undefined outside.
         \expandafter\xdef\csname codep@lblentity@#1\endcsname{%
           \codep@tmp@lblentity}%
+        \expandafter\gdef\csname codep@lblentity@samerun@#1\endcsname{1}%
         \protected@write\@auxout{}{%
           \string\codep@lblentity{#1}{\codep@tmp@lblentity}}%
       \fi%
@@ -788,11 +789,13 @@
 %   Emit one legacy atomref write from the active source atom.
 \def\codep@writerefevent#1{%
   \if@filesw%
-    \codep@getcurrentatomkey\codep@tmp@srcatom%
-    \ifx\codep@tmp@srcatom\@empty\else%
-      \codep@subsystem@recordtotal{atomref}%
-      \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
-    \fi%
+    \codep@autoproofof@ifheadsuppressed{#1}{}{%
+      \codep@getcurrentatomkey\codep@tmp@srcatom%
+      \ifx\codep@tmp@srcatom\@empty\else%
+        \codep@subsystem@recordtotal{atomref}%
+        \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
+      \fi%
+    }%
   \fi%
 }%
 
@@ -1198,16 +1201,19 @@
 %% @implements \codep@hookproof
 \def\codep@autoproofof@reset{%
   \global\codep@autoproofof@refcount=0\relax%
-  \global\let\codep@autoproofof@label\@empty%
+  \global\let\codep@autoproofof@pendinglist\@empty%
 }%
 
 % \codep@autoproofof@rememberlabel{label}
-%   Record one supported ref-family label found in a proof heading.
+%   Append one supported ref-family label found in a proof heading.
 %% @implements \codep@hookproof
 \def\codep@autoproofof@rememberlabel#1{%
   \global\advance\codep@autoproofof@refcount by 1\relax%
-  \ifnum\codep@autoproofof@refcount=1\relax%
-    \xdef\codep@autoproofof@label{#1}%
+  \ifx\codep@autoproofof@pendinglist\@empty%
+    \xdef\codep@autoproofof@pendinglist{#1}%
+  \else%
+    \xdef\codep@autoproofof@pendinglist{%
+      \codep@autoproofof@pendinglist,#1}%
   \fi%
 }%
 
@@ -1383,62 +1389,100 @@
   \codep@autoproofof@scan@tokens%
 }%
 
-% \codep@autoproofof@setpending{label}
-%   Store one auto-detected label for end-of-proof resolution.
+% \codep@autoproofof@allocateprov{macro}
+%   Allocate one provisional proof source key for a forward proof target.
 %% @implements \codep@hookproof
-\def\codep@autoproofof@setpending#1{%
-  \xdef\codep@autoproofof@pendinglabel{#1}%
+\def\codep@autoproofof@allocateprov#1{%
+  \global\advance\codep@autoproofof@provcount by 1\relax%
+  \edef#1{pproof:\the\codep@autoproofof@provcount}%
 }%
 
-% \codep@autoproofof@scan{heading}
-%   Scan a proof heading and bind only when exactly one label is found.
-%% @implements \codep@hookproof
-\def\codep@autoproofof@scan#1{%
-  \codep@autoproofof@reset%
-  \codep@autoproofof@scan@tokens#1\codep@autoproofof@stop%
-  \ifnum\codep@autoproofof@refcount=1\relax%
-    \edef\codep@tmp@autoproofoflabel{\codep@autoproofof@label}%
-    \expandafter\codep@autoproofof@setpending\expandafter{%
-      \codep@tmp@autoproofoflabel}%
-  \else\ifnum\codep@autoproofof@refcount>1\relax%
-    \PackageWarning{codependent}{Proof heading contains\space%
-      \the\codep@autoproofof@refcount\space supported reference\space%
-      labels; automatic proof attribution skipped}%
-  \fi\fi%
-  \codep@autoproofof@reset%
-}%
-
-% \codep@autoproofof@clearpending
-%   Drop any tentative proof-heading attribution for the current proof.
+% \codep@autoproofof@markheadsuppress{label}
+%   Suppress the ordinary ref-edge produced by proof optional-heading
+%   typesetting; the proof attribution resolver writes the semantic edge.
 %% @utility
-\def\codep@autoproofof@clearpending{%
-  \global\let\codep@autoproofof@pendinglabel\@empty%
+\def\codep@autoproofof@markheadsuppress#1{%
+  \expandafter\ifx%
+      \csname codep@autoproofof@headsuppress@#1\endcsname\relax%
+    \count@=0\relax%
+  \else%
+    \count@=\csname codep@autoproofof@headsuppress@#1\endcsname\relax%
+  \fi%
+  \advance\count@ by 1\relax%
+  \expandafter\xdef\csname codep@autoproofof@headsuppress@#1\endcsname{%
+    \the\count@}%
 }%
 
-% \codep@autoproofof@finalizepending
-%   Resolve a still-tentative proof-heading attribution at proof end.
-%% @implements \codep@hookproof@end
-\def\codep@autoproofof@finalizepending{%
-  \ifx\codep@autoproofof@pendinglabel\@empty%
+% \codep@autoproofof@ifheadsuppressed{label}{then}{else}
+%   Consume one heading-suppression ticket for label, if present.
+%% @utility
+\def\codep@autoproofof@ifheadsuppressed#1#2#3{%
+  \expandafter\ifx%
+      \csname codep@autoproofof@headsuppress@#1\endcsname\relax%
+    #3%
   \else%
-    \ifx\codep@currentproofid\@empty%
-      \codep@autoproofof@clearpending%
+    \count@=\csname codep@autoproofof@headsuppress@#1\endcsname\relax%
+    \ifnum\count@>0\relax%
+      \advance\count@ by -1\relax%
+      \expandafter\xdef\csname codep@autoproofof@headsuppress@#1\endcsname{%
+        \the\count@}%
+      #2%
     \else%
-      \edef\codep@tmp@autoproofofpending{%
-        \codep@autoproofof@pendinglabel}%
-      \codep@autoproofof@clearpending%
-      \codep@subsystem@recordtotal{proofof}%
-      \expandafter\codep@autoproofof@finalizepending@label\expandafter{%
-        \codep@tmp@autoproofofpending}%
+      #3%
     \fi%
   \fi%
 }%
 
-% \codep@autoproofof@finalizepending@label{label}
-%   Dispatch expanded pending label through the silent proof resolver.
-%% @implements \codep@hookproof@end
-\def\codep@autoproofof@finalizepending@label#1{%
-  \codep@proofof@do@resolver{\codep@proofof@resolve}{#1}{}%
+% \codep@autoproofof@routeforward{label}
+%   Queue an unresolved heading label through the proof-ref drain rail.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@routeforward#1{%
+  \codep@autoproofof@allocateprov{\codep@tmp@autoproofofprov}%
+  \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax%
+  \else%
+    \ifcodep@proofdisplaypending%
+      \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@autoproofofprov}%
+      \global\codep@proofdisplaypendingfalse%
+      \global\codep@autoproofof@eligiblefalse%
+      \global\let\codep@pendingproofbind\@empty%
+    \fi%
+  \fi%
+  \edef\codep@tmp@autoproofofdefer{%
+    \noexpand\codep@defer@proofof{\noexpand\codep@autoproofof@resolve}%
+      {\codep@currentproofid}{\unexpanded{#1}}%
+      {\codep@tmp@autoproofofprov}}%
+  \codep@tmp@autoproofofdefer%
+}%
+
+% \codep@autoproofof@dispatchlabel{label}
+%   Resolve same-run heading labels now; otherwise allocate and defer.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@dispatchlabel#1{%
+  \ifx\codep@currentproofid\@empty%
+  \else%
+    \codep@autoproofof@markheadsuppress{#1}%
+    \codep@subsystem@recordtotal{proofof}%
+    \expandafter\ifx\csname codep@lblentity@samerun@#1\endcsname\relax%
+      \codep@autoproofof@routeforward{#1}%
+    \else%
+      \codep@autoproofof@resolve{\codep@currentproofid}{#1}{}%
+    \fi%
+  \fi%
+}%
+
+% \codep@autoproofof@scan{heading}
+%   Scan a proof heading and route each supported label independently.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@scan#1{%
+  \codep@autoproofof@reset%
+  \codep@autoproofof@scan@tokens#1\codep@autoproofof@stop%
+  \@for\codep@tmp@autoproofoflabel:=\codep@autoproofof@pendinglist\do{%
+    \ifx\codep@tmp@autoproofoflabel\@empty\else%
+      \expandafter\codep@autoproofof@dispatchlabel\expandafter{%
+        \codep@tmp@autoproofoflabel}%
+    \fi%
+  }%
+  \codep@autoproofof@reset%
 }%
 
 % \codep@proofof@attribcount@get{proof-id}{macro}
@@ -1556,7 +1600,10 @@
     }%
   }%
 \endgroup
-\AtBeginDocument{\codep@autoproofof@install@proof}
+\AtBeginDocument{%
+  \global\codep@autoproofof@provcount=0\relax%
+  \codep@autoproofof@install@proof%
+}
 
 %% @implements \codep@hookproof@begin
 % \codep@proofstatesave{proof-id}
@@ -1574,8 +1621,6 @@
   \else%
     \expandafter\gdef\csname codep@savedproofautoeligible@#1\endcsname{0}%
   \fi%
-  \expandafter\xdef\csname codep@savedproofautopending@#1\endcsname{%
-    \codep@autoproofof@pendinglabel}%
   \expandafter\xdef\csname codep@savedproofbind@#1\endcsname{%
     \codep@pendingproofbind}%
   \expandafter\xdef\csname codep@savedproofadjkey@#1\endcsname{%
@@ -1596,7 +1641,6 @@
     \global\let\codep@pendingproofbind\@empty%
     \global\codep@proofdisplaypendingfalse%
     \global\codep@autoproofof@eligiblefalse%
-    \codep@autoproofof@clearpending%
     \global\let\codep@proofadj@pendinganchormapkey\@empty%
     \global\let\codep@proofadj@pendinganchormapanchor\@empty%
   \else%
@@ -1617,8 +1661,6 @@
     \else%
       \global\codep@autoproofof@eligiblefalse%
     \fi%
-    \global\expandafter\let\expandafter\codep@autoproofof@pendinglabel%
-      \csname codep@savedproofautopending@#1\endcsname%
     \global\expandafter\let\expandafter\codep@pendingproofbind%
       \csname codep@savedproofbind@#1\endcsname%
     \global\expandafter\let\expandafter%
@@ -1633,8 +1675,6 @@
       \csname codep@savedproofpending@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofautoeligible@#1\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@savedproofautopending@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofbind@#1\endcsname\@undefined%
     \global\expandafter\let%
@@ -1707,7 +1747,6 @@
 \newcommand*{\codep@proof@standalone}{%
   \global\codep@proofdisplaypendingtrue%
   \global\codep@autoproofof@eligibletrue%
-  \codep@autoproofof@clearpending%
 }%
 
 %% @utility
@@ -1799,7 +1838,6 @@
 \newcommand*{\codep@proof@materialize}{%
   \global\codep@proofdisplaypendingfalse%
   \global\codep@autoproofof@eligiblefalse%
-  \codep@autoproofof@clearpending%
   \edef\codep@tmp@proofkey{proof:\codep@currentproofid}%
   \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \codep@proof@writebeginpage{\codep@currentproofid}{\codep@tmp@proofkey}%
@@ -1826,7 +1864,6 @@
     statement}%
   \global\codep@proofdisplaypendingfalse%
   \global\codep@autoproofof@eligiblefalse%
-  \codep@autoproofof@clearpending%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@proofadj@pendinganchormapkey\@empty%
   \global\let\codep@proofadj@pendinganchormapanchor\@empty%
@@ -1853,7 +1890,6 @@
     \codep@ctxpeekkind\codep@tmp@ctxkind%
     \def\codep@tmp@proofkind{proof}%
     \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
-      \codep@autoproofof@finalizepending%
       \ifcodep@proofdisplaypending%
         \codep@proof@materialize%
       \fi%
@@ -2041,10 +2077,41 @@
       \csname codep@arw@#1@#2\endcsname\relax
     \global\expandafter\let%
       \csname codep@arw@#1@#2\endcsname\@empty%
-    \protected@write\@auxout{}{%
-      \string\codep@atomref{#1}{#2}}%
+    \codep@ifpproofkey{#1}{%
+      \codep@pproof@rememberref{#1}{#2}%
+    }{%
+      \protected@write\@auxout{}{%
+        \string\codep@atomref{#1}{#2}}%
+    }%
   \fi
 }
+
+% \codep@pproof@rememberref{pproof-key}{target-label}
+%   Remember atomrefs written under a provisional proof source so drain
+%   can mirror them under the final proof:N.M key in the same aux pass.
+%% @utility
+\def\codep@pproof@rememberref#1#2{%
+  \expandafter\ifx\csname codep@pproofrefs@#1\endcsname\relax%
+    \expandafter\gdef\csname codep@pproofrefs@#1\endcsname{}%
+  \fi%
+  \expandafter\g@addto@macro\csname codep@pproofrefs@#1\endcsname{%
+    \do{#2}}%
+}%
+
+% \codep@pproof@flushrefs{pproof-key}{final-proof-key}
+%   Write final-key atomrefs for every provisional source ref.
+%% @implements \codep@proofof@resolve
+\def\codep@pproof@flushrefs#1#2{%
+  \expandafter\ifx\csname codep@pproofrefs@#1\endcsname\relax%
+  \else%
+    \begingroup%
+      \def\codep@tmp@pprooffinal{#2}%
+      \def\do##1{%
+        \codep@dedupwrite{\codep@tmp@pprooffinal}{##1}}%
+      \csname codep@pproofrefs@#1\endcsname%
+    \endgroup%
+  \fi%
+}%
 
 % \codep@flusheqrange@numbered
 %   Numbered-line path: counter advanced, so compute the
@@ -2363,9 +2430,7 @@
         \codep@ctxpeekkind\codep@tmp@ctxkind%
         \def\codep@tmp@proofkind{proof}%
         \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
-          \ifx\codep@autoproofof@pendinglabel\@empty%
-            \codep@proof@materialize%
-          \fi%
+          \codep@proof@materialize%
         \fi%
       \fi%
       \ifbool{codep@sectioning}{%
@@ -2942,6 +3007,25 @@
   \def\codep@tmp@num{#2}%
 }%
 
+%% @utility
+% \codep@ifpproofkey{key}{then}{else}
+%   Branch on the provisional proof-source namespace prefix.
+\def\codep@ifpproofkey#1#2#3{%
+  \edef\codep@tmp@ifpproofkey{#1}%
+  \expandafter\codep@ifpproofkey@aux\codep@tmp@ifpproofkey:\@nil{#2}{#3}%
+}%
+
+%% @utility
+% \codep@ifpproofkey@aux key-prefix splitter.
+\def\codep@ifpproofkey@aux#1:#2\@nil#3#4{%
+  \def\codep@tmp@ifpproofprefix{#1}%
+  \ifx\codep@tmp@ifpproofprefix\codep@const@typepproof%
+    #3%
+  \else%
+    #4%
+  \fi%
+}%
+
 % Display-key formatting (\codep@displayfromkey, type constants)
 % moved to codependent-render.sty.  Tracking code uses only
 % \codep@splitprefix (above) for key decomposition.
@@ -2961,6 +3045,13 @@
 %   Performs: self-ref guard, consecutive-dedup, lazy count
 %   init, linked-list node store.
 \def\codep@appendbr@core{%
+  \codep@ifpproofkey{\codep@tmp@src}{%
+    \expandafter\ifx\csname codep@keymap@\codep@tmp@src\endcsname\relax%
+    \else%
+      \edef\codep@tmp@src{%
+        \csname codep@keymap@\codep@tmp@src\endcsname}%
+    \fi%
+  }{}%
   % Self-ref guard (REVIEW_C finding #10).
   \ifx\codep@tmp@src\codep@tmp@tgt\else
     % Dedup against previous append for this target.
@@ -3051,6 +3142,8 @@
 % Needed by \codep@graph@getdisplay; previously in render.sty.
 \def\codep@const@typeequation{equation}%
 \def\codep@const@typeproof{proof}%
+%% @utility
+\def\codep@const@typepproof{pproof}%
 
 %% @utility
 % \codep@graph@resolvekey{entity-key}{macro}
@@ -3110,9 +3203,11 @@
     \ifbool{codep@proofsnumbered}%
       {\edef#2{\codep@tmp@num*}}%
       {\let#2\codep@tmp@num}%
+  \else\ifx\codep@tmp@type\codep@const@typepproof%
+    \edef#2{?p\codep@tmp@num*}%
   \else%
     \let#2\codep@tmp@num%
-  \fi\fi%
+  \fi\fi\fi%
 }%
 
 %% @utility
@@ -4377,7 +4472,6 @@
   \ifbool{codep@proofsnumbered}{%
     \codep@subsystem@recordtotal{proofof}%
     \ifx\codep@currentproofid\@empty\else%
-      \codep@autoproofof@clearpending%
       \codep@proofof@do@resolver{\codep@proofof@resolve@warn}{#1}{#2}%
     \fi%
   }{}%
@@ -4404,18 +4498,37 @@
 %   at proofof-time; called indirectly at enddoc drain time via the
 %   deferred token sequence stored by \codep@defer@proofof.
 %
-%   Looks up the display number via the same cascade as
-%   \codep@proofof@do (lblnum first, then lblentity->entity@display).
-%   If still unresolved at this point the label truly never
-%   existed; record failure silently so callers can decide whether
-%   to warn.
+%   Explicit callers look up the display number via the same cascade
+%   as \codep@proofof@do (lblnum first, then lblentity->entity@display).
+%   Auto-detected proof headings use only lblentity->entity@display so
+%   non-tracked labels such as sections no-op silently.  If still
+%   unresolved at this point the label truly never existed; record
+%   failure silently so callers can decide whether to warn.
 %% @behavior B-PROOF-SEP
 \def\codep@proofof@resolve#1#2#3{%
+  \codep@proofof@resolve@inner{0}{#1}{#2}{#3}%
+}%
+
+% \codep@autoproofof@resolve{proofid}{label}{provisional-key}
+%   Auto-detected proof-heading resolver entry.  The third argument
+%   may carry a pproof:<N> key for a deferred forward-ref binding.
+%% @implements \codep@proofof@resolve
+\def\codep@autoproofof@resolve#1#2#3{%
+  \codep@proofof@resolve@inner{1}{#1}{#2}{#3}%
+}%
+
+% \codep@proofof@resolve@inner{auto-flag}{proofid}{label}{mode-or-prov}
+%   Shared proof-attribution resolver.  auto-flag=1 uses the tracked
+%   lblentity gate and may migrate body refs from a pproof:<N> source.
+%% @implements \codep@proofof@resolve
+\def\codep@proofof@resolve@inner#1#2#3#4{%
   \global\codep@proofof@resolvedfalse%
   \let\codep@tmp@proofdisp\@empty%
-  \expandafter\ifx\csname codep@lblnum@#2\endcsname\relax%
-    \expandafter\ifx\csname codep@lblentity@#2\endcsname\relax\else%
-      \edef\codep@tmp@proofentity{\csname codep@lblentity@#2\endcsname}%
+  \def\codep@tmp@autoflag{#1}%
+  \def\codep@tmp@one{1}%
+  \ifx\codep@tmp@autoflag\codep@tmp@one%
+    \expandafter\ifx\csname codep@lblentity@#3\endcsname\relax\else%
+      \edef\codep@tmp@proofentity{\csname codep@lblentity@#3\endcsname}%
       \edef\codep@tmp@proofdispcs{%
         codep@entity@\codep@tmp@proofentity @display}%
       \expandafter\ifx\csname\codep@tmp@proofdispcs\endcsname\relax\else%
@@ -4424,22 +4537,43 @@
       \fi%
     \fi%
   \else%
-    \edef\codep@tmp@proofdisp{\csname codep@lblnum@#2\endcsname}%
+    \expandafter\ifx\csname codep@lblnum@#3\endcsname\relax%
+      \expandafter\ifx\csname codep@lblentity@#3\endcsname\relax\else%
+        \edef\codep@tmp@proofentity{\csname codep@lblentity@#3\endcsname}%
+        \edef\codep@tmp@proofdispcs{%
+          codep@entity@\codep@tmp@proofentity @display}%
+        \expandafter\ifx\csname\codep@tmp@proofdispcs\endcsname\relax\else%
+          \edef\codep@tmp@proofdisp{%
+            \csname\codep@tmp@proofdispcs\endcsname}%
+        \fi%
+      \fi%
+    \else%
+      \edef\codep@tmp@proofdisp{\csname codep@lblnum@#3\endcsname}%
+    \fi%
   \fi%
   \ifx\codep@tmp@proofdisp\@empty\else%
     \global\codep@proofof@resolvedtrue%
     \edef\codep@tmp@proofkey{proof:\codep@tmp@proofdisp}%
-    \codep@proofof@attribcount@get{#1}{\codep@tmp@proofofcount}%
-    \codep@atomgetkey{#1}{\codep@tmp@oldproofkey}%
+    \codep@proofof@attribcount@get{#2}{\codep@tmp@proofofcount}%
+    \codep@atomgetkey{#2}{\codep@tmp@oldproofkey}%
+    \ifx\codep@tmp@autoflag\codep@tmp@one%
+      \codep@ifpproofkey{#4}{%
+        \edef\codep@tmp@oldproofkey{#4}%
+      }{}%
+    \fi%
+    \let\codep@tmp@proofduplicateskip\@empty%
     \ifnum\codep@tmp@proofofcount>0\relax%
       \ifx\codep@tmp@oldproofkey\@empty\else%
         \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
-          \codep@proofof@capturejointmeta{#1}{\codep@tmp@oldproofkey}%
+          \codep@proofof@capturejointmeta{#2}{\codep@tmp@oldproofkey}%
+        \fi%
+        \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey%
+          \def\codep@tmp@proofduplicateskip{1}%
         \fi%
       \fi%
     \fi%
-    \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
-    \codep@proof@writebeginpage{#1}{\codep@tmp@proofkey}%
+    \codep@atomsetkey{#2}{\codep@tmp@proofkey}%
+    \codep@proof@writebeginpage{#2}{\codep@tmp@proofkey}%
     \ifx\codep@tmp@oldproofkey\@empty\else%
       \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
         \ifnum\codep@tmp@proofofcount>0\relax%
@@ -4458,22 +4592,44 @@
     % Use the resolved target's lblentity (or its display key fallback)
     % as the parent value; the classifier only cares about emptiness,
     % but downstream consumers may want a meaningful identifier.
-    \expandafter\ifx\csname codep@lblentity@#2\endcsname\relax%
+    \expandafter\ifx\csname codep@lblentity@#3\endcsname\relax%
       \edef\codep@tmp@proofparentval{theorem:\codep@tmp@proofdisp}%
     \else%
       \edef\codep@tmp@proofparentval{%
-        \csname codep@lblentity@#2\endcsname}%
+        \csname codep@lblentity@#3\endcsname}%
     \fi%
-    \expandafter\xdef\csname codep@proofparent@#1\endcsname{%
+    \expandafter\xdef\csname codep@proofparent@#2\endcsname{%
       \codep@tmp@proofparentval}%
+    \edef\codep@tmp@resolverproofid{#2}%
+    \ifx\codep@tmp@resolverproofid\codep@currentproofid%
+    \else%
+      \codep@captureentitymeta{\codep@tmp@proofkey}{proof}%
+        {\codep@tmp@proofdisp}{proof}{\codep@tmp@proofparentval}%
+      \if@filesw%
+        \protected@write\@auxout{}{%
+          \string\codep@entitymeta{\codep@tmp@proofkey}{proof}%
+            {\codep@tmp@proofdisp}{proof}{\codep@tmp@proofparentval}}%
+      \fi%
+    \fi%
     \global\codep@proofdisplaypendingfalse%
     \global\codep@autoproofof@eligiblefalse%
     \global\let\codep@pendingproofbind\@empty%
-    \codep@cdpwrite@atom{%
-      \string\codep@cdp@proof{\codep@tmp@proofdisp*}}%
-    \codep@proof@bindbeginanchor{#1}{\codep@tmp@proofkey}%
-    \codep@render@queuebackref{\codep@tmp@proofkey}%
-    \codep@proofof@attribcount@advance{#1}%
+    \ifx\codep@tmp@autoflag\codep@tmp@one%
+      \if@filesw%
+        \codep@ifpproofkey{#4}{%
+          \codep@pproof@flushrefs{#4}{\codep@tmp@proofkey}%
+        }{}%
+        \codep@subsystem@recordtotal{atomref}%
+        \codep@dedupwrite{\codep@tmp@proofkey}{#3}%
+      \fi%
+    \fi%
+    \ifx\codep@tmp@proofduplicateskip\@empty%
+      \codep@cdpwrite{%
+        \string\codep@cdp@proof{\codep@tmp@proofdisp*}}%
+      \codep@proof@bindbeginanchor{#2}{\codep@tmp@proofkey}%
+      \codep@render@queuebackref{\codep@tmp@proofkey}%
+      \codep@proofof@attribcount@advance{#2}%
+    \fi%
   \fi%
 }%
 

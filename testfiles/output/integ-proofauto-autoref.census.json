@@ -1,19 +1,25 @@
 {
   "atomref": {
     "count": [
-      1,
-      1,
-      1
+      3,
+      3,
+      3
     ],
     "keys": [
       [
-        "lemma:1.2||sec:auto-one"
+        "lemma:1.2||sec:auto-one",
+        "proof:1.1||lem:autoref-witness",
+        "proof:1.1||thm:autoref-target"
       ],
       [
-        "lemma:1.2||sec:auto-one"
+        "lemma:1.2||sec:auto-one",
+        "proof:1.1||lem:autoref-witness",
+        "proof:1.1||thm:autoref-target"
       ],
       [
-        "lemma:1.2||sec:auto-one"
+        "lemma:1.2||sec:auto-one",
+        "proof:1.1||lem:autoref-witness",
+        "proof:1.1||thm:autoref-target"
       ]
     ]
   },
@@ -79,13 +85,19 @@
   "renderlist": {
     "count": [
       0,
-      0,
-      0
+      2,
+      2
     ],
     "keys": [
       [],
-      [],
-      []
+      [
+        "lemma:1.2",
+        "theorem:1.1"
+      ],
+      [
+        "lemma:1.2",
+        "theorem:1.1"
+      ]
     ]
   }
 }

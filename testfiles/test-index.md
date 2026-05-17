@@ -239,7 +239,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (37 fixtures)
+## Integration (38 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -262,11 +262,12 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
 | testfiles/integration/integ-proofauto-adjacent-no-leak.lvt | LIVE | B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE | Auto pending state does not leak into a later adjacent proof whose heading has a ref. |
 | testfiles/integration/integ-proofauto-autoref.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \autoref auto-binds silently. |
+| testfiles/integration/integ-proofauto-bodycite-routing.lvt | LIVE | B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof-heading body cites route through immediate and provisional proof identities. |
 | testfiles/integration/integ-proofauto-cref-single.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \cref auto-binds silently. |
-| testfiles/integration/integ-proofauto-explicit-wins-different.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto candidate plus different explicit \codepproofof* binds only the explicit target. |
+| testfiles/integration/integ-proofauto-explicit-wins-different.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto candidate plus different explicit \codepproofof* records both targets. |
 | testfiles/integration/integ-proofauto-explicit-wins-same.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto candidate plus same-target explicit \codepproofof* leaves one proof record. |
 | testfiles/integration/integ-proofauto-forward-ref.lvt | LIVE | B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST | A proof heading that names a later theorem settles through the deferred proof-of queue. |
-| testfiles/integration/integ-proofauto-multiref-decline.lvt | LIVE | B-PROOF-NONADJ | Multiple supported refs in headings decline with warnings, including a navigational section ref pattern. |
+| testfiles/integration/integ-proofauto-multiref-decline.lvt | LIVE | B-PROOF-NONADJ, B-PROOF-SEP | Multiple supported refs in headings resolve as best-effort serial proof attribution. |
 | testfiles/integration/integ-proofauto-nested.lvt | LIVE | B-PROOF-SEP, B-PROOF-INNER, B-LINK-PROOF-DEST | Nested proof headings save and restore independent auto-detected targets. |
 | testfiles/integration/integ-proofauto-no-ref.lvt | LIVE | B-PROOF-NONADJ | A standalone proof heading with no supported ref remains unattributed. |
 | testfiles/integration/integ-proofauto-ref.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \ref auto-binds silently. |

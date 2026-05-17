@@ -1,9 +1,9 @@
 %% TEST-NAME: integ-proofauto-multiref-decline
-%% TEST-PURPOSE: Multiple supported refs in headings decline with warnings, including a navigational section ref pattern.
+%% TEST-PURPOSE: Multiple supported refs in headings resolve as best-effort serial proof attribution.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-NONADJ
+%% TEST-BEHAVIOR: B-PROOF-NONADJ, B-PROOF-SEP
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Multiple supported refs in headings decline with warnings, including a navigational section ref pattern.
+%% TEST-WHAT: Multiple supported refs in headings resolve as best-effort serial proof attribution.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
@@ -11,11 +11,13 @@
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
-%% TEST-EXPECT-PACKAGE-WARNING: Proof heading contains.*2 supported reference.*automatic proof attribution skipped
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof
-%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
-%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1.2}{codep-proof:a
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 3
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.2}{codep-proof:a
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1}{codep-proof:a
 %% TEST-PDF-STEXT: (?s)Proof of theorems 1\.1 and 1\.2
 %% TEST-PDF-STEXT: (?s)Proof of Theorem 1\.1 in &#xa7;1
 %% TEST-PDF-NO-ORPHAN-LINKS: yes

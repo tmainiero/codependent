@@ -1,18 +1,21 @@
 {
   "atomref": {
     "count": [
-      1,
-      1,
-      1
+      2,
+      2,
+      2
     ],
     "keys": [
       [
+        "proof:3.1||thm:forward-later",
         "theorem:1.1||sec:forward-context"
       ],
       [
+        "proof:3.1||thm:forward-later",
         "theorem:1.1||sec:forward-context"
       ],
       [
+        "proof:3.1||thm:forward-later",
         "theorem:1.1||sec:forward-context"
       ]
     ]
@@ -94,13 +97,17 @@
   "renderlist": {
     "count": [
       0,
-      0,
-      0
+      1,
+      1
     ],
     "keys": [
       [],
-      [],
-      []
+      [
+        "theorem:3.1"
+      ],
+      [
+        "theorem:3.1"
+      ]
     ]
   }
 }

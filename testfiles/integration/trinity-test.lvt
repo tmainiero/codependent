@@ -92,7 +92,7 @@
 %%   After P02: body-cite routing records the atomref under proof:5.1.
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:5.1}{def:enrichment}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.1\*
-%% TEST-PDF-LINK-Y-NEAR: 5\.1\* | (?s)Proof of theorem 5\.1 | within=20
+%% TEST-PDF-LINK-Y-NEAR: ^in 5\.1\*, 5\.7\*\.$ | (?s)Proof of theorem 5\.1 | within=45
 %%
 %% Scenario 2 — forward-ref body-cite (proof of thm:autodet-forward 5.3,
 %%   body cites lem:adjunction).

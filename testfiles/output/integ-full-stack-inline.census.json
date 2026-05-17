@@ -1,9 +1,9 @@
 {
   "atomref": {
     "count": [
-      32,
-      32,
-      32
+      33,
+      33,
+      33
     ],
     "keys": [
       [
@@ -27,6 +27,7 @@
         "proof:2.5||def:noetherian",
         "proof:2.5||lem:pid-noetherian",
         "proof:2.5||thm:hilbert-basis",
+        "proof:2.5||thm:noether",
         "proof:3.2||cor:artin",
         "proof:3.2||prop:ufd",
         "proof:3.2||thm:noether",
@@ -61,6 +62,7 @@
         "proof:2.5||def:noetherian",
         "proof:2.5||lem:pid-noetherian",
         "proof:2.5||thm:hilbert-basis",
+        "proof:2.5||thm:noether",
         "proof:3.2||cor:artin",
         "proof:3.2||prop:ufd",
         "proof:3.2||thm:noether",
@@ -95,6 +97,7 @@
         "proof:2.5||def:noetherian",
         "proof:2.5||lem:pid-noetherian",
         "proof:2.5||thm:hilbert-basis",
+        "proof:2.5||thm:noether",
         "proof:3.2||cor:artin",
         "proof:3.2||prop:ufd",
         "proof:3.2||thm:noether",

@@ -1,9 +1,9 @@
 {
   "atomref": {
     "count": [
-      40,
-      40,
-      40
+      49,
+      49,
+      49
     ],
     "keys": [
       [
@@ -30,8 +30,17 @@
         "proof:2.1||lem:adjunction",
         "proof:2.3||def:enrichment",
         "proof:2.3||prop:square",
-        "proof:a40||def:enrichment",
-        "proof:a43||thm:autodet-backward",
+        "proof:5.1||def:enrichment",
+        "proof:5.1||lem:adjunction",
+        "proof:5.1||thm:autodet-backward",
+        "proof:5.3||thm:autodet-forward",
+        "proof:5.4||thm:autodet-joint-x",
+        "proof:5.5||def:enrichment",
+        "proof:5.5||thm:autodet-joint-y",
+        "proof:5.7||thm:autodet-backward",
+        "proof:5.7||thm:autodet-mixedtrk",
+        "proof:a35||lem:adjunction",
+        "proof:a44||thm:main",
         "question:1.11||cor:equiv",
         "question:1.11||term:monoidal",
         "question:1.11||thm:main",
@@ -72,8 +81,17 @@
         "proof:2.1||lem:adjunction",
         "proof:2.3||def:enrichment",
         "proof:2.3||prop:square",
-        "proof:a40||def:enrichment",
-        "proof:a43||thm:autodet-backward",
+        "proof:5.1||def:enrichment",
+        "proof:5.1||lem:adjunction",
+        "proof:5.1||thm:autodet-backward",
+        "proof:5.3||lem:adjunction",
+        "proof:5.3||thm:autodet-forward",
+        "proof:5.4||thm:autodet-joint-x",
+        "proof:5.5||def:enrichment",
+        "proof:5.5||thm:autodet-joint-y",
+        "proof:5.7||thm:autodet-backward",
+        "proof:5.7||thm:autodet-mixedtrk",
+        "proof:a44||thm:main",
         "question:1.11||cor:equiv",
         "question:1.11||term:monoidal",
         "question:1.11||thm:main",
@@ -114,8 +132,17 @@
         "proof:2.1||lem:adjunction",
         "proof:2.3||def:enrichment",
         "proof:2.3||prop:square",
-        "proof:a40||def:enrichment",
-        "proof:a43||thm:autodet-backward",
+        "proof:5.1||def:enrichment",
+        "proof:5.1||lem:adjunction",
+        "proof:5.1||thm:autodet-backward",
+        "proof:5.3||lem:adjunction",
+        "proof:5.3||thm:autodet-forward",
+        "proof:5.4||thm:autodet-joint-x",
+        "proof:5.5||def:enrichment",
+        "proof:5.5||thm:autodet-joint-y",
+        "proof:5.7||thm:autodet-backward",
+        "proof:5.7||thm:autodet-mixedtrk",
+        "proof:a44||thm:main",
         "question:1.11||cor:equiv",
         "question:1.11||term:monoidal",
         "question:1.11||thm:main",
@@ -166,12 +193,16 @@
         "+\\newlabel{rem:tqft@cref}{{[remark][4][]3.4}{[1][2][]3}{}{}{}}",
         "+\\newlabel{rem:tqft}{{3.4}{3}{}{remark.51}{}}",
         "-\\newlabel{sec:restate@cref}{{[section][4][]4}{[1][2][]3}{}{}{}}",
-        "+\\newlabel{sec:restate@cref}{{[section][4][]4}{[1][3][]3}{}{}{}}"
+        "+\\newlabel{sec:restate@cref}{{[section][4][]4}{[1][3][]3}{}{}{}}",
+        "-\\newlabel{thm:autodet-mixedtrk@cref}{{[theorem][7][]5.7}{[1][3][]3}{}{}{}}",
+        "-\\newlabel{thm:autodet-mixedtrk}{{5.7}{3}{}{theorem.70}{}}",
+        "+\\newlabel{thm:autodet-mixedtrk@cref}{{[theorem][7][]5.7}{[1][4][]4}{}{}{}}",
+        "+\\newlabel{thm:autodet-mixedtrk}{{5.7}{4}{}{theorem.70}{}}"
       ],
       []
     ],
     "diff_count": [
-      20,
+      24,
       0
     ],
     "lines": [
@@ -326,8 +357,8 @@
         "\\newlabel{thm:autodet-joint-x}{{5.4}{3}{}{theorem.65}{}}",
         "\\newlabel{thm:autodet-joint-y@cref}{{[theorem][5][]5.5}{[1][3][]3}{}{}{}}",
         "\\newlabel{thm:autodet-joint-y}{{5.5}{3}{}{theorem.67}{}}",
-        "\\newlabel{thm:autodet-mixedtrk@cref}{{[theorem][7][]5.7}{[1][3][]3}{}{}{}}",
-        "\\newlabel{thm:autodet-mixedtrk}{{5.7}{3}{}{theorem.70}{}}",
+        "\\newlabel{thm:autodet-mixedtrk@cref}{{[theorem][7][]5.7}{[1][4][]4}{}{}{}}",
+        "\\newlabel{thm:autodet-mixedtrk}{{5.7}{4}{}{theorem.70}{}}",
         "\\newlabel{thm:coherence@cref}{{[theorem][1][]2.1}{[1][1][]1}{}{}{}}",
         "\\newlabel{thm:coherence}{{2.1}{1}{}{theorem.25}{}}",
         "\\newlabel{thm:main@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
@@ -409,8 +440,8 @@
         "\\newlabel{thm:autodet-joint-x}{{5.4}{3}{}{theorem.65}{}}",
         "\\newlabel{thm:autodet-joint-y@cref}{{[theorem][5][]5.5}{[1][3][]3}{}{}{}}",
         "\\newlabel{thm:autodet-joint-y}{{5.5}{3}{}{theorem.67}{}}",
-        "\\newlabel{thm:autodet-mixedtrk@cref}{{[theorem][7][]5.7}{[1][3][]3}{}{}{}}",
-        "\\newlabel{thm:autodet-mixedtrk}{{5.7}{3}{}{theorem.70}{}}",
+        "\\newlabel{thm:autodet-mixedtrk@cref}{{[theorem][7][]5.7}{[1][4][]4}{}{}{}}",
+        "\\newlabel{thm:autodet-mixedtrk}{{5.7}{4}{}{theorem.70}{}}",
         "\\newlabel{thm:coherence@cref}{{[theorem][1][]2.1}{[1][1][]1}{}{}{}}",
         "\\newlabel{thm:coherence}{{2.1}{1}{}{theorem.25}{}}",
         "\\newlabel{thm:main@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
@@ -430,8 +461,8 @@
   "renderlist": {
     "count": [
       0,
-      15,
-      15
+      20,
+      20
     ],
     "keys": [
       [],
@@ -450,7 +481,12 @@
         "terminology:1.8",
         "theorem:1.2",
         "theorem:2.1",
-        "theorem:3.1"
+        "theorem:3.1",
+        "theorem:5.1",
+        "theorem:5.3",
+        "theorem:5.4",
+        "theorem:5.5",
+        "theorem:5.7"
       ],
       [
         "corollary:1.5",
@@ -467,7 +503,12 @@
         "terminology:1.8",
         "theorem:1.2",
         "theorem:2.1",
-        "theorem:3.1"
+        "theorem:3.1",
+        "theorem:5.1",
+        "theorem:5.3",
+        "theorem:5.4",
+        "theorem:5.5",
+        "theorem:5.7"
       ]
     ]
   }

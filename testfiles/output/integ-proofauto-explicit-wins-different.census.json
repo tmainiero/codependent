@@ -1,21 +1,24 @@
 {
   "atomref": {
     "count": [
-      2,
-      2,
-      2
+      3,
+      3,
+      3
     ],
     "keys": [
       [
         "lemma:1.2||sec:explicit-diff-statements",
+        "proof:1.1||thm:heading-target",
         "proof:1.2||lem:explicit-target"
       ],
       [
         "lemma:1.2||sec:explicit-diff-statements",
+        "proof:1.1||thm:heading-target",
         "proof:1.2||lem:explicit-target"
       ],
       [
         "lemma:1.2||sec:explicit-diff-statements",
+        "proof:1.1||thm:heading-target",
         "proof:1.2||lem:explicit-target"
       ]
     ]
@@ -82,16 +85,18 @@
   "renderlist": {
     "count": [
       0,
-      1,
-      1
+      2,
+      2
     ],
     "keys": [
       [],
       [
-        "lemma:1.2"
+        "lemma:1.2",
+        "theorem:1.1"
       ],
       [
-        "lemma:1.2"
+        "lemma:1.2",
+        "theorem:1.1"
       ]
     ]
   }

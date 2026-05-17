@@ -1,19 +1,25 @@
 {
   "atomref": {
     "count": [
-      1,
-      1,
-      1
+      3,
+      3,
+      3
     ],
     "keys": [
       [
-        "lemma:1.2||sec:switch-statements"
+        "lemma:1.2||sec:switch-statements",
+        "proof:1.1||thm:switch-auto",
+        "proof:1.2||lem:switch-explicit"
       ],
       [
-        "lemma:1.2||sec:switch-statements"
+        "lemma:1.2||sec:switch-statements",
+        "proof:1.1||thm:switch-auto",
+        "proof:1.2||lem:switch-explicit"
       ],
       [
-        "lemma:1.2||sec:switch-statements"
+        "lemma:1.2||sec:switch-statements",
+        "proof:1.1||thm:switch-auto",
+        "proof:1.2||lem:switch-explicit"
       ]
     ]
   },
@@ -79,13 +85,19 @@
   "renderlist": {
     "count": [
       0,
-      0,
-      0
+      2,
+      2
     ],
     "keys": [
       [],
-      [],
-      []
+      [
+        "lemma:1.2",
+        "theorem:1.1"
+      ],
+      [
+        "lemma:1.2",
+        "theorem:1.1"
+      ]
     ]
   }
 }
