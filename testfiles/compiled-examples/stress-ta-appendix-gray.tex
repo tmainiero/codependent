@@ -417,10 +417,13 @@ follows from \cref{def:enrichment}.
 %% --- 9.1: Backward-ref body-cite ---
 %% Proof heading names thm:s9-backward (defined here); body cites def:trace.
 %% After P02: def:trace gets a Used-In tag attributed to proof:9.1.
+%% NON-ADJACENT: intervening paragraph clears codep@pendingresultid at para/begin.
 \begin{theorem}\label{thm:s9-backward}
 Every categorical trace (\cref{def:trace}) satisfies the cyclic
 property (\cref{lem:trace-cyclic}).
 \end{theorem}
+
+We recall the key definitions before proceeding.
 
 \begin{proof}[Proof of \cref{thm:s9-backward}]
 By \cref{def:trace} and the cyclic property \cref{lem:trace-cyclic}.
@@ -444,6 +447,7 @@ with enrichment (\cref{def:enrichment}).
 %% Both heading refs are tracked atoms.  After P02 (sub-delta-7): two
 %% independent \codep@cdp@proof records (9.3* and 9.4*).  NOT a single
 %% joint atom — A2 deferred.
+%% NON-ADJACENT: intervening paragraph clears codep@pendingresultid at para/begin.
 \begin{proposition}\label{prop:s9-joint-a}
 First joint target for best-effort serial proof attribution.
 \end{proposition}
@@ -452,6 +456,8 @@ First joint target for best-effort serial proof attribution.
 Second joint target for best-effort serial proof attribution.
 Follows from \cref{prop:s9-joint-a}.
 \end{corollary}
+
+We give a unified proof of both results.
 
 \begin{proof}[Proof of \cref{prop:s9-joint-a,cor:s9-joint-b}]
 Both \cref{prop:s9-joint-a} and \cref{cor:s9-joint-b} follow from
@@ -462,9 +468,12 @@ Both \cref{prop:s9-joint-a} and \cref{cor:s9-joint-b} follow from
 %% One tracked atom (lem:s9-mixed) and one section ref (sec:w05a1).
 %% After P02+P03: ONE record for 9.5 (tracked target); tracked-entity
 %% gate silently no-ops the section ref.
+%% NON-ADJACENT: intervening paragraph clears codep@pendingresultid at para/begin.
 \begin{lemma}\label{lem:s9-mixed}
 Tracked target for the mixed-tracking joint proof scenario.
 \end{lemma}
+
+The tracked lemma and the section reference play different roles here.
 
 \begin{proof}[Proof of \cref{lem:s9-mixed,sec:w05a1}]
 The tracked lemma follows from \cref{def:trace}; the section ref

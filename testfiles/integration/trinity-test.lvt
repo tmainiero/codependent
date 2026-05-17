@@ -88,31 +88,46 @@
 %%   body cites def:enrichment 1.5).
 %%   On HEAD: proofdisplaypending=true during proof body → body cite dropped
 %%   → no atomref{proof:5.1}{def:enrichment} in aux.
+%%   The proof is NON-ADJACENT (intervening paragraph breaks pendingresultid).
+%%   After P02: body-cite routing records the atomref under proof:5.1.
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:5.1}{def:enrichment}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.1\*
-%% TEST-PDF-LINK-Y-NEAR: (?s)Used in.*5\.1\* | (?s)Proof of theorem 5\.1 | within=20
+%% TEST-PDF-LINK-Y-NEAR: 5\.1\* | (?s)Proof of theorem 5\.1 | within=20
 %%
-%% Scenario 2 — forward-ref body-cite (proof of thm:autodet-forward 5.2,
-%%   body cites lem:adjunction 1.3).
+%% Scenario 2 — forward-ref body-cite (proof of thm:autodet-forward 5.3,
+%%   body cites lem:adjunction).
+%%   The proof comes BEFORE thm:autodet-forward (naturally non-adjacent).
+%%   NOTE: atom 5.2 is the intervening paragraph in scenario 1; thm:autodet-forward
+%%   is atom 5.3 because the paragraph shifts numbering.
 %%   On HEAD: body cite dropped (proofdisplaypending=true even on pass 2).
-%%   After P02: pproof:<N> allocates at scan; migrates to proof:5.2 at drain.
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:5.2}{lem:adjunction}
+%%   After P02: pproof:<N> allocates at scan; migrates to proof:5.3 at drain.
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:5.3}{lem:adjunction}
+%% TEST-PDF-STEXT: (?s)Used in.*5\.3\*
 %%
 %% Scenario 3 — joint-via-single-cref both-tracked case (a):
 %%   \cref{thm:autodet-joint-x,thm:autodet-joint-y} heading.
+%%   The proof is NON-ADJACENT (intervening paragraph breaks pendingresultid).
+%%   NOTE: atoms shifted by the inserted paragraphs in scenarios 1 and 3:
+%%   thm:autodet-joint-x = 5.4, thm:autodet-joint-y = 5.5.
 %%   On HEAD: refcount=2 → warns+skips → zero records.
-%%   After P02 (sub-delta-7): TWO independent records (5.3*, 5.4*).
+%%   After P02 (sub-delta-7): TWO independent records (5.4*, 5.5*).
 %%   NOT a single joint atom (A2 deferred).
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.3*}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{5.4*}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.3}{codep-proof:5.3}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.4}{codep-proof:5.4}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.5*}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.4}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.5}
+%% TEST-PDF-STEXT: (?s)Used in.*5\.4\*
+%% TEST-PDF-STEXT: (?s)Used in.*5\.5\*
 %%
 %% Scenario 4 — joint-via-single-cref mixed-tracking case (b):
 %%   \cref{thm:autodet-mixedtrk,sec:autodet} heading.
+%%   The proof is NON-ADJACENT (intervening paragraph breaks pendingresultid).
+%%   NOTE: atoms shifted by inserted paragraphs; thm:autodet-mixedtrk = 5.7.
 %%   On HEAD: refcount=2 → warns+skips → zero records.
-%%   After P02+P03: ONE record for 5.5; gate silently no-ops sec:autodet.
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.5*}
+%%   After P02+P03: ONE record for 5.7; gate silently no-ops sec:autodet.
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.7*}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:5.7}{sec:autodet}
+%% TEST-PDF-STEXT: (?s)Used in.*5\.7\*
 %%
 %% Scenario 5 — section-only heading (\autoref{sec:autodet}):
 %%   On HEAD: refcount=1 single-ref path fires; lblnum@sec:autodet=5;
@@ -120,9 +135,13 @@
 %%   After P02+P03: tracked-entity gate fires (no lblentity for section) →
 %%   ZERO records, no anchormap, no Used-In on sec:autodet.
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{5*}
-%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:5}{codep-proof:a
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:5}
 %%
-%% Cross-scenario safety check — no pproof:* records survive to final cdp:
+%% Cross-scenario safety check — no pproof:* records survive to final cdp.
+%% This already passes on HEAD (no pproof: machinery yet) and remains as a
+%% no-survivors gate: it will fail if P02 leaves orphan pproof: keys.
+%% A positive keymap assertion (pproof:N → proof:N.M migration) belongs in
+%% the dedicated integ-proofauto-bodycite-routing.lvt fixture from P02.
 %% TEST-CDP-NOT-CONTAINS: pproof:
 %%
 %% This fixture inlines the theorem declarations from sty-theorems-ta.sty
@@ -497,9 +516,12 @@ foundational vocabulary.  See also \autoref{not:hom}.
 %% Proof heading names thm:autodet-backward (5.1); body cites def:enrichment (1.5).
 %% On HEAD: body cite dropped (proofdisplaypending=true during body → owner-id empty).
 %% After P02: body-cite routing attributes the cite under proof:5.1.
+%% NON-ADJACENT: intervening paragraph clears codep@pendingresultid at para/begin.
 \begin{theorem}\label{thm:autodet-backward}
   A tracked theorem for backward-ref proof auto-detection.
 \end{theorem}
+
+We recall the basic setup before giving the proof.
 
 \begin{proof}[Proof of \cref{thm:autodet-backward}]
   By \cref{def:enrichment} and the adjunction criterion \cref{lem:adjunction}.
@@ -525,6 +547,7 @@ foundational vocabulary.  See also \autoref{not:hom}.
 %% After P02 (sub-delta-7 per-label iteration): TWO independent records
 %% (5.3* and 5.4*) via best-effort serial attribution.
 %% A2 deferred: NOT a single joint atom.
+%% NON-ADJACENT: intervening paragraph clears codep@pendingresultid at para/begin.
 \begin{theorem}\label{thm:autodet-joint-x}
   First joint target for best-effort serial attribution.
 \end{theorem}
@@ -532,6 +555,8 @@ foundational vocabulary.  See also \autoref{not:hom}.
 \begin{theorem}\label{thm:autodet-joint-y}
   Second joint target for best-effort serial attribution.
 \end{theorem}
+
+We give a unified proof of both results.
 
 \begin{proof}[Proof of \cref{thm:autodet-joint-x,thm:autodet-joint-y}]
   Both targets are tracked atoms; after P02 this yields two independent
@@ -544,9 +569,12 @@ foundational vocabulary.  See also \autoref{not:hom}.
 %% On HEAD: refcount=2 → warns+skips → zero records.
 %% After P02+P03: ONE record for 5.5; tracked-entity gate silently
 %% no-ops sec:autodet (lblnum-only, no lblentity).
+%% NON-ADJACENT: intervening paragraph clears codep@pendingresultid at para/begin.
 \begin{theorem}\label{thm:autodet-mixedtrk}
   Tracked target for mixed-tracking joint proof scenario.
 \end{theorem}
+
+The tracked entity and the section reference play different roles here.
 
 \begin{proof}[Proof of \cref{thm:autodet-mixedtrk,sec:autodet}]
   Tracked atom plus section ref; P03 gate no-ops the section.
