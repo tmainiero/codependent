@@ -134,6 +134,15 @@
 %%   proofof@resolve creates proof:5 anchormap entry and cdp@proof{5*} record.
 %%   After P02+P03: tracked-entity gate fires (no lblentity for section) →
 %%   ZERO records, no anchormap, no Used-In on sec:autodet.
+%%
+%%   No TEST-PDF-STEXT(-NOT) assertion: the bad proof:5 atom is internal-only
+%%   on HEAD. It never reaches the PDF because (a) body-cite routing is broken
+%%   (a separate P02 gap, so \cref{thm:main} in the body isn't recorded), (b)
+%%   no theorem has number "5" in this document (only 5.1, 5.3, ...) so no
+%%   Used-In list could include a stray "5*", and (c) proofs=off by default,
+%%   so no † marker. The CDP+AUX negatives below are therefore the complete
+%%   gate for this scenario — verified by both reviewers in W05-A1 P01-fix
+%%   re-verification (validator P01-FIX-VAL-01, test-auditor F-P01FIX-001).
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{5*}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:5}
 %%
