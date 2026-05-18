@@ -6,6 +6,14 @@
 %% TEST-RENDER-MODES: appendix, gray-backrefs, custom-page-format
 %% TEST-PDF-PAGES: 6
 %% TEST-PDF-STEXT: Stress fixture appendix gray
+%%
+%% W05-A2 RED gate: joint-atom rendering for Section 9 (thm:s9-jatom-x, thm:s9-jatom-y)
+%%   All assertions below FAIL on current HEAD — A1 serial attribution produces
+%%   separate 9.9* and 9.10* entries; no {9.9, 9.10}* token appears in the PDF.
+%%   After A2 D1: one joint atom {9.9, 9.10}* in the Dependency Index.
+%%
+%% Dependency Index contains the joint atom identifier {9.9, 9.10}*
+%% TEST-PDF-STEXT: \{9\.9, 9\.10\}\*
 
 \def\START{}\def\END{}
 \documentclass{article}
@@ -486,6 +494,28 @@ is navigational and triggers the tracked-entity gate.
 \begin{proof}[Proof of \autoref{sec:w05a1}]
 Section-only heading exercises the tracked-entity gate.
 Uses \cref{thm:coherence} in the body (body cite dropped by gate).
+\end{proof}
+
+%% --- 9.9, 9.10: Joint-atom proof (W05-A2 RED gate) ---
+%% After A2: ONE joint atom {9.9, 9.10}* renders in Used-In entries of
+%% both thm:s9-jatom-x and thm:s9-jatom-y, and in the Dependency Index.
+%% Currently (A1 serial): two independent records 9.9* and 9.10* appear.
+%% NON-ADJACENT: no intervening theorem between these two and the proof.
+\begin{theorem}\label{thm:s9-jatom-x}
+First theorem for joint-atom proof (W05-A2 deferred).
+Uses \cref{def:enrichment}.
+\end{theorem}
+
+\begin{theorem}\label{thm:s9-jatom-y}
+Second theorem for joint-atom proof (W05-A2 deferred).
+Follows from \cref{lem:trace-cyclic}.
+\end{theorem}
+
+We give a joint proof of both theorems above.
+
+\begin{proof}[Proof of \cref{thm:s9-jatom-x,thm:s9-jatom-y}]
+Both follow from \cref{def:enrichment} and \cref{lem:trace-cyclic}
+by a unified monoidal argument.
 \end{proof}
 
 

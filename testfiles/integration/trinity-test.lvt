@@ -119,6 +119,20 @@
 %% TEST-PDF-STEXT: (?s)Used in.*5\.4\*
 %% TEST-PDF-STEXT: (?s)Used in.*5\.5\*
 %%
+%% W05-A2 RED gate: joint-atom rendering for Scenario 3.
+%%   All assertions below FAIL on current HEAD (A1 serial attribution
+%%   produces separate 5.4* and 5.5* tokens; no {5.4, 5.5}* exists).
+%%   After A2 D1 lands: one joint token {5.4, 5.5}* appears in both
+%%   thm:autodet-joint-x and thm:autodet-joint-y Used-In entries.
+%%
+%% Used-In at thm:autodet-joint-x (5.4) shows joint {5.4, 5.5}*
+%% TEST-PDF-STEXT: (?s)First joint target for best-effort serial attribution\..*\{5\.4, 5\.5\}\*
+%% Used-In at thm:autodet-joint-y (5.5) shows the same {5.4, 5.5}*
+%% TEST-PDF-STEXT: (?s)Second joint target for best-effort serial attribution\..*\{5\.4, 5\.5\}\*
+%%
+%% Link: {5.4, 5.5}* in Used-In links near the joint proof body
+%% TEST-PDF-LINK-Y-NEAR: \{5\.4, 5\.5\}\* | (?s)Both.*tracked atoms | within=60
+%%
 %% Scenario 4 — joint-via-single-cref mixed-tracking case (b):
 %%   \cref{thm:autodet-mixedtrk,sec:autodet} heading.
 %%   The proof is NON-ADJACENT (intervening paragraph breaks pendingresultid).

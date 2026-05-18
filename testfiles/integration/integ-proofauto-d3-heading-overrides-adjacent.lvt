@@ -1,0 +1,83 @@
+%% TEST-NAME: integ-proofauto-d3-heading-overrides-adjacent
+%% TEST-PURPOSE: Proof heading ref overrides adjacent attribution; warning emitted on conflict.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: D3 rule: when a proof heading contains a tracked \cref and the proof is
+%%            physically adjacent to a DIFFERENT theorem, heading attribution wins and a
+%%            package warning is emitted (suppressible via warn-attribution-conflicts=false).
+%%            thmHeading (1.1) gets the proof attribution; thmAdjacent (2.1) does not.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+%% ====================================================================
+%%  W05-A2 RED gate — D3 heading-overrides-adjacent
+%%
+%%  All assertions below FAIL on current HEAD:
+%%    - No D3 rule implemented in A1.
+%%    - Adjacent rule fires unconditionally: proof attributed to thmAdjacent (2.1*).
+%%    - No package warning for heading/adjacent conflict.
+%%    - thmHeading (1.1) does NOT receive the proof attribution.
+%%
+%%  After A2-P03 these turn GREEN.  No .sty edits in this wave.
+%% ====================================================================
+%%
+%% 1. thmHeading (1.1) receives the proof attribution — Used-In shows 1.1*
+%% TEST-PDF-STEXT: (?s)Heading target theorem.*Used in 1\.1\*
+%%
+%% 2. thmAdjacent (2.1) must NOT receive the proof attribution (no leak)
+%% TEST-PDF-STEXT-NOT: (?s)Adjacent theorem target.*Used in 2\.1\*
+%%
+%% 3. Package warning emitted for heading/adjacent conflict
+%% TEST-LOG-CONTAINS: auto-attribution to
+%% TEST-LOG-CONTAINS: supersedes adjacent
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\providecommand*{\theoremautorefname}{Theorem}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=on}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+%% ====================================================================
+%%  Section 1: The theorem named in the proof heading (D3 heading target)
+%% ====================================================================
+\section{Heading target}\label{sec:d3-heading}
+
+\begin{theorem}\label{thm:d3-heading}
+  Heading target theorem.
+\end{theorem}
+
+%% ====================================================================
+%%  Section 2: D3 conflict scenario
+%%  The proof is ADJACENT to thm:d3-adjacent but its heading names thm:d3-heading.
+%%  D3 rule: heading wins; warning emitted because 2.1 != 1.1.
+%% ====================================================================
+\section{D3 conflict}\label{sec:d3-conflict}
+
+\begin{theorem}\label{thm:d3-adjacent}
+  Adjacent theorem target.
+\end{theorem}
+\begin{proof}[Proof of \cref{thm:d3-heading}]
+  This proof is physically adjacent to thm:d3-adjacent (2.1) but its heading
+  explicitly names thm:d3-heading (1.1).  The D3 rule attributes the proof
+  to the heading target and emits a conflict warning.
+\end{proof}
+
+\END
+\end{document}

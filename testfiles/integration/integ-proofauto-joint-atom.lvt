@@ -1,0 +1,91 @@
+%% TEST-NAME: integ-proofauto-joint-atom
+%% TEST-PURPOSE: Joint-proof atom renders as {N,N}* in Used-In lists and Dependency Index.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: After A2, a proof with \cref{thmA,thmB} heading produces one joint atom
+%%            {1.1, 1.2}* rendered identically in both theorem Used-In entries (D1)
+%%            and the Dependency Index row (one row, not two).
+%%            The DI {1.1, 1.2}* entry links near the joint proof heading.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+%% ====================================================================
+%%  W05-A2 RED gate — joint-proof atom rendering
+%%
+%%  All assertions below FAIL on current HEAD:
+%%    - A1 serial attribution produces two independent records: 1.1*, 1.2*
+%%      separately; no {1.1, 1.2}* token exists in the PDF.
+%%    - DI entry for thm:joint-a shows "Used in 1.1*" not "{1.1, 1.2}*".
+%%    - DI entry for thm:joint-b shows "Used in 1.2*" not "{1.1, 1.2}*".
+%%    - TEST-PDF-STEXT for {1.1, 1.2}* fails (no such text in PDF).
+%%    - TEST-PDF-LINK-Y-NEAR for {1.1, 1.2}* fails (no source link found).
+%%
+%%  After A2 these turn GREEN.  No .sty edits in this wave.
+%% ====================================================================
+%%
+%% 1. Used-In list at thm:joint-a contains {1.1, 1.2}* (D1: same display everywhere)
+%% TEST-PDF-STEXT: (?s)First joint theorem.*\{1\.1, 1\.2\}\*
+%%
+%% 2. Used-In list at thm:joint-b contains the SAME {1.1, 1.2}* (identity D1)
+%% TEST-PDF-STEXT: (?s)Second joint theorem.*\{1\.1, 1\.2\}\*
+%%
+%% 3+4. Dependency Index contains {1.1, 1.2}* as the single joint atom identifier
+%% TEST-PDF-STEXT: \{1\.1, 1\.2\}\*
+%%
+%% 5. DI {1.1, 1.2}* entry links near the joint proof heading
+%% TEST-PDF-LINK-Y-NEAR: \{1\.1, 1\.2\}\* | (?s)Proof of.*1\.1.*1\.2 | within=60
+%%
+%% Negative guards: serial atom forms must not appear alone after A2
+%% (currently these FAIL because A1 produces serial 1.1* and 1.2* separately)
+%% TEST-PDF-STEXT-NOT: (?s)First joint theorem.*Used in 1\.1\*[^,\}]
+%% TEST-PDF-STEXT-NOT: (?s)Second joint theorem.*Used in 1\.2\*[^,\}]
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\providecommand*{\theoremautorefname}{Theorem}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+%% ====================================================================
+%%  Section 1: Joint-proof targets
+%% ====================================================================
+\section{Joint targets}\label{sec:jatom-targets}
+
+\begin{theorem}\label{thm:joint-a}
+  First joint theorem for joint-atom proof.
+\end{theorem}
+
+\begin{theorem}\label{thm:joint-b}
+  Second joint theorem for joint-atom proof.
+\end{theorem}
+
+%% ====================================================================
+%%  Section 2: Joint proof heading (NON-ADJACENT: different section)
+%% ====================================================================
+\section{Joint proof}\label{sec:jatom-proof}
+
+\begin{proof}[Proof of \cref{thm:joint-a,thm:joint-b}]
+  Both theorems follow from the same argument.
+\end{proof}
+
+\codepappendix
+
+\END
+\end{document}
