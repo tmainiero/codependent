@@ -1,9 +1,11 @@
 %% TEST-NAME: integ-proofauto-repeated-explicit
-%% TEST-PURPOSE: Two explicit \codepproofof* calls in one proof are silent joint attribution.
+%% TEST-PURPOSE: Two explicit \codepproofof* calls in one proof form one joint atom.
 %% TEST-KIND: integration
 %% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Two explicit \codepproofof* calls in one proof are silent joint attribution.
+%% TEST-WHAT: After A2, two explicit \codepproofof* calls (thm:joint-a + lem:joint-b) in the same
+%%            proof form ONE joint atom displayed as {1.1, 1.2}* in both theorem Used-In lists.
+%%            One v2 CDP record; no proof-to-proof keymap.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
@@ -13,18 +15,18 @@
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-LOG-NOT: codepproofof: unknown label|joint attribution|last-write
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
-%% TEST-CDP-COUNT: \codep@cdp@proof = 2
-%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:1.1}{proof:1.2}
-%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:1.2}{proof:1.1}
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:1.1}{thm:joint-a}
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:1.2}{lem:joint-b}
-%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.1}{proof}{1.1}{proof}{theorem:1.1}
-%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.2}{proof}{1.2}{proof}{lemma:1.2}
-%% TEST-PDF-STEXT: (?s)Used in 1\.1\*
-%% TEST-PDF-STEXT: (?s)Used in 1\.2\*
-%% TEST-PDF-LINK-Y-NEAR: Used in 1\.1\*\. | Joint proof | within=30
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:1.1,lemma:1.2}{1.1,1.2}{*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 1
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:a
+%% TEST-AUX-CONTAINS: }{thm:joint-a}
+%% TEST-AUX-CONTAINS: }{lem:joint-b}
+%% TEST-PDF-STEXT: (?s)First joint target.*Used in \{1\.1, 1\.2\}\*
+%% TEST-PDF-STEXT: (?s)Second joint target.*Used in \{1\.1, 1\.2\}\*
+%% TEST-PDF-LINK-Y-NEAR: \{1\.1, 1\.2\}\* | Joint proof | within=30
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %%
 \documentclass{article}

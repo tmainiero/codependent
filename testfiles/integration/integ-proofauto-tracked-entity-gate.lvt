@@ -11,16 +11,16 @@
 %% TEST-STABLE-AT: 2
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{2.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{3*}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:2.1}{2.1}{*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 2
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{1*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{2*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{5*}
 %% TEST-CDP-NOT-CONTAINS: unresref:
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.1}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:3}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:2.1}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
+%% TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:a
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:2}
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:3}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1}{codep-proof:a

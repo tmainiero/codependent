@@ -1,9 +1,11 @@
 %% TEST-NAME: integ-proofauto-multiref-decline
-%% TEST-PURPOSE: Multiple supported refs in headings resolve as best-effort serial proof attribution.
+%% TEST-PURPOSE: Multi-ref \cref heading becomes one joint atom; section decoration in second proof auto-filtered.
 %% TEST-KIND: integration
 %% TEST-BEHAVIOR: B-PROOF-NONADJ, B-PROOF-SEP
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Multiple supported refs in headings resolve as best-effort serial proof attribution.
+%% TEST-WHAT: After A2: proof 1 with \cref{thm:multi-a,lem:multi-b} → one joint atom {1.1, 1.2}*.
+%%            Proof 2 with \ref{thm:multi-a} + section ref → single atom 1.1* (section auto-filtered).
+%%            CDP count = 2 (not 3 as in A1 serial-best-effort).
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
@@ -12,14 +14,17 @@
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
-%% TEST-CDP-COUNT: \codep@cdp@proof = 3
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.2}{codep-proof:a
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:1.1,lemma:1.2}{1.1,1.2}{*}
+%% TEST-CDP-CONTAINS: }{theorem:1.1}{1.1}{*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 2
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1}{codep-proof:a
 %% TEST-PDF-STEXT: (?s)Proof of theorems 1\.1 and 1\.2
 %% TEST-PDF-STEXT: (?s)Proof of Theorem 1\.1 in &#xa7;1
+%% TEST-PDF-STEXT: (?s)First result.*Used in \{1\.1, 1\.2\}\*
+%% TEST-PDF-STEXT: (?s)Second result.*Used in \{1\.1, 1\.2\}\*
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %%
 \documentclass{article}

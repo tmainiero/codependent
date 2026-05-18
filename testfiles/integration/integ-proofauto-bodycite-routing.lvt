@@ -10,15 +10,16 @@
 %% TEST-STABLE-AT: 2
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:1.1}{1.1}{*}
+%% TEST-CDP-CONTAINS: }{theorem:3.1}{3.1}{*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 2
 %% TEST-CDP-NOT-CONTAINS: unresref:
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:3.1}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:1.1}{lem:body-tool}
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:3.1}{lem:body-tool}
-%% TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:3.1}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:a
+%% TEST-AUX-CONTAINS: }{lem:body-tool}
+%% TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:a
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:
 %% TEST-PDF-STEXT: (?s)Backward body-cite target.*Used in 1\.1\*
 %% TEST-PDF-STEXT: (?s)Forward body-cite target.*Used in 3\.1\*

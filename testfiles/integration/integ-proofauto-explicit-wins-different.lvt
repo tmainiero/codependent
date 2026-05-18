@@ -1,9 +1,10 @@
 %% TEST-NAME: integ-proofauto-explicit-wins-different
-%% TEST-PURPOSE: Heading auto candidate plus different explicit \codepproofof* records both targets.
+%% TEST-PURPOSE: Heading auto target plus different explicit \codepproofof* merge into one joint atom.
 %% TEST-KIND: integration
 %% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Heading auto candidate plus different explicit \codepproofof* records both targets.
+%% TEST-WHAT: After A2, heading auto target (theorem 1.1) and explicit target (lemma 1.2) combine
+%%            into ONE joint atom with display {1.1, 1.2}* instead of two separate records.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
@@ -12,12 +13,14 @@
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
-%% TEST-CDP-COUNT: \codep@cdp@proof = 2
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.2}{codep-proof:a
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:1.1,lemma:1.2}{1.1,1.2}{*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 1
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
 %% TEST-PDF-STEXT: (?s)Proof of theorem 1\.1
+%% TEST-PDF-STEXT: (?s)Heading-only target.*Used in \{1\.1, 1\.2\}\*
+%% TEST-PDF-STEXT: (?s)Explicit target.*Used in \{1\.1, 1\.2\}\*
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %%
 \documentclass{article}

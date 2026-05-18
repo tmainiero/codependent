@@ -7,16 +7,16 @@
     ],
     "keys": [
       [
-        "proof:1.2||thm:A",
-        "proof:1.2||thm:B"
+        "proof:a3||thm:A",
+        "proof:a3||thm:B"
       ],
       [
-        "proof:1.2||thm:A",
-        "proof:1.2||thm:B"
+        "proof:a3||thm:A",
+        "proof:a3||thm:B"
       ],
       [
-        "proof:1.2||thm:A",
-        "proof:1.2||thm:B"
+        "proof:a3||thm:A",
+        "proof:a3||thm:B"
       ]
     ]
   },

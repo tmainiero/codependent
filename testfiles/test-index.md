@@ -260,21 +260,21 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-no-paragraphs.lvt | LIVE | B-EDGE-PARAOFF-EQ | Integration test with paragraphs=off. Verifies that |
 | testfiles/integration/integ-ntheorem.lvt | LIVE | B-NUM-SHARED | Verify codependent works with ntheorem as the theorem backend |
 | testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
-| testfiles/integration/integ-proofauto-adjacent-no-leak.lvt | LIVE | B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE | Auto pending state does not leak into a later adjacent proof whose heading has a ref. |
+| testfiles/integration/integ-proofauto-adjacent-no-leak.lvt | LIVE | B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE | D3 heading target wins over adjacent target; conflict warning emitted. |
 | testfiles/integration/integ-proofauto-autoref-undefined.lvt | LIVE | B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof headings with undefined / section-only / forward-ref labels. |
 | testfiles/integration/integ-proofauto-autoref.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \autoref auto-binds silently. |
 | testfiles/integration/integ-proofauto-bodycite-routing.lvt | LIVE | B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof-heading body cites route through immediate and provisional proof identities. |
 | testfiles/integration/integ-proofauto-cref-single.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \cref auto-binds silently. |
 | testfiles/integration/integ-proofauto-d3-heading-overrides-adjacent.lvt | LIVE | B-PROOF-ADJRULE | Proof heading ref overrides adjacent attribution; warning emitted on conflict. |
-| testfiles/integration/integ-proofauto-explicit-wins-different.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto candidate plus different explicit \codepproofof* records both targets. |
+| testfiles/integration/integ-proofauto-explicit-wins-different.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto target plus different explicit \codepproofof* merge into one joint atom. |
 | testfiles/integration/integ-proofauto-explicit-wins-same.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto candidate plus same-target explicit \codepproofof* leaves one proof record. |
 | testfiles/integration/integ-proofauto-forward-ref.lvt | LIVE | B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST | A proof heading that names a later theorem settles through the deferred proof-of queue. |
 | testfiles/integration/integ-proofauto-joint-atom.lvt | LIVE | B-PROOF-ADJRULE, B-LINK-APPENDIX-BIDIR | Joint-proof atom renders as {N,N}* in Used-In lists and Dependency Index. |
-| testfiles/integration/integ-proofauto-multiref-decline.lvt | LIVE | B-PROOF-NONADJ, B-PROOF-SEP | Multiple supported refs in headings resolve as best-effort serial proof attribution. |
+| testfiles/integration/integ-proofauto-multiref-decline.lvt | LIVE | B-PROOF-NONADJ, B-PROOF-SEP | Multi-ref \cref heading becomes one joint atom; section decoration in second proof auto-filtered. |
 | testfiles/integration/integ-proofauto-nested.lvt | LIVE | B-PROOF-SEP, B-PROOF-INNER, B-LINK-PROOF-DEST | Nested proof headings save and restore independent auto-detected targets. |
 | testfiles/integration/integ-proofauto-no-ref.lvt | LIVE | B-PROOF-NONADJ | A standalone proof heading with no supported ref remains unattributed. |
 | testfiles/integration/integ-proofauto-ref.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \ref auto-binds silently. |
-| testfiles/integration/integ-proofauto-repeated-explicit.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Two explicit \codepproofof* calls in one proof are silent joint attribution. |
+| testfiles/integration/integ-proofauto-repeated-explicit.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Two explicit \codepproofof* calls in one proof form one joint atom. |
 | testfiles/integration/integ-proofauto-switch-off.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Auto-detected and explicit proof headings remain human-authored visible text. |
 | testfiles/integration/integ-proofauto-tracked-entity-gate.lvt | LIVE | B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof headings ignore section refs before unresref allocation. |
 | testfiles/integration/integ-stress-all-features.lvt | LIVE | B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-RERUN | Wave 3 holistic stress fixture: exercises every codependent feature |

@@ -12,9 +12,11 @@
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:1.1}{1.1}{*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 1
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
 %% TEST-PDF-STEXT: (?s)Proof of theorem 1\.1
 %% TEST-PDF-DEST-EXISTS: codep-proof:a[0-9]+
 %% TEST-PDF-NO-ORPHAN-LINKS: yes

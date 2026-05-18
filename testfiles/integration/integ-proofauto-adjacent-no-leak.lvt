@@ -1,9 +1,10 @@
 %% TEST-NAME: integ-proofauto-adjacent-no-leak
-%% TEST-PURPOSE: Auto pending state does not leak into a later adjacent proof whose heading has a ref.
+%% TEST-PURPOSE: D3 heading target wins over adjacent target; conflict warning emitted.
 %% TEST-KIND: integration
 %% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Auto pending state does not leak into a later adjacent proof whose heading has a ref.
+%% TEST-WHAT: D3: proof heading with \ref{thm:adj-auto} (1.1) adjacent to thm:adjacent-owner (3.1).
+%%            Heading tracked target (1.1) wins; adjacent target (3.1) is suppressed; warning emitted.
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-RERUN: 3
@@ -12,14 +13,18 @@
 %% TEST-CENSUS-PASS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:1.1}{1.1}{*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 2
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:3.1}{codep-proof:3.1}
-%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:3.1}{proof:1.1}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
+%% TEST-AUX-NOT-CONTAINS: }{theorem:3.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:
+%% TEST-LOG-CONTAINS: auto-attribution to
+%% TEST-LOG-CONTAINS: supersedes adjacent
 %% TEST-PDF-STEXT: (?s)Proof of theorem 1\.1
 %% TEST-PDF-STEXT: (?s)Adjacent proof mentioning Theorem 1\.1
+%% TEST-PDF-STEXT-NOT: (?s)adjacent owner theorem.*Used in [0-9]
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %%
 \documentclass{article}

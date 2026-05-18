@@ -36,6 +36,11 @@
 \newbool{codep@proofwarnings}
 \booltrue{codep@proofwarnings}
 
+% Auto-attribution conflict warnings: on (default) or off.
+% Controls the D3 warning when a proof heading overrides adjacency.
+\newbool{codep@warnattributionconflicts}
+\booltrue{codep@warnattributionconflicts}
+
 % Concept warnings: on (default) or off.
 \newbool{codep@conceptwarnings}
 \booltrue{codep@conceptwarnings}
@@ -130,6 +135,16 @@
   proof-warnings/on/.code = {\booltrue{codep@proofwarnings}},%
   proof-warnings/off/.code = {\boolfalse{codep@proofwarnings}},%
   proof-warnings/.default = on,%
+  warn-attribution-conflicts/.is choice,%
+  warn-attribution-conflicts/true/.code = {%
+    \booltrue{codep@warnattributionconflicts}},%
+  warn-attribution-conflicts/false/.code = {%
+    \boolfalse{codep@warnattributionconflicts}},%
+  warn-attribution-conflicts/on/.code = {%
+    \booltrue{codep@warnattributionconflicts}},%
+  warn-attribution-conflicts/off/.code = {%
+    \boolfalse{codep@warnattributionconflicts}},%
+  warn-attribution-conflicts/.default = true,%
   conceptwarnings/.is choice,%
   conceptwarnings/on/.code = {\booltrue{codep@conceptwarnings}},%
   conceptwarnings/off/.code = {\boolfalse{codep@conceptwarnings}},%
@@ -341,6 +356,16 @@
 % Labels captured by the proof-heading auto-detect scanner.
 %% @utility
 \newcommand*{\codep@autoproofof@pendinglist}{}
+
+% Same-scan provisional source key for unresolved proof-heading refs.
+%% @utility
+\newcommand*{\codep@autoproofof@provkey}{}
+
+% Proof target metadata accumulator keys.  The authoritative per-proof
+% payload is stored in csnames keyed by the stable proof:a<N> identity;
+% this do-list only remembers which proof keys need aux / cdp emission.
+%% @utility
+\gdef\codep@prooftargetmetalist{}
 
 % Saved nested-proof state.
 \newtoks\codep@proofneststack
@@ -799,10 +824,62 @@
   \fi%
 }%
 
+% \codep@proof@identitykey{proof-id}{macro}
+%   Return the stable proof:a<N> source key for proof-id.
+%% @implements \codep@bindproofparent
+\def\codep@proof@identitykey#1#2{%
+  \edef#2{proof:#1}%
+}%
+
+% \codep@proof@setidentity{proof-id}
+%   Make proof:a<N> the current atom key for proof-id.
+%% @implements \codep@bindproofparent
+\def\codep@proof@setidentity#1{%
+  \codep@proof@identitykey{#1}{\codep@tmp@proofidentitykey}%
+  \codep@atomsetkey{#1}{\codep@tmp@proofidentitykey}%
+}%
+
+% \codep@proof@markparent{proof-id}{target-key}
+%   Remember that proof-id has at least one target parent.
+%% @implements \codep@bindproofparent
+\def\codep@proof@markparent#1#2{%
+  \expandafter\ifx\csname codep@proofparent@#1\endcsname\relax%
+    \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
+  \else%
+    \expandafter\ifx\csname codep@proofparent@#1\endcsname\@empty%
+      \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
+    \fi%
+  \fi%
+}%
+
+% \codep@proof@maybeheadingoverrideadjacent{proof-id}{target-key}{display}
+%   D3 policy: first tracked heading target supersedes adjacent binding.
+%% @implements \codep@bindproofparent
+\def\codep@proof@maybeheadingoverrideadjacent#1#2#3{%
+  \@ifundefined{codep@proofadjtarget@#1}{}{%
+    \@ifundefined{codep@proofheadingoverride@#1}{%
+      \edef\codep@tmp@adjtarget{\csname codep@proofadjtarget@#1\endcsname}%
+      \edef\codep@tmp@headingtarget{#2}%
+      \ifx\codep@tmp@adjtarget\codep@tmp@headingtarget\else%
+        \ifbool{codep@warnattributionconflicts}{%
+          \PackageWarning{codependent}{auto-attribution to #3\space%
+            supersedes adjacent \csname codep@proofadjdisplay@#1\endcsname}%
+        }{}%
+      \fi%
+      \codep@proof@identitykey{#1}{\codep@tmp@overrideproofkey}%
+      \codep@prooftargetmeta@clear{\codep@tmp@overrideproofkey}%
+      \expandafter\xdef\csname codep@proofparent@#1\endcsname{}%
+      \global\expandafter\let%
+        \csname codep@proofheadingoverride@#1\endcsname\@empty%
+    }{}%
+  }%
+}%
+
 %% @behavior B-PROOF-ADJ
 %% @behavior B-PROOF-SEP
 % \codep@bindproofparent{proof-id}{parent-id}{mode}
-%   Bind proof-id to parent-id and derive the proof's legacy key.
+%   Bind proof-id to parent-id using the stable proof:a<N> key and
+%   append parent-id to the proof target metadata list.
 %   The third argument (mode) is currently unused at the call site;
 %   the parent slot's emptiness alone drives the renderer's
 %   ADJACENT-or-REBOUND vs. STANDALONE classifier (see
@@ -814,13 +891,14 @@
 %   (\codep@proofof@resolve also writes a prefixed key).  The
 %   classifier still only checks emptiness.
 \def\codep@bindproofparent#1#2#3{%
+  \codep@proof@setidentity{#1}%
+  \codep@proof@identitykey{#1}{\codep@tmp@proofkey}%
   \codep@atomgetkey{#2}{\codep@tmp@parentprefixedkey}%
-  \expandafter\xdef\csname codep@proofparent@#1\endcsname{%
-    \codep@tmp@parentprefixedkey}%
   \codep@atomgetdisplay{#2}\codep@tmp@parentdisplay%
-  \ifx\codep@tmp@parentdisplay\@empty\else%
-    \edef\codep@tmp@proofkey{proof:\codep@tmp@parentdisplay}%
-    \codep@atomsetkey{#1}{\codep@tmp@proofkey}%
+  \ifx\codep@tmp@parentprefixedkey\@empty\else%
+    \codep@proof@markparent{#1}{\codep@tmp@parentprefixedkey}%
+    \codep@prooftargetmeta@append{\codep@tmp@proofkey}{%
+      \codep@tmp@parentprefixedkey}{\codep@tmp@parentdisplay}{*}%
   \fi%
 }%
 
@@ -1202,6 +1280,7 @@
 \def\codep@autoproofof@reset{%
   \global\codep@autoproofof@refcount=0\relax%
   \global\let\codep@autoproofof@pendinglist\@empty%
+  \global\let\codep@autoproofof@provkey\@empty%
 }%
 
 % \codep@autoproofof@rememberlabel{label}
@@ -1397,6 +1476,16 @@
   \edef#1{unresref:\the\codep@autoproofof@unresrefcount}%
 }%
 
+% \codep@autoproofof@ensureunresref{macro}
+%   Allocate at most one provisional source key for this heading scan.
+%% @implements \codep@hookproof
+\def\codep@autoproofof@ensureunresref#1{%
+  \ifx\codep@autoproofof@provkey\@empty%
+    \codep@autoproofof@allocateunresref{\codep@autoproofof@provkey}%
+  \fi%
+  \let#1\codep@autoproofof@provkey%
+}%
+
 % \codep@autoproofof@markheadsuppress{label}
 %   Suppress the ordinary ref-edge produced by proof optional-heading
 %   typesetting; the proof attribution resolver writes the semantic edge.
@@ -1446,7 +1535,7 @@
   \fi%
   \ifx\codep@tmp@autoproofofshoulddefer\@empty%
   \else%
-    \codep@autoproofof@allocateunresref{\codep@tmp@autoproofofprov}%
+    \codep@autoproofof@ensureunresref{\codep@tmp@autoproofofprov}%
     \ifcodep@proofdisplaypending%
       \codep@atomsetkey{\codep@currentproofid}{\codep@tmp@autoproofofprov}%
       \global\codep@proofdisplaypendingfalse%
@@ -1497,11 +1586,16 @@
 %   already performed for proof-id.
 %% @utility
 \def\codep@proofof@attribcount@get#1#2{%
-  \expandafter\ifx%
-      \csname codep@proofof@attribcount@#1\endcsname\relax%
-    \def#2{0}%
+  \codep@proof@identitykey{#1}{\codep@tmp@attribproofkey}%
+  \codep@prooftargetmeta@getcount{\codep@tmp@attribproofkey}{#2}%
+  \ifnum#2>0\relax%
   \else%
-    \edef#2{\csname codep@proofof@attribcount@#1\endcsname}%
+    \expandafter\ifx%
+        \csname codep@proofof@attribcount@#1\endcsname\relax%
+      \def#2{0}%
+    \else%
+      \edef#2{\csname codep@proofof@attribcount@#1\endcsname}%
+    \fi%
   \fi%
 }%
 
@@ -1713,6 +1807,7 @@
       \else%
         \codep@allocatomid{\codep@thisproofid}{proof}%
         \xdef\codep@currentproofid{\codep@thisproofid}%
+        \codep@proof@setidentity{\codep@currentproofid}%
         \codep@proof@capturebeginpage{\codep@currentproofid}%
         \codep@ctxpush{\codep@currentproofid}{proof}%
         \global\advance\codep@suppressdepth by 1\relax%
@@ -1721,10 +1816,9 @@
         \codep@pendingproofbind@checkoverwrite%
         \let\codep@pendingproofbind\@empty%
         \codep@proof@standalone%
+        \codep@proof@capturebeginanchor{\codep@currentproofid}%
         \ifx\codep@pendingresultid\@empty%
-          \codep@proof@capturebeginanchor{\codep@currentproofid}%
         \else%
-          \global\codep@autoproofof@eligiblefalse%
           \codep@proof@adjacent%
         \fi%
       \fi\fi%
@@ -1732,6 +1826,7 @@
       \codep@allocatomid{\codep@thisproofid}{proof}%
       \codep@proofstatesave{\codep@thisproofid}%
       \xdef\codep@currentproofid{\codep@thisproofid}%
+      \codep@proof@setidentity{\codep@currentproofid}%
       \codep@proof@capturebeginpage{\codep@currentproofid}%
       \codep@ctxpush{\codep@currentproofid}{proof}%
       \global\advance\codep@suppressdepth by 1\relax%
@@ -1867,20 +1962,21 @@
 % \codep@proof@adjacent
 %   Bind the current proof to the pending adjacent theorem/result atom.
 \newcommand*{\codep@proof@adjacent}{%
+  \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@adjtargetkey}%
+  \codep@atomgetdisplay{\codep@pendingresultid}{\codep@tmp@adjtargetdisplay}%
+  \expandafter\xdef\csname codep@proofadjtarget@%
+    \codep@currentproofid\endcsname{\codep@tmp@adjtargetkey}%
+  \expandafter\xdef\csname codep@proofadjdisplay@%
+    \codep@currentproofid\endcsname{\codep@tmp@adjtargetdisplay}%
   \codep@bindproofparent{\codep@currentproofid}{\codep@pendingresultid}{%
     statement}%
   \global\codep@proofdisplaypendingfalse%
-  \global\codep@autoproofof@eligiblefalse%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@proofadj@pendinganchormapkey\@empty%
   \global\let\codep@proofadj@pendinganchormapanchor\@empty%
-  \codep@proof@capturebeginanchor{\codep@currentproofid}%
   \codep@proof@bindbeginanchor{\codep@currentproofid}{\codep@tmp@proofkey}%
   \codep@proof@writebeginpage{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@pendingresultid\@empty%
-  \expandafter\codep@splitprefix\codep@tmp@proofkey\@nil%
-  \codep@cdpwrite@atom{%
-    \string\codep@cdp@proof{\codep@tmp@num*}}%
   \codep@render@queuebackref{\codep@tmp@proofkey}%
 }%
 
@@ -1907,20 +2003,19 @@
       \global\let\codep@pendingresultid\@empty%
       \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
       \xdef\codep@proofend@pendingclear{\codep@tmp@proofkey}%
-      % W03-P03: capture entitymeta for this just-closed proof.
-      % Display extracted via \codep@splitprefix (sets \codep@tmp@num).
-      % W04-P02: populate the parent slot from \codep@proofparent@<id>
-      % so the renderer's collapsebr classifier can distinguish
-      % ADJACENT/REBOUND proofs (non-empty parent) from STANDALONE
-      % proofs (empty parent — bindproofparent never ran).
-      % \codep@bindproofparent (adjacent path) sets the binding from
-      % \codep@proof@adjacent; \codep@proofof@resolve (rebound path)
-      % sets the binding directly.  Standalone proofs reach
-      % \codep@proof@materialize without ever touching the binding,
-      % which is the ground truth the classifier checks.
-      \expandafter\codep@splitprefix\codep@tmp@proofkey\@nil%
-      \expandafter\let\expandafter\codep@tmp@proofparentval%
-        \csname codep@proofparent@\codep@thisproofid\endcsname%
+      % W03-P03/W05-A2: capture entitymeta for this just-closed proof.
+      % The stable proof source key is proof:a<N>; display now comes
+      % from proof target metadata rather than the key suffix.
+      \codep@graph@getdisplay{\codep@tmp@proofkey}{\codep@tmp@num}%
+      \ifx\codep@tmp@num\@empty%
+        \expandafter\codep@splitprefix\codep@tmp@proofkey\@nil%
+      \fi%
+      \codep@prooftargetmeta@firstkey{\codep@tmp@proofkey}{%
+        \codep@tmp@proofparentval}%
+      \ifx\codep@tmp@proofparentval\@empty%
+        \expandafter\let\expandafter\codep@tmp@proofparentval%
+          \csname codep@proofparent@\codep@thisproofid\endcsname%
+      \fi%
       \ifx\codep@tmp@proofparentval\relax%
         \let\codep@tmp@proofparentval\@empty%
       \fi%
@@ -2583,10 +2678,11 @@
 % \codep@lbltype / \codep@atomref families.  Pass-1 safety
 % providecommands; active definitions installed alongside the
 % existing codependent/backref/install hook.
-\providecommand*{\codep@lblentity}[2]{}
-\providecommand*{\codep@entitymeta}[5]{}
-\providecommand*{\codep@keymap}[2]{}
-\providecommand*{\codep@renderlist}[3]{}
+  \providecommand*{\codep@lblentity}[2]{}
+  \providecommand*{\codep@entitymeta}[5]{}
+  \providecommand*{\codep@keymap}[2]{}
+  \providecommand*{\codep@renderlist}[3]{}
+  \providecommand*{\codep@prooftargetmeta}[4]{}
 
 %% @behavior B-PASS-ONE
 % \codep@lblentity@active{label}{atom-key}
@@ -2641,10 +2737,240 @@
 %   and Moment-2 re-emit path — keys on \codep@rendered@<key>,
 %   which Moment-1 also populates synchronously (see
 %   \codep@queuebackref).
-\def\codep@renderlist@active#1#2#3{%
-  \expandafter\gdef\csname codep@rendered@#1\endcsname{#3}}
+  \def\codep@renderlist@active#1#2#3{%
+    \expandafter\gdef\csname codep@rendered@#1\endcsname{#3}}
 
-% Accumulator for entitymeta emission at enddoc.  Each tracked-env
+  %% @utility
+  % \codep@csv@count{csv}{macro}
+  %   Count non-empty comma-separated items in csv.
+  \def\codep@csv@count#1#2{%
+    \def#2{0}%
+    \edef\codep@tmp@csv{#1}%
+    \ifx\codep@tmp@csv\@empty\else%
+      \count@=0\relax%
+      \@for\codep@tmp@csvitem:=\codep@tmp@csv\do{%
+        \ifx\codep@tmp@csvitem\@empty\else%
+          \advance\count@ by 1\relax%
+        \fi%
+      }%
+      \edef#2{\the\count@}%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@csv@ifcontains{csv}{needle}{then}{else}
+  %   Branch on exact CSV membership, preserving source order.
+  \def\codep@csv@ifcontains#1#2#3#4{%
+    \let\codep@tmp@csvfound\@empty%
+    \edef\codep@tmp@csvneedle{#2}%
+    \edef\codep@tmp@csvhaystack{#1}%
+    \@for\codep@tmp@csvitem:=\codep@tmp@csvhaystack\do{%
+      \ifx\codep@tmp@csvitem\@empty\else%
+        \ifx\codep@tmp@csvitem\codep@tmp@csvneedle%
+          \def\codep@tmp@csvfound{1}%
+        \fi%
+      \fi%
+    }%
+    \ifx\codep@tmp@csvfound\@empty%
+      #4%
+    \else%
+      #3%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@csv@formatdisplay{display-csv}{macro}
+  %   Format proof target-display CSV with human spaces after commas.
+  \def\codep@csv@formatdisplay#1#2{%
+    \let#2\@empty%
+    \edef\codep@tmp@displaycsv{#1}%
+    \@for\codep@tmp@displayitem:=\codep@tmp@displaycsv\do{%
+      \ifx\codep@tmp@displayitem\@empty\else%
+        \ifx#2\@empty%
+          \edef#2{\codep@tmp@displayitem}%
+        \else%
+          \edef#2{#2,\space\codep@tmp@displayitem}%
+        \fi%
+      \fi%
+    }%
+  }%
+
+  \providecommand*{\codep@prooftargetmeta}[4]{}
+
+  %% @behavior B-PASS-ONE
+  % \codep@prooftargetmeta@active{proof-key}{target-keys}{target-displays}{marker}
+  %   Hydrate proof target-list metadata from aux.
+  \def\codep@prooftargetmeta@active#1#2#3#4{%
+    \expandafter\xdef\csname codep@prooftargetkeys@#1\endcsname{#2}%
+    \expandafter\xdef\csname codep@prooftargetdisplays@#1\endcsname{#3}%
+    \expandafter\xdef\csname codep@prooftargetmarker@#1\endcsname{#4}%
+    \codep@csv@count{#2}{\codep@tmp@prooftargetcount}%
+    \expandafter\xdef\csname codep@prooftargetcount@#1\endcsname{%
+      \codep@tmp@prooftargetcount}%
+    \codep@prooftargetmeta@touch{#1}%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@getkeys{proof-key}{macro}
+  %   Retrieve proof target-key CSV into macro.
+  \def\codep@prooftargetmeta@getkeys#1#2{%
+    \expandafter\ifx\csname codep@prooftargetkeys@#1\endcsname\relax%
+      \let#2\@empty%
+    \else%
+      \expandafter\let\expandafter#2%
+        \csname codep@prooftargetkeys@#1\endcsname%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@getdisplays{proof-key}{macro}
+  %   Retrieve proof target-display CSV into macro.
+  \def\codep@prooftargetmeta@getdisplays#1#2{%
+    \expandafter\ifx\csname codep@prooftargetdisplays@#1\endcsname\relax%
+      \let#2\@empty%
+    \else%
+      \expandafter\let\expandafter#2%
+        \csname codep@prooftargetdisplays@#1\endcsname%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@getmarker{proof-key}{macro}
+  %   Retrieve proof marker slot into macro, defaulting to *.
+  \def\codep@prooftargetmeta@getmarker#1#2{%
+    \expandafter\ifx\csname codep@prooftargetmarker@#1\endcsname\relax%
+      \def#2{*}%
+    \else%
+      \expandafter\let\expandafter#2%
+        \csname codep@prooftargetmarker@#1\endcsname%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@getcount{proof-key}{macro}
+  %   Retrieve proof target count into macro.
+  \def\codep@prooftargetmeta@getcount#1#2{%
+    \expandafter\ifx\csname codep@prooftargetcount@#1\endcsname\relax%
+      \def#2{0}%
+    \else%
+      \expandafter\let\expandafter#2%
+        \csname codep@prooftargetcount@#1\endcsname%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@touch{proof-key}
+  %   Add proof-key once to the enddoc metadata emission list.
+  \def\codep@prooftargetmeta@touch#1{%
+    \@ifundefined{codep@prooftargettouched@#1}{%
+      \global\expandafter\let%
+        \csname codep@prooftargettouched@#1\endcsname\@empty%
+      \edef\codep@tmp@prooftargettouch{\noexpand\do{#1}}%
+      \expandafter\g@addto@macro\expandafter\codep@prooftargetmetalist%
+        \expandafter{\codep@tmp@prooftargettouch}%
+    }{}%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@append{proof-key}{target-key}{display}{marker}
+  %   Append one target unless already present.
+  \def\codep@prooftargetmeta@append#1#2#3#4{%
+    \codep@prooftargetmeta@getkeys{#1}{\codep@tmp@oldtargetkeys}%
+    \codep@csv@ifcontains{\codep@tmp@oldtargetkeys}{#2}{}{%
+      \codep@prooftargetmeta@getdisplays{#1}{%
+        \codep@tmp@oldtargetdisplays}%
+      \ifx\codep@tmp@oldtargetkeys\@empty%
+        \edef\codep@tmp@newtargetkeys{#2}%
+        \edef\codep@tmp@newtargetdisplays{#3}%
+      \else%
+        \edef\codep@tmp@newtargetkeys{\codep@tmp@oldtargetkeys,#2}%
+        \edef\codep@tmp@newtargetdisplays{%
+          \codep@tmp@oldtargetdisplays,#3}%
+      \fi%
+      \codep@prooftargetmeta@active{#1}{\codep@tmp@newtargetkeys}{%
+        \codep@tmp@newtargetdisplays}{#4}%
+      \codep@prooftargetmeta@touch{#1}%
+    }%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@clear{proof-key}
+  %   Clear same-run target metadata for proof-key.
+  \def\codep@prooftargetmeta@clear#1{%
+    \codep@prooftargetmeta@active{#1}{}{}{*}%
+    \codep@prooftargetmeta@touch{#1}%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@firstkey{proof-key}{macro}
+  %   Return the first target key, or empty.
+  \def\codep@prooftargetmeta@firstkey#1#2{%
+    \codep@prooftargetmeta@getkeys{#1}{\codep@tmp@firstkeycsv}%
+    \let#2\@empty%
+    \@for\codep@tmp@firstkeyitem:=\codep@tmp@firstkeycsv\do{%
+      \ifx#2\@empty%
+        \let#2\codep@tmp@firstkeyitem%
+      \fi%
+    }%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@emit@one{proof-key}
+  %   Emit one aux proof-target metadata record, if non-empty.
+  \def\codep@prooftargetmeta@emit@one#1{%
+    \codep@prooftargetmeta@getkeys{#1}{\codep@tmp@emitkeys}%
+    \ifx\codep@tmp@emitkeys\@empty\else%
+      \codep@prooftargetmeta@getdisplays{#1}{\codep@tmp@emitdisplays}%
+      \codep@prooftargetmeta@getmarker{#1}{\codep@tmp@emitmarker}%
+      \protected@write\@auxout{}{%
+        \string\codep@prooftargetmeta{#1}{\codep@tmp@emitkeys}{%
+          \codep@tmp@emitdisplays}{\codep@tmp@emitmarker}}%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@prooftargetmeta@emit
+  %   Emit final proof target metadata to aux.
+  \def\codep@prooftargetmeta@emit{%
+    \if@filesw%
+      \begingroup%
+        \let\do\codep@prooftargetmeta@emit@one%
+        \codep@prooftargetmetalist%
+      \endgroup%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@cdp@proofmeta@emit@one{proof-key}
+  %   Emit one v2 proof record to .cdp, guarded against duplicates.
+  \def\codep@cdp@proofmeta@emit@one#1{%
+    \codep@prooftargetmeta@getkeys{#1}{\codep@tmp@cdpproofkeys}%
+    \ifx\codep@tmp@cdpproofkeys\@empty\else%
+      \@ifundefined{codep@cdpproofwritten@#1}{%
+        \global\expandafter\let%
+          \csname codep@cdpproofwritten@#1\endcsname\@empty%
+        \codep@prooftargetmeta@getdisplays{#1}{%
+          \codep@tmp@cdpproofdisplays}%
+        \codep@prooftargetmeta@getmarker{#1}{%
+          \codep@tmp@cdpproofmarker}%
+        \codep@cdpwrite{%
+          \string\codep@cdp@proof{#1}{\codep@tmp@cdpproofkeys}{%
+            \codep@tmp@cdpproofdisplays}{\codep@tmp@cdpproofmarker}}%
+      }{}%
+    \fi%
+  }%
+
+  %% @utility
+  % \codep@cdp@proofmeta@emit
+  %   Emit final v2 proof records for all proofs with target metadata.
+  \def\codep@cdp@proofmeta@emit{%
+    \begingroup%
+      \let\do\codep@cdp@proofmeta@emit@one%
+      \codep@prooftargetmetalist%
+    \endgroup%
+  }%
+
+  % Accumulator for entitymeta emission at enddoc.  Each tracked-env
 % close site appends one token-sequence describing its atom; the
 % enddoc drain walks the list in order and emits one aux record
 % per entry.  See \codep@captureentitymeta and
@@ -2846,6 +3172,8 @@
     \let\do\codep@drainrefpending%
     \codep@refpendinglabels%
   \endgroup%
+  \codep@prooftargetmeta@emit%
+  \codep@cdp@proofmeta@emit%
 }%
 
 % P04: \codep@refpending@drain is called from within
@@ -3198,14 +3526,12 @@
 %   \codep@tmp@num between sibling callbacks).  The theorem
 %   branch already snapshots via \let-meaning.
 %
-%   Proof display gates on the proofs=on|off option:
-%     proofs=on  (default) → "N.M*"  (star marks proof-sourced)
-%     proofs=off           → "N.M"   (unstarred)
-%   Standalone proofs (which carry an opaque "proof:a<N>" key
-%   rather than a "proof:N.M" key) are suppressed upstream by
-%   \codep@collapsebr@cb's classifier and never reach this
-%   helper, so getdisplay only sees adjacent / rebound keys
-%   whose num half is a real "N.M" display string.
+%   Proof display gates on proof target metadata:
+%     one target      → "N.M*"          ("N.M" when proofs=off)
+%     multiple targets → "{N.M, N.K}*"  ("{N.M, N.K}" when proofs=off)
+%   Standalone proofs carry the same stable proof:a<N> key but have
+%   no target metadata; they are suppressed upstream by
+%   \codep@collapsebr@cb's classifier.
 %
 %   equation:X → (X)
 %   proof:X    → X* | X (per proofs=on|off)
@@ -3217,9 +3543,31 @@
   \ifx\codep@tmp@type\codep@const@typeequation%
     \edef#2{(\codep@tmp@num)}%
   \else\ifx\codep@tmp@type\codep@const@typeproof%
-    \ifbool{codep@proofsnumbered}%
-      {\edef#2{\codep@tmp@num*}}%
-      {\let#2\codep@tmp@num}%
+    \codep@prooftargetmeta@getdisplays{#1}{\codep@tmp@proofdisplays}%
+    \ifx\codep@tmp@proofdisplays\@empty%
+      \codep@graph@getentitydisplay{#1}{\codep@tmp@proofentitydisplay}%
+      \ifx\codep@tmp@proofentitydisplay\@empty%
+        \ifbool{codep@proofsnumbered}%
+          {\edef#2{\codep@tmp@num*}}%
+          {\let#2\codep@tmp@num}%
+      \else%
+        \let#2\codep@tmp@proofentitydisplay%
+      \fi%
+    \else%
+      \codep@prooftargetmeta@getcount{#1}{\codep@tmp@proofdisplaycount}%
+      \codep@prooftargetmeta@getmarker{#1}{\codep@tmp@proofmarker}%
+      \codep@csv@formatdisplay{\codep@tmp@proofdisplays}{%
+        \codep@tmp@proofformatted}%
+      \ifnum\codep@tmp@proofdisplaycount>1\relax%
+        \ifbool{codep@proofsnumbered}%
+          {\edef#2{\{\codep@tmp@proofformatted\}\codep@tmp@proofmarker}}%
+          {\edef#2{\{\codep@tmp@proofformatted\}}}%
+      \else%
+        \ifbool{codep@proofsnumbered}%
+          {\edef#2{\codep@tmp@proofformatted\codep@tmp@proofmarker}}%
+          {\let#2\codep@tmp@proofformatted}%
+      \fi%
+    \fi%
   \else\ifx\codep@tmp@type\codep@const@typeunresref%
     \edef#2{?u\codep@tmp@num*}%
   \else%
@@ -3312,7 +3660,12 @@
 \def\codep@graph@getentityparent#1#2{%
   \expandafter\let\expandafter#2%
     \csname codep@entity@#1@parent\endcsname%
-  \ifx#2\relax\let#2\@empty\fi%
+  \ifx#2\relax%
+    \let#2\@empty%
+  \fi%
+  \ifx#2\@empty%
+    \codep@prooftargetmeta@firstkey{#1}{#2}%
+  \fi%
 }%
 
 %% @utility
@@ -3545,6 +3898,7 @@
   \let\codep@entitymeta\codep@entitymeta@active
   \let\codep@keymap\codep@keymap@active
   \let\codep@renderlist\codep@renderlist@active
+  \let\codep@prooftargetmeta\codep@prooftargetmeta@active
   \let\codep@anchorpage\codep@anchorpage@active
   % Activate anchormap BEFORE aux read so equation range anchors
   % like \codep@anchormap{equation:4.4--4.5}{codep.eq.3} are not discarded.
@@ -3866,7 +4220,7 @@
     \immediate\openout\codep@cdpout=\jobname.cdp\relax
     \global\booltrue{codep@cdpopen}%
     \immediate\write\codep@cdpout{%
-      \string\codep@cdp@version{1}}%
+      \string\codep@cdp@version{2}}%
     \immediate\write\codep@cdpout{%
       \string\codep@cdp@source{\jobname.tex}}%
   \fi
@@ -4570,83 +4924,65 @@
   \fi%
   \ifx\codep@tmp@proofdisp\@empty\else%
     \global\codep@proofof@resolvedtrue%
-    \edef\codep@tmp@proofkey{proof:\codep@tmp@proofdisp}%
-    \codep@proofof@attribcount@get{#2}{\codep@tmp@proofofcount}%
+    \codep@proof@identitykey{#2}{\codep@tmp@proofkey}%
     \codep@atomgetkey{#2}{\codep@tmp@oldproofkey}%
     \ifx\codep@tmp@autoflag\codep@tmp@one%
       \codep@ifunresrefkey{#4}{%
         \edef\codep@tmp@oldproofkey{#4}%
       }{}%
     \fi%
-    \let\codep@tmp@proofduplicateskip\@empty%
-    \ifnum\codep@tmp@proofofcount>0\relax%
-      \ifx\codep@tmp@oldproofkey\@empty\else%
-        \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
-          \codep@proofof@capturejointmeta{#2}{\codep@tmp@oldproofkey}%
-        \fi%
-        \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey%
-          \def\codep@tmp@proofduplicateskip{1}%
-        \fi%
-      \fi%
-    \fi%
-    \codep@atomsetkey{#2}{\codep@tmp@proofkey}%
-    \codep@proof@writebeginpage{#2}{\codep@tmp@proofkey}%
-    \ifx\codep@tmp@oldproofkey\@empty\else%
-      \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
-        \ifnum\codep@tmp@proofofcount>0\relax%
-          % Repeated explicit proof attributions are intentional
-          % joint attribution.  Keep both proof keys independent:
-          % no old-key -> new-key remap.
-        \else%
-          \codep@keymap@record{%
-            \codep@tmp@oldproofkey}{\codep@tmp@proofkey}%
-        \fi%
-      \fi%
-    \fi%
-    % W04-P02: bind the proofparent rail so \codep@hookproof@end
-    % can pass a non-empty parent to captureentitymeta and the
-    % renderer's classifier sees this as REBOUND (not STANDALONE).
-    % Use the resolved target's lblentity (or its display key fallback)
-    % as the parent value; the classifier only cares about emptiness,
-    % but downstream consumers may want a meaningful identifier.
+    \codep@proof@setidentity{#2}%
     \expandafter\ifx\csname codep@lblentity@#3\endcsname\relax%
       \edef\codep@tmp@proofparentval{theorem:\codep@tmp@proofdisp}%
     \else%
       \edef\codep@tmp@proofparentval{%
         \csname codep@lblentity@#3\endcsname}%
     \fi%
-    \expandafter\xdef\csname codep@proofparent@#2\endcsname{%
-      \codep@tmp@proofparentval}%
+    \ifx\codep@tmp@autoflag\codep@tmp@one%
+      \codep@proof@maybeheadingoverrideadjacent{#2}{%
+        \codep@tmp@proofparentval}{\codep@tmp@proofdisp}%
+    \fi%
+    \codep@prooftargetmeta@append{\codep@tmp@proofkey}{%
+      \codep@tmp@proofparentval}{\codep@tmp@proofdisp}{*}%
+    \codep@proof@markparent{#2}{\codep@tmp@proofparentval}%
+    \codep@atomsetkey{#2}{\codep@tmp@proofkey}%
+    \codep@proof@writebeginpage{#2}{\codep@tmp@proofkey}%
+    \ifx\codep@tmp@oldproofkey\@empty\else%
+      \ifx\codep@tmp@oldproofkey\codep@tmp@proofkey\else%
+        \ifx\codep@tmp@autoflag\codep@tmp@one%
+          \codep@keymap@record{%
+            \codep@tmp@oldproofkey}{\codep@tmp@proofkey}%
+        \fi%
+      \fi%
+    \fi%
     \edef\codep@tmp@resolverproofid{#2}%
     \ifx\codep@tmp@resolverproofid\codep@currentproofid%
     \else%
+      \codep@graph@getdisplay{\codep@tmp@proofkey}{%
+        \codep@tmp@proofrenderdisp}%
       \codep@captureentitymeta{\codep@tmp@proofkey}{proof}%
-        {\codep@tmp@proofdisp}{proof}{\codep@tmp@proofparentval}%
+        {\codep@tmp@proofrenderdisp}{proof}{\codep@tmp@proofparentval}%
       \if@filesw%
         \protected@write\@auxout{}{%
           \string\codep@entitymeta{\codep@tmp@proofkey}{proof}%
-            {\codep@tmp@proofdisp}{proof}{\codep@tmp@proofparentval}}%
+            {\codep@tmp@proofrenderdisp}{proof}{\codep@tmp@proofparentval}}%
       \fi%
     \fi%
     \global\codep@proofdisplaypendingfalse%
     \global\codep@autoproofof@eligiblefalse%
     \global\let\codep@pendingproofbind\@empty%
-    \ifx\codep@tmp@autoflag\codep@tmp@one%
-      \if@filesw%
+    \if@filesw%
+      \ifx\codep@tmp@autoflag\codep@tmp@one%
         \codep@ifunresrefkey{#4}{%
           \codep@unresref@flushrefs{#4}{\codep@tmp@proofkey}%
         }{}%
-        \codep@subsystem@recordtotal{atomref}%
-        \codep@dedupwrite{\codep@tmp@proofkey}{#3}%
       \fi%
+      \codep@subsystem@recordtotal{atomref}%
+      \codep@dedupwrite{\codep@tmp@proofkey}{#3}%
     \fi%
-    \ifx\codep@tmp@proofduplicateskip\@empty%
-      \codep@cdpwrite{%
-        \string\codep@cdp@proof{\codep@tmp@proofdisp*}}%
-      \codep@proof@bindbeginanchor{#2}{\codep@tmp@proofkey}%
-      \codep@render@queuebackref{\codep@tmp@proofkey}%
-      \codep@proofof@attribcount@advance{#2}%
-    \fi%
+    \codep@proof@bindbeginanchor{#2}{\codep@tmp@proofkey}%
+    \codep@render@queuebackref{\codep@tmp@proofkey}%
+    \codep@proofof@attribcount@advance{#2}%
   \fi%
 }%
 

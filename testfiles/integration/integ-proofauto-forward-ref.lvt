@@ -13,9 +13,11 @@
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
 %% TEST-LOG-NOT: codepproofof: unknown label
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{3.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-CDP-CONTAINS: }{theorem:3.1}{3.1}{*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 1
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:3.1}{codep-proof:a
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
 %% TEST-PDF-STEXT: (?s)Proof of theorem 3\.1
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %%
