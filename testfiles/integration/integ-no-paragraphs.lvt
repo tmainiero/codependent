@@ -12,7 +12,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom
 %% TEST-CDP-CONTAINS: \codep@cdp@def
 %% TEST-CDP-CONTAINS: \codep@cdp@use

@@ -11,7 +11,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a2}{theorem:1.1}{1.1}{*}
 %% TEST-PDF-VSPACE-BETWEEN: "^Theorem\\s+1\\.1\\." "^Proof\\." 14.0
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2

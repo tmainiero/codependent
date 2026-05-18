@@ -15,7 +15,7 @@
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom
 %% TEST-CDP-CONTAINS: \codep@cdp@def
 %% TEST-CDP-CONTAINS: \codep@cdp@use
@@ -76,7 +76,7 @@
 %% TEST-PDF-DEST-EXISTS: lemma\.8
 %% Starred \codepproofof* must create an anchor for the proof atom
 %% (thm:noether is now 2.5 after the standalone align paragraph shifted the counter)
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.5}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a17}
 %% TEST-RERUN: 3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes

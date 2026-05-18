@@ -13,7 +13,7 @@
 %% TEST-LOG-NOT: Overfull \\hbox
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-AUX-CONTAINS: \codep@anchorpage{theorem:1.4}{1}
-%% TEST-AUX-CONTAINS: \codep@anchorpage{proof:2.3}{
+%% TEST-AUX-CONTAINS: \codep@anchorpage{proof:a11}{
 %% TEST-AUX-CONTAINS: \codep@anchorpage{paragraph:2.13}{
 %% TEST-PDF-CONTAINS: Dependency Index
 %% TEST-PDF-CONTAINS: Theorem 1.4 SEP 1

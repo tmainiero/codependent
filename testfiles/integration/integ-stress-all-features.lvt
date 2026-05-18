@@ -27,7 +27,7 @@
 %% TEST-PDF-BACKREF-SOURCES-RENDERED: yes
 %% --- CDP assertions ---
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom
 %% TEST-CDP-CONTAINS: \codep@cdp@def
 %% TEST-CDP-CONTAINS: \codep@cdp@use

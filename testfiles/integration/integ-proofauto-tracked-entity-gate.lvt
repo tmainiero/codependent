@@ -14,6 +14,8 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@version{2}
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
 %% TEST-CDP-CONTAINS: }{theorem:2.1}{2.1}{*}
+%% Case (iv): explicit \codepproofof{sec:gate-explicit} uses lblnum fallback → proof record with display 3
+%% TEST-CDP-CONTAINS: }{theorem:3}{3}{*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 2
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{1*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{2*}

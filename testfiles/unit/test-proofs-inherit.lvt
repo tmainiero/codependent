@@ -12,9 +12,9 @@
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a2}{theorem:1.1}{1.1}{*}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.2*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a4}{theorem:1.2}{1.2}{*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.4}{proof}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.1*}
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2*}

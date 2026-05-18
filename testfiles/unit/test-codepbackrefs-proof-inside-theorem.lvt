@@ -14,8 +14,8 @@
 %% TEST-LOG-NOT: Proof not adjacent
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@label{1.1}{prf:inside}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a2}{theorem:1.1}{1.1}{*}
+%% TEST-CDP-CONTAINS: \codep@cdp@label{a2}{prf:inside}
 %% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:src}
 %% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{prf:inside}
 %% TEST-PDF-CONTAINS: Used in

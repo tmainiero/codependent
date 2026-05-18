@@ -16,7 +16,7 @@
 %% TEST-LOG-NOT: Package codependent Warning(?!.*Nested tracked environment)
 %% TEST-LOG-CONTAINS: Nested tracked environment
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
-%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
 %% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Hom}{kind}{newcommand}
 %% TEST-CDP-CONTAINS: \codep@cdp@cmddef{Hom}{arity}{2}
 %% TEST-CDP-CONTAINS: \codep@cdp@tag

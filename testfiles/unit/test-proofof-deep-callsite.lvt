@@ -16,9 +16,10 @@
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-PDF-LINK-Y-NEAR: 1\.1\* | Proof of Theorem 1\.1 | within=10
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:2.1}
-%% TEST-AUX-CONTAINS: \codep@keymap{proof:2.1}{proof:1.1}
-%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:1.1}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a3}{codep-proof:a3}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a3}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap
+%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:a3}{proof}{1.1*}{proof}{theorem:1.1}
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 %% TEST-CENSUS: enabled

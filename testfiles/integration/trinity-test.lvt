@@ -90,7 +90,7 @@
 %%   → no atomref{proof:5.1}{def:enrichment} in aux.
 %%   The proof is NON-ADJACENT (intervening paragraph breaks pendingresultid).
 %%   After P02: body-cite routing records the atomref under proof:5.1.
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:5.1}{def:enrichment}
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:a34}{def:enrichment}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.1\*
 %% TEST-PDF-LINK-Y-NEAR: ^in 5\.1\*, 5\.7\*\.$ | (?s)Proof of theorem 5\.1 | within=45
 %%
@@ -101,7 +101,7 @@
 %%   is atom 5.3 because the paragraph shifts numbering.
 %%   On HEAD: body cite dropped (proofdisplaypending=true even on pass 2).
 %%   After P02: unresref:<N> allocates at scan; migrates to proof:5.3 at drain.
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:5.3}{lem:adjunction}
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:a35}{lem:adjunction}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.3\*
 %%
 %% Scenario 3 — joint-via-single-cref both-tracked case (a):
@@ -110,20 +110,13 @@
 %%   NOTE: atoms shifted by the inserted paragraphs in scenarios 1 and 3:
 %%   thm:autodet-joint-x = 5.4, thm:autodet-joint-y = 5.5.
 %%   On HEAD: refcount=2 → warns+skips → zero records.
-%%   After P02 (sub-delta-7): TWO independent records (5.4*, 5.5*).
-%%   NOT a single joint atom (A2 deferred).
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.4*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.5*}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.4}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:5.5}
-%% TEST-PDF-STEXT: (?s)Used in.*5\.4\*
-%% TEST-PDF-STEXT: (?s)Used in.*5\.5\*
+%%   After A2 D1: ONE joint atom proof:a40 for both 5.4 and 5.5.
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a40}{theorem:5.4,theorem:5.5}{5.4,5.5}{*}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a40}
 %%
-%% W05-A2 RED gate: joint-atom rendering for Scenario 3.
-%%   All assertions below FAIL on current HEAD (A1 serial attribution
-%%   produces separate 5.4* and 5.5* tokens; no {5.4, 5.5}* exists).
-%%   After A2 D1 lands: one joint token {5.4, 5.5}* appears in both
-%%   thm:autodet-joint-x and thm:autodet-joint-y Used-In entries.
+%% W05-A2 GREEN: joint-atom rendering for Scenario 3.
+%%   Both thm:autodet-joint-x and thm:autodet-joint-y show {5.4, 5.5}* in
+%%   their Used-In entries.  One joint token from proof:a40.
 %%
 %% Used-In at thm:autodet-joint-x (5.4) shows joint {5.4, 5.5}*
 %% TEST-PDF-STEXT: (?s)First joint target for best-effort serial attribution\..*\{5\.4, 5\.5\}\*
@@ -139,8 +132,8 @@
 %%   NOTE: atoms shifted by inserted paragraphs; thm:autodet-mixedtrk = 5.7.
 %%   On HEAD: refcount=2 → warns+skips → zero records.
 %%   After P02+P03: ONE record for 5.7; gate silently no-ops sec:autodet.
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{5.7*}
-%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:5.7}{sec:autodet}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a43}{theorem:5.7}{5.7}{*}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:a43}{sec:autodet}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.7\*
 %%
 %% Scenario 5 — section-only heading (\autoref{sec:autodet}):

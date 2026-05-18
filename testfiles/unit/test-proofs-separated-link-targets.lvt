@@ -14,17 +14,17 @@
 %%               §10 (\codep@proofof@resolve), §graph (\codep@graph@getanchor)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-PDF-LINK-Y-NEAR: 2\.1\* | Proof of Theorem 1\.1 | within=10
 %% TEST-PDF-LINK-Y-NEAR: 1\.1\* | Proof of Theorem 1\.1 | within=10
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{2.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{2.1*}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:2.1}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:2.1}{codep-proof:2.1}
-%% TEST-AUX-CONTAINS: \codep@keymap{proof:2.1}{proof:1.1}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a2}{theorem:1.1}{1.1}{*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a4}{theorem:1.1}{1.1}{*}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a2}{codep-proof:a2}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a4}{codep-proof:a4}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a4}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 %%

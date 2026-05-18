@@ -9,14 +9,15 @@
 %% TEST-SECTION: docs/DESIGN.md §8a
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
-%% TEST-PDF-CONTAINS: Theorem 1.1. Main theorem statement. Used in 2.1*.
-%% TEST-PDF-CONTAINS: Theorem 2.1. A target theorem. Used in 1.1*.
+%% TEST-PDF-CONTAINS: Theorem 1.1. Main theorem statement. Used in 1.1*.
+%% In v2 the ref to thm:target inside the separated proof is suppressed (adjacent-owner path)
+%% TEST-PDF-CONTAINS: Theorem 2.1. A target theorem.
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{1.1*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a2}{theorem:1.1}{1.1}{*}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{2.1}{theorem}
-%% TEST-CDP-CONTAINS: \codep@cdp@proof{2.1*}
-%% TEST-AUX-CONTAINS: \codep@atomref{proof:2.1}{thm:main}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a4}{theorem:1.1}{1.1}{*}
+%% TEST-AUX-CONTAINS: \codep@atomref{proof:a4}{thm:main}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

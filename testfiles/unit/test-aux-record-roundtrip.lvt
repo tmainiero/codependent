@@ -32,16 +32,15 @@
 %% --- by parent-slot emptiness alone.  This P05 audit confirms the
 %% --- prefixed-key parent slot survives the aux roundtrip (TEST-RERUN: 2).
 %% --- See \codep@graph@getentityparent + capture at \codep@hookproof@end.
-%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:1.1}{proof}{1.1}{proof}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:a2}{proof}{1.1*}{proof}{theorem:1.1}
 %% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:2.1}{theorem}{2.1}{theorem}{}
 %% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:
-%% --- W04-P05: keymap roundtrip.  The section-2 proof is adjacent to
-%% --- theorem:2.1 so its pre-rebind key is proof:2.1.  \codepproofof{thm:a}
-%% --- rebinds it to proof:1.1.  \codep@keymap@record (W04-P01 keymap rail,
-%% --- codependent.sty:3989) writes \codep@keymap{proof:2.1}{proof:1.1} to
-%% --- the aux at enddoc.  This assertion verifies that record survives the
-%% --- full roundtrip (second compile reads, repopulates, and re-emits it).
-%% TEST-AUX-CONTAINS: \codep@keymap{proof:2.1}{proof:1.1}
+%% --- W05-A2: keymap rail removed; separated proof has stable identity proof:a5.
+%% --- \codepproofof{thm:a} binds proof:a5 to theorem:1.1.
+%% --- The aux shows anchormap{proof:1.1}{codep-proof:a5} for the legacy alias
+%% --- but no keymap records (keymap rail retired in W05-A2).
+%% TEST-AUX-CONTAINS: \codep@entitymeta{proof:a5}{proof}{1.1*}{proof}{theorem:1.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 %%

@@ -3,14 +3,14 @@
 %% TEST-KIND: unit
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify the first two records of the .cdp sidecar are
-%%            \codep@cdp@version{1} and \codep@cdp@source{<jobname>.tex},
+%%            \codep@cdp@version{2} and \codep@cdp@source{<jobname>.tex},
 %%            written from the begindocument/before hook.
 %% TEST-SOURCE: docs/DESIGN.md §9a "Open timing", §9a "Record format"
 %% TEST-SECTION: docs/DESIGN.md §9a Semantic sidecar (.cdp) writer
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
-%% TEST-CDP-CONTAINS: \codep@cdp@version{1}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
 %% TEST-CDP-CONTAINS: \codep@cdp@source{test-sbl-version-source.tex}
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-PACKAGES: amsthm,codependent
@@ -21,7 +21,7 @@
 %% begindocument/before (NOT \AtBeginDocument, per REVIEW_C #5,
 %% because user hooks may emit atoms from \AtBeginDocument
 %% blocks). The very first two \write calls must produce:
-%%   \codep@cdp@version{1}
+%%   \codep@cdp@version{2}
 %%   \codep@cdp@source{<jobname>.tex}
 %% If either is missing, CLI-side parsing fails immediately
 %% with "unrecognized sidecar format".
