@@ -26,7 +26,7 @@
 %% TEST-AUX-CONTAINS: }{lem:joint-b}
 %% TEST-PDF-STEXT: (?s)First joint target.*Used in \{1\.1, 1\.2\}\*
 %% TEST-PDF-STEXT: (?s)Second joint target.*Used in \{1\.1, 1\.2\}\*
-%% TEST-PDF-LINK-Y-NEAR: \{1\.1, 1\.2\}\* | Joint proof | within=30
+%% TEST-PDF-LINK-Y-NEAR: \{1\.1, 1\.2\}\* | Joint proof\. We first cite | within=30
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %%
 \documentclass{article}

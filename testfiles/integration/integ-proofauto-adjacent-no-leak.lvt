@@ -18,7 +18,9 @@
 %% TEST-CDP-CONTAINS: }{theorem:1.1}{1.1}{*}
 %% TEST-CDP-COUNT: \codep@cdp@proof = 2
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:a
-%% TEST-AUX-NOT-CONTAINS: }{theorem:3.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:a5}{thm:adjacent-owner}
+%% TEST-AUX-NOT-CONTAINS: \codep@renderlist{theorem:3.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:a5}{theorem:3.1}
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:
 %% TEST-LOG-CONTAINS: auto-attribution to
 %% TEST-LOG-CONTAINS: supersedes adjacent

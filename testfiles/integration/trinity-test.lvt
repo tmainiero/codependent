@@ -124,7 +124,7 @@
 %% TEST-PDF-STEXT: (?s)Second joint target for best-effort serial attribution\..*\{5\.4, 5\.5\}\*
 %%
 %% Link: {5.4, 5.5}* in Used-In links near the joint proof body
-%% TEST-PDF-LINK-Y-NEAR: \{5\.4, 5\.5\}\* | (?s)Both.*tracked atoms | within=60
+%% TEST-PDF-LINK-Y-NEAR: ^\{5\.4, 5\.5\}\*\.$ | (?s)Both.*tracked atoms | within=60
 %%
 %% Scenario 4 — joint-via-single-cref mixed-tracking case (b):
 %%   \cref{thm:autodet-mixedtrk,sec:autodet} heading.
