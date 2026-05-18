@@ -815,11 +815,13 @@
 \def\codep@writerefevent#1{%
   \if@filesw%
     \codep@autoproofof@ifheadsuppressed{#1}{}{%
-      \codep@getcurrentatomkey\codep@tmp@srcatom%
-      \ifx\codep@tmp@srcatom\@empty\else%
-        \codep@subsystem@recordtotal{atomref}%
-        \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
-      \fi%
+      \codep@proof@ifadjacenttargetsuppressed{#1}{}{%
+        \codep@getcurrentatomkey\codep@tmp@srcatom%
+        \ifx\codep@tmp@srcatom\@empty\else%
+          \codep@subsystem@recordtotal{atomref}%
+          \codep@dedupwrite{\codep@tmp@srcatom}{#1}%
+        \fi%
+      }%
     }%
   \fi%
 }%
@@ -865,6 +867,7 @@
           \PackageWarning{codependent}{auto-attribution to #3\space%
             supersedes adjacent \csname codep@proofadjdisplay@#1\endcsname}%
         }{}%
+        \codep@proof@suppressadjacenttarget{#1}{\codep@tmp@adjtarget}%
       \fi%
       \codep@proof@identitykey{#1}{\codep@tmp@overrideproofkey}%
       \codep@prooftargetmeta@clear{\codep@tmp@overrideproofkey}%
@@ -873,6 +876,42 @@
         \csname codep@proofheadingoverride@#1\endcsname\@empty%
     }{}%
   }%
+}%
+
+% \codep@proof@suppressadjacenttarget{proof-id}{target-key}
+%   Record the adjacent target displaced by proof-heading attribution.
+%% @implements \codep@bindproofparent
+\def\codep@proof@suppressadjacenttarget#1#2{%
+  \expandafter\xdef\csname codep@proofsuppressadjacent@#1\endcsname{#2}%
+}%
+
+% \codep@proof@ifadjacenttargetsuppressed{label}{then}{else}
+%   Suppress later proof-body references to the displaced adjacent target.
+%% @implements \codep@writerefevent
+\def\codep@proof@ifadjacenttargetsuppressed#1#2#3{%
+  \ifx\codep@currentproofid\@empty%
+    #3%
+  \else%
+    \expandafter\ifx%
+        \csname codep@proofsuppressadjacent@%
+          \codep@currentproofid\endcsname\relax%
+      #3%
+    \else%
+      \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax%
+        #3%
+      \else%
+        \edef\codep@tmp@suppressadjacent{%
+          \csname codep@proofsuppressadjacent@%
+            \codep@currentproofid\endcsname}%
+        \edef\codep@tmp@suppresstarget{\csname codep@lblentity@#1\endcsname}%
+        \ifx\codep@tmp@suppressadjacent\codep@tmp@suppresstarget%
+          #2%
+        \else%
+          #3%
+        \fi%
+      \fi%
+    \fi%
+  \fi%
 }%
 
 %% @behavior B-PROOF-ADJ
@@ -1680,6 +1719,7 @@
     \codep@autoproofof@scan{#2}%
     \global\codep@autoproofof@eligiblefalse%
   \fi%
+  \codep@proof@captureheadinganchor{\codep@currentproofid}%
 }%
 
 \begingroup
@@ -1816,7 +1856,6 @@
         \codep@pendingproofbind@checkoverwrite%
         \let\codep@pendingproofbind\@empty%
         \codep@proof@standalone%
-        \codep@proof@capturebeginanchor{\codep@currentproofid}%
         \ifx\codep@pendingresultid\@empty%
         \else%
           \codep@proof@adjacent%
@@ -1835,7 +1874,6 @@
       \codep@pendingproofbind@checkoverwrite%
       \let\codep@pendingproofbind\@empty%
       \codep@proof@standalone%
-      \codep@proof@capturebeginanchor{\codep@currentproofid}%
     \fi%
   }{%
     \global\codep@autoproofof@eligiblefalse%
@@ -1857,6 +1895,16 @@
 \newcommand*{\codep@proof@emitanchorname}[1]{%
   \@ifpackageloaded{hyperref}{%
     \Hy@raisedlink{\hyper@anchorstart{#1}\hyper@anchorend}%
+  }{}%
+}%
+
+%% @utility
+% \codep@proof@emitheadinganchorname{anchor-name}
+%   Emit a proof destination after optional-argument parsing, lowered
+%   to match the visible amsthm proof-heading baseline.
+\newcommand*{\codep@proof@emitheadinganchorname}[1]{%
+  \@ifpackageloaded{hyperref}{%
+    \smash{\lower3pt\hbox{\hyper@anchorstart{#1}\hyper@anchorend}}%
   }{}%
 }%
 
@@ -1889,6 +1937,27 @@
   }{}%
 }%
 
+%% @implements \codep@proof@capturebeginanchor
+% \codep@proof@captureheadinganchor{proof-id}
+%   Emit the proof destination after the proof optional argument is parsed.
+\newcommand*{\codep@proof@captureheadinganchor}[1]{%
+  \def\codep@tmp@headingproofid{#1}%
+  \ifx\codep@tmp@headingproofid\@empty\else%
+    \expandafter\ifx%
+        \csname codep@proofbeginanchor@\codep@tmp@headingproofid\endcsname%
+        \relax%
+      \@ifpackageloaded{hyperref}{%
+        \codep@proof@beginanchorname{\codep@tmp@headingproofid}{%
+          \codep@tmp@proofbeginanchor}%
+        \codep@proof@emitheadinganchorname{\codep@tmp@proofbeginanchor}%
+        \expandafter\xdef%
+          \csname codep@proofbeginanchor@%
+            \codep@tmp@headingproofid\endcsname{\codep@tmp@proofbeginanchor}%
+      }{}%
+    \fi%
+  \fi%
+}%
+
 %% @utility
 % \codep@proof@bindbeginanchor{proof-id}{proof-key}
 %   Bind proof-key to the proof-begin destination emitted for proof-id.
@@ -1900,6 +1969,18 @@
       \csname codep@proofbeginanchor@#1\endcsname}%
   \fi%
   \codep@writeanchormapvalue{#2}{\codep@tmp@proofanchor}%
+}%
+
+%% @utility
+% \codep@proof@bindbeginanchorwithdisplay{proof-id}{proof-key}{display}
+%   Bind the opaque proof key and its legacy display-key alias.
+\newcommand*{\codep@proof@bindbeginanchorwithdisplay}[3]{%
+  \codep@proof@bindbeginanchor{#1}{#2}%
+  \def\codep@tmp@proofdisplayanchor{#3}%
+  \ifx\codep@tmp@proofdisplayanchor\@empty\else%
+    \edef\codep@tmp@proofdisplayanchorkey{proof:#3}%
+    \codep@proof@bindbeginanchor{#1}{\codep@tmp@proofdisplayanchorkey}%
+  \fi%
 }%
 
 %% @utility
@@ -4980,7 +5061,8 @@
       \codep@subsystem@recordtotal{atomref}%
       \codep@dedupwrite{\codep@tmp@proofkey}{#3}%
     \fi%
-    \codep@proof@bindbeginanchor{#2}{\codep@tmp@proofkey}%
+    \codep@proof@bindbeginanchorwithdisplay{#2}{\codep@tmp@proofkey}{%
+      \codep@tmp@proofdisp}%
     \codep@render@queuebackref{\codep@tmp@proofkey}%
     \codep@proofof@attribcount@advance{#2}%
   \fi%
