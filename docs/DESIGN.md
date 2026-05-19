@@ -546,8 +546,8 @@ preserves the same switch-off-safety property.
 
 | Command | Purpose | Stable PDF effect | `.cdp` record |
 |---------|---------|-------------------|---------------|
-| `\codepproofof{label}` | Bind a separated proof to this labeled atom | Backrefs to the proof land at the proof heading by aliasing the rebound proof key to the existing proof-begin `\codep@anchormap` target | `\codep@cdp@proof{2.1*}` |
-| `\codepproofof*{label}` | Compatibility spelling for the same binding path | Uses the same single proof-begin anchor path as the plain form | `\codep@cdp@proof{2.1*}` |
+| `\codepproofof{label}` | Bind a separated proof to this labeled atom | Backrefs to the proof land at the proof heading by aliasing the rebound proof key to the existing proof-begin `\codep@anchormap` target | `\codep@cdp@proof{proof:a7}{theorem:2.1}{2.1}{*}` |
+| `\codepproofof*{label}` | Compatibility spelling for the same binding path | Uses the same single proof-begin anchor path as the plain form | `\codep@cdp@proof{proof:a7}{theorem:2.1}{2.1}{*}` |
 | `\codepproofin{citation}` | Proof is in an external source | `\codep@cdp@proofext{citation}` (TODO) |
 | `\codepnoproof{label}` | Theorem intentionally has no proof here | `\codep@cdp@noproof{label}` (TODO) |
 
@@ -3613,7 +3613,7 @@ a dedicated record with a fixed number of brace-delimited
 arguments.  The CLI parses N `{}`-groups and stops.
 
 ```
-\codep@cdp@version{1}
+\codep@cdp@version{2}
 \codep@cdp@source{main.tex}
 \codep@cdp@atom{1.2.3}{paragraph}
 \codep@cdp@meta{1.2.3}{src}{main.tex:42:1}
@@ -3641,7 +3641,7 @@ arguments.  The CLI parses N `{}`-groups and stops.
 
 | Macro | Arity | Meaning |
 |---|---|---|
-| `\codep@cdp@version{v}` | 1 | File format version. Current: `1`. |
+| `\codep@cdp@version{v}` | 1 | File format version. Current: `2`. |
 | `\codep@cdp@source{file}` | 1 | Master source file name. |
 | `\codep@cdp@atom{num}{type}` | 2 | Atom begins. `type` is `paragraph`, `Definition`, `Theorem`, `proof`, etc. |
 | `\codep@cdp@meta{num}{k}{v}` | 3 | Per-atom metadata pair. Keys: `src` (file:line:col), `env`, `depth`. Extensible. |
@@ -3690,7 +3690,7 @@ precedes every atom write.
     \immediate\openout\codep@cdpout=\jobname.cdp\relax
     \global\booltrue{codep@cdpopen}%
     \immediate\write\codep@cdpout{%
-      \string\codep@cdp@version{1}}%
+      \string\codep@cdp@version{2}}%
     \immediate\write\codep@cdpout{%
       \string\codep@cdp@source{\jobname.tex}}%
   \fi

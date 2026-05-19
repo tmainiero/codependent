@@ -265,7 +265,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-proofauto-autoref.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \autoref auto-binds silently. |
 | testfiles/integration/integ-proofauto-bodycite-routing.lvt | LIVE | B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof-heading body cites route through immediate and provisional proof identities. |
 | testfiles/integration/integ-proofauto-cref-single.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \cref auto-binds silently. |
-| testfiles/integration/integ-proofauto-d3-heading-overrides-adjacent.lvt | LIVE | B-PROOF-ADJRULE | Proof heading ref overrides adjacent attribution; warning emitted on conflict. |
+| testfiles/integration/integ-proofauto-d3-heading-overrides-adjacent.lvt | LIVE | B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE | Proof heading ref overrides adjacent attribution; warning can be suppressed. |
 | testfiles/integration/integ-proofauto-explicit-wins-different.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto target plus different explicit \codepproofof* merge into one joint atom. |
 | testfiles/integration/integ-proofauto-explicit-wins-same.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Heading auto candidate plus same-target explicit \codepproofof* leaves one proof record. |
 | testfiles/integration/integ-proofauto-forward-ref.lvt | LIVE | B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST | A proof heading that names a later theorem settles through the deferred proof-of queue. |
