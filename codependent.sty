@@ -551,6 +551,14 @@
 %% Section 4a: Runtime helpers
 %% ===================================================================
 
+% Proof atoms are identified by their opaque key (proof:a<N>) only;
+% there is no display-keyed alias. \hyperref[proof:1.2]{...} is NOT
+% supported -- users must reference proof atoms by their proof:a<N>
+% key (extractable from the .cdp file).
+%
+% A generic display->atom sidecar rail will be added in Wave E
+% (sub-item E1) to support display-keyed reverse lookup for joint
+% proofs, per-result ordinals, continued theorems, and cross-doc.
 %% @utility
 % \codep@allocatomid{macro}{kind}
 %   Allocate a fresh opaque source-atom ID (aN) into macro.
@@ -1889,6 +1897,13 @@
   \global\codep@autoproofof@eligibletrue%
 }%
 
+% Proof-heading anchors are emitted after optional-argument parsing.
+% pdfsavepos captures the top of the line box; the visible baseline in
+% the default amsthm proof heading is about 3pt lower.  The offset was
+% chosen empirically against integ-proof-link-target's 10pt tolerance.
+\newdimen\codep@proof@anchoroffset
+\codep@proof@anchoroffset=3pt
+
 %% @utility
 % \codep@proof@emitanchorname{anchor-name}
 %   Emit a zero-size hyperref destination at the current location.
@@ -1904,7 +1919,8 @@
 %   to match the visible amsthm proof-heading baseline.
 \newcommand*{\codep@proof@emitheadinganchorname}[1]{%
   \@ifpackageloaded{hyperref}{%
-    \smash{\lower3pt\hbox{\hyper@anchorstart{#1}\hyper@anchorend}}%
+    \smash{\lower\codep@proof@anchoroffset\hbox{%
+      \hyper@anchorstart{#1}\hyper@anchorend}}%
   }{}%
 }%
 
@@ -1969,18 +1985,6 @@
       \csname codep@proofbeginanchor@#1\endcsname}%
   \fi%
   \codep@writeanchormapvalue{#2}{\codep@tmp@proofanchor}%
-}%
-
-%% @utility
-% \codep@proof@bindbeginanchorwithdisplay{proof-id}{proof-key}{display}
-%   Bind the opaque proof key and its legacy display-key alias.
-\newcommand*{\codep@proof@bindbeginanchorwithdisplay}[3]{%
-  \codep@proof@bindbeginanchor{#1}{#2}%
-  \def\codep@tmp@proofdisplayanchor{#3}%
-  \ifx\codep@tmp@proofdisplayanchor\@empty\else%
-    \edef\codep@tmp@proofdisplayanchorkey{proof:#3}%
-    \codep@proof@bindbeginanchor{#1}{\codep@tmp@proofdisplayanchorkey}%
-  \fi%
 }%
 
 %% @utility
@@ -5061,8 +5065,7 @@
       \codep@subsystem@recordtotal{atomref}%
       \codep@dedupwrite{\codep@tmp@proofkey}{#3}%
     \fi%
-    \codep@proof@bindbeginanchorwithdisplay{#2}{\codep@tmp@proofkey}{%
-      \codep@tmp@proofdisp}%
+    \codep@proof@bindbeginanchor{#2}{\codep@tmp@proofkey}%
     \codep@render@queuebackref{\codep@tmp@proofkey}%
     \codep@proofof@attribcount@advance{#2}%
   \fi%
