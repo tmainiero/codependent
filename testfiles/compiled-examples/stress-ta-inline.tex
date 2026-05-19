@@ -4,8 +4,10 @@
 %% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN
 %% TEST-STATUS: LIVE
 %% TEST-RENDER-MODES: inline, default-color
-%% TEST-PDF-PAGES: 2
+%% TEST-PDF-PAGES: 3
 %% TEST-PDF-STEXT: Stress fixture inline default
+%% TEST-PDF-STEXT: (?s)First theorem for inline joint-atom proof.*\{9\.9, 9\.10\}\*
+%% TEST-PDF-STEXT: (?s)Second theorem for inline joint-atom proof.*\{9\.9, 9\.10\}\*
 
 \def\START{}\def\END{}
 \documentclass{article}
@@ -128,6 +130,93 @@ Answers \cref{q:gadget} partially.
 \begin{corollary}\label{cor:sec3}
 Combines \cref{thm:sec3}, \cref{def:gadget}, and \cref{prop:compose}.
 \end{corollary}
+
+
+%% ====================================================================
+%%  Section 9: Auto-detect proof scenarios (W05-A2 inline parity)
+%%  The inline stress variants are intentionally shorter than the
+%%  appendix-gray fixture, so this jumps to section 9 to keep the joint
+%%  atom source token aligned with appendix-gray: {9.9, 9.10}*.
+%% ====================================================================
+\setcounter{section}{8}
+\section{Auto-detect proof scenarios}
+\label{sec:w05a1}
+
+%% --- 9.1: Backward-ref body-cite ---
+\begin{theorem}\label{thm:s9-backward}
+Every inline widget (\cref{def:widget}) inherits the technical reduction
+of \cref{lem:technical}.
+\end{theorem}
+
+We recall the widget definitions before proceeding.
+
+\begin{proof}[Proof of \cref{thm:s9-backward}]
+By \cref{def:widget} and the technical lemma \cref{lem:technical}.
+\end{proof}
+
+%% --- Forward-ref body-cite: proof comes BEFORE the theorem ---
+\begin{proof}[Proof of \cref{thm:s9-forward-late}]
+By widget composition (\cref{prop:compose}) and idempotence terminology
+(\cref{term:idempotent}).
+\end{proof}
+
+\begin{theorem}\label{thm:s9-forward-late}
+The forward-referenced inline result combines \cref{prop:compose}
+with \cref{term:idempotent}.
+\end{theorem}
+
+%% --- 9.3, 9.4: Joint-via-single-cref best-effort serial case ---
+\begin{proposition}\label{prop:s9-joint-a}
+First inline joint target for best-effort serial proof attribution.
+\end{proposition}
+
+\begin{corollary}\label{cor:s9-joint-b}
+Second inline joint target for best-effort serial proof attribution.
+Follows from \cref{prop:s9-joint-a}.
+\end{corollary}
+
+We give a unified proof of both inline results.
+
+\begin{proof}[Proof of \cref{prop:s9-joint-a,cor:s9-joint-b}]
+Both \cref{prop:s9-joint-a} and \cref{cor:s9-joint-b} follow from
+\cref{lem:technical} and widget composition.
+\end{proof}
+
+%% --- 9.5: Joint-via-single-cref mixed-tracking case ---
+\begin{lemma}\label{lem:s9-mixed}
+Tracked inline target for the mixed-tracking joint proof scenario.
+\end{lemma}
+
+The tracked lemma and the section reference play different roles here.
+
+\begin{proof}[Proof of \cref{lem:s9-mixed,sec:w05a1}]
+The tracked lemma follows from \cref{def:widget}; the section ref is
+navigational and triggers the tracked-entity gate.
+\end{proof}
+
+%% --- Section-only heading: zero records expected ---
+\begin{proof}[Proof of \autoref{sec:w05a1}]
+Section-only heading exercises the tracked-entity gate.  It mentions
+\cref{thm:nontrivial} in the body, which is dropped by the gate.
+\end{proof}
+
+%% --- 9.9, 9.10: Joint-atom proof through inline Used-In rendering ---
+\begin{theorem}\label{thm:s9-jatom-x}
+First theorem for inline joint-atom proof.
+Uses \cref{def:gadget}.
+\end{theorem}
+
+\begin{theorem}\label{thm:s9-jatom-y}
+Second theorem for inline joint-atom proof.
+Follows from \cref{lem:technical}.
+\end{theorem}
+
+We give a joint proof of both inline theorems above.
+
+\begin{proof}[Proof of \cref{thm:s9-jatom-x,thm:s9-jatom-y}]
+Both follow from \cref{def:gadget} and \cref{lem:technical} by a unified
+inline-mode argument.
+\end{proof}
 
 \END
 \end{document}
