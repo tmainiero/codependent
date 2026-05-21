@@ -270,6 +270,12 @@
 \newif\ifcodep@proofof@resolved
 \codep@proofof@resolvedfalse
 
+% Flag: true when the current proof has a staged adjacent candidate
+% waiting for post-heading-scan commitment.
+%% @utility
+\newif\ifcodep@proof@adjcommit@needed
+\codep@proof@adjcommit@neededfalse
+
 % Per-proof count of successful explicit/auto proof-attribution
 % resolutions.  Stored in csname family
 % \codep@proofof@attribcount@<proof-id> so repeated explicit
@@ -1588,6 +1594,7 @@
       \global\codep@proofdisplaypendingfalse%
       \global\codep@autoproofof@eligiblefalse%
       \global\let\codep@pendingproofbind\@empty%
+      \codep@proof@adjcandidate@drop{\codep@currentproofid}%
     \fi%
     \edef\codep@tmp@autoproofofdefer{%
       \noexpand\codep@defer@proofof{\noexpand\codep@autoproofof@resolve}%
@@ -1725,6 +1732,7 @@
   \codep@autoproofof@markseen{#1}%
   \ifcodep@autoproofof@eligible%
     \codep@autoproofof@scan{#2}%
+    \codep@proof@adjacent@finalize%
     \global\codep@autoproofof@eligiblefalse%
   \fi%
   \codep@proof@captureheadinganchor{\codep@currentproofid}%
@@ -1770,6 +1778,11 @@
   \else%
     \expandafter\gdef\csname codep@savedproofautoeligible@#1\endcsname{0}%
   \fi%
+  \ifcodep@proof@adjcommit@needed%
+    \expandafter\gdef\csname codep@savedproofadjcommit@#1\endcsname{1}%
+  \else%
+    \expandafter\gdef\csname codep@savedproofadjcommit@#1\endcsname{0}%
+  \fi%
   \expandafter\xdef\csname codep@savedproofbind@#1\endcsname{%
     \codep@pendingproofbind}%
   \expandafter\xdef\csname codep@savedproofadjkey@#1\endcsname{%
@@ -1790,6 +1803,7 @@
     \global\let\codep@pendingproofbind\@empty%
     \global\codep@proofdisplaypendingfalse%
     \global\codep@autoproofof@eligiblefalse%
+    \global\codep@proof@adjcommit@neededfalse%
     \global\let\codep@proofadj@pendinganchormapkey\@empty%
     \global\let\codep@proofadj@pendinganchormapanchor\@empty%
   \else%
@@ -1810,6 +1824,13 @@
     \else%
       \global\codep@autoproofof@eligiblefalse%
     \fi%
+    \edef\codep@tmp@proofadjcommit{%
+      \csname codep@savedproofadjcommit@#1\endcsname}%
+    \ifx\codep@tmp@proofadjcommit\codep@tmp@proofone%
+      \global\codep@proof@adjcommit@neededtrue%
+    \else%
+      \global\codep@proof@adjcommit@neededfalse%
+    \fi%
     \global\expandafter\let\expandafter\codep@pendingproofbind%
       \csname codep@savedproofbind@#1\endcsname%
     \global\expandafter\let\expandafter%
@@ -1824,6 +1845,8 @@
       \csname codep@savedproofpending@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofautoeligible@#1\endcsname\@undefined%
+    \global\expandafter\let%
+      \csname codep@savedproofadjcommit@#1\endcsname\@undefined%
     \global\expandafter\let%
       \csname codep@savedproofbind@#1\endcsname\@undefined%
     \global\expandafter\let%
@@ -1895,6 +1918,7 @@
 \newcommand*{\codep@proof@standalone}{%
   \global\codep@proofdisplaypendingtrue%
   \global\codep@autoproofof@eligibletrue%
+  \global\codep@proof@adjcommit@neededfalse%
 }%
 
 % Proof-heading anchors are emitted after optional-argument parsing.
@@ -2045,24 +2069,78 @@
 
 %% @behavior B-PROOF-ADJ
 % \codep@proof@adjacent
-%   Bind the current proof to the pending adjacent theorem/result atom.
+%   Stage the pending adjacent theorem/result atom for delayed binding.
 \newcommand*{\codep@proof@adjacent}{%
   \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@adjtargetkey}%
   \codep@atomgetdisplay{\codep@pendingresultid}{\codep@tmp@adjtargetdisplay}%
+  \expandafter\xdef\csname codep@adjcandidate@%
+    \codep@currentproofid\endcsname{\codep@pendingresultid}%
+  \expandafter\xdef\csname codep@adjcandidate@target@%
+    \codep@currentproofid\endcsname{\codep@tmp@adjtargetkey}%
+  \expandafter\xdef\csname codep@adjcandidate@display@%
+    \codep@currentproofid\endcsname{\codep@tmp@adjtargetdisplay}%
   \expandafter\xdef\csname codep@proofadjtarget@%
     \codep@currentproofid\endcsname{\codep@tmp@adjtargetkey}%
   \expandafter\xdef\csname codep@proofadjdisplay@%
     \codep@currentproofid\endcsname{\codep@tmp@adjtargetdisplay}%
-  \codep@bindproofparent{\codep@currentproofid}{\codep@pendingresultid}{%
-    statement}%
-  \global\codep@proofdisplaypendingfalse%
+  \global\codep@proof@adjcommit@neededtrue%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@proofadj@pendinganchormapkey\@empty%
   \global\let\codep@proofadj@pendinganchormapanchor\@empty%
   \codep@proof@bindbeginanchor{\codep@currentproofid}{\codep@tmp@proofkey}%
   \codep@proof@writebeginpage{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@pendingresultid\@empty%
+}%
+
+% \codep@proof@adjcandidate@clear{proof-id}
+%   Clear staged adjacent-candidate state for proof-id.
+%% @implements \codep@proof@adjacent
+\def\codep@proof@adjcandidate@clear#1{%
+  \global\expandafter\let\csname codep@adjcandidate@#1\endcsname\relax%
+  \global\expandafter\let%
+    \csname codep@adjcandidate@target@#1\endcsname\relax%
+  \global\expandafter\let%
+    \csname codep@adjcandidate@display@#1\endcsname\relax%
+}%
+
+% \codep@proof@adjcandidate@drop{proof-id}
+%   Drop a staged adjacent candidate without committing it.
+%% @implements \codep@proof@adjacent
+\def\codep@proof@adjcandidate@drop#1{%
+  \global\codep@proof@adjcommit@neededfalse%
+  \codep@proof@adjcandidate@clear{#1}%
+  \global\expandafter\let\csname codep@proofadjtarget@#1\endcsname\relax%
+  \global\expandafter\let\csname codep@proofadjdisplay@#1\endcsname\relax%
+}%
+
+% \codep@proof@adjacent@commit{proof-id}{target-id}
+%   Commit a staged adjacent binding after proof-heading scan returns.
+%% @implements \codep@proof@adjacent
+\def\codep@proof@adjacent@commit#1#2{%
+  \codep@bindproofparent{#1}{#2}{statement}%
+  \global\codep@proofdisplaypendingfalse%
+  \codep@atomgetkey{#1}{\codep@tmp@proofkey}%
   \codep@render@queuebackref{\codep@tmp@proofkey}%
+  \global\codep@proof@adjcommit@neededfalse%
+  \codep@proof@adjcandidate@clear{#1}%
+}%
+
+% \codep@proof@adjacent@finalize
+%   Commit the current proof's staged adjacent candidate, if any.
+%% @implements \codep@proof@adjacent
+\def\codep@proof@adjacent@finalize{%
+  \ifcodep@proof@adjcommit@needed%
+    \expandafter\ifx%
+        \csname codep@adjcandidate@\codep@currentproofid\endcsname\relax%
+      \global\codep@proof@adjcommit@neededfalse%
+    \else%
+      \edef\codep@tmp@adjproofid{\codep@currentproofid}%
+      \edef\codep@tmp@adjtargetid{%
+        \csname codep@adjcandidate@\codep@tmp@adjproofid\endcsname}%
+      \codep@proof@adjacent@commit{%
+        \codep@tmp@adjproofid}{\codep@tmp@adjtargetid}%
+    \fi%
+  \fi%
 }%
 
 %% @behavior B-PROOF-OFF
@@ -5056,6 +5134,9 @@
     \global\codep@proofdisplaypendingfalse%
     \global\codep@autoproofof@eligiblefalse%
     \global\let\codep@pendingproofbind\@empty%
+    \ifx\codep@tmp@autoflag\codep@tmp@one%
+      \codep@proof@adjcandidate@drop{#2}%
+    \fi%
     \if@filesw%
       \ifx\codep@tmp@autoflag\codep@tmp@one%
         \codep@ifunresrefkey{#4}{%
