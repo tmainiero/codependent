@@ -1,0 +1,209 @@
+%% TEST-NAME: integ-proofauto-adjacent-delayed-commit-probe
+%% TEST-PURPOSE: Probe delayed adjacent proof binding across adjacent, same-run, and forward-heading paths.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-PROOF-SEP, B-PROOF-ADJRULE, B-FRONTEDGE-CAPTURE
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: W05-P30: scenario observers verify delayed adjacent commit timing.
+%%            Same-run and forward-heading scenarios compile before the final
+%%            headingless-adjacent RED-on-HEAD PackageError witness fires.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-NOT: adjacent bind fired before scan completed
+%% TEST-LOG-CONTAINS: same-run heading override resolve observed
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,cleveref,codependent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a3}{theorem:1.1}{1.1}{*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a5}{theorem:2.2}{2.2}{*}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a8}{theorem:3.1}{3.1}{*}
+%% TEST-CDP-COUNT: \codep@cdp@proof = 3
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a3
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a5
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a8
+%% TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:a5}
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:a3}{thm:same-B}
+%% TEST-AUX-NOT-CONTAINS: \codep@renderlist{theorem:1.2}
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:a3}{theorem:1.2}
+%% TEST-AUX-NOT-CONTAINS: \codep@keymap{proof:
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:a5}{thm:forward-A}
+%% TEST-AUX-NOT-CONTAINS: \codep@renderlist{theorem:2.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:a5}{theorem:2.1}
+%% TEST-CDP-NOT-CONTAINS: proof:{
+%% TEST-AUX-NOT-CONTAINS: proof:{
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:0
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:1
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:2
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:3
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:4
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:5
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:6
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:7
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:8
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:9
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:0
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:1
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:2
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:3
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:4
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:5
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:6
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:7
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:8
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{proof:9
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:0
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:1
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:2
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:3
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:4
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:5
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:6
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:7
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:8
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:9
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:0
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:1
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:2
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:3
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:4
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:5
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:6
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:7
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:8
+%% TEST-AUX-NOT-CONTAINS: \codep@atomref{proof:9
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\providecommand*{\theoremautorefname}{Theorem}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem}
+
+\makeatletter
+% Test-only sentinel state; reset/copy per scenario so cases cannot bleed.
+\newif\ifcodep@test@scan@done
+\newif\ifcodep@test@bind@seen
+\newif\ifcodep@test@resolve@seen
+\newif\ifcodep@test@bind@active
+\newif\ifcodep@test@samerun@resolve@seen
+\newif\ifcodep@test@forward@resolve@seen
+
+\def\codep@test@samerunlabel{thm:same-A}%
+\def\codep@test@forwardlabel{thm:later}%
+
+\def\codep@test@reset#1{%
+  \global\codep@test@scan@donefalse%
+  \global\codep@test@bind@seenfalse%
+  \global\codep@test@resolve@seenfalse%
+  \global\codep@test@bind@activefalse%
+  \gdef\codep@test@scenario{#1}%
+}%
+
+\def\codep@test@activatebind#1{%
+  \codep@test@reset{#1}%
+  \global\codep@test@bind@activetrue%
+}%
+
+\def\codep@test@assertbindseen#1{%
+  \ifcodep@test@bind@seen\else%
+    \PackageError{codep-test}{#1 bind observer did not fire}{}%
+  \fi%
+}%
+
+\def\codep@test@assertsamerunresolved{%
+  \ifcodep@test@samerun@resolve@seen\else%
+    \PackageError{codep-test}{same-run heading resolver did not fire}{}%
+  \fi%
+}%
+
+\AtEndDocument{%
+  \ifcodep@test@forward@resolve@seen\else%
+    \PackageError{codep-test}{forward-ref heading resolver did not fire}{}%
+  \fi%
+}%
+
+% Wrapper A: scan-completion sentinel.
+\let\codep@test@origscan\codep@autoproofof@scan
+\def\codep@autoproofof@scan#1{%
+  \codep@test@origscan{#1}%
+  \global\codep@test@scan@donetrue%
+}%
+
+% Wrapper B: adjacent-binding observer; use only for headingless adjacent.
+\let\codep@test@origbind\codep@bindproofparent
+\def\codep@bindproofparent#1#2#3{%
+  \ifcodep@test@bind@active%
+    \ifcodep@test@scan@done\else%
+      \PackageError{codep-test}{adjacent bind fired before scan completed}{}%
+    \fi%
+    \global\codep@test@bind@seentrue%
+  \fi%
+  \codep@test@origbind{#1}{#2}{#3}%
+}%
+
+% Wrapper C: heading-resolver observer; use for same-run and forward-ref.
+\let\codep@test@origresolve\codep@autoproofof@resolve
+\def\codep@autoproofof@resolve#1#2#3{%
+  \codep@test@origresolve{#1}{#2}{#3}%
+  \global\codep@test@resolve@seentrue%
+  \def\codep@test@observedlabel{#2}%
+  \ifx\codep@test@observedlabel\codep@test@samerunlabel%
+    \global\codep@test@samerun@resolve@seentrue%
+    \PackageInfo{codep-test}{same-run heading override resolve observed}%
+  \fi%
+  \ifx\codep@test@observedlabel\codep@test@forwardlabel%
+    \global\codep@test@forward@resolve@seentrue%
+    \PackageInfo{codep-test}{forward-ref heading resolve observed}%
+  \fi%
+}%
+\makeatother
+
+\begin{document}
+\START
+
+\section{Same-run heading override}\label{sec:same-run}
+\makeatletter\codep@test@reset{same-run heading override}\makeatother
+\begin{theorem}\label{thm:same-A}
+  Same-run target theorem.
+\end{theorem}
+\begin{theorem}\label{thm:same-B}
+  Adjacent theorem that must not receive the proof attribution.
+\end{theorem}
+\begin{proof}[Proof of \autoref{thm:same-A}]
+  The heading target must supersede the adjacent theorem.
+\end{proof}
+\makeatletter\codep@test@assertsamerunresolved\makeatother
+
+\section{Forward-ref heading}\label{sec:forward}
+\makeatletter\codep@test@reset{forward-ref heading}\makeatother
+\begin{theorem}\label{thm:forward-A}
+  Adjacent theorem that must not receive the forward proof attribution.
+\end{theorem}
+\begin{proof}[Proof of \autoref{thm:later}]
+  The heading target is defined later in the same document.
+\end{proof}
+\begin{theorem}\label{thm:later}
+  Later theorem that must receive the forward proof attribution.
+\end{theorem}
+
+\section{Headingless adjacent}\label{sec:headingless}
+\makeatletter\codep@test@activatebind{headingless adjacent}\makeatother
+\begin{theorem}\label{thm:headingless-A}
+  Headingless adjacent theorem.
+\end{theorem}
+\begin{proof}
+  This headingless proof is the RED-on-HEAD delayed-commit witness.
+\end{proof}
+\makeatletter\codep@test@assertbindseen{headingless adjacent}\makeatother
+
+\END
+\end{document}

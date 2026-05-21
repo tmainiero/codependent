@@ -239,7 +239,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (42 fixtures)
+## Integration (43 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -260,6 +260,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-no-paragraphs.lvt | LIVE | B-EDGE-PARAOFF-EQ | Integration test with paragraphs=off. Verifies that |
 | testfiles/integration/integ-ntheorem.lvt | LIVE | B-NUM-SHARED | Verify codependent works with ntheorem as the theorem backend |
 | testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
+| testfiles/integration/integ-proofauto-adjacent-delayed-commit-probe.lvt | LIVE | B-PROOF-ADJ, B-PROOF-SEP, B-PROOF-ADJRULE, B-FRONTEDGE-CAPTURE | Probe delayed adjacent proof binding across adjacent, same-run, and forward-heading paths. |
 | testfiles/integration/integ-proofauto-adjacent-no-leak.lvt | LIVE | B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE | D3 heading target wins over adjacent target; conflict warning emitted. |
 | testfiles/integration/integ-proofauto-autoref-undefined.lvt | LIVE | B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof headings with undefined / section-only / forward-ref labels. |
 | testfiles/integration/integ-proofauto-autoref.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | A standalone proof heading containing a single \autoref auto-binds silently. |
