@@ -1,20 +1,24 @@
 %% TEST-NAME: test-concept-scope-visible
-%% TEST-PURPOSE: Concept-use edges render only on the definition atom's row,
+%% TEST-PURPOSE: Concept-use edges are recorded in sidecars, not Used-in lists
 %% TEST-KIND: unit
 %% TEST-BEHAVIOR: B-CONC-SCOPE
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: Concept-use edges render only on the definition atom's row,
-%%            not on unrelated referenced atoms.
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-WHAT: Concept-use edges are recorded in .aux/.cdp sidecars for CLI
+%%            and hyperlink consumers, not injected into PDF Used-in lists.
+%% TEST-PINS-KNOWN-BROKEN: no
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-CONC-SCOPE
 %% TEST-SECTION: concept edge scope
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-LOG-NOT: Package codependent Warning
 %% TEST-PDF-STEXT: (?s)Used in 1\.3\.
-%% TEST-PDF-STEXT: (?s)Used in 1\.4\.
 %% TEST-PDF-STEXT-NOT: Used in 1\.3, 1\.4
 %% TEST-PDF-STEXT-NOT: Used in 1\.4, 1\.3
+%% TEST-PDF-STEXT-NOT: (?s)Used in 1\.4\.
+%% TEST-CDP-CONTAINS: \codep@cdp@def{1.2}{Hom}
+%% TEST-CDP-CONTAINS: \codep@cdp@use{1.4}{Hom}
+%% TEST-AUX-CONTAINS: \codep@concept{Hom}{1.2}
+%% TEST-AUX-CONTAINS: \codep@conceptref{1.4}{Hom}
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
 

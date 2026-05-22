@@ -5,10 +5,13 @@
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: A single-pass build still produces a numbered document but
 %%            does not yet render visible "Used in" annotations.
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-PINS-KNOWN-BROKEN: no
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-PASS-SINGLE
 %% TEST-SECTION: single-pass output
 %% TEST-EXIT: 0
+%% The single-pass fixture intentionally leaves the ordinary \ref unresolved;
+%% the behavior under test is that codependent emits no Used-in list on pass 1.
+%% TEST-ALLOW-UNDEFINED-REFS: yes
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-PDF-CONTAINS: Theorem 1.1
 %% TEST-PDF-NOT: Used in

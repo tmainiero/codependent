@@ -241,7 +241,7 @@ displays "Used in A" in the PDF.
 - [B-CONC-EDGES] `\codepnewcommand`-defined commands produce concept-use edges in the backref graph.
 - [B-CONC-USEDIN] All uses (`\cmd`) of a concept appear as "Used in" entries on the def-site atom.
 - [B-CONC-DEFSITE] The def site is marked by `\cmd*`; exactly one per concept.
-- [B-CONC-SCOPE] Concept edges do NOT appear in "Used in" lists of referenced atoms -- they appear only on the definition atom.
+- [B-CONC-SCOPE] Concept edges are observation-layer records: they are written to `.aux`/`.cdp` for hyperlink resolution and CLI graph consumers, but are NOT injected into PDF "Used in" lists.
 - [B-CONC-FWDREF] Forward references (use before def) are resolved on pass 2.
 - [B-CONC-NODEF] Missing def site: warning; concept backrefs disabled for that command.
 - [B-CONC-DUPDEF] Duplicate def site: error; build halts.

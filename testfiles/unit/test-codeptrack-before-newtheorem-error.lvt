@@ -5,11 +5,11 @@
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Calling \codeptrack before the theorem environment exists
 %%            is a package error and produces no visible backrefs.
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-PINS-KNOWN-BROKEN: no
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-EDGE-TRACK-ORDER
 %% TEST-SECTION: codeptrack ordering
 %% TEST-EXIT: 1
-%% TEST-EXPECT-PACKAGE-ERROR: codeptrack\\s+called before.*newtheorem
+%% TEST-EXPECT-PACKAGE-ERROR: codeptrack\s+called\s+before\\newtheorem
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsthm,codependent
