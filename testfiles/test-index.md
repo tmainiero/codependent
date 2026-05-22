@@ -13,7 +13,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-backref-style-below-errors.lvt | LIVE | B-REND-INLINE | \codepsetup{backref-style=below} in v2.0 raises a package |
 | testfiles/unit/test-backref-style-inline.lvt | LIVE | B-REND-INLINE | Verify that backref-style=inline works as a package option |
 | testfiles/unit/test-backref-style-margin-errors.lvt | LIVE | B-REND-INLINE | \codepsetup{backref-style=margin} in v2.0 raises a package |
-| testfiles/unit/test-backrefs-none.lvt | LIVE | — | With backrefs=none, tracking (.cdp and .aux records) still |
+| testfiles/unit/test-backrefs-none.lvt | LIVE | B-REND-INLINE, B-PASS-ONE | With backrefs=none, tracking (.cdp and .aux records) still |
 | testfiles/unit/test-base-counter-custom.lvt | LIVE | B-NUM-SHARED, B-NUM-SEQ | Verify that codependent works when the base counter is NOT named |
 | testfiles/unit/test-book-class.lvt | LIVE | B-NUM-DEPTH1 | codependent works with \documentclass{book} and depth=1, |
 | testfiles/unit/test-cmd-uses.lvt | LIVE | B-CONC-USEDIN, B-CONC-EDGES | Verify a wrapped command (defined via \codepnewcommand) |
@@ -26,7 +26,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-codepbackrefs-restatable-replay.lvt | LIVE | B-REND-INLINE, B-REST-FIRST, B-REST-NODUP | restatable replay regression: \codepbackrefs in a restatable |
 | testfiles/unit/test-codepbackrefs-suppresses-auto.lvt | LIVE | B-REND-INLINE | Single-theorem double-emit scenario: theorem body calls |
 | testfiles/unit/test-codepbackrefs-theorem.lvt | LIVE | B-REND-INLINE | \codepbackrefs called inside a theorem body emits the |
-| testfiles/unit/test-codepsetup.lvt | LIVE | — | Verify that \codepsetup accepts all rendering configuration |
+| testfiles/unit/test-codepsetup.lvt | LIVE | B-REND-INLINE | Verify that \codepsetup accepts all rendering configuration |
 | testfiles/unit/test-codeptag.lvt | LIVE | — | Verify \codeptag{kind}{value} emits a flat |
 | testfiles/unit/test-codeptrack-before-newtheorem-error.lvt | LIVE | B-EDGE-TRACK-ORDER | Calling \codeptrack before the theorem environment exists |
 | testfiles/unit/test-codeptrack-called-twice-error.lvt | LIVE | B-EDGE-TRACK-TWICE | Calling \codeptrack twice is a package error and does not |
@@ -41,9 +41,9 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-effective-anchor-overwrite.lvt | LIVE | B-LINK-EFFECTIVE-ANCHOR | When a theorem body installs a same-typed, same-display |
 | testfiles/unit/test-empty-proof-visible.lvt | LIVE | B-EDGE-EMPTY-PROOF | Even an empty adjacent proof gets a proof atom number, so a |
 | testfiles/unit/test-enddoc-orchestrator.lvt | LIVE | B-ERROR-ENDDOC, B-WARN-ENDDOC | Exercise the single enddoc orchestrator (commit ad0c423): |
-| testfiles/unit/test-engine-lualatex.lvt | LIVE | — | Verify codependent.sty compiles cleanly and tracks one theorem |
-| testfiles/unit/test-engine-pdflatex.lvt | LIVE | — | Verify codependent.sty compiles cleanly and tracks one theorem |
-| testfiles/unit/test-engine-xelatex.lvt | LIVE | — | Verify codependent.sty compiles cleanly and tracks one theorem |
+| testfiles/unit/test-engine-lualatex.lvt | LIVE | B-COMPAT-THMTOOLS-CONTINUED, B-PASS-ONE | Verify codependent.sty compiles cleanly and tracks one theorem |
+| testfiles/unit/test-engine-pdflatex.lvt | LIVE | B-PASS-ONE | Verify codependent.sty compiles cleanly and tracks one theorem |
+| testfiles/unit/test-engine-xelatex.lvt | LIVE | B-PASS-ONE | Verify codependent.sty compiles cleanly and tracks one theorem |
 | testfiles/unit/test-equations-align.lvt | LIVE | B-EQ-TRACK2 | Track 2: align environment records equation range as |
 | testfiles/unit/test-equations-all-inside-theorem-align.lvt | LIVE | B-EQ-ALL | With equations=all, an align block inside a theorem |
 | testfiles/unit/test-equations-all.lvt | LIVE | B-EQ-ALL | equations=all: equation inside a theorem uses the |
@@ -99,8 +99,8 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-halt-on-error-opt-out.lvt | LIVE | B-ERROR-ENDDOC | Verify that the test runner correctly drops -halt-on-error |
 | testfiles/unit/test-hyperref-links.lvt | LIVE | B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN | When hyperref is loaded, "Used in" backrefs become |
 | testfiles/unit/test-hyperref-manual-no-edge.lvt | LIVE | B-EDGE-HYPERREF | A manual \hyperref link still renders as a link in the PDF |
-| testfiles/unit/test-label-cleveref-opt.lvt | LIVE | — | Verify \label[theorem]{thm:foo} (cleveref optional-arg form) |
-| testfiles/unit/test-label-kernel.lvt | LIVE | — | Verify a plain \label{key} inside a tracked atom produces |
+| testfiles/unit/test-label-cleveref-opt.lvt | LIVE | B-PASS-ONE | Verify \label[theorem]{thm:foo} (cleveref optional-arg form) |
+| testfiles/unit/test-label-kernel.lvt | LIVE | B-PASS-ONE | Verify a plain \label{key} inside a tracked atom produces |
 | testfiles/unit/test-load-cleveref-after-codependent.lvt | LIVE | B-PASS-ONE | Verify cleveref loaded AFTER codependent still has all its |
 | testfiles/unit/test-load-codependent-then-hyperref.lvt | LIVE | B-PASS-ONE | Verify hyperref loaded AFTER codependent still works: the |
 | testfiles/unit/test-load-hyperref-then-codependent.lvt | LIVE | B-PASS-ONE | Verify hyperref loaded BEFORE codependent works cleanly (the |
@@ -111,7 +111,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-numbering-basic.lvt | LIVE | B-NUM-SHARED, B-NUM-SEQ | Minimal atom counter sanity: one plain paragraph + one tracked |
 | testfiles/unit/test-numbering-depth1.lvt | LIVE | B-NUM-DEPTH1 | depth=1 option produces section.atom display numbers |
 | testfiles/unit/test-numbering-depth2.lvt | LIVE | B-NUM-DEPTH2 | depth=2 option produces section.subsection.atom display |
-| testfiles/unit/test-numbering-depth3.lvt | LIVE | — | depth=3 option produces section.subsection.subsubsection.atom |
+| testfiles/unit/test-numbering-depth3.lvt | LIVE | B-NUM-DEPTH2 | depth=3 option produces section.subsection.subsubsection.atom |
 | testfiles/unit/test-numbering-sibling.lvt | LIVE | B-NUM-SEQ, B-NUM-RESET | thmtools sibling=theorem envs get correct atom numbering. |
 | testfiles/unit/test-paragraphs-off.lvt | LIVE | B-NUM-PARA | paragraphs=off disables bare-paragraph atom tracking; |
 | testfiles/unit/test-pass-single-no-backrefs.lvt | LIVE | B-PASS-SINGLE | A single-pass build still produces a numbered document but |
