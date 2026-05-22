@@ -37,8 +37,8 @@
 %% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:
 %% --- W05-A2: keymap rail removed; separated proof has stable identity proof:a5.
 %% --- \codepproofof{thm:a} binds proof:a5 to theorem:1.1.
-%% --- The aux shows anchormap{proof:1.1}{codep-proof:a5} for the legacy alias
-%% --- but no keymap records (keymap rail retired in W05-A2).
+%% --- The aux may show anchormap{proof:1.1}{codep-proof:a5} for the
+%% --- hyperref proof destination, but no keymap records (rail retired in W05-A2).
 %% TEST-AUX-CONTAINS: \codep@entitymeta{proof:a5}{proof}{1.1*}{proof}{theorem:1.1}
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap
 %% TEST-PACKAGES: amsthm,codependent
@@ -82,9 +82,9 @@ One more sentence so the paragraph atom has material.
   Second theorem; produces theorem:2.1 atom.
 \end{theorem}
 
-% Separated proof of thm:a.  Adjacent to thm:b so pre-rebind key is
-% proof:2.1; \codepproofof{thm:a} rebinds to proof:1.1.  The keymap
-% rail (W04-P01) writes \codep@keymap{proof:2.1}{proof:1.1} to aux.
+% Separated proof of thm:a.  Adjacent to thm:b, but \codepproofof
+% rebinds the opaque proof atom proof:a5 to theorem:1.1.  No keymap
+% records are written; the W05-A2 stable proof key is canonical.
 \begin{proof}[Proof of Theorem~\ref{thm:a}]
   \codepproofof{thm:a}
   Separated proof of the first theorem; body runs after rebind.
