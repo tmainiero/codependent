@@ -12,6 +12,17 @@ LaTeX package for automatic semantic dependency tracking and backreference rende
 | User commands | `\codeptrack`, `\codepsetup`, `\codeptag`, `\codepnewcommand`, etc. |
 | pgfkeys namespace | `/codep/` |
 
+## First-time setup (per clone)
+
+```sh
+git config core.hooksPath .githooks   # enable repo-shared git hooks
+```
+
+The pre-commit hook at `.githooks/pre-commit` blocks commits that include
+paths matching `.gitignore` (catches `git add -f` slipping ephemeral state
+into the repo). Bypass with `git commit --no-verify` only when you genuinely
+need to commit an otherwise-ignored path.
+
 ## Build & Test
 
 ```sh

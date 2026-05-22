@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Block commits that include paths matching .gitignore.
+#
+# Catches the failure mode where `git add -f` silently smuggles ephemeral
+# session artifacts (e.g. .claude/comms/*) into the repo despite the
+# gitignore rule. The remedy is one of:
+#
+#   (1) Unstage the offending paths:    git reset HEAD <path>...
+#   (2) Move the content to a non-ignored location (e.g. docs/).
+#   (3) Bypass with explicit intent:    git commit --no-verify
+#       (use only when you genuinely need to commit an ignored path AND
+#       you've justified it; this is the same affordance `git add -f`
+#       gives, but you have to say it twice — once at add, once at commit.)
+#
+# Enable for this clone (one-time):  git config core.hooksPath .githooks
+# Verify:                            git config --get core.hooksPath
+
+set -euo pipefail
+
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+[ -z "$staged" ] && exit 0
+
+# `git check-ignore` returns 0 if a path WOULD be ignored by .gitignore.
+# We check each staged path; collect violations.
+violations=""
+while IFS= read -r path; do
+  [ -z "$path" ] && continue
+  # `--no-index` makes it consult only gitignore rules (not tracked-state).
+  if git check-ignore -q --no-index -- "$path" 2>/dev/null; then
+    violations="${violations}${path}"$'\n'
+  fi
+done <<< "$staged"
+
+if [ -n "$violations" ]; then
+  printf '\n\033[1;31mBLOCK:\033[0m commit includes paths that match .gitignore:\n' >&2
+  printf '%s' "$violations" | sed 's/^/  /' >&2
+  printf '\nRemedies:\n' >&2
+  printf '  - Unstage:           git reset HEAD <path>...\n' >&2
+  printf '  - Move out:          move content to a non-ignored location (e.g. docs/)\n' >&2
+  printf '  - Override:          git commit --no-verify  (use sparingly)\n' >&2
+  exit 1
+fi
+
+exit 0
