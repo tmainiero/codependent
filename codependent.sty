@@ -2666,13 +2666,29 @@
 %   When enumitem is loaded, wraps \newlist so that every
 %   user-defined list environment is automatically registered
 %   for paragraph-number suppression.
+\newif\ifcodep@enumitemnewlistwrapped
+%% @behavior B-SUPP-LISTS
+\newcommand*{\codep@wrapenumitemnewlist}{%
+  \ifcodep@enumitemnewlistwrapped%
+  \else%
+    \global\codep@enumitemnewlistwrappedtrue%
+    \global\let\codep@orig@newlist\newlist%
+    \gdef\newlist##1##2##3{%
+      \codep@orig@newlist{##1}{##2}{##3}%
+      \codep@suppressenv{##1}%
+    }%
+  \fi%
+}%
+\@ifpackageloaded{enumitem}{%
+  \codep@wrapenumitemnewlist%
+}{%
+  \AddToHook{package/enumitem/after}[codependent/suppress/enumitem]{%
+    \codep@wrapenumitemnewlist%
+  }%
+}%
 \AddToHook{begindocument/before}[codependent/suppress/enumitem]{%
   \@ifpackageloaded{enumitem}{%
-    \let\codep@orig@newlist\newlist
-    \def\newlist#1#2#3{%
-      \codep@orig@newlist{#1}{#2}{#3}%
-      \codep@suppressenv{#1}%
-    }%
+    \codep@wrapenumitemnewlist%
   }{}%
 }
 

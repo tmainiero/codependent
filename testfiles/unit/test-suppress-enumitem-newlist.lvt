@@ -5,7 +5,7 @@
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify a user-declared \newlist{mylist}{itemize}{1} environment
 %%            auto-suppresses atom numbering for paragraphs inside it.
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-PINS-KNOWN-BROKEN: no
 %% TEST-SOURCE: REVIEW_E #10 (MINOR)
 %% TEST-SECTION: docs/DESIGN.md §8a.6 suppression list / enumitem integration
 %% TEST-EXIT: 0
