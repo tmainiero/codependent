@@ -8,18 +8,18 @@
     "keys": [
       [
         "lemma:1.2||sec:joint-statements",
-        "proof:1.1||thm:joint-a",
-        "proof:1.2||lem:joint-b"
+        "proof:a3||lem:joint-b",
+        "proof:a3||thm:joint-a"
       ],
       [
         "lemma:1.2||sec:joint-statements",
-        "proof:1.1||thm:joint-a",
-        "proof:1.2||lem:joint-b"
+        "proof:a3||lem:joint-b",
+        "proof:a3||thm:joint-a"
       ],
       [
         "lemma:1.2||sec:joint-statements",
-        "proof:1.1||thm:joint-a",
-        "proof:1.2||lem:joint-b"
+        "proof:a3||lem:joint-b",
+        "proof:a3||thm:joint-a"
       ]
     ]
   },

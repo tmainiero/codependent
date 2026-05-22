@@ -17,7 +17,7 @@
 %% TEST-PDF-LINK-Y-NEAR: 1\.1\* | Proof of Theorem 1\.1 | within=10
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:a3}{codep-proof:a3}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a3}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a3}{codep-proof:a3}
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap
 %% TEST-AUX-CONTAINS: \codep@entitymeta{proof:a3}{proof}{1.1*}{proof}{theorem:1.1}
 %% TEST-PACKAGES: amsthm,hyperref,codependent
@@ -30,9 +30,9 @@
 %%
 %% This fixture forces the separated-proof rebind to happen well below
 %% the heading.  The proof begins adjacent to theorem 2.1, so the
-%% proof-begin anchor is emitted as codep-proof:2.1.  Much later,
+%% proof-begin anchor is emitted as codep-proof:a3.  Much later,
 %% \codepproofof{thm:main} rebinds the proof to theorem 1.1.  The fix
-%% under test must alias proof:1.1 back to the stored proof-begin
+%% under test must keep proof:a3 bound to the stored proof-begin
 %% anchor instead of emitting a second call-site anchor.
 
 \documentclass{article}

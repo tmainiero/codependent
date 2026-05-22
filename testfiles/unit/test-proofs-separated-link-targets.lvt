@@ -23,7 +23,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a4}{theorem:1.1}{1.1}{*}
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:a2}{codep-proof:a2}
 %% TEST-AUX-CONTAINS: \codep@anchormap{proof:a4}{codep-proof:a4}
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.1}{codep-proof:a4}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a4}{codep-proof:a4}
 %% TEST-AUX-NOT-CONTAINS: \codep@keymap
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-RERUN: 2
@@ -31,25 +31,25 @@
 %% Companion to test-proofs-separated.lvt, which asserts the source-
 %% level rendering ("Used in 2.1*" on thm:main, "Used in 1.1*" on
 %% thm:target) without hyperref.  This fixture loads hyperref and
-%% verifies the corresponding link annotations land near the same
+%% verifies the canonical proof:a<N> link annotation lands near the same
 %% proof-begin anchor:
 %%
 %%   * Theorem 1.1 thm:main is referenced from the optional arg
 %%     \ref{thm:main} in \begin{proof}[Proof of Theorem~\ref{thm:main}].
 %%     That \ref runs BEFORE \codepproofof rebinds, so \codep@atomref
-%%     records source-key proof:2.1 (the adjacent-inheritance key).
+%%     records source-key proof:a4 (the canonical proof atom key).
 %%     thm:main's "Used in" line contains "2.1*", and its link
 %%     lands at the rebound proof's heading.
 %%
 %%   * Theorem 2.1 thm:target is referenced from the body's
 %%     \ref{thm:target}, which runs AFTER \codepproofof rebinds.
-%%     \codep@atomref records source-key proof:1.1 (post-rebind).
+%%     \codep@atomref records source-key proof:a4 (post-rebind).
 %%     thm:target's "Used in" line contains "1.1*", and its link
 %%     lands at the same rebound proof heading.
 %%
-%% The adjacent proof begin emits codep-proof:2.1 before \codepproofof
+%% The adjacent proof begin emits codep-proof:a4 before \codepproofof
 %% rebinds the proof key.  \codep@proofof@resolve then aliases the
-%% rebound proof:1.1 key back to that stored proof-begin anchor, so
+%% canonical proof:a4 key bound to that stored proof-begin anchor, so
 %% pre- and post-rebind source keys both land near the same proof.
 
 \documentclass{article}

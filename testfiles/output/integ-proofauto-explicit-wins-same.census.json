@@ -8,18 +8,18 @@
     "keys": [
       [
         "lemma:1.2||sec:explicit-same-statements",
-        "proof:1.1||lem:explicit-same-witness",
-        "proof:1.1||thm:explicit-same"
+        "proof:a3||lem:explicit-same-witness",
+        "proof:a3||thm:explicit-same"
       ],
       [
         "lemma:1.2||sec:explicit-same-statements",
-        "proof:1.1||lem:explicit-same-witness",
-        "proof:1.1||thm:explicit-same"
+        "proof:a3||lem:explicit-same-witness",
+        "proof:a3||thm:explicit-same"
       ],
       [
         "lemma:1.2||sec:explicit-same-statements",
-        "proof:1.1||lem:explicit-same-witness",
-        "proof:1.1||thm:explicit-same"
+        "proof:a3||lem:explicit-same-witness",
+        "proof:a3||thm:explicit-same"
       ]
     ]
   },

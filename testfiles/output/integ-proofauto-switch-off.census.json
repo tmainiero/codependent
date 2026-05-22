@@ -8,18 +8,18 @@
     "keys": [
       [
         "lemma:1.2||sec:switch-statements",
-        "proof:1.1||thm:switch-auto",
-        "proof:1.2||lem:switch-explicit"
+        "proof:a3||thm:switch-auto",
+        "proof:a4||lem:switch-explicit"
       ],
       [
         "lemma:1.2||sec:switch-statements",
-        "proof:1.1||thm:switch-auto",
-        "proof:1.2||lem:switch-explicit"
+        "proof:a3||thm:switch-auto",
+        "proof:a4||lem:switch-explicit"
       ],
       [
         "lemma:1.2||sec:switch-statements",
-        "proof:1.1||thm:switch-auto",
-        "proof:1.2||lem:switch-explicit"
+        "proof:a3||thm:switch-auto",
+        "proof:a4||lem:switch-explicit"
       ]
     ]
   },

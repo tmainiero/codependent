@@ -15,7 +15,7 @@
 %% The "Used in" line for thm:B must land at the proof heading, not
 %% at the parent theorem anchor.
 %% TEST-PDF-LINK-Y-NEAR: 1\.2\* | Proof of Theorem 1\.2 | within=10
-%% TEST-AUX-CONTAINS: \codep@anchormap{proof:1.2}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a3}{codep-proof:a3}
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-PACKAGES: amsmath,amssymb,amsthm,hyperref,codependent
 %% TEST-CENSUS: enabled

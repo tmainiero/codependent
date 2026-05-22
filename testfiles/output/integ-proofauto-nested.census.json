@@ -8,18 +8,18 @@
     "keys": [
       [
         "lemma:1.2||sec:nested-statements",
-        "proof:1.1||thm:nested-outer",
-        "proof:1.2||lem:nested-inner"
+        "proof:a3||thm:nested-outer",
+        "proof:a4||lem:nested-inner"
       ],
       [
         "lemma:1.2||sec:nested-statements",
-        "proof:1.1||thm:nested-outer",
-        "proof:1.2||lem:nested-inner"
+        "proof:a3||thm:nested-outer",
+        "proof:a4||lem:nested-inner"
       ],
       [
         "lemma:1.2||sec:nested-statements",
-        "proof:1.1||thm:nested-outer",
-        "proof:1.2||lem:nested-inner"
+        "proof:a3||thm:nested-outer",
+        "proof:a4||lem:nested-inner"
       ]
     ]
   },

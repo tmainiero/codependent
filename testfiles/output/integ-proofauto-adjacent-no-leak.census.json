@@ -1,28 +1,25 @@
 {
   "atomref": {
     "count": [
-      4,
-      4,
-      4
+      3,
+      3,
+      3
     ],
     "keys": [
       [
         "lemma:1.2||sec:adj-first",
-        "proof:1.1||thm:adj-auto",
-        "proof:3.1||thm:adj-auto",
-        "proof:3.1||thm:adjacent-owner"
+        "proof:a3||thm:adj-auto",
+        "proof:a5||thm:adj-auto"
       ],
       [
         "lemma:1.2||sec:adj-first",
-        "proof:1.1||thm:adj-auto",
-        "proof:3.1||thm:adj-auto",
-        "proof:3.1||thm:adjacent-owner"
+        "proof:a3||thm:adj-auto",
+        "proof:a5||thm:adj-auto"
       ],
       [
         "lemma:1.2||sec:adj-first",
-        "proof:1.1||thm:adj-auto",
-        "proof:3.1||thm:adj-auto",
-        "proof:3.1||thm:adjacent-owner"
+        "proof:a3||thm:adj-auto",
+        "proof:a5||thm:adj-auto"
       ]
     ]
   },
@@ -103,18 +100,16 @@
   "renderlist": {
     "count": [
       0,
-      2,
-      2
+      1,
+      1
     ],
     "keys": [
       [],
       [
-        "theorem:1.1",
-        "theorem:3.1"
+        "theorem:1.1"
       ],
       [
-        "theorem:1.1",
-        "theorem:3.1"
+        "theorem:1.1"
       ]
     ]
   }

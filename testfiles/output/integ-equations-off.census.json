@@ -17,7 +17,7 @@
         "paragraph:2.4||eq:lipschitz",
         "paragraph:2.4||thm:ivt",
         "paragraph:2.4||thm:mvt",
-        "proof:1.2||def:continuous",
+        "proof:a3||def:continuous",
         "theorem:1.2||def:continuous",
         "theorem:1.4||def:continuous",
         "theorem:1.4||thm:ivt"
@@ -33,7 +33,7 @@
         "paragraph:2.4||eq:lipschitz",
         "paragraph:2.4||thm:ivt",
         "paragraph:2.4||thm:mvt",
-        "proof:1.2||def:continuous",
+        "proof:a3||def:continuous",
         "theorem:1.2||def:continuous",
         "theorem:1.4||def:continuous",
         "theorem:1.4||thm:ivt"
@@ -49,7 +49,7 @@
         "paragraph:2.4||eq:lipschitz",
         "paragraph:2.4||thm:ivt",
         "paragraph:2.4||thm:mvt",
-        "proof:1.2||def:continuous",
+        "proof:a3||def:continuous",
         "theorem:1.2||def:continuous",
         "theorem:1.4||def:continuous",
         "theorem:1.4||thm:ivt"

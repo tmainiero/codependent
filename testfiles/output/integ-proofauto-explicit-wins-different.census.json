@@ -8,18 +8,18 @@
     "keys": [
       [
         "lemma:1.2||sec:explicit-diff-statements",
-        "proof:1.1||thm:heading-target",
-        "proof:1.2||lem:explicit-target"
+        "proof:a3||lem:explicit-target",
+        "proof:a3||thm:heading-target"
       ],
       [
         "lemma:1.2||sec:explicit-diff-statements",
-        "proof:1.1||thm:heading-target",
-        "proof:1.2||lem:explicit-target"
+        "proof:a3||lem:explicit-target",
+        "proof:a3||thm:heading-target"
       ],
       [
         "lemma:1.2||sec:explicit-diff-statements",
-        "proof:1.1||thm:heading-target",
-        "proof:1.2||lem:explicit-target"
+        "proof:a3||lem:explicit-target",
+        "proof:a3||thm:heading-target"
       ]
     ]
   },

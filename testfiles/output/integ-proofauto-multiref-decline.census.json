@@ -1,25 +1,28 @@
 {
   "atomref": {
     "count": [
-      3,
-      3,
-      3
+      4,
+      4,
+      4
     ],
     "keys": [
       [
         "lemma:1.2||sec:multi-statements",
-        "proof:1.1||thm:multi-a",
-        "proof:1.2||lem:multi-b"
+        "proof:a3||lem:multi-b",
+        "proof:a3||thm:multi-a",
+        "proof:a4||thm:multi-a"
       ],
       [
         "lemma:1.2||sec:multi-statements",
-        "proof:1.1||thm:multi-a",
-        "proof:1.2||lem:multi-b"
+        "proof:a3||lem:multi-b",
+        "proof:a3||thm:multi-a",
+        "proof:a4||thm:multi-a"
       ],
       [
         "lemma:1.2||sec:multi-statements",
-        "proof:1.1||thm:multi-a",
-        "proof:1.2||lem:multi-b"
+        "proof:a3||lem:multi-b",
+        "proof:a3||thm:multi-a",
+        "proof:a4||thm:multi-a"
       ]
     ]
   },

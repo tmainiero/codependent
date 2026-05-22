@@ -1,22 +1,19 @@
 {
   "atomref": {
     "count": [
-      2,
-      2,
-      2
+      1,
+      1,
+      1
     ],
     "keys": [
       [
-        "proof:1.1||thm:target",
-        "proof:2.1||thm:main"
+        "proof:a3||thm:main"
       ],
       [
-        "proof:1.1||thm:target",
-        "proof:2.1||thm:main"
+        "proof:a3||thm:main"
       ],
       [
-        "proof:1.1||thm:target",
-        "proof:2.1||thm:main"
+        "proof:a3||thm:main"
       ]
     ]
   },
@@ -64,18 +61,16 @@
   "renderlist": {
     "count": [
       0,
-      2,
-      2
+      1,
+      1
     ],
     "keys": [
       [],
       [
-        "theorem:1.1",
-        "theorem:2.1"
+        "theorem:1.1"
       ],
       [
-        "theorem:1.1",
-        "theorem:2.1"
+        "theorem:1.1"
       ]
     ]
   }

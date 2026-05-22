@@ -8,18 +8,18 @@
     "keys": [
       [
         "lemma:1.2||sec:auto-one",
-        "proof:1.1||lem:autoref-witness",
-        "proof:1.1||thm:autoref-target"
+        "proof:a3||lem:autoref-witness",
+        "proof:a3||thm:autoref-target"
       ],
       [
         "lemma:1.2||sec:auto-one",
-        "proof:1.1||lem:autoref-witness",
-        "proof:1.1||thm:autoref-target"
+        "proof:a3||lem:autoref-witness",
+        "proof:a3||thm:autoref-target"
       ],
       [
         "lemma:1.2||sec:auto-one",
-        "proof:1.1||lem:autoref-witness",
-        "proof:1.1||thm:autoref-target"
+        "proof:a3||lem:autoref-witness",
+        "proof:a3||thm:autoref-target"
       ]
     ]
   },

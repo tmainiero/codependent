@@ -8,18 +8,18 @@
     "keys": [
       [
         "lemma:1.2||sec:ref-one",
-        "proof:1.1||lem:ref-witness",
-        "proof:1.1||thm:ref-target"
+        "proof:a3||lem:ref-witness",
+        "proof:a3||thm:ref-target"
       ],
       [
         "lemma:1.2||sec:ref-one",
-        "proof:1.1||lem:ref-witness",
-        "proof:1.1||thm:ref-target"
+        "proof:a3||lem:ref-witness",
+        "proof:a3||thm:ref-target"
       ],
       [
         "lemma:1.2||sec:ref-one",
-        "proof:1.1||lem:ref-witness",
-        "proof:1.1||thm:ref-target"
+        "proof:a3||lem:ref-witness",
+        "proof:a3||thm:ref-target"
       ]
     ]
   },
