@@ -19,22 +19,23 @@ relative paths from `tools/codependent/`, so a future
 testfiles/
   README.md              this file
   run-tests.py           the test runner (Python 3, stdlib only)
-  unit/                  ~30 single-concern fixtures
+  unit/                  single-concern fixtures (currently ~155)
     test-<category>-<name>.lvt
-  integration/           ~5 realistic-preamble integration fixtures
+  integration/           full-preamble integration fixtures (currently ~34)
+  compiled-examples/     stress/visual fixtures
   real-world/            arxiv-corpus smoke test
     fetch.py             arxiv tarball downloader
     wrap.py              wrapper-generation script
     corpus.lock          paper manifest with SHA-256 pins
     .gitignore           papers/ and wrappers/ NOT committed
     README.md            real-world subdir docs
-  test-*.lvt             v0.1 stub fixtures (legacy, not run by run-tests.py)
+  support/               shared .sty / .cls files for fixtures
+  output/                expected .census.json files for cdp-census checks
 ```
 
-The `testfiles/` root contains 11 stub `.lvt` files from the
-v0.1 design. They are kept for historical reference and as
-seed material for the implementer; the modern runner only
-discovers `unit/*.lvt` and `integration/*.lvt`.
+The `testfiles/` root must not contain `.lvt` fixtures. The runner
+rejects root-level `.lvt` files so new fixtures live under `unit/` or
+`integration/`, with stress/visual fixtures under `compiled-examples/`.
 
 ## Running
 

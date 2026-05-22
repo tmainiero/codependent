@@ -2883,6 +2883,18 @@ def _fixture_headers(path: Path) -> dict:
     return parse_test_kind_headers(path).get("headers", {})
 
 
+def _reject_root_lvt_fixtures() -> None:
+    root_lvt = sorted(SCRIPT_DIR.glob("*.lvt"))
+    if not root_lvt:
+        return
+    offenders = "\n  ".join(str(path) for path in root_lvt)
+    raise SystemExit(
+        "testfiles/ root must not contain .lvt files; only unit/ and integration/\n"
+        "Offenders:\n  " + offenders + "\n"
+        "Move to testfiles/unit/ or testfiles/integration/, or delete."
+    )
+
+
 def _discover_lvt_fixtures(
     selected_kinds: set[str],
     real_world: bool,
@@ -2945,6 +2957,7 @@ def discover_fixtures(
     pattern: str | None,
 ) -> list[Fixture]:
     """Discover selected .lvt fixtures plus LIVE stress .tex fixtures."""
+    _reject_root_lvt_fixtures()
     return [
         *_discover_lvt_fixtures(selected_kinds, real_world, pattern),
         *_discover_live_stress_tex_fixtures(selected_kinds, pattern),
@@ -3136,6 +3149,7 @@ def main():
     )
     args = parser.parse_args()
 
+    _reject_root_lvt_fixtures()
     index_rc = sync_test_index(check=args.check_test_index)
     if index_rc != 0:
         return index_rc
