@@ -239,6 +239,8 @@
 % Paragraph suppression depth.
 \newcount\codep@suppressdepth
 \codep@suppressdepth=0\relax
+\newcount\codep@sourceblockdepth
+\codep@sourceblockdepth=0\relax
 
 % Tracked theorem-like nesting depth.
 \newcount\codep@trackeddepth
@@ -740,8 +742,12 @@
 % \codep@getcurrentatomkey{macro}
 %   Resolve the active source atom's legacy prefixed key.
 \def\codep@getcurrentatomkey#1{%
-  \codep@getcurrentownerid\codep@tmp@ownerid%
-  \codep@atomgetkey{\codep@tmp@ownerid}{#1}%
+  \ifnum\codep@sourceblockdepth>0\relax%
+    \let#1\@empty%
+  \else%
+    \codep@getcurrentownerid\codep@tmp@ownerid%
+    \codep@atomgetkey{\codep@tmp@ownerid}{#1}%
+  \fi%
 }%
 
 %% @implements \codep@recordlabelowner
@@ -2498,9 +2504,33 @@
 %   \global\advance is required: caller may be inside a group
 %   (e.g., \AfterEndEnvironment callbacks).
 \def\codep@withsuppression#1{%
-  \global\advance\codep@suppressdepth\@ne%
+  \global\advance\codep@suppressdepth\@ne\relax%
   #1%
-  \global\advance\codep@suppressdepth\m@ne%
+  \global\advance\codep@suppressdepth\m@ne\relax%
+}%
+
+\newif\ifcodep@footnotesuppressed
+%% @utility
+% \codep@suppressfootnote
+%   Suppress paragraph atoms and source attribution while the footnote
+%   body is typeset; direct wrapping avoids \footnote's \unskip path.
+\newcommand*{\codep@suppressfootnote}{%
+  \ifcodep@footnotesuppressed%
+  \else%
+    \global\codep@footnotesuppressedtrue%
+    \let\codep@orig@footnote\footnote%
+    \RenewDocumentCommand{\footnote}{o +m}{%
+      \global\advance\codep@sourceblockdepth\@ne\relax%
+      \codep@withsuppression{%
+        \IfNoValueTF{##1}{%
+          \codep@orig@footnote{##2}%
+        }{%
+          \codep@orig@footnote[##1]{##2}%
+        }%
+      }%
+      \global\advance\codep@sourceblockdepth\m@ne\relax%
+    }%
+  \fi%
 }%
 
 % \codep@installsuppress
@@ -2674,7 +2704,7 @@
 %   suppressed at the env level.
 %% @implements \codep@installsuppress
 \newcommand*{\codep@suppresscommands}{%
-  \codep@suppresscmd{\footnote}%
+  \codep@suppressfootnote%
   \codep@suppresscmd{\parbox}%
   \codep@suppresscmd{\maketitle}%
 }

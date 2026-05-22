@@ -6,7 +6,7 @@
 %% TEST-WHAT: Concept invocations outside any tracked atom, including in
 %%            headings, captions, and footnotes, are silently ignored and
 %%            do not produce visible backrefs.
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-PINS-KNOWN-BROKEN: no
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-CONC-OUTSIDE, B-EDGE-CONC-OUTSIDE
 %% TEST-SECTION: concept uses outside atoms
 %% TEST-EXIT: 0

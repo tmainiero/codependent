@@ -5,7 +5,7 @@
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Refs in quote environments, floats, tabular content, and
 %%            footnotes are suppressed and produce no visible backref row.
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-PINS-KNOWN-BROKEN: no
 %% TEST-SOURCE: .claude/comms/behavior-coverage-audit-report.md B-SUPP-QUOTE, B-SUPP-FLOATS, B-SUPP-TABLES, B-EDGE-FOOTNOTE
 %% TEST-SECTION: suppressed contexts
 %% TEST-EXIT: 0
