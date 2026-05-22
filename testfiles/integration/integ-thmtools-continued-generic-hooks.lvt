@@ -1,0 +1,64 @@
+%% TEST-NAME: integ-thmtools-continued-generic-hooks
+%% TEST-PURPOSE: thmtools continued theorem tracks via generic hooks; continued copy gets its own atom.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: thmtools [continued=1] compiles through \codeptrack{theorem}; the original theorem label
+%%            emits lblentity, the continued theorem gets its own atom, and its adjacent proof uses
+%%            canonical opaque proof:a<N> identity with no display-key sidecar.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,thmtools,hyperref,cleveref,codependent
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@version{2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:continued-original}{theorem:1.1}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a3}{theorem:1.2}{1.2}{*}
+%% TEST-AUX-CONTAINS: \codep@anchormap{proof:a3}{codep-proof:a3}
+%% TEST-AUX-CONTAINS: \codep@prooftargetmeta{proof:a3}{theorem:1.2}{1.2}{*}
+%% TEST-AUX-NOT-CONTAINS: displaytoatom
+%% TEST-CDP-NOT-CONTAINS: displaytoatom
+%% TEST-AUX-NOT-CONTAINS: proof:{
+%% TEST-CDP-NOT-CONTAINS: proof:{
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@proof{proof:1
+%% TEST-AUX-NOT-CONTAINS: \codep@prooftargetmeta{proof:1
+%% TEST-PDF-BACKREF-TARGETS: theorem\.1\.1 = codep-proof:a3
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%%
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{thmtools}
+\declaretheorem[name=Theorem,numberwithin=section]{theorem}
+\providecommand*{\theoremautorefname}{Theorem}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=inline,proofs=on,paragraphs=off,equations=off,proof-warnings=off}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Thmtools continued}
+
+\begin{theorem}\label{thm:continued-original}
+  The original thmtools theorem establishes the base statement.
+\end{theorem}
+
+\begin{theorem}[continued=1]\label{thm:continued-copy}
+  The continued thmtools theorem records a second tracked environment.
+\end{theorem}
+
+\begin{proof}
+  The adjacent proof follows the continued theorem and cites the original
+  theorem via \cref{thm:continued-original}.
+\end{proof}
+
+\END
+\end{document}
