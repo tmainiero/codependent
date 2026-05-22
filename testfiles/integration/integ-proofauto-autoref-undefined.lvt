@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proofauto-autoref-undefined
 %% TEST-PURPOSE: Auto proof headings with undefined / section-only / forward-ref labels.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING, B-PROOF-UNRESREF
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Undefined heading ref silently no-ops; section heading ref gates before unresref allocation; forward theorem ref migrates unresref to proof:a<N>.
 %% Waiver: case (a) exercises a truly undefined \autoref label; hyperref emits

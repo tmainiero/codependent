@@ -549,12 +549,24 @@ not become a load-bearing text source.  Behavioral anchors:
 [B-LINK-PROOFOF-STAR](BEHAVIOR.md#reference-links), and
 [B-EDGE-BADLABEL](BEHAVIOR.md#edge-cases).
 
+**Current commands:**
+
 | Command | Purpose | Stable PDF effect | `.cdp` record |
 |---------|---------|-------------------|---------------|
 | `\codepproofof{label}` | Bind a separated proof to this labeled atom | Backrefs to the proof land at the proof heading by aliasing the rebound proof key to the existing proof-begin `\codep@anchormap` target | `\codep@cdp@proof{proof:a7}{theorem:2.1}{2.1}{*}` |
 | `\codepproofof*{label}` | Compatibility spelling for the same binding path | Uses the same single proof-begin anchor path as the plain form | `\codep@cdp@proof{proof:a7}{theorem:2.1}{2.1}{*}` |
-| `\codepproofin{citation}` | Proof is in an external source | `\codep@cdp@proofext{citation}` (TODO) |
-| `\codepnoproof{label}` | Theorem intentionally has no proof here | `\codep@cdp@noproof{label}` (TODO) |
+
+**Future proof-metadata commands (Wave E+ planning, not current API):**
+
+The following commands are only planned in the W05 design ledger's future
+feature waves; current code contains only placeholder pending-bind slots for
+this surface.  Do not document them as implemented user API until a future
+wave ships the matching public commands and `.cdp` records.
+
+| Planned command / record | Intended purpose | Planned `.cdp` record |
+|--------------------------|------------------|------------------------|
+| `\codepproofin{citation}` | Proof is in an external source | `\codep@cdp@proofext{citation}` |
+| `\codepnoproof{label}` | Theorem intentionally has no proof here | `\codep@cdp@noproof{label}` |
 
 **Unattributed proofs** (non-adjacent, no `\codepproofof`):
 standalone atom with no parent.  The CLI flags these for user
@@ -1579,6 +1591,11 @@ Notes on the sketch:
 
 ### Section 8a.5 — `\codep@currentatom` state management
 
+> **Historical — pre-W05 implementation plan.** Current code uses the
+> ctx-stack helpers `\codep@getcurrentownerid` and `\codep@getcurrentatomkey`
+> at `codependent.sty:720-750`; theorem ctx push at `codependent.sty:1165-1167`.
+> Below is preserved for rationale.
+
 > Upstream motivation: REVIEW_A finding #3 and REVIEW_C
 > finding #4.  Promoted from a prose subsection to a
 > numbered subsection per REVIEW_D finding #8 so an
@@ -2044,6 +2061,11 @@ Assertions the fixture must verify:
   extraction; this also exercises E#3).
 
 ### Section 8a.6 — Edits to existing `codependent.sty` macros
+
+> **Historical — pre-W05 implementation plan.** The live queue/flush macros are
+> in `codependent-render.sty` (`\codep@queuebackref` at line 155,
+> `\codep@flushbackref` at line 223); `project_w05_queue_retirement.md`
+> (W05-D) supersedes the architectural direction below.  Preserved for rationale.
 
 > Per REVIEW_D finding #5 (BLOCKER): the Section 8a.1-8a.4
 > sketch defines new macros but does not specify how the
@@ -3568,10 +3590,10 @@ emitted.
 Before committing `codependent.ltxml`, run
 
 ```
-latexml --dest=/tmp/out.xml testfiles/test-minimal.tex
+latexml --dest=/tmp/out.xml testfiles/compiled-examples/stress-ta-appendix-gray.tex
 ```
 
-on a minimal fixture document.  LaTeXML reports
+on a current compiled-example fixture document.  LaTeXML reports
 `DefMacro` / `DefConstructor` argument-pattern errors
 loudly at parse time (e.g. "Missing argument count",
 "Unbalanced braces in pattern"), so a successful run is
@@ -4204,6 +4226,11 @@ noise from concepts that have no `\Hom*` marker.  See
 Package options below.
 
 #### Implementation sketch
+
+> **Historical — pre-W05 implementation sketch.** Current command wrapping uses
+> `\codep@definetrackedcmd` at `codependent.sty:4679-4736`; public entrypoints
+> are `\codepnewcommand` / `\codepNewDocumentCommand` at
+> `codependent.sty:5230-5291`.  The sketch below is preserved for rationale.
 
 The wrapped command is defined via `\NewDocumentCommand`
 with an `s` (star) specifier prepended to the user's
