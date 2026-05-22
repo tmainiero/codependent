@@ -505,14 +505,15 @@ It is hooked separately via `\AtBeginEnvironment{proof}`.
 Proof tracking depends on the proof kind:
 
 * **Adjacent / `\codepproofof`-rebound proofs** are bound to a
-  parent atom (theorem / equation) and use the parent's display
-  number for their key (`proof:N.M`).  They render as `N.M*` in
+  parent atom (theorem / equation) while retaining their own
+  opaque proof identity (`proof:a<N>`).  They render as `N.M*` in
   source-token output (the trailing star marks proof-sourced
   refs) and do not consume an additional shared-counter slot —
-  the slot is the parent atom's.
+  the slot is the parent atom's.  Display data lives in proof
+  target metadata, not in the proof key.
 * **Standalone proofs** (no adjacency, no `\codepproofof`) do NOT
-  consume a shared-counter slot at all.  Their key is the opaque
-  proof-id form (`proof:a<N>`) and they are SUPPRESSED from
+  consume a shared-counter slot at all.  Their key is the same
+  opaque proof-id form (`proof:a<N>`) and they are SUPPRESSED from
   rendered backref source-token output by the collapsebr
   classifier.  They remain addressable in the graph (CDP atom
   records, anchor maps, registeratom array) so post-hoc tooling
@@ -528,8 +529,9 @@ no false attribution.  The CLI resolves ambiguous cases.
 
 **Adjacent proofs** (nothing intervened between a tracked
 environment and the proof): auto-attributed to the preceding
-tracked atom.  Display: `proof:2.1`
-renders as `2.1*`.
+tracked atom.  The proof's canonical key remains opaque (for
+example `proof:a7`); proof-target metadata renders it as `2.1*`.
+See [B-PROOF-SEP](BEHAVIOR.md#proof-environments).
 
 **Non-adjacent proofs with explicit attribution:**
 
@@ -540,9 +542,12 @@ the proof heading directly (e.g. `\begin{proof}[Proof of Proposition~\ref{prop:s
 and `\codepproofof` is invoked separately inside the proof body. This
 guarantees that removing codependent (`\usepackage{codependent}` →
 commented out) leaves the rendered document's proof headings intact.
-The W05 backlog tracks an additive feature that auto-detects `\ref` in
-the proof's optional argument; that feature is purely additive and
-preserves the same switch-off-safety property.
+The proof-heading auto-detect path is silent-additive: it may discover
+`\ref`/`\cref`/`\autoref` targets in the optional heading, but it must
+not become a load-bearing text source.  Behavioral anchors:
+[B-PROOF-SEP](BEHAVIOR.md#proof-environments),
+[B-LINK-PROOFOF-STAR](BEHAVIOR.md#reference-links), and
+[B-EDGE-BADLABEL](BEHAVIOR.md#edge-cases).
 
 | Command | Purpose | Stable PDF effect | `.cdp` record |
 |---------|---------|-------------------|---------------|
@@ -561,11 +566,42 @@ cases.
 1. Nothing intervened (no paragraph, no other tracked env)
 2. The preceding environment was registered via `\codeptrack`
 
+#### Joint-proof target metadata
+
+A proof heading that names multiple tracked targets is one proof atom,
+not N independent proofs.  The canonical identity remains `proof:a<N>`;
+`\codep@proofof@capturejointmeta` accumulates target keys, displays, and
+marker in the `\codep@prooftargetmeta{proof}{targets}{displays}{*}` rail.
+The renderer uses that rail to display the single source token as
+`{N,N,N}*`, and the `.cdp` emits one `\codep@cdp@proof` row carrying the
+same target list.  See [B-PROOF-JOINT](BEHAVIOR.md#proof-environments).
+
+#### Heading override and delayed adjacent commit
+
+D3 makes heading attribution win over a same-run adjacent candidate.  The
+adjacent path stores `\codep@adjcandidate@<proofid>` plus target/display
+siblings and raises `\ifcodep@proof@adjcommit@needed`; it no longer writes
+the parent binding before the optional heading has been scanned.
+`\codep@proof@maybeheadingoverrideadjacent` clears the candidate and, when
+`/codep/warn-attribution-conflicts=true`, emits the conflict warning only
+for an adjacent-target-vs-heading-target mismatch.  The false/off spelling
+suppresses the warning, not the attribution result.  See
+[B-PROOF-HEADING-OVERRIDE](BEHAVIOR.md#proof-environments) and
+[B-WARN-ATTR-CONFLICTS](BEHAVIOR.md#proof-environments).
+
+The delayed-commit sentinel is cleared in exactly three places: the
+routeforward Option-A drop for undefined/section-only headings, resolver
+success for a heading target, and finalizer consumption of a surviving
+adjacent candidate.  The refactor is required to be wire-format invariant:
+final `.aux`/`.cdp` output for D3 fixtures stays byte-identical apart from
+intentional behavior changes.  See
+[B-PROOF-DELAYED-COMMIT](BEHAVIOR.md#proof-environments).
+
 ### Unresolved-reference allocation (`unresref:<N>`)
 
 When the proof-heading scanner (`\codep@autoproofof@routeforward`) encounters a label in the optional heading argument, it must decide in the same pass whether the label refers to a tracked theorem.  Three cases arise:
 
-1. **Immediate forward-ref**: the label has a `\codep@lblentity` (the tracked entity is already defined earlier in the document and the `.aux` entry is loaded).  Resolution happens immediately; the proof gets a permanent `proof:N.M` key.
+1. **Immediate forward-ref**: the label has a `\codep@lblentity` (the tracked entity is already defined earlier in the document and the `.aux` entry is loaded).  Resolution happens immediately; the proof keeps its permanent opaque `proof:a<N>` key and records parent/display data in proof-target metadata.
 
 2. **Deferred forward-ref**: the label has neither `\codep@lblnum` nor `\codep@lblentity` at scan time.  The scanner cannot tell whether a tracked theorem with this label will be defined later in the document.  A placeholder `unresref:<N>` key is allocated.  A resolver is queued onto Q3 (`\AtEndDocument`) so the final attribution can be written once the full `.aux` is available.
 
@@ -581,7 +617,7 @@ The prefix "unresref" (unresolved reference) describes what the key represents a
 
 At drain time (`\AtEndDocument`), `\codep@autoproofof@resolve` pops each queued `unresref:<N>` entry and re-checks the label:
 
-- **Case (a) — forward-ref confirmed**: `\codep@lblentity` is now present.  The resolver computes the final `proof:N.M` key, writes a `\codep@keymap{unresref:<N>}{proof:N.M}` entry to `.aux`, and calls `\codep@unresref@flushrefs` to migrate all body `\codep@atomref` edges from the provisional key to the final key in the same aux pass.
+- **Case (a) — forward-ref confirmed**: `\codep@lblentity` is now present.  The resolver binds the proof's opaque `proof:a<N>` identity to the resolved target, writes a `\codep@keymap{unresref:<N>}{proof:a<N>}` entry to `.aux`, and calls `\codep@unresref@flushrefs` to migrate all body `\codep@atomref` edges from the provisional key to the final key in the same aux pass.
 
 - **Case (b) — truly undefined label**: `\codep@lblentity` is still absent (the label was never defined at all).  The drain-time auto-flag gate silently no-ops: no `.cdp` record, no `\codep@keymap` entry, no migration.  The `\codep@entitymeta{unresref:<N>}` line emitted at allocation time remains in `.aux` as a bookkeeping artefact but has no semantic effect.  The `.cdp` is clean.
 
@@ -589,7 +625,7 @@ Note: cases (a) and (b) are indistinguishable at scan time — both labels have 
 
 #### Live migration path
 
-During proof body scanning, `\codep@dedupwrite` intercepts any `\codep@atomref{unresref:<N>}{target}` write (detected via `\codep@ifunresrefkey`) and diverts it to `\codep@unresref@rememberref` instead of emitting a provisional `.aux` line.  At drain time, once the final `proof:N.M` key is known, `\codep@unresref@flushrefs` replays all remembered target labels under the final key.  This means body-cite edges are written exactly once in the `.aux` — under the final permanent key — and no re-processing is needed.
+During proof body scanning, `\codep@dedupwrite` intercepts any `\codep@atomref{unresref:<N>}{target}` write (detected via `\codep@ifunresrefkey`) and diverts it to `\codep@unresref@rememberref` instead of emitting a provisional `.aux` line.  At drain time, once the final `proof:a<N>` key is known, `\codep@unresref@flushrefs` replays all remembered target labels under the final key.  This means body-cite edges are written exactly once in the `.aux` — under the final permanent key — and no re-processing is needed.
 
 The `\codep@appendbr@core` `unresref:`-prefix branch (`\codep@ifunresrefkey` check with keymap lookup) is a **defensive backup**: it handles any provisional-key edge that somehow reaches the backref replay pass without prior migration.  Under normal operation this branch is never triggered.
 
@@ -603,9 +639,9 @@ Any `unresref:*` key that reaches `\codep@graph@getdisplay` (which should not ha
 
 - Case (a): `\autoref{thm:never-defined}` — truly undefined label; asserts `TEST-AUX-NOT-CONTAINS: \codep@keymap{unresref:1}` (no keymap entry written) and `TEST-CDP-NOT-CONTAINS: unresref:` (clean `.cdp`).
 - Case (b): `\cref{sec:foo-undef}` — section-only label; asserts no `unresref:` entry at all (the tracked-entity gate fires before allocation).
-- Case (c): a proof heading naming a theorem defined **later** in the same document; asserts `TEST-AUX-CONTAINS: \codep@keymap{unresref:2}{proof:3.1}` (successful migration).
+- Case (c): a proof heading naming a theorem defined **later** in the same document; asserts migration to an opaque `proof:a<N>` key via `\codep@keymap{unresref:<N>}{proof:a<N>}`.
 
-`testfiles/integration/integ-proofauto-bodycite-routing.lvt` covers the body-cite migration path specifically: it asserts that `TEST-AUX-CONTAINS: \codep@keymap{unresref:1}{proof:3.1}` and `TEST-CDP-NOT-CONTAINS: unresref:` — confirming both that migration wrote the keymap and that no provisional key survived into the `.cdp`.
+`testfiles/integration/integ-proofauto-bodycite-routing.lvt` covers the body-cite migration path specifically: it asserts migration to an opaque proof key and `TEST-CDP-NOT-CONTAINS: unresref:` — confirming both that migration wrote the keymap and that no provisional key survived into the `.cdp`.
 
 ### Environment tracking
 
@@ -650,7 +686,7 @@ Definition:1.2  — from \begin{definition}
 Lemma:1.4       — from \begin{lemma}
 MyCustomEnv:3.1 — from any user-tracked environment
 equation:2.1    — from equation tracking
-proof:2.1       — from proof attribution
+proof:a7        — from proof attribution (opaque proof identity)
 paragraph:2.1   — from paragraph numbering
 ```
 
@@ -662,7 +698,7 @@ are derived from the prefix:
 | Any tracked env | bare number | `2.1` |
 | `paragraph` | bare number | `2.1` |
 | `equation` | parenthesized | `(2.1)` |
-| `proof` | starred | `2.1*` |
+| `proof` | starred, from target metadata | `2.1*` / `{2.1,2.3}*` |
 
 This namespacing prevents collisions (equation 2.1 vs
 paragraph 2.1 are distinct keys) and gives the CLI full
@@ -4540,7 +4576,20 @@ The `.sty` hooks into theorem environments by name via
   KOMA-Script.  Auto-detects top-level sectioning command.
 - **Theorem backends:** `amsthm`, `ntheorem`, or raw
   `\newtheorem`.  No preference imposed.
+- **thmtools `[continued]`:** covered through the same generic
+  environment begin/end hook surface as ordinary tracked theorem
+  instances; no per-package shim is installed.  The GREEN fixture is
+  `testfiles/integration/integ-thmtools-continued-generic-hooks.lvt`.
+  See [B-COMPAT-THMTOOLS-CONTINUED](BEHAVIOR.md#compatibility-matrix).
 - **hyperref:** optional, detected at load time.
+
+### Known limitations
+
+- **keytheorems:** support is waived to a future xparse-environment
+  tracking wave, not treated as a dropped TODO.  The blocker is the
+  LaTeX2e `cmd/<env>` hook surface against xparse-defined environments;
+  see `project_keytheorems_xparse_future_wave.md` and
+  `.claude/comms/w05-c-axis-b-keytheorems-followup.md`.
 
 LaTeXML compatibility is a secondary goal.  The `.sty` uses
 standard LaTeX2e mechanisms.  If LaTeXML needs help with
