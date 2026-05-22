@@ -116,7 +116,11 @@ def validate_fixture(path: Path, repo_root: Path, behavior_baseline: set[str]) -
     # Relationship to lint_traceability.py: that linter validates B-ID existence
     # for its .lvt scan scope. This linter only enforces that all indexed
     # fixtures either carry TEST-BEHAVIOR or are path-grandfathered.
-    if not headers.get("TEST-BEHAVIOR", "").strip() and rel_path not in behavior_baseline:
+    if (
+        not headers.get("TEST-BEHAVIOR", "").strip()
+        and not headers.get("TEST-EXEMPT", "").strip()
+        and rel_path not in behavior_baseline
+    ):
         violations.append(_missing(path, parsed, "TEST-BEHAVIOR"))
 
     return violations

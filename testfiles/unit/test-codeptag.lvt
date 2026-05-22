@@ -13,6 +13,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@tag{1.1}{uid}{cat:category}
 %% TEST-CDP-CONTAINS: \codep@cdp@tag{1.1}{introduces}{Hom}
 %% TEST-CDP-CONTAINS: \codep@cdp@tag{1.1}{type}{Cat}
+%% TEST-EXEMPT: utility
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
 

@@ -58,6 +58,9 @@ def _behavior_value(headers: dict, rel_path: str, baseline: set[str]) -> str:
     behavior = headers.get("TEST-BEHAVIOR", "").strip()
     if behavior:
         return behavior
+    exempt = headers.get("TEST-EXEMPT", "").strip()
+    if exempt:
+        return f"(exempt: {exempt})"
     if rel_path in baseline:
         return "—"
     return ""

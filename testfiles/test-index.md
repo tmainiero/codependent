@@ -27,7 +27,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-codepbackrefs-suppresses-auto.lvt | LIVE | B-REND-INLINE | Single-theorem double-emit scenario: theorem body calls |
 | testfiles/unit/test-codepbackrefs-theorem.lvt | LIVE | B-REND-INLINE | \codepbackrefs called inside a theorem body emits the |
 | testfiles/unit/test-codepsetup.lvt | LIVE | B-REND-INLINE | Verify that \codepsetup accepts all rendering configuration |
-| testfiles/unit/test-codeptag.lvt | LIVE | — | Verify \codeptag{kind}{value} emits a flat |
+| testfiles/unit/test-codeptag.lvt | LIVE | (exempt: utility) | Verify \codeptag{kind}{value} emits a flat |
 | testfiles/unit/test-codeptrack-before-newtheorem-error.lvt | LIVE | B-EDGE-TRACK-ORDER | Calling \codeptrack before the theorem environment exists |
 | testfiles/unit/test-codeptrack-called-twice-error.lvt | LIVE | B-EDGE-TRACK-TWICE | Calling \codeptrack twice is a package error and does not |
 | testfiles/unit/test-concept-def-site-required.lvt | LIVE | B-CONC-NODEF | Verify that using \Hom without any \Hom* definition |

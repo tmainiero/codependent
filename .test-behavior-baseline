@@ -22,7 +22,6 @@
 #
 # All 94 tests have been backfilled with TEST-BEHAVIOR headers.
 # Remaining grandfathered entries (CODER-NEEDED — W05-TAGSWEEP Wave 1):
-testfiles/unit/test-codeptag.lvt
 testfiles/unit/test-sbl-end-marker.lvt
 testfiles/unit/test-sbl-flat-records.lvt
 testfiles/unit/test-sbl-version-source.lvt

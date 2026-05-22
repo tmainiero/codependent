@@ -57,8 +57,8 @@ TEST_DIRS = [
     os.path.join(PROJ_ROOT, "testfiles", "integration"),
 ]
 
-RE_BEHAVIOR_ID = re.compile(r'\[B-([A-Z0-9]+(?:-[A-Z0-9]+)*)\]')
-RE_STY_BEHAVIOR = re.compile(r'^%%\s+@behavior\s+(B-[A-Z0-9]+(?:-[A-Z0-9]+)*)')
+RE_BEHAVIOR_ID = re.compile(r'\[((?:B|BCDP)-[A-Z0-9]+(?:-[A-Z0-9]+)*)\]')
+RE_STY_BEHAVIOR = re.compile(r'^%%\s+@behavior\s+((?:B|BCDP)-[A-Z0-9]+(?:-[A-Z0-9]+)*)')
 RE_STY_IMPLEMENTS = re.compile(r'^%%\s+@implements\s+(\\[a-zA-Z@]+)')
 RE_STY_UTILITY = re.compile(r'^%%\s+@utility\b')
 
@@ -129,7 +129,7 @@ def parse_behavior_md(path: str) -> Dict[str, str]:
         for line in f:
             m = RE_BEHAVIOR_ID.search(line)
             if m:
-                bid = "B-" + m.group(1)
+                bid = m.group(1)
                 rest = line[m.end():].strip().lstrip("|").strip()
                 if "|" in rest:
                     rest = rest[:rest.index("|")].strip()
@@ -265,7 +265,12 @@ def parse_sty_file(path: str) -> List[MacroInfo]:
 # ---------------------------------------------------------------------------
 
 RE_TEST_BEHAVIOR = re.compile(r'^%%\s+TEST-BEHAVIOR:\s*(.+)$')
+RE_TEST_EXEMPT = re.compile(r'^%%\s+TEST-EXEMPT:\s*(.+)$')
 RE_TEST_SOURCE_OR_SECTION = re.compile(r'^%%\s+TEST-(?:SOURCE|SECTION):\s*(.+)$')
+
+# Recognized TEST-EXEMPT categories. Files carrying a valid TEST-EXEMPT header
+# are considered graduated from the TEST-BEHAVIOR: requirement.
+VALID_TEST_EXEMPT_CATEGORIES = {"utility"}
 RE_TEST_HEADER = re.compile(
     r"^%%\s+(TEST-[A-Z-]+)(?:\[(cold|warm|warm_changed)\])?:\s*(.*)$"
 )
@@ -331,20 +336,21 @@ def load_grandfathered_behavior_ids(path: str) -> Set[str]:
     return {
         entry
         for entry in _iter_test_behavior_baseline_entries(path)
-        if entry.startswith("B-")
+        if entry.startswith("B-") or entry.startswith("BCDP-")
     }
 
 
-def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]], Set[str]]:
-    """Return (behavior_ids, prose_doc_refs, pdf_directive_names).
+def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]], Set[str], List[str]]:
+    """Return (behavior_ids, prose_doc_refs, pdf_directive_names, exempt_categories).
 
     Reads the `%%` header block until the first non-header line.
     """
     ids: List[str] = []
     prose_refs: List[Tuple[int, str]] = []
     pdf_directives: Set[str] = set()
+    exempt: List[str] = []
     if not os.path.isfile(path):
-        return ids, prose_refs, pdf_directives
+        return ids, prose_refs, pdf_directives, exempt
     with open(path, "r", encoding="utf-8") as f:
         for lineno, raw in enumerate(f, 1):
             line = raw.rstrip("\n")
@@ -360,6 +366,13 @@ def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]], Set[s
                     if tok:
                         ids.append(tok)
                 continue
+            m = RE_TEST_EXEMPT.match(line)
+            if m:
+                for tok in m.group(1).split(","):
+                    tok = tok.strip()
+                    if tok:
+                        exempt.append(tok)
+                continue
             m = RE_TEST_SOURCE_OR_SECTION.match(line)
             if m and RE_PROSE_DOC_REF.search(m.group(1)):
                 prose_refs.append((lineno, line))
@@ -367,7 +380,7 @@ def parse_lvt_header(path: str) -> Tuple[List[str], List[Tuple[int, str]], Set[s
             m = RE_TEST_HEADER.match(line)
             if m and m.group(1) in PDF_ASSERTION_DIRECTIVES:
                 pdf_directives.add(m.group(1))
-    return ids, prose_refs, pdf_directives
+    return ids, prose_refs, pdf_directives, exempt
 
 
 def find_lvt_files() -> List[str]:
@@ -384,8 +397,25 @@ def check_tests(specs: Dict[str, str]) -> List[str]:
     exempt = load_test_behavior_baseline(TEST_BEHAVIOR_BASELINE)
     for lvt in find_lvt_files():
         rel = os.path.relpath(lvt, PROJ_ROOT)
-        ids, prose_refs, _ = parse_lvt_header(lvt)
+        ids, prose_refs, _, exempt_cats = parse_lvt_header(lvt)
         if rel in exempt:
+            continue
+        if exempt_cats:
+            # Validate exempt categories.
+            for cat in exempt_cats:
+                if cat not in VALID_TEST_EXEMPT_CATEGORIES:
+                    errors.append(
+                        f"{rel}: TEST-EXEMPT references unknown category {cat!r} "
+                        f"(valid: {sorted(VALID_TEST_EXEMPT_CATEGORIES)})"
+                    )
+            # A fixture cannot carry both TEST-BEHAVIOR and TEST-EXEMPT.
+            if ids:
+                errors.append(
+                    f"{rel}: has BOTH TEST-BEHAVIOR and TEST-EXEMPT headers — pick one"
+                )
+            # Exempt fixtures skip the BEHAVIOR-ID rule entirely.
+            for lineno, line in prose_refs:
+                errors.append(f"{rel}:{lineno}: prose docs/*.md ref in TEST-SOURCE/TEST-SECTION header — cite B-* IDs via TEST-BEHAVIOR instead ({line.strip()})")
             continue
         if not ids:
             errors.append(f"{rel}: missing TEST-BEHAVIOR: header (add ≥1 B-* ID from docs/BEHAVIOR.md or add to .test-behavior-baseline)")
@@ -406,7 +436,7 @@ def classify_behavior_test_coverage(
 
     for lvt in find_lvt_files():
         rel = os.path.relpath(lvt, PROJ_ROOT)
-        ids, _prose_refs, pdf_directives = parse_lvt_header(lvt)
+        ids, _prose_refs, pdf_directives, _exempt = parse_lvt_header(lvt)
         has_pdf_assertion = bool(pdf_directives)
         for bid in ids:
             claims[bid].append(rel)
@@ -569,7 +599,7 @@ def run_full_check() -> int:
         rel = os.path.relpath(p, PROJ_ROOT)
         if rel in test_exempt:
             continue
-        tids, _, _ = parse_lvt_header(p)
+        tids, _, _, _ = parse_lvt_header(p)
         if tids:
             n_tests_assigned += 1
     n_tests_exempt = sum(1 for p in all_lvt if os.path.relpath(p, PROJ_ROOT) in test_exempt)
