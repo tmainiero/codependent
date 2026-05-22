@@ -1148,6 +1148,7 @@
 %   into the four hook points.
 
 %% @behavior B-NUM-NESTED
+%% @behavior B-EDGE-NESTED
 %% @behavior B-EDGE-RESTATE
 % \codep@hooktheorem@begin{envname}
 %   Begin-hook body for tracked theorem-like environments.
@@ -1238,6 +1239,7 @@
 }%
 
 %% @behavior B-NUM-NESTED
+%% @behavior B-EDGE-NESTED
 %% @behavior B-EDGE-RESTATE
 % \codep@hooktheorem@end{envname}
 %   End-hook body: unwind replay, nested, or outer theorem state.
@@ -2351,6 +2353,8 @@
   }%
 }%
 
+%% @behavior B-EDGE-DEDUP
+%% @behavior B-EDGE-MULTI-SAME
 % \codep@dedupwrite{src}{tgt}
 %   Per-(source, target) dedup write.  If the csname flag
 %   codep@arw@<src>@<tgt> is undefined (\relax), set it to
@@ -2450,6 +2454,7 @@
 }%
 
 %% @behavior B-EQ-NOTAG
+%% @behavior B-EDGE-NOTAG
 % \codep@flusheqrange@fallback
 %   All-notag path: replay pending refs from the enclosing owner.
 \def\codep@flusheqrange@fallback{%
@@ -2464,6 +2469,7 @@
   \fi%
 }%
 
+%% @behavior B-EQ-TRACK2
 % \codep@flusheqrange
 %   Compute the equation range and flush all pending refs.
 %   Called at \end{align} (Track 2).  Dispatches to
@@ -2510,7 +2516,7 @@
 }%
 
 \newif\ifcodep@footnotesuppressed
-%% @utility
+%% @behavior B-EDGE-FOOTNOTE
 % \codep@suppressfootnote
 %   Suppress paragraph atoms and source attribution while the footnote
 %   body is typeset; direct wrapping avoids \footnote's \unskip path.
@@ -2538,6 +2544,11 @@
 %% @behavior B-SUPP-BOXES
 %% @behavior B-SUPP-TRACKED
 %% @behavior B-SUPP-WRAPPERS
+%% @behavior B-SUPP-FLOATS
+%% @behavior B-SUPP-QUOTE
+%% @behavior B-SUPP-TABLES
+%% @behavior B-SUPP-MATH
+%% @behavior B-EQ-UNNUM
 \newcommand*{\codep@installsuppress}{%
   \codep@suppressenv{enumerate}%
   \codep@suppressenv{itemize}%
@@ -3564,6 +3575,7 @@
 %% prefixed key; the display form is derived by stripping the
 %% prefix and applying type-specific formatting.
 
+%% @utility
 % \codep@splitprefix{type:num}
 %   Split a prefixed key into \codep@tmp@type and \codep@tmp@num.
 %   The key format is "type:number" where type is one of
@@ -3604,6 +3616,7 @@
 %% macro \codep@br@<num>.  Per REVIEW_C finding #2 second half,
 %% this turns O(degree^2) into O(degree).
 
+%% @implements \codep@processbr
 % \codep@appendbr@core
 %   Shared body for \codep@processbr and \codep@appendbr.
 %   Precondition: \codep@tmp@tgt and \codep@tmp@src are already
@@ -3654,6 +3667,9 @@
   \fi
 }%
 
+%% @behavior B-LINK-EFFECTIVE-ANCHOR
+%% @behavior B-PASS-TWO
+%% @behavior B-SELFREF
 % \codep@processbr{tgt}{src}
 %   #1 = target label key (resolves to canonical atom-key via
 %        lblentity, or falls back to ltype:lblnum for stale aux)
@@ -3687,6 +3703,7 @@
   \fi
 }
 
+%% @implements \codep@processbr
 % \codep@appendbr{tgtnum}{srcnum}
 %   Append a backref edge directly using display numbers
 %   (no lblnum lookup).  Used by concept resolution where
@@ -3709,7 +3726,9 @@
 
 % String constants for type comparisons in display rules.
 % Needed by \codep@graph@getdisplay; previously in render.sty.
+%% @utility
 \def\codep@const@typeequation{equation}%
+%% @utility
 \def\codep@const@typeproof{proof}%
 %% @utility
 \def\codep@const@typeunresref{unresref}%
@@ -3929,15 +3948,18 @@
 %% block does not clobber it.  Also override \newlabelxx for
 %% the pre-2023 hyperref pathway.
 
+%% @implements \codep@extractlblnum
 % \codep@grabfirst#1#2\@nil -> #1
 %   Grab the first brace group of a delimited argument.
 \def\codep@grabfirst#1#2\@nil{#1}
 
+%% @implements \codep@extractanchor
 % \codep@grab4th#1#2#3#4#5\@nil -> #4
 %   Grab the 4th brace group.  Used to extract hyperref's
 %   anchor name from \newlabel's value ({num}{page}{title}{anchor}{}).
 \def\codep@grab4th#1#2#3#4#5\@nil{#4}
 
+%% @behavior B-LINK-EFFECTIVE-ANCHOR
 % \codep@extractanchor{key}{value}
 %   Extract hyperref's anchor (4th field of \newlabel value)
 %   and store a reverse mapping: atom number -> anchor name.
@@ -3991,6 +4013,7 @@
     \fi%
   \fi%
 }%
+%% @utility
 % \codep@ifdatakey{key}{then}{else}
 %   True iff the label key ends in "@data" (thm-restate internal).
 %   These contain \setcounter calls, not display numbers.
@@ -4055,6 +4078,7 @@
   }%
 }
 
+%% @behavior B-PASS-ONE
 % \codep@extractlblnum{key}{value}
 %   value is the raw 2nd arg of \newlabel; after TeX brace-
 %   stripping it is "{num}{page}{...}{...}{...}".  Grab the
@@ -4068,13 +4092,16 @@
       \expandafter{\codep@grabfirst#2\@nil}{#1}%
   }%
 }
+%% @implements \codep@extractlblnum
 \def\codep@extractlblnum@ii#1#2{%
   \expandafter\gdef\csname codep@lblnum@#2\endcsname{#1}%
 }
 
+%% @utility
 % Sentinel used by \codep@ifcrefkey.
 \def\codep@ifcrefsentinel{@cref}
 
+%% @utility
 % \codep@ifcrefkey{key}{then}{else}
 %   True iff the label key ENDS in "@cref".  Per REVIEW_D
 %   finding #4, matching "any key containing @cref" incorrectly
@@ -4137,6 +4164,7 @@
 %% swapped in at begindocument/before by \let, following the
 %% same pattern as \codep@atomref@active.
 
+%% @behavior B-CONC-DEFSITE
 % \codep@concept@active{name}{atomnum}
 %   Populate the concept def-site map.  Per J3, silently
 %   overwrite on duplicate aux records (stale prior-run).
@@ -4145,6 +4173,7 @@
     \csname codep@conceptdef@#1\endcsname{#2}%
 }
 
+%% @behavior B-CONC-FWDREF
 % \codep@conceptref@active{srcatom}{conceptname}
 %   If the def site is already in the concept map, resolve
 %   immediately; otherwise defer to \codep@conceptpending
@@ -4156,6 +4185,7 @@
     {\codep@resolveconcept{#1}{#2}}%
 }
 
+%% @behavior B-CONC-SCOPE
 % \codep@resolveconcept{srcatom}{conceptname}
 %   Concept resolution callback.  Originally fed concept edges
 %   into the backref linked list via \codep@appendbr; this was
@@ -4415,6 +4445,7 @@
 %% with fixed-arity brace-delimited arguments (no kv blobs).
 %%
 
+%% @utility
 % \codep@cdpwrite{text}
 %   Guarded write to the .cdp stream.  No-op when the stream
 %   is not open (e.g. \if@filesw is false).
@@ -4424,6 +4455,7 @@
   }{}%
 }
 
+%% @utility
 % \codep@cdpwrite@atom{text}
 %   Atom-scoped guard: drops the write when not inside a tracked
 %   atom (\codep@currentatom is empty).
@@ -4519,6 +4551,7 @@
     }%
   }%
 }%
+%% @behavior B-PASS-ONE
 \def\codep@cdp@label@withopt[#1]#2{%
   \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
   \ifx\codep@tmp@labeldisplay\@empty\else%
@@ -4530,6 +4563,7 @@
   \codep@label@samerun{#2}%
   \codep@orig@label[#1]{#2}%
 }%
+%% @behavior B-PASS-ONE
 \def\codep@cdp@label@noopt#1{%
   \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
   \ifx\codep@tmp@labeldisplay\@empty\else%
@@ -4542,6 +4576,7 @@
   \codep@orig@label{#1}%
 }%
 
+%% @behavior B-PASS-ONE
 % \codep@writelbltype{label}
 %   Write the current atom type prefix to .aux for this label.
 %   Priority order:
@@ -4563,6 +4598,7 @@
 %% The public API lives in Section 10; the emit helpers live here
 %% because they write to both .cdp and .aux.
 
+%% @utility
 % \codep@cdpwrite@deferred{text}
 %   Accumulate a deferred .cdp write for preamble-time emission.
 %   Records queued here are flushed once the .cdp stream opens.
@@ -4591,6 +4627,10 @@
 \DeclareHookRule{begindocument/before}{codependent/cdp/cmddef}%
                 {after}{codependent/cdp/open}
 
+%% @behavior B-CONC-DEFSITE
+%% @behavior B-CONC-DUPDEF
+%% @behavior B-CONC-OUTSIDE
+%% @behavior B-EDGE-CONC-OUTSIDE
 % \codep@emit@def{name}
 %   Star-branch handler: fires when \cmd* is used (defining site).
 %   Records the current atom as the defining site for the named
@@ -4623,6 +4663,10 @@
       }%
   \fi}%
 
+%% @behavior B-CONC-EDGES
+%% @behavior B-CONC-USEDIN
+%% @behavior B-CONC-OUTSIDE
+%% @behavior B-EDGE-CONC-OUTSIDE
 % \codep@emit@use{name}
 %   Non-star-branch handler: fires when \cmd is used (use site).
 %   Emits both .aux and .cdp records under the current atom guard.
@@ -4651,6 +4695,7 @@
 %% concept for a matching def site.  Concepts with uses but no
 %% def site trigger a warning (or info per conceptwarnings option).
 
+%% @behavior B-CONC-NODEF
 % \codep@conceptwarnscan
 %   Walk \codep@conceptnames via \do.  For each concept name,
 %   check if codep@conceptdef@<name> is defined.  If not, the
@@ -4676,6 +4721,7 @@
 
 %% --- Section 9a.10: Shared wrapper-pipeline helper ---
 
+%% @implements \codepnewcommand
 % \codep@definetrackedcmd{name}{cmd}{kind}{key2}{val2}
 %   Common pipeline shared by \codepnewcommand and
 %   \codepNewDocumentCommand.  The declaration step (step 1) is
@@ -4900,6 +4946,7 @@
 %% Section 10: User-facing API
 %% ===================================================================
 
+%% @implements \codeptrack
 % \codep@extractfirst  env1,env2,...\@nil
 %   Extract the first comma-separated element into \codep@basecounter.
 \def\codep@extractfirst#1,#2\@nil{\def\codep@basecounter{#1}}
@@ -4910,6 +4957,7 @@
 %   env1, env2, ... -- comma-separated environment names to track.
 %   The first env name is auto-detected as the base counter name.
 %% @behavior B-COMPAT-THMTOOLS-CONTINUED
+%% @behavior B-EDGE-TRACK-TWICE
 % Generic env-hook surface: covers thmtools[continued] via generic hooks;
 % no per-package shim.
 \newcommand*{\codeptrack}[1]{%
@@ -4985,6 +5033,7 @@
   \codep@installparendhook%
 }
 
+%% @utility
 % \codeptag{kind}{value}
 %   Emit a semantic tag record to the .cdp sidecar, scoped to the
 %   current atom.  No visible typesetting effect.  Ignored outside
@@ -5050,10 +5099,15 @@
 %   created yet).  \codepproofof clears the deferred flag and
 %   assigns the proof's identity to the target theorem — no
 %   standalone atom is ever materialized.
+%% @behavior B-PROOF-SEP
+%% @behavior B-LINK-PROOFOF-STAR
 \newcommand{\codepproofof}{%
   \@ifstar{\codep@proofof@star}{\codep@proofof@plain}}
+%% @implements \codep@proofof@do
 \def\codep@proofof@plain#1{\codep@proofof@do{#1}{}}
+%% @behavior B-LINK-PROOFOF-STAR
 \def\codep@proofof@star#1{\codep@proofof@do{#1}{anchor}}
+%% @behavior B-PROOF-SEP
 % \codep@proofof@do{label}{anchormode}
 %   Entry dispatcher for \codepproofof.  Try resolution paths in
 %   order:
@@ -5244,6 +5298,7 @@
 %   \cmd  -- command to define (with backslash, e.g. \Hom)
 %   arity -- optional integer 0..9 (default 0)
 %   body  -- replacement text, uses #1..#N
+%% @behavior B-CONC-EDGES
 \NewDocumentCommand{\codepnewcommand}{m O{0} +m}{%
   % #1 = \cmd (with backslash), #2 = arity, #3 = body.
   \edef\codep@tmp@name{%
@@ -5278,6 +5333,7 @@
 %   \cmd    -- command to define (with backslash)
 %   argspec -- xparse argument specification string
 %   body    -- replacement text, uses #1..#N per the spec
+%% @behavior B-CONC-EDGES
 \NewDocumentCommand{\codepNewDocumentCommand}{m m +m}{%
   % #1 = \cmd, #2 = argspec, #3 = body.
   \edef\codep@tmp@name{%
@@ -5290,13 +5346,16 @@
     {NewDocumentCommand}{argspec}{#2}%
 }
 
+%% @behavior B-EQ-TRACK1
 % \codeptrackeq{envname}
 %   Register a custom single-number equation environment (Track 1).
 \newcommand*{\codeptrackeq}[1]{\codep@trackeqenv{#1}}
+%% @behavior B-EQ-TRACK2
 % \codeptrackalign{envname}
 %   Register a custom multi-number equation environment (Track 2).
 \newcommand*{\codeptrackalign}[1]{\codep@trackalignenv{#1}}
 
+%% @behavior B-SUPP-EXTEND
 % \codepsuppress{envname}
 %   Register a user environment for paragraph-number suppression.
 %   envname -- environment name to suppress
@@ -5304,6 +5363,8 @@
   \codep@suppressenv{#1}%
 }
 
+%% @behavior B-SUPP-EXTEND
+%% @behavior B-SUPP-CMDS
 % \codepsuppresscmd{\command}
 %   Register a user command for paragraph-number suppression.
 %   \command -- command to patch
