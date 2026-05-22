@@ -42,7 +42,6 @@
 \codepsuppress
 \codepsuppresscmd
 \codeptag
-\codeptrack
 \codeptrackalign
 \codeptrackeq
 
@@ -56,7 +55,6 @@ B-CONC-OUTSIDE
 B-CONC-SCOPE
 B-CONC-USEDIN
 B-DISP-EQ
-B-DISP-PROOF
 B-EDGE-BADLABEL
 B-EDGE-CONC-OUTSIDE
 B-EDGE-DEDUP
@@ -83,7 +81,6 @@ B-REST-CONCEPT
 B-REST-FIRST
 B-REST-NODUP
 B-SELFREF
-B-SUPP-BOXES
 B-SUPP-CMDS
 B-SUPP-FLOATS
 B-SUPP-LISTS
