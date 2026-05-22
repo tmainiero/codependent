@@ -7,6 +7,11 @@
           {
             "type": "command",
             "command": "bash .claude/scripts/block-rootlatex.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/pre-check-traceability.sh",
+            "blocking": true
           }
         ]
       }

@@ -459,6 +459,28 @@ def classify_behavior_test_coverage(
 # Full check
 # ---------------------------------------------------------------------------
 
+def count_stale_baseline_entries(
+    stale_baseline_macros: List[str],
+    stale_baseline_bids: List[str],
+    stale_grandfathered_bids: List[str],
+) -> int:
+    """Return total stale entries across all traceability baselines."""
+    return (
+        len(stale_baseline_macros)
+        + len(stale_baseline_bids)
+        + len(stale_grandfathered_bids)
+    )
+
+
+def print_stale_baseline_action(stale_count: int) -> None:
+    """Print the remediation command for stale-but-shrunk baselines."""
+    print(f"Action required: {stale_count} baseline entries are now covered. Run:")
+    print("  python3 .claude/scripts/lint_traceability.py --update-ratchet")
+    print("to lock the shrinkage, then commit the updated baseline files")
+    print("(.claude/baseline-sizes.json, .traceability-baseline, possibly")
+    print(".test-behavior-baseline) alongside the work that closed coverage.")
+
+
 def run_full_check() -> int:
     specs = parse_behavior_md(BEHAVIOR_MD)
     baseline_macros, baseline_bids = load_baseline(BASELINE_FILE)
@@ -605,6 +627,11 @@ def run_full_check() -> int:
     print("=== Baseline Ratchet ===")
     ratchet_rc = run_check_ratchet()
     print()
+    stale_count = count_stale_baseline_entries(
+        stale_baseline_macros,
+        stale_baseline_bids,
+        stale_grandfathered_bids,
+    )
 
     if errors:
         print(f"ERRORS ({len(errors)}):")
@@ -618,6 +645,10 @@ def run_full_check() -> int:
         return 1
     elif ratchet_rc != 0:
         print("RESULT: FAIL (ratchet)")
+        return 1
+    elif stale_count:
+        print("RESULT: FAIL (stale baseline)")
+        print_stale_baseline_action(stale_count)
         return 1
     else:
         print("RESULT: PASS")
