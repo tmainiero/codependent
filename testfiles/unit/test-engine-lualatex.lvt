@@ -1,6 +1,7 @@
 %% TEST-NAME: test-engine-lualatex
 %% TEST-PURPOSE: Verify codependent.sty compiles cleanly and tracks one theorem
 %% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-COMPAT-THMTOOLS-CONTINUED, B-PASS-ONE
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify codependent.sty compiles cleanly and tracks one theorem
 %%            under the lualatex engine. Catches any \directlua
