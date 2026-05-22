@@ -44,7 +44,5 @@ B-CONC-FWDREF
 B-CONC-NODEF
 # B-CONC-DUPDEF: behavior is a hard package error / halted build before any PDF-visible oracle.
 B-CONC-DUPDEF
-# B-SUPP-BOXES: current suppression coverage is structural/log-based; no PDF spacing/numbering assertion yet.
-B-SUPP-BOXES
 # B-REST-CONCEPT: current restatable concept fixtures assert aux/cdp replay semantics only; no PDF-visible oracle yet.
 B-REST-CONCEPT
