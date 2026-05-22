@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proofauto-adjacent-delayed-commit-probe
 %% TEST-PURPOSE: Probe delayed adjacent proof binding across adjacent, same-run, and forward-heading paths.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-ADJ, B-PROOF-SEP, B-PROOF-ADJRULE, B-FRONTEDGE-CAPTURE
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-PROOF-SEP, B-PROOF-ADJRULE, B-FRONTEDGE-CAPTURE, B-PROOF-DELAYED-COMMIT
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: W05-P30: scenario observers verify delayed adjacent commit timing.
 %%            Same-run and forward-heading scenarios compile before the final

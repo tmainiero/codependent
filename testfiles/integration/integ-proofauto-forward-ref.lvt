@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proofauto-forward-ref
 %% TEST-PURPOSE: A proof heading that names a later theorem settles through the deferred proof-of queue.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PASS-ONE, B-LINK-PROOF-DEST, B-PROOF-UNRESREF
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: A proof heading that names a later theorem settles through the deferred proof-of queue.
 %% TEST-EXIT: 0

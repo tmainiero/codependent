@@ -194,7 +194,7 @@ displays "Used in A" in the PDF.
 - [B-LINK-CLICKABLE] When hyperref is loaded, every entry in "Used in X, Y" is a clickable link.
 - [B-LINK-CORRECT] Link targets point to the correct atom location in the PDF. Theorem-like atoms resolve via their effective anchor; proof atoms resolve via the proof key's `\codep@anchormap` entry to the proof heading, not the parent theorem anchor.
 - [B-LINK-EFFECTIVE-ANCHOR] For theorem-like atoms, backlink destinations resolve from the effective anchor: the heading anchor, possibly replaced by a same-typed same-display in-atom label. Proof and appendix links are routed through their own anchor maps rather than borrowing the theorem anchor.
-- [B-LINK-PROOF-DEST] Proof backlinks are addressable through `\codep@anchormap`. Adjacent proofs bind `proof:N.M` directly to their proof-begin anchor; rebound proofs alias the post-rebind `proof:N.M` key to the already-emitted proof-begin anchor; standalone proofs bind their opaque `proof:a<N>` key similarly. The physical hyperref destination names are not part of the public contract.
+- [B-LINK-PROOF-DEST] Proof backlinks are addressable through `\codep@anchormap`. Adjacent, rebound, and standalone proofs all bind their canonical opaque `proof:a<N>` key through `\codep@anchormap` to the proof-begin anchor. The physical hyperref destination names are not part of the public contract.
 - [B-PROOF-ANCHOR-NEAR-HEADING] Adjacent, standalone, and rebound proofs all place exactly one proof-local anchor at proof-begin, so proof backlinks land near the rendered proof heading, not after the proof or on a later in-proof equation anchor.
 - [B-LINK-PROOFOF-STAR] Both `\codepproofof` and `\codepproofof*` bind separated proofs to the proof's own anchor; the starred form is retained as an explicit compatibility spelling for the same proof-begin aliasing path.
 - [B-LINK-ADJ-PROOF] Backref entries for adjacent proofs resolve through the adjacent proof's own `\codep@anchormap` target, not the parent theorem anchor. Effective-anchor rewrites on the parent theorem do not collapse the proof backlink onto the theorem target.
@@ -227,6 +227,12 @@ displays "Used in A" in the PDF.
 | [B-PROOF-NONADJ] Non-adjacent proof (no `\codepproofof`) | Opaque proof-id key (`proof:a<N>`); does not consume a shared-counter slot; warning emitted | suppressed from source-token output |
 | [B-PROOF-INNER] Proof inside a tracked env | Suppressed (part of outer atom) | N/A |
 | [B-PROOF-OFF] `proofs=off` | No atom number, paragraph suppression only | N/A |
+| [B-PROOF-OPAQUE-ID] Proof atom identity | Every proof atom uses a stable opaque key of the form `proof:a<N>` in `.aux` / `.cdp` records and `\codep@anchormap`; display-number keys such as `proof:1.2` or `proof:{1.1,1.2}` are not emitted. Covered by the `integ-proofauto-*` fixtures. |
+| [B-PROOF-JOINT] Joint proof attribution | A single proof heading that references multiple tracked targets is represented as one proof atom whose displayed source token is the braced target list with `*`, e.g. `{1.1, 1.2}*`, and that one atom appears consistently in inline and appendix backrefs. Covered by `integ-proofauto-joint-atom.lvt`. |
+| [B-PROOF-HEADING-OVERRIDE] Heading target overrides adjacency | When a proof is physically adjacent to one tracked atom but its heading names a different tracked target, the heading target receives the proof attribution and the adjacent atom is not polluted with the proof backref. Covered by `integ-proofauto-d3-heading-overrides-adjacent.lvt`. |
+| [B-WARN-ATTR-CONFLICTS] Attribution conflict warning toggle | `warn-attribution-conflicts=false` suppresses only the warning for a heading-target-over-adjacent-target conflict; it does not change the attribution result. Covered by `integ-proofauto-d3-heading-overrides-adjacent.lvt`. |
+| [B-PROOF-DELAYED-COMMIT] Delayed adjacent proof commit | Adjacent proof candidates are staged while the proof heading is scanned, then committed only after heading attribution has had a chance to override or drop the adjacent candidate. Covered by `integ-proofauto-adjacent-delayed-commit-probe.lvt` and `integ-proofauto-adjacent-no-leak.lvt`. |
+| [B-PROOF-UNRESREF] Forward proof-heading resolution | A proof heading that names a tracked label not yet defined in the current run is routed through an `unresref:<N>` placeholder and resolves to the later target on the convergence pass without emitting display-keyed proof aliases. Covered by `integ-proofauto-forward-ref.lvt`. |
 
 - [B-PROOF-ADJRULE] **Adjacency rule:** Auto-attribution fires whenever a tracked environment closes with no intervening paragraph or other tracked environment before the proof opens. Any `\codeptrack`-registered environment is eligible, not just result-type environments like `theorem`, `lemma`, `proposition`, `corollary`.
 
@@ -276,6 +282,7 @@ Paragraph numbers are suppressed inside:
 | hyperref | Optional | Enables clickable backref links; use `hypertexnames=false` |
 | cleveref | Optional | `\cref`, `\Cref`, etc. fully tracked as backref sources |
 | thmtools | Optional | `sibling=`, `restatable`, custom styles all work |
+| [B-COMPAT-THMTOOLS-CONTINUED] thmtools continued theorems | Optional | `[continued=...]` theorem instances are tracked through the same generic `\codeptrack` begin/end hook surface as ordinary theorem instances; no thmtools-specific shim is required. Covered by `integ-thmtools-continued-generic-hooks.lvt`. |
 | amsmath | Optional | Equation environments auto-tracked |
 | subfiles / standalone | Compatible | Multi-file projects work; canonical build from master doc |
 | article, book, report, KOMA | Supported | Auto-detects `\chapter` for depth formatting |

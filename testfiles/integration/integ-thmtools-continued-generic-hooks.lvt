@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-thmtools-continued-generic-hooks
 %% TEST-PURPOSE: thmtools continued theorem tracks via generic hooks; continued copy gets its own atom.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST, B-COMPAT-THMTOOLS-CONTINUED
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: thmtools [continued=1] compiles through \codeptrack{theorem}; the original theorem label
 %%            emits lblentity, the continued theorem gets its own atom, and its adjacent proof uses

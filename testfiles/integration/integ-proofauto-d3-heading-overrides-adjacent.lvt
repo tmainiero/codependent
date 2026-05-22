@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proofauto-d3-heading-overrides-adjacent
 %% TEST-PURPOSE: Proof heading ref overrides adjacent attribution; warning can be suppressed.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE, B-PROOF-HEADING-OVERRIDE, B-WARN-ATTR-CONFLICTS
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: D3 rule: when a proof heading contains a tracked \cref and the proof is
 %%            physically adjacent to a DIFFERENT theorem, heading attribution wins and a

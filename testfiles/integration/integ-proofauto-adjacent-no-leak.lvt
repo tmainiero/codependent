@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proofauto-adjacent-no-leak
 %% TEST-PURPOSE: D3 heading target wins over adjacent target; conflict warning emitted.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE, B-PROOF-OPAQUE-ID, B-PROOF-DELAYED-COMMIT
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: D3: proof heading with \ref{thm:adj-auto} (1.1) adjacent to thm:adjacent-owner (3.1).
 %%            Heading tracked target (1.1) wins; adjacent target (3.1) is suppressed; warning emitted.

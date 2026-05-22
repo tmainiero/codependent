@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proofauto-ref
 %% TEST-PURPOSE: A standalone proof heading containing a single \ref auto-binds silently.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-OPAQUE-ID
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: A standalone proof heading containing a single \ref auto-binds silently.
 %% TEST-EXIT: 0

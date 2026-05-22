@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proofauto-joint-atom
 %% TEST-PURPOSE: Joint-proof atom renders as {N,N}* in Used-In lists and Dependency Index.
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PROOF-ADJRULE, B-LINK-APPENDIX-BIDIR
+%% TEST-BEHAVIOR: B-PROOF-ADJRULE, B-LINK-APPENDIX-BIDIR, B-PROOF-JOINT
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: After A2, a proof with \cref{thmA,thmB} heading produces one joint atom
 %%            {1.1, 1.2}* rendered identically in both theorem Used-In entries (D1)

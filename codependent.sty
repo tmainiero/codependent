@@ -135,6 +135,8 @@
   proof-warnings/on/.code = {\booltrue{codep@proofwarnings}},%
   proof-warnings/off/.code = {\boolfalse{codep@proofwarnings}},%
   proof-warnings/.default = on,%
+  % see @behavior B-WARN-ATTR-CONFLICTS at
+  % \codep@proof@maybeheadingoverrideadjacent
   warn-attribution-conflicts/.is choice,%
   warn-attribution-conflicts/true/.code = {%
     \booltrue{codep@warnattributionconflicts}},%
@@ -558,6 +560,7 @@
 %% ===================================================================
 
 % Proof atoms are identified by their opaque key (proof:a<N>) only;
+% see @behavior B-PROOF-OPAQUE-ID at \codep@proof@identitykey.
 % there is no display-keyed alias. \hyperref[proof:1.2]{...} is NOT
 % supported -- users must reference proof atoms by their proof:a<N>
 % key (extractable from the .cdp file).
@@ -842,7 +845,7 @@
 
 % \codep@proof@identitykey{proof-id}{macro}
 %   Return the stable proof:a<N> source key for proof-id.
-%% @implements \codep@bindproofparent
+%% @behavior B-PROOF-OPAQUE-ID
 \def\codep@proof@identitykey#1#2{%
   \edef#2{proof:#1}%
 }%
@@ -870,7 +873,8 @@
 
 % \codep@proof@maybeheadingoverrideadjacent{proof-id}{target-key}{display}
 %   D3 policy: first tracked heading target supersedes adjacent binding.
-%% @implements \codep@bindproofparent
+%% @behavior B-PROOF-HEADING-OVERRIDE
+%% @behavior B-WARN-ATTR-CONFLICTS
 \def\codep@proof@maybeheadingoverrideadjacent#1#2#3{%
   \@ifundefined{codep@proofadjtarget@#1}{}{%
     \@ifundefined{codep@proofheadingoverride@#1}{%
@@ -930,6 +934,7 @@
 
 %% @behavior B-PROOF-ADJ
 %% @behavior B-PROOF-SEP
+%% @behavior B-PROOF-JOINT
 % \codep@bindproofparent{proof-id}{parent-id}{mode}
 %   Bind proof-id to parent-id using the stable proof:a<N> key and
 %   append parent-id to the proof target metadata list.
@@ -950,6 +955,7 @@
   \codep@atomgetdisplay{#2}\codep@tmp@parentdisplay%
   \ifx\codep@tmp@parentprefixedkey\@empty\else%
     \codep@proof@markparent{#1}{\codep@tmp@parentprefixedkey}%
+    % see @behavior B-PROOF-JOINT at \codep@proofof@capturejointmeta.
     \codep@prooftargetmeta@append{\codep@tmp@proofkey}{%
       \codep@tmp@parentprefixedkey}{\codep@tmp@parentdisplay}{*}%
   \fi%
@@ -1577,7 +1583,7 @@
 
 % \codep@autoproofof@routeforward{label}
 %   Queue an unresolved heading label through the proof-ref drain rail.
-%% @implements \codep@hookproof
+%% @behavior B-PROOF-UNRESREF
 \def\codep@autoproofof@routeforward#1{%
   \def\codep@tmp@autoproofofshoulddefer{1}%
   \expandafter\ifx\csname codep@lblentity@#1\endcsname\relax%
@@ -1613,6 +1619,8 @@
     \codep@autoproofof@markheadsuppress{#1}%
     \codep@subsystem@recordtotal{proofof}%
     \expandafter\ifx\csname codep@lblentity@samerun@#1\endcsname\relax%
+      % see @behavior B-PROOF-UNRESREF at
+      % \codep@autoproofof@routeforward.
       \codep@autoproofof@routeforward{#1}%
     \else%
       \codep@autoproofof@resolve{\codep@currentproofid}{#1}{}%
@@ -1677,7 +1685,7 @@
 %   explicit proof attribution joins the proof to another target.  The
 %   keymap rail is deliberately skipped for joint attribution, so each
 %   proof key needs its own parent metadata for source-token rendering.
-%% @implements \codep@proofof@resolve
+%% @behavior B-PROOF-JOINT
 \def\codep@proofof@capturejointmeta#1#2{%
   \expandafter\let\expandafter\codep@tmp@jointparent%
     \csname codep@proofparent@#1\endcsname%
@@ -2068,11 +2076,13 @@
 }%
 
 %% @behavior B-PROOF-ADJ
+%% @behavior B-PROOF-DELAYED-COMMIT
 % \codep@proof@adjacent
 %   Stage the pending adjacent theorem/result atom for delayed binding.
 \newcommand*{\codep@proof@adjacent}{%
   \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@adjtargetkey}%
   \codep@atomgetdisplay{\codep@pendingresultid}{\codep@tmp@adjtargetdisplay}%
+  % see @behavior B-PROOF-DELAYED-COMMIT on this macro.
   \expandafter\xdef\csname codep@adjcandidate@%
     \codep@currentproofid\endcsname{\codep@pendingresultid}%
   \expandafter\xdef\csname codep@adjcandidate@target@%
@@ -2095,6 +2105,7 @@
 % \codep@proof@adjcandidate@clear{proof-id}
 %   Clear staged adjacent-candidate state for proof-id.
 %% @implements \codep@proof@adjacent
+% see @behavior B-PROOF-DELAYED-COMMIT at \codep@proof@adjacent.
 \def\codep@proof@adjcandidate@clear#1{%
   \global\expandafter\let\csname codep@adjcandidate@#1\endcsname\relax%
   \global\expandafter\let%
@@ -2116,6 +2127,7 @@
 % \codep@proof@adjacent@commit{proof-id}{target-id}
 %   Commit a staged adjacent binding after proof-heading scan returns.
 %% @implements \codep@proof@adjacent
+% see @behavior B-PROOF-DELAYED-COMMIT at \codep@proof@adjacent.
 \def\codep@proof@adjacent@commit#1#2{%
   \codep@bindproofparent{#1}{#2}{statement}%
   \global\codep@proofdisplaypendingfalse%
@@ -2128,6 +2140,7 @@
 % \codep@proof@adjacent@finalize
 %   Commit the current proof's staged adjacent candidate, if any.
 %% @implements \codep@proof@adjacent
+% see @behavior B-PROOF-DELAYED-COMMIT at \codep@proof@adjacent.
 \def\codep@proof@adjacent@finalize{%
   \ifcodep@proof@adjcommit@needed%
     \expandafter\ifx%
@@ -3035,6 +3048,7 @@
   }%
 
   %% @utility
+  % see @behavior B-PROOF-JOINT at \codep@proofof@capturejointmeta.
   % \codep@prooftargetmeta@append{proof-key}{target-key}{display}{marker}
   %   Append one target unless already present.
   \def\codep@prooftargetmeta@append#1#2#3#4{%
@@ -4848,6 +4862,9 @@
 %   hooks.  Must be called AFTER all \newtheorem declarations.
 %   env1, env2, ... -- comma-separated environment names to track.
 %   The first env name is auto-detected as the base counter name.
+%% @behavior B-COMPAT-THMTOOLS-CONTINUED
+% Generic env-hook surface: covers thmtools[continued] via generic hooks;
+% no per-package shim.
 \newcommand*{\codeptrack}[1]{%
   % Guard against double invocation (newcounter{atom} would crash).
   \ifbool{codep@tracked}{%
