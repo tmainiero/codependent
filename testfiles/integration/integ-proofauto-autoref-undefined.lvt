@@ -80,7 +80,7 @@
 %% BEFORE the theorem definition.  The scanner allocates unresref:2 and queues
 %% \codep@autoproofof@resolve on the Q3 drain rail.  At \enddocument the
 %% theorem has been processed (\codep@lblentity@samerun set), the resolver
-%% fires and writes \codep@keymap{unresref:2}{proof:3.1} to the .aux.
+%% fires and writes \codep@keymap{unresref:2}{proof:a<N>} to the .aux.
 \section{Forward theorem}\label{sec:forward-c}
 \begin{proof}[Proof of \autoref{thm:later-defined}]
   Body of the forward-ref proof, exercising the unresref:2 allocation and

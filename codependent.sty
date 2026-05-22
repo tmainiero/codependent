@@ -3193,8 +3193,8 @@
   \else%
     \codep@entitymeta@active{#1}{#2}{#3}{#4}{#5}%
     % \xdef forces full arg expansion so the accumulator stores
-    % final string values (e.g., "proof:1.2") rather than the
-    % caller's \codep@tmp@* temp macros, whose bindings may have
+    % final string values (e.g., "theorem:1.2" or "proof:a7")
+    % rather than the caller's \codep@tmp@* temp macros, whose bindings may have
     % moved on by enddoc-drain time.  The entry marker
     % \codep@entitymeta@mark is \protected so previously-stored
     % entries survive the re-expansion of \codep@entitymetaacc
@@ -5289,7 +5289,7 @@
 }{}
 
 % Hyperref link wrapping for backref numbers.
-% Receives a prefixed key (e.g. theorem:2.1, equation:3.1, proof:2.1).
+% Receives a prefixed key (e.g. theorem:2.1, equation:3.1, proof:a7).
 % Default (no rendering): bare pass-through.  Redefined by
 % codependent-render.sty to format via \codep@displayfromkey
 % and (with hyperref) wrap in \hyperlink.

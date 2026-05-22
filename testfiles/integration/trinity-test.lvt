@@ -87,9 +87,9 @@
 %% Scenario 1 — backward-ref body-cite (proof of thm:autodet-backward 5.1,
 %%   body cites def:enrichment 1.5).
 %%   On HEAD: proofdisplaypending=true during proof body → body cite dropped
-%%   → no atomref{proof:5.1}{def:enrichment} in aux.
+%%   → no proof-owned atomref for def:enrichment in aux.
 %%   The proof is NON-ADJACENT (intervening paragraph breaks pendingresultid).
-%%   After P02: body-cite routing records the atomref under proof:5.1.
+%%   After P02: body-cite routing records the atomref under the proof atom.
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:a34}{def:enrichment}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.1\*
 %% TEST-PDF-LINK-Y-NEAR: ^in 5\.1\*, 5\.7\*\.$ | (?s)Proof of theorem 5\.1 | within=45
@@ -100,7 +100,7 @@
 %%   NOTE: atom 5.2 is the intervening paragraph in scenario 1; thm:autodet-forward
 %%   is atom 5.3 because the paragraph shifts numbering.
 %%   On HEAD: body cite dropped (proofdisplaypending=true even on pass 2).
-%%   After P02: unresref:<N> allocates at scan; migrates to proof:5.3 at drain.
+%%   After P02: unresref:<N> allocates at scan; migrates to proof atom at drain.
 %% TEST-AUX-CONTAINS: \codep@atomref{proof:a35}{lem:adjunction}
 %% TEST-PDF-STEXT: (?s)Used in.*5\.3\*
 %%
@@ -531,7 +531,7 @@ foundational vocabulary.  See also \autoref{not:hom}.
 %% Scenario 1 — backward-ref body-cite.
 %% Proof heading names thm:autodet-backward (5.1); body cites def:enrichment (1.5).
 %% On HEAD: body cite dropped (proofdisplaypending=true during body → owner-id empty).
-%% After P02: body-cite routing attributes the cite under proof:5.1.
+%% After P02: body-cite routing attributes the cite under the proof atom.
 %% NON-ADJACENT: intervening paragraph clears codep@pendingresultid at para/begin.
 \begin{theorem}\label{thm:autodet-backward}
   A tracked theorem for backward-ref proof auto-detection.
@@ -547,7 +547,7 @@ We recall the basic setup before giving the proof.
 %% Proof heading names thm:autodet-forward (5.2) which is defined LATER.
 %% On HEAD: body cite dropped even on pass 2 (proofdisplaypending=true during body).
 %% After P02: unresref:<N> provisional key allocates at scan time;
-%% body cite migrates to proof:5.2 at enddoc drain; no unresref: survives.
+%% body cite migrates to the proof atom at enddoc drain; no unresref: survives.
 \begin{proof}[Proof of \cref{thm:autodet-forward}]
   By the adjunction criterion \cref{lem:adjunction}.
 \end{proof}
