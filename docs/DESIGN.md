@@ -2398,7 +2398,7 @@ Correct either way — `para/begin` suppresses iff
 `nestlevel > 0`.
 
 Add a regression fixture:
-`testfiles/test-amsthm-nested.lvt` exercising a
+`testfiles/unit/test-proofs-nested-lemma.lvt` exercising a
 `theorem` containing a nested `lemma` with a paragraph
 between, and asserting the atom count.
 
@@ -2435,7 +2435,7 @@ wrapper install site is `begindocument/before` (not
 package-load time, because enumitem may load after
 codependent).
 
-Regression fixture: `testfiles/test-enumitem-newlist.lvt`.
+Regression fixture: `testfiles/unit/test-suppress-enumitem-newlist.lvt`.
 
 #### 8a.6.l — `tcolorbox` / `mdframed` suppression
 
@@ -2467,7 +2467,7 @@ for v0.1 that is deferred.  Users with custom tcolorbox
 variants must manually call
 `\codepsuppress{myname}` after `\newtcolorbox`.
 
-Regression fixture: `testfiles/test-tcolorbox.lvt`.
+Regression fixture: `testfiles/unit/test-suppress-tcolorbox.lvt`.
 
 #### 8a.6.m — Summary of additions vs. deletions
 

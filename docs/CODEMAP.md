@@ -32,20 +32,20 @@ This rail implements or protects the proof behaviors in `docs/BEHAVIOR.md`:
 
 | Macro | Citation | Role |
 |---|---:|---|
-| `\ifcodep@proof@adjcommit@needed` | `codependent.sty:278` | Global sentinel: an adjacent proof candidate exists and must either be committed or cleared. |
-| `\codep@proof@maybeheadingoverrideadjacent` | `codependent.sty:878` | D3 override hook: the first tracked heading target supersedes a conflicting physically-adjacent target and may warn. |
-| `\codep@bindproofparent` | `codependent.sty:951` | Final attribution writer for adjacent/manual/joint parents; sets opaque `proof:a<N>` identity and appends target metadata. |
-| `\codep@autoproofof@routeforward` | `codependent.sty:1587` | Forward-ref routing for heading labels that are not yet resolvable; allocates/routes through `unresref:<N>`. |
-| `\codep@autoproofof@dispatchlabel` | `codependent.sty:1616` | Per-label dispatcher used after heading scan; resolves same-run tracked labels or calls routeforward. |
-| `\codep@autoproofof@scan` | `codependent.sty:1634` | Heading content scan coordinator; collects `\ref`/`\autoref`/`\cref` labels, then dispatches each. |
-| `\codep@autoproofof@heading` | `codependent.sty:1739` | Proof-heading entrypoint patched into `proof`; scans heading, finalizes adjacent candidate, captures proof anchor. |
-| `\codep@proof@adjacent` | `codependent.sty:2082` | Adjacent path entry: stages the pending result as a delayed candidate instead of committing immediately. |
-| `\codep@proof@adjcandidate@clear` | `codependent.sty:2109` | Clears per-proof staged adjacent-candidate csnames. |
-| `\codep@proof@adjcandidate@drop` | `codependent.sty:2120` | Drops a staged adjacent candidate and clears adjacent-target/display state. |
-| `\codep@proof@adjacent@commit` | `codependent.sty:2131` | Commits a staged adjacent binding through `\codep@bindproofparent`, queues rendering, clears candidate state. |
-| `\codep@proof@adjacent@finalize` | `codependent.sty:2144` | End-of-heading finalizer: if the sentinel remains set, commits the current proof's staged candidate. |
-| `\codep@autoproofof@resolve` | `codependent.sty:5067` | Auto-heading resolver shim; delegates to the shared resolver with auto mode enabled. |
-| `\codep@proofof@resolve@inner` | `codependent.sty:5075` | Shared heading/manual resolver; checks tracked-label gate, writes parent metadata, handles unresref key migration. |
+| `\ifcodep@proof@adjcommit@needed` | `codependent.sty:280` | Global sentinel: an adjacent proof candidate exists and must either be committed or cleared. |
+| `\codep@proof@maybeheadingoverrideadjacent` | `codependent.sty:884` | D3 override hook: the first tracked heading target supersedes a conflicting physically-adjacent target and may warn. |
+| `\codep@bindproofparent` | `codependent.sty:957` | Final attribution writer for adjacent/manual/joint parents; sets opaque `proof:a<N>` identity and appends target metadata. |
+| `\codep@autoproofof@routeforward` | `codependent.sty:1593` | Forward-ref routing for heading labels that are not yet resolvable; allocates/routes through `unresref:<N>`. |
+| `\codep@autoproofof@dispatchlabel` | `codependent.sty:1622` | Per-label dispatcher used after heading scan; resolves same-run tracked labels or calls routeforward. |
+| `\codep@autoproofof@scan` | `codependent.sty:1640` | Heading content scan coordinator; collects `\ref`/`\autoref`/`\cref` labels, then dispatches each. |
+| `\codep@autoproofof@heading` | `codependent.sty:1745` | Proof-heading entrypoint patched into `proof`; scans heading, finalizes adjacent candidate, captures proof anchor. |
+| `\codep@proof@adjacent` | `codependent.sty:2088` | Adjacent path entry: stages the pending result as a delayed candidate instead of committing immediately. |
+| `\codep@proof@adjcandidate@clear` | `codependent.sty:2115` | Clears per-proof staged adjacent-candidate csnames. |
+| `\codep@proof@adjcandidate@drop` | `codependent.sty:2126` | Drops a staged adjacent candidate and clears adjacent-target/display state. |
+| `\codep@proof@adjacent@commit` | `codependent.sty:2137` | Commits a staged adjacent binding through `\codep@bindproofparent`, queues rendering, clears candidate state. |
+| `\codep@proof@adjacent@finalize` | `codependent.sty:2150` | End-of-heading finalizer: if the sentinel remains set, commits the current proof's staged candidate. |
+| `\codep@autoproofof@resolve` | `codependent.sty:5114` | Auto-heading resolver shim; delegates to the shared resolver with auto mode enabled. |
+| `\codep@proofof@resolve@inner` | `codependent.sty:5122` | Shared heading/manual resolver; checks tracked-label gate, writes parent metadata, handles unresref key migration. |
 
 ### Flow summary
 

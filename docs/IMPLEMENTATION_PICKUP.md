@@ -3,33 +3,33 @@
 > **If you are a fresh orchestrator, READ ALL OF THIS FILE FIRST.**
 > **DO NOT SKIP. Skipping has caused repeated regressions.**
 
-## One-sentence state (as of 2026-05-21)
+## One-sentence state (as of 2026-05-22)
 
-W05-C SHIPPED 2026-05-21; suite 192/182/10/0; HEAD `e264f69` on `graph-redesign-phase3`; next wave: W05-PIN1 per design ledger order.
+Post-W05-TEST-HYG state: HEAD `2bbe790` on `graph-redesign-phase3` (pushed); suite `192 total / passed=191 / failed=1 / pinned-broken=1` with exit 0; next wave: W05-D queue retirement.
 
 ## Next-orchestrator entrypoint (read in order)
 
 1. **This file** — done.
-2. **W05-PIN1 brief** — no brief written yet; see `~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_design_ledger.md` §"Revised wave order" for scope. W05-PIN1 scope TBD — pin-broken count cleanup per `feedback_no_pinning.md`.
-3. **`.claude/comms/w05-docs-planner.md`** — W05-DOCS planner output (P37–P42 items); read for any in-flight DOCS items.
+2. **W05-D pickup** — `~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_d_pickup.md` is the live cold-start handoff for queue retirement.
+3. **W05 design ledger** — `~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_design_ledger.md` remains authoritative for D1–D4 decisions and the wave order.
 4. **`~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/MEMORY.md`** — durable findings index. Skim the top section + any entry referenced by your task.
 5. **`docs/CONVENTIONS.md`** — coding conventions for .sty files (mandatory `@behavior`/`@implements`/`@utility` tagging).
-6. **`docs/BEHAVIOR.md`** — behavioral specification (96+ testable [B-XXX] IDs).
+6. **`docs/BEHAVIOR.md`** — behavioral specification (96+ testable behavior IDs).
 7. **`docs/PHASE3_SPEC.md`** — original Phase-3 architecture spec (historical context for the wave structure; not the current plan).
 
-## Current suite state (as of HEAD `e264f69`)
+## Current suite state (as of HEAD `2bbe790`)
 
-- `192 total / passed=182 / failed=10 / pinned-broken=10 / no-pdf-assertions=0 / exit=0`
-- **Real failures = 0.** All 10 "failures" are pinned-broken (known).
-- Ratchet: `uncovered_behaviors=44`, `unclassified_macros=42`, `test-behavior-baseline=12` — all locked by `.claude/baseline-sizes.json`, **must monotonically shrink**, never grow.
-- Linters: 3/3 PASS (5–7 pre-existing structural warnings — none new).
+- `192 total / passed=191 / failed=1 / pinned-broken=1 / no-pdf-assertions=0 / exit=0`
+- **Real failures = 0.** The one reported failure is pinned-broken: `test-starred-visible`, deferred via `project_w05_pin1_defer_starred_theorem_numbering.md`.
+- Ratchet: `uncovered_behaviors=42`, `unclassified_macros=41`, `test-behavior-baseline=12` — all locked by `.claude/baseline-sizes.json`, **must monotonically shrink**, never grow.
+- Linters: 3/3 PASS.
 
 ## Verification checkpoint — MANDATORY before any .sty edit
 
 ```sh
 # 1. Confirm passing baseline
 nix develop --command python3 testfiles/run-tests.py 2>&1 | tail -3
-# Expect: 182 pass / 10 pinned-broken / 0 real failures
+# Expect: TOTAL: 192  passed=191  failed=1  pinned-broken=1
 
 # 2. Linters all clean
 python3 .claude/scripts/lint_sty_structural.py 2>&1 | tail -3
@@ -37,7 +37,7 @@ python3 .claude/scripts/lint_traceability.py 2>&1 | tail -3
 .claude/scripts/lint-tests.sh 2>&1 | tail -3
 
 # 3. Confirm branch + HEAD
-git rev-parse HEAD              # 770ad46 or a later W05-C-BUILD commit
+git rev-parse HEAD              # 2bbe790 or later
 git rev-parse --abbrev-ref HEAD # graph-redesign-phase3
 ```
 
@@ -47,7 +47,7 @@ Axis A (D3 delayed adjacent-commit refactor): replaced the proof-attribution "co
 
 Axis B (external thmstyle compat): `thmtools[continued]` GREEN fixture landed (`4cc5eff`). `keytheorems` WAIVED — upstream `xparse`-vs-cmd-hook incompatibility (reproduces without codependent); see [`project_keytheorems_xparse_future_wave.md`](~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_keytheorems_xparse_future_wave.md) for scope of a future wave. Commits `1287f41..87c01db`.
 
-Post-wave DOCS items: `4b0496a` (W05-P37, 7 new B-IDs), `e264f69` (W05-P39, stale proof:N.M comment sweep).
+Post-wave DOCS items later completed through `a0c04b7` (7 new behavior IDs, DESIGN atomic update, CODEMAP stub, pickup refresh, and ratchet shrink).
 
 ## Wave history (graph-redesign-phase3 branch)
 
@@ -58,10 +58,11 @@ Post-wave DOCS items: `4b0496a` (W05-P37, 7 new B-IDs), `e264f69` (W05-P39, stal
 | W05-A1+RENAME | `pproof:` → `unresref:` rename | DONE | |
 | W05-A2 | Joint-proof atom-identity refactor (D1+D2) | DONE | `e3ef8bc..666575d` |
 | W05-DEBT | Retire `proof:<display>` alias + named anchor-offset dim | DONE | `770ad46` |
-| W05-C | D3 delayed-commit refactor + external-thmstyle-compat (Axis A + Axis B; keytheorems waived — see `project_keytheorems_xparse_future_wave.md`) | DONE 2026-05-21 | `87c01db` (Axis B close); `e264f69` (HEAD post-DOCS) |
-| **W05-DOCS** | **B-ID minting, IMPLEMENTATION_PICKUP refresh, ratchet shrinkage** | **IN PROGRESS** | |
-| W05-PIN1 | Pin-burndown attempt | future | |
-| W05-D | Queue retirement, harmonize on `\codepbackrefsof` | future | |
+| W05-C | D3 delayed-commit refactor + external-thmstyle-compat (Axis A + Axis B; keytheorems waived — see `project_keytheorems_xparse_future_wave.md`) | DONE 2026-05-21 | `87c01db` (Axis B close); `e264f69` (post-C pickup refresh) |
+| W05-DOCS | behavior-ID minting, DESIGN atomic update, CODEMAP stub, IMPLEMENTATION_PICKUP refresh, ratchet shrinkage | PASS 0.3 | `a0c04b7` |
+| W05-PIN1 | Pin-burndown: 10 pinned-broken fixtures reduced to 1 remaining pin | PASS 1.0 | `b12deca` |
+| W05-TEST-HYG | Purged root-level v0.1 stubs and `.tlg` siblings; added root-level `.lvt` runner guard | PASS 1.0 | `2bbe790` |
+| W05-D | Queue retirement, harmonize on `\codepbackrefsof` | next | |
 | W05-E | `\codepignorethis`, display→atom sidecar, multi-proof ordinal | future | |
 | W05-F | `enabled=false` toggle, `\ref*` macros | future | |
 
@@ -89,7 +90,7 @@ Post-wave DOCS items: `4b0496a` (W05-P37, 7 new B-IDs), `e264f69` (W05-P39, stal
 - No big-bang rewrites — wave-based only.
 - No editing `codependent.sty` without running the test suite first.
 - No running tests outside `nix develop`.
-- No declaring a wave done without ALL tests passing (180/180 + 10 pinned-broken).
+- No declaring a wave done without the current suite floor holding (`192 total / passed=191 / failed=1 / pinned-broken=1`, exit 0 at `2bbe790`).
 - No "trust me bro" — every test must pass, zero exceptions.
 - No allowlists or new "known-failing" pins (pinned-broken count must monotonically decrease).
 - No `git checkout <file>` / `git restore <file>` without saving a patch first.
@@ -103,12 +104,12 @@ Post-wave DOCS items: `4b0496a` (W05-P37, 7 new B-IDs), `e264f69` (W05-P39, stal
 | `codependent.sty` | The package (5225 lines as of `770ad46`) |
 | `codependent-render.sty` | Rendering layer (586 lines) |
 | `docs/PHASE3_SPEC.md` | Phase-3 architecture spec (historical wave structure) |
-| `docs/BEHAVIOR.md` | Behavioral spec (83+ [B-XXX] IDs) |
+| `docs/BEHAVIOR.md` | Behavioral spec (83+ behavior IDs) |
 | `docs/CONVENTIONS.md` | Coding conventions (tagging, naming, indentation) |
 | `docs/DESIGN.md` | Living design spec (v2 post-W05-A2/DEBT) |
 | `docs/HISTORY.md` | Audit trail |
 | `docs/CREDITS.md` | Pavlov dpmac credit |
-| `testfiles/run-tests.py` | Test runner (3245 lines, 28+ assertion types) |
+| `testfiles/run-tests.py` | Test runner (current suite: 155 unit + 34 integration `.lvt` fixtures) |
 | `testfiles/test-index.md` | Generated test index (regenerated by fixture-owning items) |
 | `.claude/scripts/lint_sty_structural.py` | Structural TeX linter |
 | `.claude/scripts/lint_traceability.py` | Behavioral traceability check |
@@ -116,15 +117,26 @@ Post-wave DOCS items: `4b0496a` (W05-P37, 7 new B-IDs), `e264f69` (W05-P39, stal
 | `.claude/scripts/compare-wire-format.sh` | Wire-format diff (hardcoded fixture list; supplement with explicit `diff -u` for new fixtures) |
 | `.claude/baseline-sizes.json` | Baseline ratchet (monotone shrink) |
 | `.claude/paths.toml` | Machine-read doc-path SSOT |
-| `.claude/comms/w05-c-PLAN-FINAL.md` | **W05-C build pickup — read this for the next wave** |
+| `~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_d_pickup.md` | **W05-D cold-start pickup — read this for the next wave** |
 | `.claude/comms/w05-c-planner-r9.md` | Canonical R9 plan body |
 | `.claude/comms/w05-c-explorer-state-machine.md` | C1 state-machine ground truth |
 | `.claude/comms/w05-c-worktree-baseline.txt` | Frozen worktree-residue snapshot (do-not-touch list) |
 
-## First commands (W05-PIN1 / next session)
+## Test layout (post-W05-TEST-HYG)
+
+Active `.lvt` fixtures live only under `testfiles/unit/` and `testfiles/integration/`:
+
+- `testfiles/unit/*.lvt`: 155 fixtures
+- `testfiles/integration/*.lvt`: 34 fixtures
+- Total active `.lvt` fixtures: 189
+- `testfiles/` root: zero `.lvt` fixtures; the runner rejects new root-level `.lvt` files
+
+Compiled examples, real-world smoke tests, support files, and expected census outputs remain in their existing subdirectories.
+
+## First commands (W05-D / next session)
 
 ```sh
-# 1. Confirm baseline (expect: 182 pass / 10 pinned-broken / 0 real failures)
+# 1. Confirm baseline (expect: TOTAL: 192  passed=191  failed=1  pinned-broken=1)
 nix develop --command python3 testfiles/run-tests.py 2>&1 | tail -3
 
 # 2. Linter state
@@ -135,13 +147,15 @@ python3 .claude/scripts/lint_traceability.py 2>&1 | tail -3
 # 3. Recent commits
 git log --oneline | head -10
 
-# 4. Read the design ledger for W05-PIN1 scope
-cat ~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_design_ledger.md
+# 4. Read the W05-D cold-start pickup
+cat ~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_d_pickup.md
 ```
 
-## Historical pickup files (no longer authoritative)
+## Pickup files
 
-These remain as context but are SUPERSEDED for orchestration purposes:
+- `~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_d_pickup.md` — current W05-D next-wave pickup. AUTHORITATIVE for the next wave.
+
+The files below remain as context but are SUPERSEDED for orchestration purposes:
 
 - `~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_w05_c_axis_a_landed.md` — W05-C ship state (HEAD, suite, Axis A + B details). HISTORICAL post-W05-C.
 - `.claude/comms/w05-c-PLAN-FINAL.md` — W05-C build plan. HISTORICAL (W05-C shipped).
