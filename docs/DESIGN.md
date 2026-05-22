@@ -4614,9 +4614,31 @@ The `.sty` hooks into theorem environments by name via
 
 - **keytheorems:** support is waived to a future xparse-environment
   tracking wave, not treated as a dropped TODO.  The blocker is the
-  LaTeX2e `cmd/<env>` hook surface against xparse-defined environments;
-  see `project_keytheorems_xparse_future_wave.md` and
-  `.claude/comms/w05-c-axis-b-keytheorems-followup.md`.
+  LaTeX2e `cmd/<env>` hook surface against xparse-defined environments.
+
+  **Minimal reproduction** (fails identically without `codependent`):
+
+  ```tex
+  \documentclass{article}
+  \usepackage{keytheorems}
+  \newkeytheorem{theorem}[name=Theorem,numberwithin=section]
+  \AddToHook{cmd/theorem/before}{\typeout{BEFORE}}
+  \begin{document}
+  \begin{theorem}\label{thm:x}X\end{theorem}
+  \end{document}
+  ```
+
+  Observed: `! Use of \__hook_make_prefixes:w doesn't match its
+  definition.` This is an upstream LaTeX-kernel interaction between
+  `\AddToHook{cmd/<env>/...}` and `keytheorems`' xparse-defined
+  environment commands; `codependent`'s tracking surface is not the
+  source of the conflict.
+
+  **Path forward:** `codependent` needs an xparse-env tracking pathway
+  (e.g. `env/<env>/begin` hooks, or post-creation `\pretocmd` against
+  the xparse-generated internal command) before `keytheorems` envs can
+  be tracked. Tracked-via-other-backend theorems (amsthm, ntheorem,
+  raw `\newtheorem`) and `thmtools[continued]` are unaffected.
 
 LaTeXML compatibility is a secondary goal.  The `.sty` uses
 standard LaTeX2e mechanisms.  If LaTeXML needs help with
