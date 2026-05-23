@@ -15,7 +15,7 @@
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@tag{1.1}{uid=cat:category theory}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% (no TEST-BEHAVIOR: .cdp flat record format for \codeptag has no matching B-* ID)
+%% TEST-BEHAVIOR: BCDP-FLAT-RECORD
 %%
 %% REVIEW_C finding #6. The original v0.5 sketch proposed
 %% records like \codep@cdp@atom{1.1}{paragraph}{src=foo,env=bar}

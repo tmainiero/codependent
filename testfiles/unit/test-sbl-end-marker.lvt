@@ -13,7 +13,7 @@
 %% TEST-CDP-LAST-RECORD: \codep@cdp@end{OK}
 %% TEST-PACKAGES: amsthm,codependent
 %% TEST-RERUN: 2
-%% (no TEST-BEHAVIOR: .cdp sentinel/close-timing has no matching B-* ID)
+%% TEST-BEHAVIOR: BCDP-SENTINEL
 %%
 %% REVIEW_C finding #7. The .cdp sentinel is the CLI's
 %% indicator that the file is complete and valid. If pdflatex

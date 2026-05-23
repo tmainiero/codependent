@@ -1,7 +1,7 @@
 %% TEST-NAME: test-runner-pdf-link-y-between
 %% TEST-PURPOSE: Self-test for TEST-PDF-LINK-Y-BETWEEN assertion type.
 %% TEST-KIND: unit
-%% TEST-BEHAVIOR: B-LINK-CORRECT
+%% TEST-BEHAVIOR: B-LINK-EFFECTIVE-ANCHOR
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Self-test for TEST-PDF-LINK-Y-BETWEEN assertion type.
 %%            A \hyperlink destination (\hypertarget) is placed between

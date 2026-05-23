@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-full-stack-inline
 %% TEST-PURPOSE: Full-stack integration: amsmath, amsthm, thmtools, hyperref,
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-BEHAVIOR: B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Full-stack integration: amsmath, amsthm, thmtools, hyperref,
 %%            cleveref, tikz-cd, codependent with backref-style=inline.

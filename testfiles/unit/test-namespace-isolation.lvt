@@ -1,7 +1,7 @@
 %% TEST-NAME: test-namespace-isolation
 %% TEST-PURPOSE: Verify type-prefixed keys keep theorem, definition, and
 %% TEST-KIND: unit
-%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-NO-ORPHAN
+%% TEST-BEHAVIOR: B-LINK-EFFECTIVE-ANCHOR, B-LINK-NO-ORPHAN
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Verify type-prefixed keys keep theorem, definition, and
 %%            paragraph atoms distinct in the backref graph.  Every

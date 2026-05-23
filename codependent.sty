@@ -4455,10 +4455,12 @@
   }{}%
 }
 
-%% @utility
+%% @behavior BCDP-FLAT-RECORD
 % \codep@cdpwrite@atom{text}
 %   Atom-scoped guard: drops the write when not inside a tracked
-%   atom (\codep@currentatom is empty).
+%   atom (\codep@currentatom is empty).  Every per-atom .cdp
+%   record (label, tag, edge, use, …) routes through this guard,
+%   pinning the flat 3-arg record shape used by the CLI consumer.
 \newcommand*{\codep@cdpwrite@atom}[1]{%
   \codep@getcurrentatomdisplay\codep@tmp@cdpdisplay%
   \ifx\codep@tmp@cdpdisplay\@empty\else%
@@ -4470,15 +4472,25 @@
 %% Per REVIEW_C finding #5, the stream opens at begindocument/before
 %% (before any \AtBeginDocument hook), so atoms emitted from user
 %% hooks are never silently dropped.
+%%
+%% The header-record writes are factored into \codep@cdp@writeheader
+%% so the BCDP-VERSION / BCDP-SOURCE invariants have honest carrier
+%% macros tagged in this file (per docs/CONVENTIONS.md "every
+%% @behavior tag must reference a real .sty macro").
+%% @behavior BCDP-VERSION
+%% @behavior BCDP-SOURCE
+\def\codep@cdp@writeheader{%
+  \immediate\write\codep@cdpout{%
+    \string\codep@cdp@version{2}}%
+  \immediate\write\codep@cdpout{%
+    \string\codep@cdp@source{\jobname.tex}}%
+}
 \AddToHook{begindocument/before}[codependent/cdp/open]{%
   \if@filesw
     \newwrite\codep@cdpout
     \immediate\openout\codep@cdpout=\jobname.cdp\relax
     \global\booltrue{codep@cdpopen}%
-    \immediate\write\codep@cdpout{%
-      \string\codep@cdp@version{2}}%
-    \immediate\write\codep@cdpout{%
-      \string\codep@cdp@source{\jobname.tex}}%
+    \codep@cdp@writeheader%
   \fi
 }
 
@@ -4488,7 +4500,7 @@
 %% test for "complete file".  P04: invoked from
 %% \codep@enddoc@orchestrator's drain@sentinel slot (must be LAST
 %% of the drain slots since closing the stream drops later writes).
-%% @utility
+%% @behavior BCDP-SENTINEL
 \def\codep@enddoc@drain@sentinel{%
   \ifbool{codep@cdpopen}{%
     \immediate\write\codep@cdpout{%

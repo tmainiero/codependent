@@ -1,7 +1,7 @@
 %% TEST-NAME: test-runner-pdf-link-y-near
 %% TEST-PURPOSE: Self-test for TEST-PDF-LINK-Y-NEAR assertion type.
 %% TEST-KIND: unit
-%% TEST-BEHAVIOR: B-LINK-PROOF-DEST, B-LINK-CORRECT
+%% TEST-BEHAVIOR: B-LINK-PROOF-DEST
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Self-test for TEST-PDF-LINK-Y-NEAR assertion type.
 %%            A \hyperlink jumps to a \hypertarget placed immediately

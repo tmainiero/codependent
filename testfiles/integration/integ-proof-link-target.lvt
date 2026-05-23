@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-proof-link-target
 %% TEST-PURPOSE: Proof-atom link target: clicking N.M* in a "Used in" list
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-BEHAVIOR: B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Proof-atom link target: clicking N.M* in a "Used in" list
 %%            jumps near the proof heading, not the parent theorem.

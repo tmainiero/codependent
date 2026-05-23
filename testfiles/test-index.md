@@ -97,14 +97,14 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-frontedge-unresolved.lvt | LIVE | B-FRONTEDGE-CAPTURE | Verify that \ref{thm:MISSING} (an undefined label that |
 | testfiles/unit/test-frontedge-vref.lvt | LIVE | B-FRONTEDGE-CAPTURE | Verify \vref{thm:A} (varioref smart reference) from |
 | testfiles/unit/test-halt-on-error-opt-out.lvt | LIVE | B-ERROR-ENDDOC | Verify that the test runner correctly drops -halt-on-error |
-| testfiles/unit/test-hyperref-links.lvt | LIVE | B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN | When hyperref is loaded, "Used in" backrefs become |
+| testfiles/unit/test-hyperref-links.lvt | LIVE | B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-NO-ORPHAN | When hyperref is loaded, "Used in" backrefs become |
 | testfiles/unit/test-hyperref-manual-no-edge.lvt | LIVE | B-EDGE-HYPERREF | A manual \hyperref link still renders as a link in the PDF |
 | testfiles/unit/test-label-cleveref-opt.lvt | LIVE | B-PASS-ONE | Verify \label[theorem]{thm:foo} (cleveref optional-arg form) |
 | testfiles/unit/test-label-kernel.lvt | LIVE | B-PASS-ONE | Verify a plain \label{key} inside a tracked atom produces |
 | testfiles/unit/test-load-cleveref-after-codependent.lvt | LIVE | B-PASS-ONE | Verify cleveref loaded AFTER codependent still has all its |
 | testfiles/unit/test-load-codependent-then-hyperref.lvt | LIVE | B-PASS-ONE | Verify hyperref loaded AFTER codependent still works: the |
 | testfiles/unit/test-load-hyperref-then-codependent.lvt | LIVE | B-PASS-ONE | Verify hyperref loaded BEFORE codependent works cleanly (the |
-| testfiles/unit/test-namespace-isolation.lvt | LIVE | B-LINK-CORRECT, B-LINK-NO-ORPHAN | Verify type-prefixed keys keep theorem, definition, and |
+| testfiles/unit/test-namespace-isolation.lvt | LIVE | B-LINK-EFFECTIVE-ANCHOR, B-LINK-NO-ORPHAN | Verify type-prefixed keys keep theorem, definition, and |
 | testfiles/unit/test-nested-tracked.lvt | LIVE | B-NUM-NESTED, B-EDGE-NESTED | A tracked env nested inside another tracked env must NOT |
 | testfiles/unit/test-newcommand-tracking.lvt | LIVE | B-CONC-EDGES, B-CONC-DEFSITE | Verify \codepnewcommand{\Hom}[2]{...} emits the expected |
 | testfiles/unit/test-newdoccommand-tracking.lvt | LIVE | B-CONC-EDGES, B-CONC-DEFSITE | Verify \codepNewDocumentCommand{\Cite}{s o m}{...} emits |
@@ -114,8 +114,8 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-numbering-depth3.lvt | LIVE | B-NUM-DEPTH2 | depth=3 option produces section.subsection.subsubsection.atom |
 | testfiles/unit/test-numbering-sibling.lvt | LIVE | B-NUM-SEQ, B-NUM-RESET | thmtools sibling=theorem envs get correct atom numbering. |
 | testfiles/unit/test-paragraphs-off.lvt | LIVE | B-NUM-PARA | paragraphs=off disables bare-paragraph atom tracking; |
-| testfiles/unit/test-pass-single-no-backrefs.lvt | LIVE | B-PASS-SINGLE | A single-pass build still produces a numbered document but |
-| testfiles/unit/test-pass-three-toc-floor.lvt | LIVE | B-PASS-THREE | A document whose base TOC machinery requires a third pass |
+| testfiles/unit/test-pass-single-no-backrefs.lvt | LIVE | B-PASS-ONE | A single-pass build still produces a numbered document but |
+| testfiles/unit/test-pass-three-toc-floor.lvt | LIVE | B-PASS-ONE, B-PASS-TWO | A document whose base TOC machinery requires a third pass |
 | testfiles/unit/test-pass-two-backrefs-appear.lvt | LIVE | B-PASS-TWO | On the second pass the visible "Used in" annotation |
 | testfiles/unit/test-proof-bind-overwrite-warn.lvt | LIVE | B-WARN-ENDDOC | Asserts the single-slot proof-binding overwrite warn |
 | testfiles/unit/test-proof-spacing-invariant.lvt | LIVE | B-PROOF-ADJ | Adjacent tracked theorem/proof spacing stays at the |
@@ -129,7 +129,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-proofs-nested-lemma.lvt | LIVE | B-PROOF-INNER | A lemma inside a proof gets its own atom number; the proof |
 | testfiles/unit/test-proofs-off.lvt | LIVE | B-PROOF-OFF | proofs=off disables all proof tracking; no atom numbers, |
 | testfiles/unit/test-proofs-paragraph-breaks-adjacency.lvt | LIVE | B-PROOF-ADJRULE | A paragraph between theorem and proof breaks adjacency; |
-| testfiles/unit/test-proofs-separated-link-targets.lvt | LIVE | B-PROOF-SEP, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | For a rebound proof (\codepproofof, B-PROOF-SEP), backref |
+| testfiles/unit/test-proofs-separated-link-targets.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | For a rebound proof (\codepproofof, B-PROOF-SEP), backref |
 | testfiles/unit/test-proofs-separated.lvt | LIVE | B-PROOF-SEP | \codepproofof associates a separated proof with its theorem; |
 | testfiles/unit/test-proofs-warnings-off.lvt | LIVE | B-PROOF-NONADJ | proof-warnings=off suppresses the "Proof not adjacent" |
 | testfiles/unit/test-reference-edge-cases-visible.lvt | LIVE | B-DEDUP, B-SELFREF, B-ZERO-REF, B-EDGE-ZERO-REF, B-EDGE-DEDUP, B-EDGE-MULTI-SAME | Multiple refs from one source deduplicate to one visible |
@@ -137,11 +137,11 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-restatable-inert-visible.lvt | LIVE | B-EDGE-RESTATE | A restated theorem body is inert for tracking, so a ref in |
 | testfiles/unit/test-restatable-single.lvt | LIVE | B-REST-FIRST, B-REST-NODUP | Verify \restatable{theorem}{thm:foo}{...} + \restate{thm:foo} |
 | testfiles/unit/test-runner-pdf-dest-page.lvt | LIVE | B-LINK-NO-ORPHAN | Self-test for TEST-PDF-DEST-PAGE assertion type. |
-| testfiles/unit/test-runner-pdf-link-y-between.lvt | LIVE | B-LINK-CORRECT | Self-test for TEST-PDF-LINK-Y-BETWEEN assertion type. |
-| testfiles/unit/test-runner-pdf-link-y-near.lvt | LIVE | B-LINK-PROOF-DEST, B-LINK-CORRECT | Self-test for TEST-PDF-LINK-Y-NEAR assertion type. |
-| testfiles/unit/test-sbl-end-marker.lvt | LIVE | — | Verify the last record of the .cdp sidecar is the sentinel |
-| testfiles/unit/test-sbl-flat-records.lvt | LIVE | — | Verify \codeptag{key}{value with spaces} produces a flat |
-| testfiles/unit/test-sbl-version-source.lvt | LIVE | — | Verify the first two records of the .cdp sidecar are |
+| testfiles/unit/test-runner-pdf-link-y-between.lvt | LIVE | B-LINK-EFFECTIVE-ANCHOR | Self-test for TEST-PDF-LINK-Y-BETWEEN assertion type. |
+| testfiles/unit/test-runner-pdf-link-y-near.lvt | LIVE | B-LINK-PROOF-DEST | Self-test for TEST-PDF-LINK-Y-NEAR assertion type. |
+| testfiles/unit/test-sbl-end-marker.lvt | LIVE | BCDP-SENTINEL | Verify the last record of the .cdp sidecar is the sentinel |
+| testfiles/unit/test-sbl-flat-records.lvt | LIVE | BCDP-FLAT-RECORD | Verify \codeptag{key}{value with spaces} produces a flat |
+| testfiles/unit/test-sbl-version-source.lvt | LIVE | BCDP-VERSION, BCDP-SOURCE | Verify the first two records of the .cdp sidecar are |
 | testfiles/unit/test-section-article.lvt | LIVE | B-SUPP-SECTION | Verify \section{Foo} heading paragraph is NOT numbered as an |
 | testfiles/unit/test-section-koma.lvt | LIVE | B-SUPP-SECTION | Verify a \section{Foo} heading in a KOMA-Script scrbook |
 | testfiles/unit/test-section-titlesec.lvt | LIVE | B-SUPP-SECTION | Verify \section{Foo} heading paragraph is NOT numbered as |
@@ -173,12 +173,12 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-appendix.lvt | LIVE | B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-LINK-APPENDIX-BIDIR | Integration test for backrefs=appendix mode. |
 | testfiles/integration/integ-equations-all.lvt | LIVE | B-EQ-ALL | Verify that equations=all causes equations INSIDE tracked theorem |
 | testfiles/integration/integ-equations-off.lvt | LIVE | B-EQ-OFF | Verify that equations=off fully suppresses equation tracking: |
-| testfiles/integration/integ-full-stack-inline.lvt | LIVE | B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Full-stack integration: amsmath, amsthm, thmtools, hyperref, |
+| testfiles/integration/integ-full-stack-inline.lvt | LIVE | B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Full-stack integration: amsmath, amsthm, thmtools, hyperref, |
 | testfiles/integration/integ-no-cleveref.lvt | LIVE | B-PASS-ONE | Correct patch-site selection when cleveref is absent. |
 | testfiles/integration/integ-no-hyperref.lvt | LIVE | B-REND-INLINE | Graceful degradation when hyperref is absent. Verifies that |
 | testfiles/integration/integ-no-paragraphs.lvt | LIVE | B-EDGE-PARAOFF-EQ | Integration test with paragraphs=off. Verifies that |
 | testfiles/integration/integ-ntheorem.lvt | LIVE | B-NUM-SHARED | Verify codependent works with ntheorem as the theorem backend |
-| testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
+| testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
 | testfiles/integration/integ-proofauto-adjacent-delayed-commit-probe.lvt | LIVE | B-PROOF-ADJ, B-PROOF-SEP, B-PROOF-ADJRULE, B-FRONTEDGE-CAPTURE, B-PROOF-DELAYED-COMMIT | Probe delayed adjacent proof binding across adjacent, same-run, and forward-heading paths. |
 | testfiles/integration/integ-proofauto-adjacent-no-leak.lvt | LIVE | B-PROOF-SEP, B-PROOF-ADJ, B-PROOF-ADJRULE, B-PROOF-OPAQUE-ID, B-PROOF-DELAYED-COMMIT | D3 heading target wins over adjacent target; conflict warning emitted. |
 | testfiles/integration/integ-proofauto-autoref-undefined.lvt | LIVE | B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING, B-PROOF-UNRESREF | Auto proof headings with undefined / section-only / forward-ref labels. |
@@ -197,7 +197,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-proofauto-repeated-explicit.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Two explicit \codepproofof* calls in one proof form one joint atom. |
 | testfiles/integration/integ-proofauto-switch-off.lvt | LIVE | B-PROOF-SEP, B-LINK-PROOF-DEST | Auto-detected and explicit proof headings remain human-authored visible text. |
 | testfiles/integration/integ-proofauto-tracked-entity-gate.lvt | LIVE | B-PROOF-SEP, B-PROOF-NONADJ, B-LINK-PROOF-DEST, B-PASS-ONE, B-PROOF-ANCHOR-NEAR-HEADING | Auto proof headings ignore section refs before unresref allocation. |
-| testfiles/integration/integ-stress-all-features.lvt | LIVE | B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-RERUN | Wave 3 holistic stress fixture: exercises every codependent feature |
+| testfiles/integration/integ-stress-all-features.lvt | LIVE | B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-TWO | Wave 3 holistic stress fixture: exercises every codependent feature |
 | testfiles/integration/integ-supp-tracked-env.lvt | LIVE | B-SUPP-TRACKED | Verify paragraph numbering is suppressed inside tracked |
 | testfiles/integration/integ-thmtools-continued-generic-hooks.lvt | LIVE | B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST, B-COMPAT-THMTOOLS-CONTINUED | thmtools continued theorem tracks via generic hooks; continued copy gets its own atom. |
 | testfiles/integration/test-integration-kitchen-sink.lvt | LIVE | B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP | Exercise every codependent.sty feature in a single document that |

@@ -1,7 +1,7 @@
 %% TEST-NAME: test-proofs-separated-link-targets
 %% TEST-PURPOSE: For a rebound proof (\codepproofof, B-PROOF-SEP), backref
 %% TEST-KIND: unit
-%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-CORRECT, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
+%% TEST-BEHAVIOR: B-PROOF-SEP, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: For a rebound proof (\codepproofof, B-PROOF-SEP), backref
 %%            entries in source-token "Used in" lists for both the

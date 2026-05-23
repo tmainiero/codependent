@@ -1,7 +1,7 @@
 %% TEST-NAME: test-pass-single-no-backrefs
 %% TEST-PURPOSE: A single-pass build still produces a numbered document but
 %% TEST-KIND: unit
-%% TEST-BEHAVIOR: B-PASS-SINGLE
+%% TEST-BEHAVIOR: B-PASS-ONE
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: A single-pass build still produces a numbered document but
 %%            does not yet render visible "Used in" annotations.

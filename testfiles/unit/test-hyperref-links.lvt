@@ -1,7 +1,7 @@
 %% TEST-NAME: test-hyperref-links
 %% TEST-PURPOSE: When hyperref is loaded, "Used in" backrefs become
 %% TEST-KIND: unit
-%% TEST-BEHAVIOR: B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN
+%% TEST-BEHAVIOR: B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-NO-ORPHAN
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: When hyperref is loaded, "Used in" backrefs become
 %%            clickable \hyperlink commands and atoms get

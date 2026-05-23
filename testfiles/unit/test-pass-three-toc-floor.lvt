@@ -1,7 +1,7 @@
 %% TEST-NAME: test-pass-three-toc-floor
 %% TEST-PURPOSE: A document whose base TOC machinery requires a third pass
 %% TEST-KIND: unit
-%% TEST-BEHAVIOR: B-PASS-THREE
+%% TEST-BEHAVIOR: B-PASS-ONE, B-PASS-TWO
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: A document whose base TOC machinery requires a third pass
 %%            still settles within that same three-pass budget while

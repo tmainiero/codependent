@@ -192,7 +192,7 @@ displays "Used in A" in the PDF.
 ### 3.3 Hyperlinks
 
 - [B-LINK-CLICKABLE] When hyperref is loaded, every entry in "Used in X, Y" is a clickable link.
-- [B-LINK-CORRECT] Link targets point to the correct atom location in the PDF. Theorem-like atoms resolve via their effective anchor; proof atoms resolve via the proof key's `\codep@anchormap` entry to the proof heading, not the parent theorem anchor.
+- *(retired: `B-LINK-CORRECT` — umbrella for the four rows below; specialise tests to B-LINK-EFFECTIVE-ANCHOR / B-LINK-PROOF-DEST / B-LINK-PROOFOF-STAR / B-LINK-ADJ-PROOF.)*
 - [B-LINK-EFFECTIVE-ANCHOR] For theorem-like atoms, backlink destinations resolve from the effective anchor: the heading anchor, possibly replaced by a same-typed same-display in-atom label. Proof and appendix links are routed through their own anchor maps rather than borrowing the theorem anchor.
 - [B-LINK-PROOF-DEST] Proof backlinks are addressable through `\codep@anchormap`. Adjacent, rebound, and standalone proofs all bind their canonical opaque `proof:a<N>` key through `\codep@anchormap` to the proof-begin anchor. The physical hyperref destination names are not part of the public contract.
 - [B-PROOF-ANCHOR-NEAR-HEADING] Adjacent, standalone, and rebound proofs all place exactly one proof-local anchor at proof-begin, so proof backlinks land near the rendered proof heading, not after the proof or on a later in-proof equation anchor.
@@ -272,6 +272,18 @@ Paragraph numbers are suppressed inside:
 - [B-REST-NODUP] `\TheoremCmd*` (restate) does NOT create a duplicate atom or backref entries.
 - [B-REST-CONCEPT] Concept commands (`\cmd*`) inside a restated body register the def site only at the original declaration, not at the restate site.
 
+### 3.9 `.cdp` sidecar-format rail (`BCDP-*`)
+
+These IDs document `.cdp` wire-format invariants observed by the
+`codep` CLI consumer.  They are NOT user-PDF behaviors — the `B-*`
+prefix is reserved for that.  A `BCDP-*` ID is honest only if a
+real `.sty` macro emits the record being asserted.
+
+- [BCDP-VERSION] The first non-comment record in `.cdp` is `\codep@cdp@version{<n>}` carrying the current schema version. Emitted from the `begindocument/before` open hook in `codependent.sty`.
+- [BCDP-SOURCE] The second non-comment record is `\codep@cdp@source{<file>}` naming the source document. Emitted alongside `BCDP-VERSION` from the open hook.
+- [BCDP-SENTINEL] The final record before `\endinput` is `\codep@cdp@end{OK}` confirming a clean drain. Emitted by `\codep@enddoc@drain@sentinel` (sentinel drain slot, runs last so the closeout cannot drop later writes).
+- [BCDP-FLAT-RECORD] Per-atom records use the flat 3-arg shape `\codep@cdp@<type>{a}{b}{c}` (NOT key-value blobs in a single argument). Emitted via the universal `\codep@cdpwrite@atom` guard wrapping every per-atom record; `\codeptag{kind}{value}` is a canonical example (`\codep@cdp@tag{atom}{kind}{value}`).
+
 ---
 
 ## 4. Package Interactions
@@ -300,9 +312,7 @@ Paragraph numbers are suppressed inside:
 | [B-PASS-ONE] Pass 1 | Atoms numbered, references recorded, and same-run label-number / effective-anchor state hydrated from `\label` | Correct numbering; NO "Used in" annotations |
 | [B-PASS-TWO] Pass 2 | Reference graph inverted and backrefs rendered from already-final targets/links | Full "Used in" annotations with final links |
 
-- [B-PASS-SINGLE] A single-pass build produces a correctly numbered document without backrefs.
-- [B-PASS-RERUN] "Rerun needed" = labels changed; standard LaTeX `Label(s) may have changed` warning.
-- [B-PASS-THREE] When the base packages loaded by the document themselves require a third pass (TOC restructuring, makeindex, bibliography staging, etc.), codependent settles within that same pass budget without adding to it. Codependent never increases cold pass count versus the base-package floor.
+*(retired: `B-PASS-SINGLE`, `B-PASS-RERUN`, `B-PASS-THREE` — emergent properties of the LaTeX kernel and the B-PASS-ONE/B-PASS-TWO pair, not codependent macro behaviors. Single-pass numbering and rerun-on-label-change are kernel behaviors; the cold-pass-floor invariant is a suite-level convergence contract tested via integration fixtures, not a macro carrier.)*
 
 ### 5.1 End-of-document finalization
 
