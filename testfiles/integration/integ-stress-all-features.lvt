@@ -84,7 +84,7 @@
 %%   - outer-mode guard: eq inside lemma body → no eq-sourced atomref (B-EQ-OUTER)
 %%   - paragraph numbering with backrefs (B-DISP-PARA)
 %%   - cross-section references §3 → §1 atoms, §3 → §2 atoms
-%%   - hyperref links for all backrefs (B-LINK-CLICKABLE, B-LINK-CORRECT, B-LINK-NO-ORPHAN)
+%%   - hyperref links for all backrefs (B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-NO-ORPHAN)
 
 \documentclass{article}
 
@@ -300,7 +300,7 @@ Also (properties of the metric, cf.\ \cref{def:topspace}):
 %%  Section 3: Cross-section references
 %%  Tests: §3 → §1 and §3 → §2 edges in the backref graph;
 %%         paragraph backref display (B-DISP-PARA);
-%%         hyperlink correctness for all backref entries (B-LINK-CORRECT).
+%%         hyperlink target correctness for all backref entries (B-LINK-EFFECTIVE-ANCHOR).
 %% ====================================================================
 \section{Cross-references}%
 \label{sec:crossref}

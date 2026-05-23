@@ -282,7 +282,7 @@ real `.sty` macro emits the record being asserted.
 - [BCDP-VERSION] The first non-comment record in `.cdp` is `\codep@cdp@version{<n>}` carrying the current schema version. Emitted from the `begindocument/before` open hook in `codependent.sty`.
 - [BCDP-SOURCE] The second non-comment record is `\codep@cdp@source{<file>}` naming the source document. Emitted alongside `BCDP-VERSION` from the open hook.
 - [BCDP-SENTINEL] The final record before `\endinput` is `\codep@cdp@end{OK}` confirming a clean drain. Emitted by `\codep@enddoc@drain@sentinel` (sentinel drain slot, runs last so the closeout cannot drop later writes).
-- [BCDP-FLAT-RECORD] Per-atom records use the flat 3-arg shape `\codep@cdp@<type>{a}{b}{c}` (NOT key-value blobs in a single argument). Emitted via the universal `\codep@cdpwrite@atom` guard wrapping every per-atom record; `\codeptag{kind}{value}` is a canonical example (`\codep@cdp@tag{atom}{kind}{value}`).
+- [BCDP-FLAT-RECORD] User-emitted tag records use the fixed 3-arg flat shape `\codep@cdp@tag{atom}{kind}{value}` (NOT key-value blobs in a single argument). Emitted by `\codeptag{kind}{value}`.
 
 ---
 

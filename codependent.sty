@@ -4344,6 +4344,11 @@
 %% @behavior B-FRONTEDGE-CAPTURE
 %% @behavior B-FRONTEDGE-DEDUP-EQ
 %% @behavior B-EDGE-HYPERREF
+%% Manual \hyperref[label]{...} calls are intentionally not wrapped
+%% here. B-EDGE-HYPERREF documents that user-written \hyperref
+%% produces a live link but does not participate in the codependent
+%% backref graph; omitting \hyperref from the wrapped-primitive list
+%% below is the carrier of that behavior.
 \def\codep@installfrontedgerefpatch{%
   %% ---- \ref and \ref* ----
   \ifcsname ref\endcsname%
@@ -4460,12 +4465,12 @@
   }{}%
 }
 
-%% @behavior BCDP-FLAT-RECORD
+%% @utility
 % \codep@cdpwrite@atom{text}
 %   Atom-scoped guard: drops the write when not inside a tracked
 %   atom (\codep@currentatom is empty).  Every per-atom .cdp
-%   record (label, tag, edge, use, …) routes through this guard,
-%   pinning the flat 3-arg record shape used by the CLI consumer.
+%   record (label, tag, edge, use, …) routes through this guard;
+%   record-specific emitters own their concrete arity and payload shape.
 \newcommand*{\codep@cdpwrite@atom}[1]{%
   \codep@getcurrentatomdisplay\codep@tmp@cdpdisplay%
   \ifx\codep@tmp@cdpdisplay\@empty\else%
@@ -5051,7 +5056,7 @@
   \codep@installparendhook%
 }
 
-%% @utility
+%% @behavior BCDP-FLAT-RECORD
 % \codeptag{kind}{value}
 %   Emit a semantic tag record to the .cdp sidecar, scoped to the
 %   current atom.  No visible typesetting effect.  Ignored outside
