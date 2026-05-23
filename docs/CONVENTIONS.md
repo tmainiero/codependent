@@ -239,12 +239,12 @@ fixtures and forbidden for unit/integration fixtures.
 
 The generated index `testfiles/test-index.md` is the canonical fixture index.
 Regenerate it with `python3 .claude/scripts/regenerate_test_index.py`; CI checks
-it with `python3 testfiles/run-tests.py --check-test-index --full`. Edit fixture
+it with `python3 scripts/run-tests.py --check-test-index --full`. Edit fixture
 headers, not the generated index.
 
 ### Runner kind flags
 
-`testfiles/run-tests.py` selects fixtures from parsed metadata within the
+`scripts/run-tests.py` selects fixtures from parsed metadata within the
 active fixture roots: `--unit` maps to `TEST-KIND: unit`, `--integration` maps
 to `TEST-KIND: integration`, and `--visual` maps to `TEST-KIND: stress`. These
 flags are additive when stacked; `--full` (also the no-flag default) runs all

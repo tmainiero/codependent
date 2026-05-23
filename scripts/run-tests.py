@@ -13,7 +13,7 @@ once the implementation lands and we can lock in golden output.
 
 Usage:
 
-    python3 run-tests.py [--filter PATTERN] [--engine pdflatex|lualatex|xelatex]
+    python3 scripts/run-tests.py [--filter PATTERN] [--engine pdflatex|lualatex|xelatex]
                          [--keep-temp] [--verbose]
                          [--unit] [--integration] [--visual] [--full]
                          [--unit-only] [--integration-only]
@@ -50,20 +50,22 @@ from xml.etree import ElementTree
 # Project layout
 # ----------------------------------------------------------------------
 
-# Path of THIS script: tools/codependent/testfiles/run-tests.py
+# Path of THIS script: scripts/run-tests.py (relative to the repo root).
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent  # tools/codependent/
-UNIT_DIR = SCRIPT_DIR / "unit"
-INTEGRATION_DIR = SCRIPT_DIR / "integration"
-COMPILED_EXAMPLES_DIR = SCRIPT_DIR / "compiled-examples"
-REAL_WORLD_DIR = SCRIPT_DIR / "real-world" / "wrappers"
-OUTPUT_DIR = SCRIPT_DIR / "output"
+REPO_ROOT = SCRIPT_DIR.parent  # the codependent repo root
+PROJECT_ROOT = REPO_ROOT  # legacy alias retained for in-file readers
+TESTFILES_DIR = REPO_ROOT / "testfiles"
+UNIT_DIR = TESTFILES_DIR / "unit"
+INTEGRATION_DIR = TESTFILES_DIR / "integration"
+COMPILED_EXAMPLES_DIR = TESTFILES_DIR / "compiled-examples"
+REAL_WORLD_DIR = TESTFILES_DIR / "real-world" / "wrappers"
+OUTPUT_DIR = TESTFILES_DIR / "output"
 
 # Where the .sty file lives. The runner copies it into the temp work dir
 # so each test sees a clean kpse search path.
-STY_FILE = PROJECT_ROOT / "codependent.sty"
-RENDER_STY_FILE = PROJECT_ROOT / "codependent-render.sty"
-LTXML_FILE = PROJECT_ROOT / "codependent.ltxml"  # may not exist yet
+STY_FILE = REPO_ROOT / "codependent.sty"
+RENDER_STY_FILE = REPO_ROOT / "codependent-render.sty"
+LTXML_FILE = REPO_ROOT / "codependent.ltxml"  # may not exist yet
 
 
 # ----------------------------------------------------------------------
@@ -1585,7 +1587,7 @@ def _prepare_stress_workspace(fix: "Fixture", tmp_path: Path) -> Path:
     compiled_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy(fix.path, compiled_dir / fix.path.name)
     shutil.copy(COMPILED_EXAMPLES_DIR / ".latexmkrc", compiled_dir / ".latexmkrc")
-    support_src = SCRIPT_DIR / "support"
+    support_src = TESTFILES_DIR / "support"
     if support_src.exists():
         shutil.copytree(support_src, tmp_path / "testfiles" / "support")
     _copy_project_style_files(tmp_path)
@@ -2824,7 +2826,7 @@ def run_fixture(
                 _run_assertions(fix, result, tmp_path, last_exit, prefix="")
 
         if keep_temp:
-            persistent = SCRIPT_DIR / "tmp" / fix.name
+            persistent = TESTFILES_DIR / "tmp" / fix.name
             persistent.parent.mkdir(parents=True, exist_ok=True)
             if persistent.exists():
                 shutil.rmtree(persistent)
@@ -2884,7 +2886,7 @@ def _fixture_headers(path: Path) -> dict:
 
 
 def _reject_root_lvt_fixtures() -> None:
-    root_lvt = sorted(SCRIPT_DIR.glob("*.lvt"))
+    root_lvt = sorted(TESTFILES_DIR.glob("*.lvt"))
     if not root_lvt:
         return
     offenders = "\n  ".join(str(path) for path in root_lvt)

@@ -26,7 +26,7 @@ or `~/texmf/` tree.
 
 `testfiles/compiled-examples/.latexmkrc` extends `TEXINPUTS` to include
 `../support` so manual `latexmk` from `compiled-examples/` finds these
-files. The test runner (`testfiles/run-tests.py`) extends `TEXINPUTS`
+files. The test runner (`scripts/run-tests.py`) extends `TEXINPUTS`
 in the per-fixture temp workspace via the same convention.
 
 ## Other files in this directory

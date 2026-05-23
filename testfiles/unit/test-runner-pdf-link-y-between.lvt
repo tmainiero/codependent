@@ -8,8 +8,8 @@
 %%            two reference texts vertically.  The assertion verifies
 %%            the destination y falls strictly between top-text y and
 %%            bottom-text y in PDF coordinates.
-%% TEST-SOURCE: testfiles/run-tests.py _check_pdf_link_y_between
-%% TEST-SECTION: testfiles/run-tests.py _parse_link_y_between_spec
+%% TEST-SOURCE: scripts/run-tests.py _check_pdf_link_y_between
+%% TEST-SECTION: scripts/run-tests.py _parse_link_y_between_spec
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-LOG-NOT: Emergency stop

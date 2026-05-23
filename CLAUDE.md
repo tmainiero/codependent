@@ -26,18 +26,18 @@ need to commit an otherwise-ignored path.
 ## Build & Test
 
 ```sh
-nix develop --command python3 testfiles/run-tests.py   # full suite (94 tests) — MUST use nix develop
-nix develop --command python3 testfiles/run-tests.py --filter X  # subset
-nix develop --command python3 testfiles/run-tests.py --unit         # unit only
-nix develop --command python3 testfiles/run-tests.py --integration  # integration only
-nix develop --command python3 testfiles/run-tests.py --visual       # stress only
-nix develop --command python3 testfiles/run-tests.py --full         # all (default)
+nix develop --command python3 scripts/run-tests.py   # full suite (94 tests) — MUST use nix develop
+nix develop --command python3 scripts/run-tests.py --filter X  # subset
+nix develop --command python3 scripts/run-tests.py --unit         # unit only
+nix develop --command python3 scripts/run-tests.py --integration  # integration only
+nix develop --command python3 scripts/run-tests.py --visual       # stress only
+nix develop --command python3 scripts/run-tests.py --full         # all (default)
 python3 .claude/scripts/lint_sty_structural.py         # structural TeX linter
 python3 .claude/scripts/lint_traceability.py           # behavioral traceability check
 .claude/scripts/lint-tests.sh                          # test convention linter
 ```
 
-**Dev iteration**: `nix develop --command python3 testfiles/run-tests.py ...` (above).
+**Dev iteration**: `nix develop --command python3 scripts/run-tests.py ...` (above).
 **CI / wave-close reproducibility**: `nix flake check` (runs the equivalent inside the flake build sandbox).
 
 ## Key Files
@@ -48,7 +48,7 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 - `docs/BEHAVIOR.md` — behavioral specification (83 testable statements with [B-XXX] IDs)
 - `docs/IMPLEMENTATION_PICKUP.md` — mandatory reading gate for new agents
 - `docs/CONVENTIONS.md` — coding conventions (including traceability tagging)
-- `testfiles/run-tests.py` — custom test runner (28 assertion types)
+- `scripts/run-tests.py` — custom test runner (28 assertion types)
 - `.traceability-baseline` — pre-rewrite unclassified macros/uncovered behaviors (shrinks to zero)
 - `.test-behavior-baseline` — 14 tests grandfathered from `TEST-BEHAVIOR:` rule (shrinks to zero)
 - `.claude/paths.toml` — single source of truth for machine-read doc paths; consult before hardcoding
@@ -63,12 +63,12 @@ Where things go. **If your file doesn't fit here, ask before creating a new top-
 |---|---|---|
 | `codependent.sty`, `codependent-render.sty` | Package source. LaTeX convention requires .sty at repo root. | Subroutines you want hidden — there's no `src/`; the .sty layer is flat. |
 | `docs/` | Specs, design docs, conventions, history. Machine-read paths registered in `.claude/paths.toml`. | Scripts; build artifacts; ephemeral notes. |
-| `testfiles/unit/`, `testfiles/integration/`, `testfiles/compiled-examples/` | `.lvt` fixtures + their `.tlg` siblings. | Scripts (those go in `scripts/`); generated outputs (those go in `testfiles/output/`). |
+| `testfiles/unit/`, `testfiles/integration/`, `testfiles/compiled-examples/` | `.lvt` fixtures + their `.tlg` siblings. NO scripts — scripts go in `scripts/`. | Scripts (those go in `scripts/`); generated outputs (those go in `testfiles/output/`). |
 | `testfiles/output/` | Generated test artifacts (census .json, .pdf, .log). | Anything hand-edited. |
 | `testfiles/support/` | Vendored support `.sty` files needed by tests (e.g. `sty-theorems-ta.sty`). | Project source; non-vendor support. |
 | `testfiles/tmp/` | Truly ephemeral runner state. Safe to wipe. | Anything you want to commit. |
 | `testfiles/real-world/` | Real published-paper fixtures used as fuzz/regression material. | Synthetic fixtures (those are `unit/`/`integration/`). |
-| `scripts/` | Human-facing utilities (build cleanup, golden management, the test runner). Invoke directly with `python3 scripts/X` or `./scripts/X`. | Agent/harness tooling (that goes in `.claude/scripts/`). |
+| `scripts/` | Human-facing utilities + the test runner (`run-tests.py`). Invoke directly: `python3 scripts/run-tests.py` (also build cleanup, golden management). | Agent/harness tooling (that goes in `.claude/scripts/`). |
 | `.claude/scripts/` | Harness/agent tooling: linters, hooks, dispatch helpers. Invoked by agents, PreToolUse hooks, and humans following CLAUDE.md. | Build/test infrastructure for end users. |
 | `.claude/comms/` | Ephemeral agent communication (briefs, reports, plans). Gitignored. | Anything that should survive the session. |
 | `.claude/agent_memory/` | Per-session findings/decisions. Gitignored. | Durable memory (that lives in `~/.claude/projects/...`). |

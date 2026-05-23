@@ -11,7 +11,7 @@ sourcefiles = {"codependent.sty"}
 
 -- Test directory: l3build expects a flat dir with .lvt + .tlg files.
 -- Our tests live in testfiles/unit/ and testfiles/integration/ for the
--- custom runner (run-tests.py).  Symlinks in testfiles/ point to those
+-- custom runner (scripts/run-tests.py).  Symlinks in testfiles/ point to those
 -- subdirectories so l3build can discover them.
 testfiledir = "testfiles"
 
@@ -20,7 +20,7 @@ checkengines = {"pdftex"}
 
 -- Load regression-test.tex automatically before each .lvt file.
 -- Standard l3build practice is `\input regression-test` in every .lvt,
--- but the custom runner (run-tests.py) injects its own \START/\END
+-- but the custom runner (scripts/run-tests.py) injects its own \START/\END
 -- no-ops and would break if regression-test.tex redefines \END to
 -- call \@@end.  Using tokens= lets l3build prepend the load while
 -- keeping the .lvt files runner-agnostic.

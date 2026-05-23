@@ -10,7 +10,7 @@
 %%            the error site so it can collect the error message from the
 %%            log. The runner should find the error and not prematurely halt.
 %% TEST-SOURCE: wave3-plan-v11.md v12 A1 runner-mechanism contract
-%% TEST-SECTION: testfiles/run-tests.py §TEST-EXPECT-PACKAGE-ERROR opt-out
+%% TEST-SECTION: scripts/run-tests.py §TEST-EXPECT-PACKAGE-ERROR opt-out
 %% TEST-EXIT: 1
 %% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
 %% TEST-LOG-NOT: Undefined control sequence

@@ -89,7 +89,7 @@ for GOLDEN_PDF in "${GOLDEN_PDFS[@]}"; do
 
     # Recompile via runner (preserves TEST-PDF assertion machinery)
     echo "[check-goldens] recompiling via runner..."
-    nix develop --command python3 testfiles/run-tests.py \
+    nix develop --command python3 scripts/run-tests.py \
         --visual --filter "${FIXTURE}" --keep-temp \
         > "${TMPDIR_WORK}/${FIXTURE}-runner.log" 2>&1 || {
         echo "[check-goldens] FAIL: runner returned non-zero for ${FIXTURE}"

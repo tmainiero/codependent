@@ -43,7 +43,7 @@ def _load_module(name: str, path: Path):
 
 PARSER = _load_module(
     "codep_test_header_parser",
-    PROJECT_ROOT / "testfiles" / "test_header_parser.py",
+    PROJECT_ROOT / "scripts" / "test_header_parser.py",
 )
 
 

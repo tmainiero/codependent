@@ -82,7 +82,7 @@ run_case \
 
 run_case \
   "python3 test runner (no engine token at all)" \
-  'python3 testfiles/run-tests.py' \
+  'python3 scripts/run-tests.py' \
   0
 
 run_case \

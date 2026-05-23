@@ -21,7 +21,7 @@ import tempfile
 ACTIVE_PATHS = [
     "codependent.sty",
     "codependent-render.sty",
-    "testfiles/run-tests.py",
+    "scripts/run-tests.py",
 ]
 
 ACTIVE_GLOBS = [

@@ -46,7 +46,7 @@
           # Make system PATH available so pdflatex is reachable.
           buildPhase = ''
             export PATH="/run/current-system/sw/bin:$PATH"
-            python3 testfiles/run-tests.py --check-test-index --full
+            python3 scripts/run-tests.py --check-test-index --full
           '';
 
           installPhase = ''

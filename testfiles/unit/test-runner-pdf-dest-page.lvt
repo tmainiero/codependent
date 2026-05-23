@@ -8,8 +8,8 @@
 %%            page.  The assertion verifies the named destination
 %%            resolves to the same page as the anchor text using the
 %%            page tree from qpdf JSON.
-%% TEST-SOURCE: testfiles/run-tests.py _check_pdf_dest_page
-%% TEST-SECTION: testfiles/run-tests.py _build_page_ref_to_index, _parse_dest_page_spec
+%% TEST-SOURCE: scripts/run-tests.py _check_pdf_dest_page
+%% TEST-SECTION: scripts/run-tests.py _build_page_ref_to_index, _parse_dest_page_spec
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-LOG-NOT: Emergency stop

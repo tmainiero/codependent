@@ -19,3 +19,4 @@ behavior_baseline = ".test-behavior-baseline"
 
 [scripts]
 test_index = "testfiles/test-index.md"
+test_runner = "scripts/run-tests.py"

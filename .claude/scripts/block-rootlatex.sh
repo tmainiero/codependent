@@ -27,7 +27,7 @@ if printf '%s' "$CMD" | grep -qE '(^|[;&|`( ])(pdflatex|lualatex|xelatex|latex)[
 Use ONE of:
   latexmk <file>.tex                              # reads .latexmkrc (preferred)
   pdflatex -output-directory=texbuild <file>.tex  # explicit out-dir
-  nix develop --command python3 testfiles/run-tests.py [--filter X]   # test suite
+  nix develop --command python3 scripts/run-tests.py [--filter X]   # test suite
 
 If you must compile a one-off, write the .tex under testfiles/ or /tmp/, never the repo root.
 EOF

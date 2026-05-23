@@ -65,7 +65,7 @@ fi
 if $DRY_RUN; then
     echo "[run-stress] DRY RUN — no files written"
     echo "[run-stress] run-id    : ${RUN_ID}"
-    echo "[run-stress] command   : nix develop --command python3 testfiles/run-tests.py ${RUNNER_ARGS}"
+    echo "[run-stress] command   : nix develop --command python3 scripts/run-tests.py ${RUNNER_ARGS}"
     echo "[run-stress] artifacts : ${RUNS_DIR}/${RUN_ID}-<fixture>-stress.pdf"
     echo "[run-stress] manifest  : ${MANIFEST_FILE}"
     if $PRUNE_ARCHIVE; then
@@ -77,11 +77,11 @@ fi
 mkdir -p "${RUNS_DIR}"
 
 echo "[run-stress] run-id  : ${RUN_ID}"
-echo "[run-stress] command : nix develop --command python3 testfiles/run-tests.py ${RUNNER_ARGS}"
+echo "[run-stress] command : nix develop --command python3 scripts/run-tests.py ${RUNNER_ARGS}"
 
 RUNNER_EXIT=0
 # shellcheck disable=SC2086
-nix develop --command python3 testfiles/run-tests.py ${RUNNER_ARGS} || RUNNER_EXIT=$?
+nix develop --command python3 scripts/run-tests.py ${RUNNER_ARGS} || RUNNER_EXIT=$?
 
 # Discover stress PDFs produced by this run.
 # With a filter, scan pdf-out/ for files whose basename matches the filter pattern.
@@ -119,7 +119,7 @@ manifest = {
     "timestamp": "${UTC}",
     "branch": "${BRANCH}",
     "sha": "${SHA}",
-    "command": "nix develop --command python3 testfiles/run-tests.py ${RUNNER_ARGS}",
+    "command": "nix develop --command python3 scripts/run-tests.py ${RUNNER_ARGS}",
     "artifacts": artifacts,
     "runner_exit_code": ${RUNNER_EXIT},
 }

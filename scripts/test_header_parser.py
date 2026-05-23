@@ -2,7 +2,7 @@
 
 The parser is intentionally tiny and importable via
 ``importlib.util.spec_from_file_location`` so project scripts under
-``.claude/scripts`` and ``testfiles/run-tests.py`` can share one definition
+``.claude/scripts`` and ``scripts/run-tests.py`` can share one definition
 without turning either directory into a Python package.
 """
 

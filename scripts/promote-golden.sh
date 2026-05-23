@@ -108,7 +108,7 @@ manifest = {
     "commit": "${FULL_SHA}",
     "timestamp": "${TIMESTAMP}",
     "run_id": "${RUN_ID}",
-    "command": "nix develop --command python3 testfiles/run-tests.py --visual --filter ${FIXTURE} --keep-temp",
+    "command": "nix develop --command python3 scripts/run-tests.py --visual --filter ${FIXTURE} --keep-temp",
     "source_fixture_hash_sha256": "${SOURCE_HASH}",
     "normalized_comparison_hash_sha256": "${NORM_HASH}",
     "approver": "${APPROVER}",

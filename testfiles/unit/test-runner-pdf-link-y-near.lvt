@@ -8,8 +8,8 @@
 %%            before anchor text.  The assertion verifies the named
 %%            destination y-coordinate is within tolerance of the
 %%            anchor text y-coordinate extracted from stext.
-%% TEST-SOURCE: testfiles/run-tests.py _check_pdf_link_y_near
-%% TEST-SECTION: testfiles/run-tests.py _find_link_for_source_text, _parse_link_y_near_spec
+%% TEST-SOURCE: scripts/run-tests.py _check_pdf_link_y_near
+%% TEST-SECTION: scripts/run-tests.py _find_link_for_source_text, _parse_link_y_near_spec
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-LOG-NOT: Emergency stop
