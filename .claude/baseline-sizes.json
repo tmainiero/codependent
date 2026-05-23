@@ -1,7 +1,7 @@
 {
-  ".test-behavior-baseline": 12,
-  ".traceability-baseline.unclassified_macros": 41,
-  ".traceability-baseline.uncovered_behaviors": 41,
+  ".test-behavior-baseline": 0,
+  ".traceability-baseline.unclassified_macros": 0,
+  ".traceability-baseline.uncovered_behaviors": 5,
   "census": {
     "integ-appendix": {
       "atomref_gap": 0,
