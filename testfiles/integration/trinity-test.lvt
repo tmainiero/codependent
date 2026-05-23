@@ -108,6 +108,7 @@
 %% TEST-AUX-CONTAINS: \codep@anchormap{paragraph:4.3}
 %% TEST-AUX-CONTAINS: \codep@renderlist{paragraph:4.3}{inline}
 %% TEST-AUX-CONTAINS: \codep@atomref{paragraph:5.2}{par:finals}
+%% TEST-PDF-BACKREF-TARGETS: paragraph:4\.3 = atom\.57
 %%
 %% ====================================================================
 %%  W05-A1 RED gate: auto-detect proof scenarios

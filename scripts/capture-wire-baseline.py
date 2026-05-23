@@ -279,7 +279,7 @@ def compile_stress(
         copy_package_files(tmp_path)
 
         latexmk = find_latexmk()
-        subprocess.run(
+        lmk_result = subprocess.run(
             [
                 str(latexmk),
                 "-pdf",
@@ -289,6 +289,14 @@ def compile_stress(
             cwd=str(compiled_dir),
             capture_output=True,
         )
+        if lmk_result.returncode != 0:
+            stderr_tail = lmk_result.stderr[-2000:].decode(
+                "utf-8", errors="replace"
+            )
+            raise RuntimeError(
+                f"latexmk failed (exit {lmk_result.returncode}) "
+                f"for stress variant {variant_name!r}:\n{stderr_tail}"
+            )
 
         aux_path = tmp_path / "texbuild" / f"{variant_name}.aux"
         cdp_path = tmp_path / "texbuild" / f"{variant_name}.cdp"
@@ -297,40 +305,48 @@ def compile_stress(
         aux_sha = sha256_file(aux_path)
         cdp_sha = sha256_file(cdp_path)
 
-        pdf_objects_sha: "str | None" = None
-        if pdf_path.exists():
-            try:
-                qpdf = find_qpdf()
-                qpdf_result = subprocess.run(
-                    [str(qpdf), "--json", "--show-object=all", str(pdf_path)],
-                    capture_output=True,
-                    text=True,
-                )
-                if qpdf_result.returncode == 0:
-                    obj_json = qpdf_result.stdout
-                    # Strip volatile fields before hashing
-                    obj_json = re.sub(
-                        r'"Producer"\s*:\s*"[^"]*"',
-                        '"Producer": ""',
-                        obj_json,
-                    )
-                    obj_json = re.sub(
-                        r'"CreationDate"\s*:\s*"[^"]*"',
-                        '"CreationDate": ""',
-                        obj_json,
-                    )
-                    pdf_objects_sha = sha256_text(obj_json)
+        if not pdf_path.exists():
+            raise RuntimeError(
+                f"latexmk exited 0 but PDF not found at {pdf_path}; "
+                f"check $out_dir in {compiled_dir / '.latexmkrc'}"
+            )
+        qpdf = find_qpdf()
+        qpdf_result = subprocess.run(
+            [str(qpdf), "--json", str(pdf_path)],
+            capture_output=True,
+            text=True,
+        )
+        if qpdf_result.returncode != 0:
+            raise RuntimeError(
+                f"qpdf failed (exit {qpdf_result.returncode}) "
+                f"on {pdf_path}:\n{qpdf_result.stderr[-1000:]}"
+            )
+        obj_json = qpdf_result.stdout
+        # Strip volatile fields before hashing (Producer, CreationDate, /ID).
+        # /ID is a two-entry array of random binary hashes that change every
+        # compile (PDF spec §7.5.5); strip both entries.
+        obj_json = re.sub(
+            r'"Producer"\s*:\s*"[^"]*"',
+            '"Producer": ""',
+            obj_json,
+        )
+        obj_json = re.sub(
+            r'"CreationDate"\s*:\s*"[^"]*"',
+            '"CreationDate": ""',
+            obj_json,
+        )
+        obj_json = re.sub(
+            r'"/ID"\s*:\s*\[[^\]]*\]',
+            '"/ID": []',
+            obj_json,
+        )
+        pdf_objects_sha = sha256_text(obj_json)
 
-                    # Write debug copy
-                    DEBUG_DIR.mkdir(parents=True, exist_ok=True)
-                    (DEBUG_DIR / f"{variant_name}.qpdf.json").write_text(
-                        obj_json, encoding="utf-8"
-                    )
-            except RuntimeError:
-                print(
-                    "  WARNING: qpdf not found; skipping pdf_objects_sha",
-                    file=sys.stderr,
-                )
+        # Write debug copy
+        DEBUG_DIR.mkdir(parents=True, exist_ok=True)
+        (DEBUG_DIR / f"{variant_name}.qpdf.json").write_text(
+            obj_json, encoding="utf-8"
+        )
 
         _copy_debug(aux_path, aux_path.name)
         _copy_debug(cdp_path, cdp_path.name)
