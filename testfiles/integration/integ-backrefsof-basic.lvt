@@ -1,0 +1,48 @@
+%% TEST-NAME: integ-backrefsof-basic
+%% TEST-PURPOSE: Public \codepbackrefsof reads another tracked atom label's Used-In list.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-BACKREFSOF
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Exercises \codepbackrefsof with a label defined earlier in the document.
+%% TEST-SOURCE: codependent.sty \codepbackrefsof
+%% TEST-SECTION: B-REND-BACKREFSOF remote Used-In read
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: codepbackrefsof: unknown label
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@label{1.1}{thm:target}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:target}
+%% TEST-PDF-STEXT: (?s)Remote read of target Used-In list:.*Used in 1\.2\.
+%% TEST-PDF-LINKS: 2
+%% TEST-PDF-LINK-Y-NEAR: 1\.2\. | Theorem\s+1\.2 | within=40
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage[paragraphs=off]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Backward remote read}
+
+\begin{theorem}\label{thm:target}
+  The target theorem is defined before the remote read.
+\end{theorem}
+
+\begin{theorem}\label{thm:user}
+  This theorem uses \cref{thm:target}.
+\end{theorem}
+
+Remote read of target Used-In list: \codepbackrefsof{thm:target}
+
+\END
+\end{document}

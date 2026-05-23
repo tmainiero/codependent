@@ -1,0 +1,47 @@
+%% TEST-NAME: integ-backrefsof-forward
+%% TEST-PURPOSE: Forward \codepbackrefsof warns on pass one, then emits after label hydration.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-BACKREFSOF
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Exercises forward label resolution via \codep@lblentity@<label> from a previous aux run; pass 1 warns before stable emission.
+%% TEST-SOURCE: codependent.sty \codepbackrefsof
+%% TEST-SECTION: B-REND-BACKREFSOF remote Used-In read
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@label{1.1}{thm:later}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:1.2}{thm:later}
+%% TEST-PDF-STEXT: (?s)Forward remote read of later target:.*Used in 1\.2\.
+%% TEST-PDF-LINKS: 2
+%% TEST-PDF-LINK-Y-NEAR: 1\.2\. | Theorem\s+1\.2 | within=40
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage[paragraphs=off]{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+
+\section{Forward remote read}
+
+Forward remote read of later target: \codepbackrefsof{thm:later}
+
+\begin{theorem}\label{thm:later}
+  The target theorem is labelled after the remote read site.
+\end{theorem}
+
+\begin{theorem}\label{thm:later-user}
+  This theorem uses \cref{thm:later} after the target is defined.
+\end{theorem}
+
+\END
+\end{document}

@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-23T18:26:22.187812+00:00",
+  "captured_at": "2026-05-23T19:13:30.007444+00:00",
   "fixtures": [
     {
       "aux_sha": "e5cbc449b56aacdc954fb1b2bf8647d88cbce67858effcad47acb42154cd7218",
@@ -164,28 +164,28 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "f3211fee3100bde46e700b8aff09ddb7dd91909ddd130069495c7e836b731565",
-      "cdp_sha": "8ad4fda22acf644b153fa95d1a1c053beca0aad0515dbfb0cddf5fdd249c06f9",
+      "aux_sha": "0de35a20f7933ea39c704e70064f440e57e0d997201abd14b8dba224ae546e40",
+      "cdp_sha": "cd2b268433de58ab15c43bef15edbe3e100c9865539aad336416214f5da58694",
       "name": "trinity-test",
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "7ca4b7a7f407dcefd85f0a44e057813b40f5731e0f7d1e4563398da35ef74efb",
-      "cdp_sha": "5d2993926dacc815a3e2dfe1d390630096e5e8a81bd0391982019c9fc7e3ae68",
+      "aux_sha": "0415515d7f001f6248ff6776097915124f61b30dd4467a3fc70aee79d4d29c22",
+      "cdp_sha": "5627f6ab69cd85f9429e54bfc1eefc9321077483fcff28e550ba28f7fa919e1c",
       "name": "stress-ta-appendix-gray",
-      "pdf_objects_sha": "83e7c46b573b778c53ba10ded154a881d6ff2e72bf29af26f596ee6df1886f46"
+      "pdf_objects_sha": "28dc6b878501f4677c1ca071bbc710ba5fc54141e009fafa9145f52c6e62de03"
     },
     {
-      "aux_sha": "812235bee14a67a2296e7a2770b95d6377d50627020990e25ef017cfded6c635",
-      "cdp_sha": "af9730b11181ede7a1d26e37d5efbc06baf1ac96d75532025d48b573d847e8a4",
+      "aux_sha": "4604a793d4de1b1490f02d841595e6e3dbd84c0ee083b17dfbc6f5654bbe9533",
+      "cdp_sha": "5a77c80292fffc85f40173f55d0fa3803a64443e3cc39cbcc5d5a02b7f2698f6",
       "name": "stress-ta-inline",
-      "pdf_objects_sha": "84a2dc1a7373a53958c00e9f051314c5444fc6bd8c65cd559999f941e773a1f4"
+      "pdf_objects_sha": "4ca62c43652f84f15f1761cd26c4115ebf486d84fd1b0a8bb6b22b5964975404"
     },
     {
-      "aux_sha": "812235bee14a67a2296e7a2770b95d6377d50627020990e25ef017cfded6c635",
-      "cdp_sha": "e11b40a75eda3685f35e2ba0dd97734cfb30310c5d2e9b4291d63a135ff8a07b",
+      "aux_sha": "4604a793d4de1b1490f02d841595e6e3dbd84c0ee083b17dfbc6f5654bbe9533",
+      "cdp_sha": "9be4b1b94d2d48ad51fa3252d3feb779e215a9d8e7cd1843b3c9b12e3c4cde44",
       "name": "stress-ta-inline-gray",
-      "pdf_objects_sha": "3d06433d6c40a0ddcc83948c49e904033cb2e9432d096a2c865cb1ff60da788e"
+      "pdf_objects_sha": "d6a19737fa0aef55458e9ae1bbaf1ce6d49720901311805b960f0e1d719100a3"
     }
   ],
   "wave": "W05-D"

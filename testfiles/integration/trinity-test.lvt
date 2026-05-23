@@ -74,6 +74,8 @@
 %% TEST-PDF-STEXT: (?s)Used in 1\.9, 1\.10, 1\.11, 2\.1, 3\.2\.
 %% TEST-PDF-STEXT: (?s)Used in 3\.1\.
 %% TEST-PDF-STEXT: (?s)Used in 3\.4, 4\.3\.
+%% TEST-PDF-STEXT: (?s)Remote read of thm:main Used-In list:.*Used in.*1\.4\*, 1\.11, 2\.5, \(2\.6&#x2013;2\.7\), 3\.1, 3\.4, 4\.3\.
+%% TEST-PDF-STEXT: (?s)Remote read of thm:with-eq Used-In list:.*Used in.*3\.4\.
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%
@@ -550,7 +552,9 @@ A final paragraph referencing multiple labels via cleveref:
 \Cref{thm:main,prop:decompose,lem:adjunction} establish the
 core categorical framework, while
 \cref{cor:equiv,def:enrichment,q:coherence} provide the
-foundational vocabulary.  See also \autoref{not:hom}.\label{par:finals}%
+foundational vocabulary.  See also \autoref{not:hom}.  Remote read
+of thm:main Used-In list: \codepbackrefsof{thm:main} Remote read of
+thm:with-eq Used-In list: \codepbackrefsof{thm:with-eq}\label{par:finals}%
 
 %% ====================================================================
 %%  Section 5: Auto-detect proof scenarios (W05-A1 RED gate)

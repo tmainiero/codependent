@@ -5103,6 +5103,43 @@
   \fi%
 }%
 
+% \codepbackrefsof{label}
+%   User-driven remote backref read.  Resolves a tracked atom label to
+%   its canonical atom key and renders that atom's refreshed "Used in"
+%   line at the call site.  Unlike \codepbackrefs, this does not mark
+%   the resolved atom manually emitted; the target atom's own auto-emit
+%   remains unchanged.  Unknown or non-tracked labels warn and no-op.
+%% @behavior B-REND-BACKREFSOF
+\newcommand*{\codepbackrefsof}[1]{%
+  \begingroup%
+    \def\codep@tmp@backrefsoflabel{#1}%
+    \ifcsname codep@lblentity@\codep@tmp@backrefsoflabel\endcsname%
+      \edef\codep@tmp@backrefsofkey{%
+        \csname codep@lblentity@\codep@tmp@backrefsoflabel\endcsname}%
+    \else%
+      \ifcsname codep@lblnum@\codep@tmp@backrefsoflabel\endcsname%
+        \ifcsname codep@ltype@\codep@tmp@backrefsoflabel\endcsname%
+          \edef\codep@tmp@backrefsofkey{%
+            \csname codep@ltype@\codep@tmp@backrefsoflabel\endcsname%
+            :\csname codep@lblnum@\codep@tmp@backrefsoflabel\endcsname}%
+        \else%
+          \let\codep@tmp@backrefsofkey\relax%
+        \fi%
+      \else%
+        \let\codep@tmp@backrefsofkey\relax%
+      \fi%
+    \fi%
+    \ifx\codep@tmp@backrefsofkey\relax%
+      \PackageWarning{codependent}{%
+        \string\codepbackrefsof: unknown label '#1' %
+        (not a tracked atom label)}%
+    \else%
+      \codep@render@refresh{\codep@tmp@backrefsofkey}%
+      \codep@render@flushbackref{\codep@tmp@backrefsofkey}%
+    \fi%
+  \endgroup%
+}%
+
 % \codepproofof{label}    — bind a separated proof to label
 % \codepproofof*{label}   — same, preserving explicit proof-anchor mode
 %   Associate a separated proof with its theorem.  Must be called

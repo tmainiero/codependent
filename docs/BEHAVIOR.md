@@ -189,6 +189,8 @@ displays "Used in A" in the PDF.
 
 - [B-ZERO-REF] **Zero inbound refs:** No "Used in" annotation appears.
 
+- [B-REND-BACKREFSOF] **Remote Used-In read:** `\codepbackrefsof{label}` renders the Used-In list for the tracked codependent atom identified by `label`, without marking that atom manually emitted. The `label` argument is a tracked codependent atom label. Arbitrary non-tracked LaTeX labels (e.g. `sec:intro`) fall through to the warning path. Forward refs warn on the first pass and emit on subsequent passes (depends on `\codep@lblentity@<label>` from a previous run's `.aux`).
+
 ### 3.3 Hyperlinks
 
 - [B-LINK-CLICKABLE] When hyperref is loaded, every entry in "Used in X, Y" is a clickable link.
