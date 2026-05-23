@@ -52,13 +52,11 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PAPERS_DIR = SCRIPT_DIR / "papers"
 WRAPPERS_DIR = SCRIPT_DIR / "wrappers"
 
-CODEPENDENT_INJECTION = (
+CODEPENDENT_PACKAGE_LOAD = (
     "\n"
-    "% ---- codependent injection (added by wrap.py) ----\n"
-    "\\usepackage[conceptwarnings=off]{codependent}\n"
-    "\\codeptrack{theorem,definition,proposition,lemma,"
-    "corollary,remark,example,proof}\n"
-    "% ---- end codependent injection ----\n"
+    "% ---- codependent package load (added by wrap.py) ----\n"
+    "\\usepackage[paragraphs=off,conceptwarnings=off]{codependent}\n"
+    "% ---- end codependent package load ----\n"
 )
 
 # Compiled regexes for the command-rewrite pass.
@@ -72,6 +70,16 @@ RE_NEWDOCCMD = re.compile(
 )
 
 RE_DOCUMENTCLASS = re.compile(r"\\documentclass\b")
+RE_DOCUMENTCLASS_COMMAND = re.compile(
+    r"\\documentclass(?:\[[^\]]*\])?\{[^}]+\}"
+)
+RE_REWRITTEN_CODEP_COMMAND = re.compile(
+    r"\\codep(?:newcommand|NewDocumentCommand)\b"
+)
+RE_NEWTHEOREM_ENV = re.compile(
+    r"\\newtheorem(?!\*)\s*\{(?P<env>[^}]+)\}\s*"
+    r"(?:\[(?P<shared>[^\]]+)\])?"
+)
 RE_BEGIN_DOCUMENT = re.compile(r"\\begin\s*\{document\}")
 RE_END_DOCUMENT = re.compile(r"\\end\s*\{document\}")
 RE_CODEPENDENT_LOADED = re.compile(r"\\usepackage\s*(?:\[[^\]]*\])?\s*\{codependent\}")
@@ -262,6 +270,46 @@ def rewrite_preamble(
     return "".join(out), rewrites
 
 
+def inject_codependent_package(preamble: str) -> str:
+    """Load codependent before the first rewritten command definition.
+
+    wrap.py rewrites preamble command definitions to \\codepnewcommand and
+    \\codepNewDocumentCommand, so the package must be loaded before those
+    rewritten definitions execute.  Loading at the first rewritten command,
+    rather than directly after \\documentclass, preserves source-local helper
+    definitions that may intentionally precede all package-level helpers.
+    \\codeptrack remains near \\begin{document}, after theorem environments
+    have been declared.
+    """
+    match = RE_REWRITTEN_CODEP_COMMAND.search(preamble)
+    if match is None:
+        return preamble.rstrip() + CODEPENDENT_PACKAGE_LOAD
+    return (
+        preamble[: match.start()]
+        + CODEPENDENT_PACKAGE_LOAD
+        + preamble[match.start() :]
+    )
+
+
+def tracking_setup(preamble: str) -> str:
+    """Return a \\codeptrack call for theorem envs declared by the paper."""
+    envs: list[str] = []
+    for match in RE_NEWTHEOREM_ENV.finditer(preamble):
+        shared = match.group("shared")
+        if shared and not envs:
+            envs.append(shared)
+        envs.append(match.group("env"))
+    envs = list(dict.fromkeys(envs))
+    if not envs:
+        return ""
+    return (
+        "\n"
+        "% ---- codependent tracking setup (added by wrap.py) ----\n"
+        f"\\codeptrack{{{','.join(envs)}}}\n"
+        "% ---- end codependent tracking setup ----\n"
+    )
+
+
 def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
     """Generate wrappers/<id>.tex for a single paper. Returns True on success."""
     paper_dir = PAPERS_DIR / paper_id
@@ -306,6 +354,10 @@ def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
     rewrites: list[tuple[int, str]] = []
     if do_rewrite:
         preamble, rewrites = rewrite_preamble(preamble, paper_id)
+        preamble = preamble.replace(
+            "\\newcommand{\\ifundef}",
+            "\\providecommand{\\ifundef}",
+        )
         preamble_note = (
             "% Commands rewritten: \\newcommand -> \\codepnewcommand, etc.\n"
         )
@@ -313,6 +365,8 @@ def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
         preamble_note = (
             "% This wrapper preserves the original preamble byte-for-byte\n"
         )
+    preamble = inject_codependent_package(preamble)
+    tracking = tracking_setup(preamble)
 
     # Strip any trailing whitespace from the preamble, then inject.
     wrapper_text = (
@@ -321,11 +375,11 @@ def wrap_paper(paper_id: str, do_rewrite: bool = True) -> bool:
         f"% Original main file: {main_file.relative_to(paper_dir)}\n"
         "%\n"
         + preamble_note
-        + "% and injects \\usepackage{codependent} just before \\begin{document}.\n"
+        + "% and injects codependent package load plus tracking setup.\n"
         "%\n"
         + preamble.rstrip()
         + "\n"
-        + CODEPENDENT_INJECTION
+        + tracking
         + "\\begin{document}\n"
         + body
         + "\\end{document}\n"
