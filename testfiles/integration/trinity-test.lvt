@@ -78,6 +78,38 @@
 %% TEST-CENSUS-PASS: yes
 %%
 %% ====================================================================
+%%  W05-D-X5 render-path coverage gate (added 2026-05-23)
+%%  Asserts each of the four render paths has at least one STEXT artifact
+%%  and one AUX/link artifact.  No new B-IDs; reuses B-DISP-THM, B-DISP-PARA,
+%%  B-LINK-EFFECTIVE-ANCHOR, B-PASS-ONE.
+%%
+%%  Theorem auto-emit (\codep@render@thm@preparebackref):
+%%    Covered by TEST-PDF-BACKREF-TARGETS: lemma\.30 = corollary\.49 above
+%%    and TEST-PDF-STEXT: (?s)Used in 1\.4\*, 1\.11, ... above.
+%%
+%%  Proof auto-emit (\codep@render@proof@end):
+%%    Covered by TEST-PDF-LINK-Y-NEAR: ^in 5\.1\*, 5\.7\*\.$ above
+%%    and TEST-AUX-CONTAINS: \codep@atomref{proof:a34}{def:enrichment} below.
+%%
+%%  Manual emit (\codep@render@manual@emit via \codepbackrefs in thm:with-eq):
+%%    \cref{thm:with-eq} added to rem:tqft (3.4) body → thm:with-eq shows
+%%    "Used in 3.4." via the \codepbackrefs call site (§\codep@render@manual@emit).
+%%    Source atom key is remark:3.4 (not the label rem:tqft).
+%% TEST-PDF-STEXT: (?s)Used in 3\.4\.
+%% TEST-AUX-CONTAINS: \codep@atomref{remark:3.4}{thm:with-eq}
+%%
+%%  Paragraph emit (\codep@render@para@emit):
+%%    \label{par:finals} placed at paragraph:4.3 end; \ref{par:finals} in
+%%    the sec-5 intervening paragraph (atom 5.2) creates the backref.
+%%    para@emit fires at paragraph:4.3 start → margin label "4.3" emitted
+%%    (B-NUM-PARA / \codep@emitmargin); renderlist entry written to .aux
+%%    (B-PASS-ONE / \codep@renderlist@emit@one).
+%% TEST-PDF-STEXT: 4\.3
+%% TEST-AUX-CONTAINS: \codep@anchormap{paragraph:4.3}
+%% TEST-AUX-CONTAINS: \codep@renderlist{paragraph:4.3}{inline}
+%% TEST-AUX-CONTAINS: \codep@atomref{paragraph:5.2}{par:finals}
+%%
+%% ====================================================================
 %%  W05-A1 RED gate: auto-detect proof scenarios
 %%  All assertions below FAIL on HEAD 0021ccf (before P02).
 %%  P02 turns them GREEN.  NO new B-IDs.  Reuses B-PROOF-SEP,
@@ -498,7 +530,7 @@ By \cref{def:enrichment}, we have
   The correspondence of \cref{cor:modular} underlies the
   Reshetikhin--Turaev construction of 3-dimensional TQFTs.
   This connects to the original equivalence of
-  \cref{thm:main,prop:decompose}.
+  \cref{thm:main,prop:decompose}; see also \cref{thm:with-eq}.
 \end{remark}
 
 %% ====================================================================
@@ -517,7 +549,7 @@ A final paragraph referencing multiple labels via cleveref:
 \Cref{thm:main,prop:decompose,lem:adjunction} establish the
 core categorical framework, while
 \cref{cor:equiv,def:enrichment,q:coherence} provide the
-foundational vocabulary.  See also \autoref{not:hom}.
+foundational vocabulary.  See also \autoref{not:hom}.\label{par:finals}%
 
 %% ====================================================================
 %%  Section 5: Auto-detect proof scenarios (W05-A1 RED gate)
@@ -537,7 +569,7 @@ foundational vocabulary.  See also \autoref{not:hom}.
   A tracked theorem for backward-ref proof auto-detection.
 \end{theorem}
 
-We recall the basic setup before giving the proof.
+We recall the basic setup before giving the proof; see also \ref{par:finals}.
 
 \begin{proof}[Proof of \cref{thm:autodet-backward}]
   By \cref{def:enrichment} and the adjunction criterion \cref{lem:adjunction}.

@@ -1,0 +1,192 @@
+{
+  "captured_at": "2026-05-23T17:59:02.363040+00:00",
+  "fixtures": [
+    {
+      "aux_sha": "e5cbc449b56aacdc954fb1b2bf8647d88cbce67858effcad47acb42154cd7218",
+      "cdp_sha": "9a27f773a32b40c51d9da94b733f11433c5281966d00a3adc5bfac15024ef0a4",
+      "name": "integ-appendix",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "185f3cf3f0b0647a6611a50ba2a8e34570ca4ba194a9e3b9692902ff1265ceb9",
+      "cdp_sha": "4208ff1e4e203452bcb3889f738dafd5c863483ffb7737440d2d53a62841a13e",
+      "name": "integ-equations-all",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "8396367c1b5dd9f589b0889a99bc78f67662f619be9815fb5c3876f2fcc1ad59",
+      "cdp_sha": "889d23d79b0e13f178da88848af6da805ab39c8bce890bbca5da741c7c9c38fa",
+      "name": "integ-equations-off",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "dee2fda431216e379c269eec710215933da00613fd18044f9072f9908a8b6707",
+      "cdp_sha": "411a987c4b0cf8edc6bdbf635021b48ae4d2f8025e97d7d6bb7ed47da32d2239",
+      "name": "integ-full-stack-inline",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "a07f1c606825ec487eab6438046708f042d6e1427579ce4277f89db4da43cba2",
+      "cdp_sha": "a3307bb75b9a3b4640f4337575f55ed1ac7666ecf068b522b6bf69364d1eaf0d",
+      "name": "integ-no-cleveref",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "a07f1c606825ec487eab6438046708f042d6e1427579ce4277f89db4da43cba2",
+      "cdp_sha": "a3307bb75b9a3b4640f4337575f55ed1ac7666ecf068b522b6bf69364d1eaf0d",
+      "name": "integ-no-cleveref [warm-changed]",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "088ce84f4e2a8a4a10ef2509f06c3dab368179a1c295db959d2e666170566415",
+      "cdp_sha": "c8cada9349fbd9ec5f6e93116ed4f94cc6bab9f980de5f22abf100cea520a014",
+      "name": "integ-no-hyperref",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "323fb19b15a29bbe82a647d432db015530f30519a964ccb6e8fedbedb44524a0",
+      "cdp_sha": "5c758c873d71f13b0586c275d65b28c915a271a2d185bd10ca0a884a265ac51c",
+      "name": "integ-no-paragraphs",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "ab2b7e73246c309b3e120c83474fe1272a8a7a60e15ee9a3474a246b8b0a067a",
+      "cdp_sha": "a8c5abe6cecd5750943902be1511c856f1c22e8383a3a28c37f345ffd9e79a52",
+      "name": "integ-ntheorem",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "ab2b7e73246c309b3e120c83474fe1272a8a7a60e15ee9a3474a246b8b0a067a",
+      "cdp_sha": "a8c5abe6cecd5750943902be1511c856f1c22e8383a3a28c37f345ffd9e79a52",
+      "name": "integ-ntheorem [warm-changed]",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "485734c44750353a5cbd73f3a0e52332e5773f895d56daf6e30dc5d1651edaae",
+      "cdp_sha": "f8bcb96c44f1bcdcbc6dceed0f70010426196e2e1e0c4752cbb1975573d11a60",
+      "name": "integ-proof-link-target",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "2f20c5b35ac2d631105bc55d827722e3147f082584d07f442b42fcf9e71e62e0",
+      "cdp_sha": "78a53fea811dbaca1a17b85468c75017be8930899fbeb1cafaef74bad68d9b1e",
+      "name": "integ-proofauto-adjacent-no-leak",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "ca0a2051535e37dc22ccd2117aaed0b7da77a9cc8bc896e41ca8f31d01831db3",
+      "cdp_sha": "85aa694738ca66cc2c56a2b339312b519b1573f0686de7efdab011b802c9620f",
+      "name": "integ-proofauto-autoref",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "bcf6b88999927f044f5a27fbecde61c697ba88de26daed9177ab38cb77a4fabb",
+      "cdp_sha": "f4b3ee21981e5bbdc584f17d1245734861417e05acd0e93d7a60803460a4b809",
+      "name": "integ-proofauto-cref-single",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "7318517a7d6aa9a4d456e2a4f385491ad7f6a6fa98350f243339552b48cb06ae",
+      "cdp_sha": "a8865038e3e063b269900f8161f523f7adcc3278e70c07c23f00a1bb54d842b8",
+      "name": "integ-proofauto-explicit-wins-different",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "ac24b11a048a9f908a7dcde679ac7ba05f5b744772d616044912bf1bb8847b1c",
+      "cdp_sha": "899bcb7aadf15ca231f7a820422942944742e2413eb524423d487a87e8b340d4",
+      "name": "integ-proofauto-explicit-wins-same",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "c07bbed9177491c1b161c7b903d6cd2bb78ae34ca46617d97389a626a3469f42",
+      "cdp_sha": "5ce55b1d009165e6ca71ff3d23295277b5f96b02eaa1b6a9cbe2e46c4128d37f",
+      "name": "integ-proofauto-forward-ref",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "67a526d090f2f94855554e13662e0014f6a18245402541a6dda8a2c747818e5d",
+      "cdp_sha": "1608fe08af931c8ca00635915df57a1f16d0c05121c8651d92196879223ee835",
+      "name": "integ-proofauto-multiref-decline",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "b1725c82405bb71f4f99f20ac347e92162c635d40baf6b254ce3efc8a19f7581",
+      "cdp_sha": "e87059f3963841e318cb0b5ba3c60ae5d23f9bc463ba8c2aeb577f48ce9c4cb4",
+      "name": "integ-proofauto-nested",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "fb7639e6301042413b3b97b8fcbccb52941d4adf0e62e8f308b9d842799b23df",
+      "cdp_sha": "0e8c69c3f5e7c5ccf448ccaa75eb05f6e92399d20407b455fbf6ac7c605d0a37",
+      "name": "integ-proofauto-no-ref",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "16770622b391d3c64ad70110f33648678323e48107042d49be4ccc588fd2ef0a",
+      "cdp_sha": "aff49021315cbf9604f8134a7fc30556f15ba024c9c7bd181eb5c6a55237603d",
+      "name": "integ-proofauto-ref",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "3ae54b22ff42130b22bf41e4b1cff7dba412be5c24c8b6f37b676195eb913ec2",
+      "cdp_sha": "1d9851295641167801f16c62c2b3be0b6c3fc7235afdad9831f9e801e074e3b2",
+      "name": "integ-proofauto-repeated-explicit",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "120f96ac5a3110fb66006766110e821940679da98e7526f83098893ca9f0427a",
+      "cdp_sha": "03acc3d870e531477d718655465834cfa73d3221393fbe879599733f04f722af",
+      "name": "integ-proofauto-switch-off",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "42b4f7ec1c7cb3349e3ae13ef9cfe09f9be9652fdb89eeb7a8f358bf444ca4fe",
+      "cdp_sha": "bcd8d84aa8237dc94c3684d702364080e8d149fc6f40ee5c3047076109dbf984",
+      "name": "integ-stress-all-features",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "f48c61de7be3d10ad6118c24971dfeb6e082564635ac38dc71651481ad7d17ed",
+      "cdp_sha": "e226edc56235c07bb42d38c4ccc42519a82f873f00181a8c5c3d52984c3a32cb",
+      "name": "test-integration-kitchen-sink",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "4d6257f3beac4a17f2b9a0940c51da8441cd92e31c3cee10d68fdc6ada769554",
+      "cdp_sha": "db2c4fdb3c2b1cebf611848e1ebb3f596e966c11d1240d871df638ea43db0079",
+      "name": "test-proofof-deep-callsite",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "90bb5e43269cd0919d10f342e36ea5679f6fc36493071cf1ad694dcbbfb3e6df",
+      "cdp_sha": "71fc11d8e9158507875094d36a363de718f504f18e4400c1d0e6befa080d8a52",
+      "name": "test-trinity-stripped",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "f3211fee3100bde46e700b8aff09ddb7dd91909ddd130069495c7e836b731565",
+      "cdp_sha": "d80ed770216109501875ef11462f371239254b1c5a8c4e4420cf2f8f4df094be",
+      "name": "trinity-test",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "7ca4b7a7f407dcefd85f0a44e057813b40f5731e0f7d1e4563398da35ef74efb",
+      "cdp_sha": "5d2993926dacc815a3e2dfe1d390630096e5e8a81bd0391982019c9fc7e3ae68",
+      "name": "stress-ta-appendix-gray",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "812235bee14a67a2296e7a2770b95d6377d50627020990e25ef017cfded6c635",
+      "cdp_sha": "af9730b11181ede7a1d26e37d5efbc06baf1ac96d75532025d48b573d847e8a4",
+      "name": "stress-ta-inline",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "812235bee14a67a2296e7a2770b95d6377d50627020990e25ef017cfded6c635",
+      "cdp_sha": "e11b40a75eda3685f35e2ba0dd97734cfb30310c5d2e9b4291d63a135ff8a07b",
+      "name": "stress-ta-inline-gray",
+      "pdf_objects_sha": null
+    }
+  ],
+  "wave": "W05-D"
+}

@@ -64,6 +64,7 @@ Where things go. **If your file doesn't fit here, ask before creating a new top-
 | `codependent.sty`, `codependent-render.sty` | Package source. LaTeX convention requires .sty at repo root. | Subroutines you want hidden — there's no `src/`; the .sty layer is flat. |
 | `docs/` | Specs, design docs, conventions, history. Machine-read paths registered in `.claude/paths.toml`. | Scripts; build artifacts; ephemeral notes. |
 | `testfiles/unit/`, `testfiles/integration/`, `testfiles/compiled-examples/` | `.lvt` fixtures + their `.tlg` siblings. NO scripts — scripts go in `scripts/`. | Scripts (those go in `scripts/`); generated outputs (those go in `testfiles/output/`). |
+| `testfiles/baselines/` | Committed wire-format baseline sha256 manifests (per-wave). Plain-JSON only; raw `.aux`/`.cdp` are gitignored. | Anything hand-edited; raw build outputs; non-baseline fixtures. |
 | `testfiles/output/` | Generated test artifacts (census .json, .pdf, .log). | Anything hand-edited. |
 | `testfiles/support/` | Vendored support `.sty` files needed by tests (e.g. `sty-theorems-ta.sty`). | Project source; non-vendor support. |
 | `testfiles/tmp/` | Truly ephemeral runner state. Safe to wipe. | Anything you want to commit. |
