@@ -55,10 +55,30 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 - `.claude/baseline-sizes.json` — baseline ratchet; linter fails if any baseline grows
 - `.latexmkrc` + `scripts/clean-build.sh` — build artifacts route to `texbuild/` + `pdf-out/`
 
-## Scripts layout
+## Directory Map
 
-- `.claude/scripts/` — harness/agent tooling: hooks, linters, dispatch helpers, wire-format checkers. Invoked by agents, PreToolUse hooks, and humans following CLAUDE.md.
-- `scripts/` — repo utilities for humans (build cleanup, release scaffolding).
+Where things go. **If your file doesn't fit here, ask before creating a new top-level dir.**
+
+| Path | Owns | DON'T put here |
+|---|---|---|
+| `codependent.sty`, `codependent-render.sty` | Package source. LaTeX convention requires .sty at repo root. | Subroutines you want hidden — there's no `src/`; the .sty layer is flat. |
+| `docs/` | Specs, design docs, conventions, history. Machine-read paths registered in `.claude/paths.toml`. | Scripts; build artifacts; ephemeral notes. |
+| `testfiles/unit/`, `testfiles/integration/`, `testfiles/compiled-examples/` | `.lvt` fixtures + their `.tlg` siblings. | Scripts (those go in `scripts/`); generated outputs (those go in `testfiles/output/`). |
+| `testfiles/output/` | Generated test artifacts (census .json, .pdf, .log). | Anything hand-edited. |
+| `testfiles/support/` | Vendored support `.sty` files needed by tests (e.g. `sty-theorems-ta.sty`). | Project source; non-vendor support. |
+| `testfiles/tmp/` | Truly ephemeral runner state. Safe to wipe. | Anything you want to commit. |
+| `testfiles/real-world/` | Real published-paper fixtures used as fuzz/regression material. | Synthetic fixtures (those are `unit/`/`integration/`). |
+| `scripts/` | Human-facing utilities (build cleanup, golden management, the test runner). Invoke directly with `python3 scripts/X` or `./scripts/X`. | Agent/harness tooling (that goes in `.claude/scripts/`). |
+| `.claude/scripts/` | Harness/agent tooling: linters, hooks, dispatch helpers. Invoked by agents, PreToolUse hooks, and humans following CLAUDE.md. | Build/test infrastructure for end users. |
+| `.claude/comms/` | Ephemeral agent communication (briefs, reports, plans). Gitignored. | Anything that should survive the session. |
+| `.claude/agent_memory/` | Per-session findings/decisions. Gitignored. | Durable memory (that lives in `~/.claude/projects/...`). |
+| `build/`, `texbuild/`, `pdf-out/` | Build artifacts. Gitignored. `pdf-out/goldens/` is the ONE exception that is committed. | Anything hand-authored. |
+| `.githooks/` | Repo-shared git hooks (enabled via `git config core.hooksPath`). | Per-clone overrides; use `.git/hooks/` for those. |
+| Repo root | Top-level config: `flake.nix`, `shell.nix`, `build.lua` (l3build), `.latexmkrc`, `.latexindent.yaml`, `CLAUDE.md`, the two `.sty` files, the three baseline files. | Scripts; docs; anything else. |
+
+**Path-policy hook**: `.claude/scripts/pre-check-path-policy.sh` (PreToolUse on Write/Edit) warns when an agent tries to create a path outside this map. If your work genuinely needs a new top-level dir, propose it in the session and update this map first.
+
+**Single source of truth for machine-read paths**: `.claude/paths.toml` — extend it if you add a doc that lint scripts need to find.
 
 ## Rules
 
