@@ -531,7 +531,9 @@
 %% rendering code is loaded (see "Rendering hook activation" below).
 %% When tracking runs without a rendering layer, these are inert.
 %% @utility
-\def\codep@render@queuebackref#1{}%
+\def\codep@render@refresh#1{}%
+%% @utility
+\def\codep@render@flushbackref#1{}%
 %% @utility
 \def\codep@render@thm@preparebackref#1{}%
 %% @utility
@@ -1120,7 +1122,7 @@
 %
 %   Timing note (docs/DESIGN.md §8a.5.0): the cmd/before hook fires
 %   BEFORE amsthm's \refstepcounter{theorem}, so \theatom at
-%   begin-time is the PREVIOUS atom's number.  The queuebackref
+%   begin-time is the PREVIOUS atom's number.  The render refresh
 %   call is therefore in the end hook, where the env body has
 %   run and \theatom reflects the current atom.
 %   \codep@currentatom is demoted to a sentinel — its value
@@ -1206,7 +1208,7 @@
 }%
 
 % \codep@hooktheorem@preparebackref{envname}
-%   Queue backrefs, apply orphan prevention, flush inline style.
+%   Refresh backrefs, apply orphan prevention, flush inline style.
 %   Block/margin styles flush later in \AfterEndEnvironment.
 %   Delegates to the rendering hook point.
 %% @implements \codep@hooktheorem
@@ -2076,7 +2078,7 @@
     \string\codep@cdp@meta{\codep@currentproofid}{src}%
       {\jobname.tex:\the\inputlineno:1}}%
   \codep@registeratom{\codep@tmp@proofkey}{proof}%
-  \codep@render@queuebackref{\codep@tmp@proofkey}%
+  \codep@render@refresh{\codep@tmp@proofkey}%
   \ifbool{codep@proofwarnings}{%
     \PackageWarning{codependent}{Proof not adjacent to a tracked\space%
       environment and has no \string\codepproofof\space binding;\space%
@@ -2141,7 +2143,7 @@
   \codep@bindproofparent{#1}{#2}{statement}%
   \global\codep@proofdisplaypendingfalse%
   \codep@atomgetkey{#1}{\codep@tmp@proofkey}%
-  \codep@render@queuebackref{\codep@tmp@proofkey}%
+  \codep@render@refresh{\codep@tmp@proofkey}%
   \global\codep@proof@adjcommit@neededfalse%
   \codep@proof@adjcandidate@clear{#1}%
 }%
@@ -2973,7 +2975,7 @@
 %   read it), but the only live consumer — the W3 appendix reader
 %   and Moment-2 re-emit path — keys on \codep@rendered@<key>,
 %   which Moment-1 also populates synchronously (see
-%   \codep@queuebackref).
+%   \codep@render@refresh).
   \def\codep@renderlist@active#1#2#3{%
     \expandafter\gdef\csname codep@rendered@#1\endcsname{#3}}
 
@@ -3290,7 +3292,7 @@
 
 % \codep@renderlist@emit@one{atom-key}{atom-kind}
 %   Per-atom handler.  Guarded by the "touched this run" flag
-%   \codep@rlflag@<key>, set by \codep@queuebackref's non-empty
+%   \codep@rlflag@<key>, set by \codep@render@refresh's non-empty
 %   branch at collapse time.  Without the flag, a warmed
 %   \codep@rendered@<key> from aux-replay that was NOT refreshed
 %   this run (because the atom lost its last ref) would be
@@ -3940,7 +3942,7 @@
 %   #2 = fallback atom id (empty or enclosing atom key)
 %   #3 = target list as \do{q1}\do{q2}...
 %   In the current architecture equation rendering is already
-%   handled by \codep@render@queuebackref called from the
+%   handled by \codep@render@refresh called from the
 %   tracking hooks, so this shim is intentionally empty.
 %   The real implementation lands in Wave 2/3.
 \def\codep@render@equationblock#1#2#3{}%
@@ -5077,7 +5079,7 @@
 %   atom's key, sets the per-atom
 %   \codep@manuallyemitted@<key> flag (so the env-end auto-flush
 %   skips a duplicate emission), and routes through the rendering
-%   layer's manual-emit hook to queue + flush the "Used in ..." line
+%   layer's manual-emit hook to refresh + flush the "Used in ..." line
 %   at the call site.  Outside any tracked atom: emits a package
 %   warning and produces no output.  Complete no-op during
 %   restatable replay (replay guard wraps the entire body).
@@ -5288,7 +5290,10 @@
       \codep@dedupwrite{\codep@tmp@proofkey}{#3}%
     \fi%
     \codep@proof@bindbeginanchor{#2}{\codep@tmp@proofkey}%
-    \codep@render@queuebackref{\codep@tmp@proofkey}%
+    % SAFE-TO-REINVOKE, NOT IDEMPOTENT: joint-proof attribution
+    % refreshes the same proof key after each per-label graph growth;
+    % proof-end flush reads the final snapshot.
+    \codep@render@refresh{\codep@tmp@proofkey}%
     \codep@proofof@attribcount@advance{#2}%
   \fi%
 }%

@@ -25,8 +25,8 @@
 %% Rendering state
 %% ===================================================================
 
-% Pending back-reference text (flushed at env end or by \codepbackrefs).
-\newtoks\codep@pendingbr
+% No render-side pending text is kept.  Inline emission refreshes the
+% per-atom rendered cache and flushes directly from that dictionary slot.
 
 % String constants for \ifx comparisons in rendering macros.
 % Defined in codependent.sty (Section 3 options); available here
@@ -42,7 +42,7 @@
 %   the per-target source refs.  Uses the query API
 %   (\codep@graph@hasrefs, \codep@graph@foreachref) instead
 %   of reading graph internals directly.  Called lazily the
-%   first time \codep@queuebackref looks up <num>.
+%   first time \codep@render@refresh looks up <num>.
 % Callback for \codep@collapsebr.  Defined at top level to avoid
 % parameter-doubling issues when nested inside other macros.
 %
@@ -125,7 +125,7 @@
     \codep@collapsebr@cb@emit{#1}%
   \fi%
 }%
-%% @implements \codep@queuebackref
+%% @implements \codep@render@refresh
 \def\codep@collapsebr#1{%
   \begingroup%
     \def\codep@tmp@acc{}%
@@ -141,20 +141,22 @@
 }
 
 %% ===================================================================
-%% Backref queue
+%% Backref refresh
 %% ===================================================================
 
-% \codep@queuebackref{atomnumber}
-%   Look up back-refs for the given atom and queue for emission.
+% \codep@render@refresh{atomnumber}
+%   Look up back-refs for the given atom and refresh its rendered cache.
 %   Lazily materialises \codep@br@#1 via \codep@collapsebr
 %   (§8a.3), which walks the per-target linked-list nodes built
 %   from \codep@atomref aux records.  Collapse is idempotent, so
 %   calling it unconditionally is fine.
+%   SAFE-TO-REINVOKE, NOT IDEMPOTENT: source refs for a key may grow
+%   between calls in a single run (notably joint-proof attribution);
+%   the last refresh writes the complete rendered token list.
 %% @behavior B-DISP-THM
 %% @behavior B-PASS-ONE
-\newcommand*{\codep@queuebackref}[1]{%
+\def\codep@render@refresh#1{%
   \ifbool{codep@backrefs}{%
-    \global\codep@pendingbr={}%
     \codep@collapsebr{#1}%
     % After collapse, codep@br@#1 is either \@empty (no refs)
     % or a macro whose body is the comma-joined pre-rendered
@@ -168,7 +170,7 @@
       % No refs to this target (collapsed to \@empty): clear cache.
       % Replay-guarded: atom may re-populate refs in same run,
       % so cache must be cleared outside replay depth to allow
-      % fresh collapse on next \codep@queuebackref call.
+      % fresh collapse on next refresh call.
       \ifnum\codep@replaydepth=0\relax%
         \global\expandafter\let\csname codep@rendered@#1\endcsname\@undefined%
         \global\expandafter\let\csname codep@rlflag@#1\endcsname\@undefined%
@@ -180,11 +182,10 @@
       % this cache line is current-run evidence (GPT MAJOR #1
       % "stale cache clear" — touched-set semantics).
       % Fires for both inline and appendix modes (collapse ran
-      % regardless of mode); the inline-only pendingbr store
-      % below is separate.  Collapse already resolved anchor and
-      % display at its own call site, so the stored tokens are
-      % literal rendered tokens — no deferred \codep@brhyper
-      % refs.  Replay-guarded: restatable replays must not
+      % regardless of mode).  Collapse already resolved anchor and
+      % display at its own call site, so the stored tokens are literal
+      % rendered tokens — no deferred \codep@brhyper refs.
+      % Replay-guarded: restatable replays must not
       % overwrite the cache with redundant rewrites.
       %
       % The \expandafter\expandafter\expandafter chain resolves
@@ -200,11 +201,6 @@
             \csname codep@br@#1\endcsname}}%
         \expandafter\gdef\csname codep@rlflag@#1\endcsname{}%
       \fi%
-      \ifbool{codep@appendix}{}{%
-        % Inline mode: store ref list for flush.
-        \global\codep@pendingbr=\expandafter{%
-          \csname codep@br@#1\endcsname}%
-      }%
     \fi
   }{}%
 }
@@ -213,23 +209,18 @@
 %% Backref flush
 %% ===================================================================
 
-% \codep@flushbackref
-%   Emit the pending back-reference and clear it.
-%   The pendingbr register is cleared BEFORE rendering so that
-%   the \par inside \codep@renderbackref cannot re-enter
-%   flushbackref with the same data (para/end → flushbackref
-%   → renderbackref → \par → para/end → flushbackref loop).
+% \codep@render@flushbackref{atomnumber}
+%   Emit the refreshed back-reference cache for the given atom.
 %% @behavior B-DISP-THM
-\newcommand*{\codep@flushbackref}{%
-  \ifbool{codep@backrefs}{%
-    \ifbool{codep@appendix}{}{%
-      \expandafter\def\expandafter\codep@tmp@flushed\expandafter{%
-        \the\codep@pendingbr}%
-      \codep@pendingbr={}%
+\def\codep@render@flushbackref#1{%
+  \ifboolexpr{bool {codep@backrefs} and not bool {codep@appendix}}{%
+    \ifcsname codep@rendered@#1\endcsname%
+      \expandafter\let\expandafter\codep@tmp@flushed%
+        \csname codep@rendered@#1\endcsname%
       \ifx\codep@tmp@flushed\@empty\else
         \codep@renderbackref{\codep@tmp@flushed}%
       \fi
-    }%
+    \fi
   }{}%
 }
 
@@ -489,13 +480,6 @@
 %% Redefine the no-op hook points to wire them to the live
 %% rendering implementations.
 
-% \codep@render@queuebackref{atomkey}
-%   Queue back-references for the given atom key.
-%% @implements \codep@queuebackref
-\def\codep@render@queuebackref#1{%
-  \codep@queuebackref{#1}%
-}%
-
 %% @implements \codep@hooktheorem
 % \codep@appendix@forwardlink{atom-key}
 %   Emit a small theorem-side link to the appendix entry in
@@ -513,7 +497,7 @@
 }%
 
 % \codep@render@thm@preparebackref{envname}
-%   Queue backrefs for the outermost atom and auto-flush inline.
+%   Refresh backrefs for the outermost atom and auto-flush inline.
 %   Callable at cmd/end#1/before inside the tracked env body.
 %   If the user already invoked \codepbackrefs inside this atom
 %   (per-atom \codep@manuallyemitted@<key> flag set), the auto-flush
@@ -525,9 +509,9 @@
   \codep@subsystem@recordtotal{backref-render}%
   \ifcsname codep@manuallyemitted@\codep@outeratom\endcsname%
   \else%
-    \codep@queuebackref{\codep@outeratom}%
+    \codep@render@refresh{\codep@outeratom}%
     \codep@appendix@forwardlink{\codep@outeratom}%
-    \codep@flushbackref%
+    \codep@render@flushbackref{\codep@outeratom}%
   \fi%
 }%
 
@@ -539,7 +523,7 @@
 \def\codep@render@thm@afterend#1{}%
 
 % \codep@render@proof@end
-%   Flush the pending backref before the proof env closes
+%   Refresh and flush the proof backref cache before the proof env closes
 %   (hmode, before QED).  Suppressed if the user already invoked
 %   \codepbackrefs inside this proof atom (per-atom
 %   \codep@manuallyemitted@<key> flag set).  Atom key derived from
@@ -547,10 +531,11 @@
 %   (\codep@hookproof@end runs the restore AFTER this hook).
 %% @implements \codep@hookproof
 \def\codep@render@proof@end{%
-  \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
+  \codep@proof@identitykey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \ifcsname codep@manuallyemitted@\codep@tmp@proofkey\endcsname%
   \else%
-    \codep@flushbackref%
+    \codep@render@refresh{\codep@tmp@proofkey}%
+    \codep@render@flushbackref{\codep@tmp@proofkey}%
   \fi%
 }%
 
@@ -562,16 +547,16 @@
 \def\codep@render@proof@afterend{}%
 
 % \codep@render@para@emit{prefixedkey}{displaynum}
-%   Emit margin label and queue backref for a paragraph atom.
+%   Emit margin label and refresh backrefs for a paragraph atom.
 %% @behavior B-DISP-PARA
 \def\codep@render@para@emit#1#2{%
   \codep@emitmargin{#2}%
-  \codep@queuebackref{#1}%
+  \codep@render@refresh{#1}%
 }%
 
 % \codep@render@manual@emit{atomkey}
 %   Wired implementation of the manual-emit shim called by the
-%   public \codepbackrefs macro.  Queues backrefs for atomkey and
+%   public \codepbackrefs macro.  Refreshes backrefs for atomkey and
 %   immediately flushes them inline at the call site.  The
 %   \codep@manuallyemitted@<key> flag is set by \codepbackrefs
 %   BEFORE this call, so the env-end auto-flush check
@@ -579,8 +564,8 @@
 %   sees the flag and suppresses the duplicate emission.
 %% @implements \codepbackrefs
 \def\codep@render@manual@emit#1{%
-  \codep@queuebackref{#1}%
-  \codep@flushbackref%
+  \codep@render@refresh{#1}%
+  \codep@render@flushbackref{#1}%
 }%
 
 \endinput
