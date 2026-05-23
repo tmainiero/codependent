@@ -1024,6 +1024,7 @@
 %   and document class.
 %% @behavior B-NUM-DEPTH1
 %% @behavior B-NUM-DEPTH2
+%% @behavior B-NUM-RESET
 \newcommand*{\codep@configuredepth}{%
   % Remove base counter from any existing reset parent.
   \@ifundefined{c@\codep@basecounter}{}{%
@@ -2014,7 +2015,7 @@
   \fi%
 }%
 
-%% @utility
+%% @behavior B-LINK-ADJ-PROOF
 % \codep@proof@bindbeginanchor{proof-id}{proof-key}
 %   Bind proof-key to the proof-begin destination emitted for proof-id.
 \newcommand*{\codep@proof@bindbeginanchor}[2]{%
@@ -2251,6 +2252,7 @@
 %% @behavior B-EQ-OUTER
 %% @behavior B-EQ-ALL
 %% @behavior B-EQ-OFF
+%% @behavior B-EDGE-PARAOFF-EQ
 % \codep@eqshouldtrack
 %   Set \codep@eqatom to a non-empty sentinel if this block owns refs.
 \newcommand*{\codep@eqshouldtrack}{%
@@ -2413,6 +2415,7 @@
 %   equation range, write the anchormap entry, and flush
 %   all pending refs with dedup.
 %% @behavior B-DISP-EQRANGE
+%% @behavior B-EQ-SUBEQ
 % \codep@flusheqrange@numbered
 %   Compute the legacy equation range key and flush pending refs.
 \def\codep@flusheqrange@numbered{%
@@ -3780,6 +3783,7 @@
 %   proof:X    → X* | X (per proofs=on|off)
 %   otherwise  → X
 %% @behavior B-DISP-PROOF
+%% @behavior B-DISP-EQ
 %% @behavior B-PROOF-OFF
 \def\codep@graph@getdisplay#1#2{%
   \expandafter\codep@splitprefix#1\@nil%
@@ -4339,6 +4343,7 @@
 %   guard stays as belt-and-braces for multiline equation refs.
 %% @behavior B-FRONTEDGE-CAPTURE
 %% @behavior B-FRONTEDGE-DEDUP-EQ
+%% @behavior B-EDGE-HYPERREF
 \def\codep@installfrontedgerefpatch{%
   %% ---- \ref and \ref* ----
   \ifcsname ref\endcsname%
@@ -4969,6 +4974,7 @@
 %   env1, env2, ... -- comma-separated environment names to track.
 %   The first env name is auto-detected as the base counter name.
 %% @behavior B-COMPAT-THMTOOLS-CONTINUED
+%% @behavior B-EDGE-TRACK-ORDER
 %% @behavior B-EDGE-TRACK-TWICE
 % Generic env-hook surface: covers thmtools[continued] via generic hooks;
 % no per-package shim.
@@ -5284,7 +5290,7 @@
 
 % \codep@proofof@resolve@warn{proofid}{label}{anchormode}
 %   Resolver wrapper used by explicit \codepproofof calls.
-%% @implements \codep@proofof@resolve
+%% @behavior B-EDGE-BADLABEL
 \def\codep@proofof@resolve@warn#1#2#3{%
   \codep@proofof@resolve{#1}{#2}{#3}%
   \ifcodep@proofof@resolved\else%
