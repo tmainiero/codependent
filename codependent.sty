@@ -1148,7 +1148,7 @@
 %
 %   The hook bodies are factored into named helpers below;
 %   \codep@hooktheorem is a thin orchestrator that wires them
-%   into the four hook points.
+%   into the five hook points.
 
 %% @behavior B-NUM-NESTED
 %% @behavior B-EDGE-NESTED
@@ -1295,6 +1295,79 @@
   \fi%
 }%
 
+%% ===================================================================
+%% W05-XPARSE-SUBSTRATE P01: lifecycle API, descriptor, dispatcher
+%% INERT until P02/P03 rewires call sites.
+%% ===================================================================
+
+% \codep@lifecycle@register@prebegin{env}{callback}
+%   Register code at cmd/<env>/before without changing hook semantics.
+%% @utility
+\newcommand{\codep@lifecycle@register@prebegin}[2]{%
+  \AddToHook{cmd/#1/before}{#2}%
+}
+
+% \codep@lifecycle@register@postbegin{env}{callback}
+%   Register code at cmd/<env>/after without changing hook semantics.
+%% @utility
+\newcommand{\codep@lifecycle@register@postbegin}[2]{%
+  \AddToHook{cmd/#1/after}{#2}%
+}
+
+% \codep@lifecycle@register@preend{env}{callback}
+%   Register code at cmd/end<env>/before without changing hook semantics.
+%% @utility
+\newcommand{\codep@lifecycle@register@preend}[2]{%
+  \AddToHook{cmd/end#1/before}{#2}%
+}
+
+% \codep@lifecycle@register@postend{env}{callback}
+%   Register code at cmd/end<env>/after without changing hook semantics.
+%% @utility
+\newcommand{\codep@lifecycle@register@postend}[2]{%
+  \AddToHook{cmd/end#1/after}{#2}%
+}
+
+% \codep@lifecycle@register@afterenv{env}{callback}
+%   Register code after an environment without changing hook semantics.
+%% @utility
+\newcommand{\codep@lifecycle@register@afterenv}[2]{%
+  \AfterEndEnvironment{#1}{#2}%
+}
+
+% \codep@envtrack@config@write{env}{field}{value}
+%   Store a token-list descriptor field keyed by environment and field.
+%% @utility
+\newcommand*{\codep@envtrack@config@write}[3]{%
+  \expandafter\def\csname codep@envtrack@cfg@#1@#2\endcsname{#3}%
+}
+
+% \codep@envtrack@config@read{env}{field}{cs}
+%   Bind a control sequence to a stored env-track descriptor field.
+%% @utility
+\newcommand*{\codep@envtrack@config@read}[3]{%
+  \expandafter\let\expandafter#3\csname codep@envtrack@cfg@#1@#2\endcsname%
+}
+
+% \codep@strategy@cmdhookobservable
+%   Strategy ID for the legacy command-hook-observable theorem path.
+%% @utility
+\def\codep@strategy@cmdhookobservable{cmd-hook-observable}%
+
+% \codep@envtrack@dispatch{env}
+%   Route an env through its configured env-track strategy.
+%% @utility
+\newcommand*{\codep@envtrack@dispatch}[1]{%
+  \codep@envtrack@config@read{#1}{strategy}{\codep@tmp@strategy}%
+  \ifx\codep@tmp@strategy\codep@strategy@cmdhookobservable%
+    \codep@hooktheorem{#1}%
+  \else%
+    \PackageError{codependent}{Unknown env-track strategy for #1}%
+      {Expected strategy='cmd-hook-observable'. Got something else or unset.%
+       \MessageBreak Did \codeptrack run before dispatch?}%
+  \fi%
+}
+
 % Thin orchestrator: wire the named helpers into the five hook points.
 % Fifth hook (cmd/end#1/after) clears any per-atom
 % \codep@manuallyemitted@<key> flag set by an inline
@@ -1303,11 +1376,11 @@
 %% @behavior B-NUM-SEQ
 %% @behavior B-PROOF-ADJ
 \newcommand*{\codep@hooktheorem}[1]{%
-  \AddToHook{cmd/#1/before}{\codep@hooktheorem@begin{#1}}%
-  \AddToHook{cmd/#1/after}{\codep@hooktheorem@after{#1}}%
-  \AddToHook{cmd/end#1/before}{\codep@hooktheorem@end{#1}}%
-  \AfterEndEnvironment{#1}{\codep@hooktheorem@afterend{#1}}%
-  \AddToHook{cmd/end#1/after}{\codep@manuallyemitted@end@outer@clear}%
+  \codep@lifecycle@register@prebegin{#1}{\codep@hooktheorem@begin{#1}}%
+  \codep@lifecycle@register@postbegin{#1}{\codep@hooktheorem@after{#1}}%
+  \codep@lifecycle@register@preend{#1}{\codep@hooktheorem@end{#1}}%
+  \codep@lifecycle@register@afterenv{#1}{\codep@hooktheorem@afterend{#1}}%
+  \codep@lifecycle@register@postend{#1}{\codep@manuallyemitted@end@outer@clear}%
 }
 
 % \codep@hookproof
@@ -5033,14 +5106,18 @@
         % ensures every tracked env uses the atom display format.
         \expandafter\let\csname the\codep@tmp@envname\endcsname\theatom%
       }%
-      \expandafter\codep@hooktheorem%
+      \codep@envtrack@config@write{\codep@tmp@envname}{strategy}{cmd-hook-observable}%
+      \codep@envtrack@config@write{\codep@tmp@envname}{quirks-key}{none}%
+      \expandafter\codep@envtrack@dispatch%
         \expandafter{\codep@tmp@envname}%
       % Auto-register starred variant (amsthm creates foo*).
       \edef\codep@starred{\codep@tmp@envname*}%
       \expandafter\@ifundefined\expandafter{%
         \codep@starred%
       }{}{%
-        \expandafter\codep@hooktheorem%
+        \codep@envtrack@config@write{\codep@starred}{strategy}{cmd-hook-observable}%
+        \codep@envtrack@config@write{\codep@starred}{quirks-key}{none}%
+        \expandafter\codep@envtrack@dispatch%
           \expandafter{\codep@starred}%
       }%
     \fi
