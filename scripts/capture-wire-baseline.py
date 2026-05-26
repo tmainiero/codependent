@@ -3,12 +3,17 @@
 scripts/capture-wire-baseline.py
 
 Compile all census fixtures + 3 stress variants, sha256 their final-pass
-.aux/.cdp outputs, and write a manifest to testfiles/baselines/W05-D/.
+.aux/.cdp outputs, and write a manifest to testfiles/baselines/<wave>/.
 
 Run under nix develop:
   nix develop --command python3 scripts/capture-wire-baseline.py
+  nix develop --command python3 scripts/capture-wire-baseline.py --wave W05-XPARSE-VMODE-FIXES
+  nix develop --command python3 scripts/capture-wire-baseline.py \\
+      --wave W05-XPARSE-VMODE-FIXES \\
+      --manifest testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json
 """
 
+import argparse
 import hashlib
 import json
 import os
@@ -24,10 +29,14 @@ PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 TESTFILES_DIR = PROJECT_ROOT / "testfiles"
 COMPILED_EXAMPLES_DIR = TESTFILES_DIR / "compiled-examples"
 BASELINE_SIZES = PROJECT_ROOT / ".claude" / "baseline-sizes.json"
-MANIFEST_DIR = PROJECT_ROOT / "testfiles" / "baselines" / "W05-D"
-MANIFEST_PATH = MANIFEST_DIR / "baseline.sha256.json"
+
+# Defaults (backward-compat with unaudited callsites that pass no flags)
+_DEFAULT_WAVE = "W05-D"
+_DEFAULT_MANIFEST_DIR = PROJECT_ROOT / "testfiles" / "baselines" / _DEFAULT_WAVE
+MANIFEST_DIR = _DEFAULT_MANIFEST_DIR
+MANIFEST_PATH = _DEFAULT_MANIFEST_DIR / "baseline.sha256.json"
 DEBUG_DIR = (
-    PROJECT_ROOT / ".claude" / "comms" / "waves" / "W05-D" / "baseline-raw"
+    PROJECT_ROOT / ".claude" / "comms" / "waves" / _DEFAULT_WAVE / "baseline-raw"
 )
 
 STY_FILE = PROJECT_ROOT / "codependent.sty"
@@ -358,9 +367,54 @@ def compile_stress(
 # Main
 # ---------------------------------------------------------------------------
 
+def _parse_args() -> "argparse.Namespace":
+    parser = argparse.ArgumentParser(
+        description="Capture wire-format baseline sha256 manifest."
+    )
+    parser.add_argument(
+        "--wave",
+        default=_DEFAULT_WAVE,
+        help=(
+            "Wave identifier (e.g. W05-XPARSE-VMODE-FIXES). "
+            f"Default: {_DEFAULT_WAVE!r}"
+        ),
+    )
+    parser.add_argument(
+        "--manifest",
+        default=None,
+        help=(
+            "Path to write the manifest JSON. "
+            "Default: testfiles/baselines/<wave>/baseline.sha256.json"
+        ),
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
-    print("W05-D wire-format baseline capture")
+    args = _parse_args()
+    wave_id: str = args.wave
+
+    if args.manifest is not None:
+        manifest_path = Path(args.manifest)
+        if not manifest_path.is_absolute():
+            manifest_path = PROJECT_ROOT / manifest_path
+    else:
+        manifest_path = (
+            PROJECT_ROOT / "testfiles" / "baselines" / wave_id / "baseline.sha256.json"
+        )
+
+    manifest_dir = manifest_path.parent
+    debug_dir = (
+        PROJECT_ROOT / ".claude" / "comms" / "waves" / wave_id / "baseline-raw"
+    )
+
+    # Monkey-patch module-level DEBUG_DIR so _copy_debug uses the right wave dir
+    global DEBUG_DIR
+    DEBUG_DIR = debug_dir
+
+    print(f"{wave_id} wire-format baseline capture")
     print(f"Project root: {PROJECT_ROOT}")
+    print(f"Manifest path: {manifest_path}")
 
     census_data = json.loads(BASELINE_SIZES.read_text(encoding="utf-8"))
     census_keys: "list[str]" = list(census_data.get("census", {}).keys())
@@ -416,17 +470,17 @@ def main() -> None:
             }
         )
 
-    MANIFEST_DIR.mkdir(parents=True, exist_ok=True)
-    manifest = {
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest: "dict" = {
         "captured_at": datetime.now(timezone.utc).isoformat(),
         "fixtures": results,
-        "wave": "W05-D",
+        "wave": wave_id,
     }
-    MANIFEST_PATH.write_text(
+    manifest_path.write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(f"\nManifest → {MANIFEST_PATH}")
+    print(f"\nManifest → {manifest_path}")
     print(f"Fixtures captured: {len(results)}")
 
 

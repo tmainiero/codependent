@@ -80,11 +80,14 @@
       14
     ],
     "diff": [
-      [],
+      [
+        "-\\newlabel{prop:picard}{{2.4}{1}{}{theorem.12}{}}",
+        "+\\newlabel{prop:picard}{{2.4}{2}{}{theorem.12}{}}"
+      ],
       []
     ],
     "diff_count": [
-      0,
+      2,
       0
     ],
     "lines": [
@@ -99,7 +102,7 @@
         "\\newlabel{eq:contraction}{{2.1}{1}{}{equation.9}{}}",
         "\\newlabel{ex:reals}{{1.4}{1}{}{theorem.6}{}}",
         "\\newlabel{lem:contraction-cauchy}{{2.2}{1}{}{theorem.10}{}}",
-        "\\newlabel{prop:picard}{{2.4}{2}{}{theorem.12}{}}",
+        "\\newlabel{prop:picard}{{2.4}{1}{}{theorem.12}{}}",
         "\\newlabel{sec:contraction}{{2}{1}{Contractions and fixed points}{section.7}{}}",
         "\\newlabel{sec:metric}{{1}{1}{Metric spaces}{section.1}{}}",
         "\\newlabel{thm:banach}{{2.3}{1}{}{theorem.11}{}}"

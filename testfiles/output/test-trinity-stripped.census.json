@@ -71,20 +71,11 @@
       36
     ],
     "diff": [
-      [
-        "-\\newlabel{eq:square@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
-        "-\\newlabel{eq:square}{{2.2}{1}{Categorical framework}{equation.16}{}}",
-        "+\\newlabel{eq:square@cref}{{[equation][2][2]2.2}{[1][1][]2}{}{}{}}",
-        "+\\newlabel{eq:square}{{2.2}{2}{Categorical framework}{equation.16}{}}",
-        "-\\newlabel{sec:morita@cref}{{[section][3][]3}{[1][1][]2}{}{}{}}",
-        "+\\newlabel{sec:morita@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
-        "-\\newlabel{thmt@@MoritaEquiv@data@cref}{{[atom][1][3]3.1}{[1][1][]2}{}{}{}}",
-        "+\\newlabel{thmt@@MoritaEquiv@data@cref}{{[atom][1][3]3.1}{[1][2][]2}{}{}{}}"
-      ],
+      [],
       []
     ],
     "diff_count": [
-      8,
+      0,
       0
     ],
     "lines": [
@@ -137,8 +128,8 @@
         "\\newlabel{def:bimodule_tensor}{{2.1}{1}{}{definition.11}{}}",
         "\\newlabel{eq:inner_outer@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
         "\\newlabel{eq:inner_outer}{{1.1}{1}{}{equation.8}{}}",
-        "\\newlabel{eq:square@cref}{{[equation][2][2]2.2}{[1][1][]2}{}{}{}}",
-        "\\newlabel{eq:square}{{2.2}{2}{Categorical framework}{equation.16}{}}",
+        "\\newlabel{eq:square@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:square}{{2.2}{1}{Categorical framework}{equation.16}{}}",
         "\\newlabel{eq:tensor_compose@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
         "\\newlabel{eq:tensor_compose}{{2.1}{1}{}{equation.12}{}}",
         "\\newlabel{lem:adjunction@cref}{{[lemma][3][2]2.3}{[1][1][]1}{}{}{}}",
@@ -151,7 +142,7 @@
         "\\newlabel{sec:avatars}{{1}{1}{Three avatars of matrix product factors}{section.1}{}}",
         "\\newlabel{sec:framework@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
         "\\newlabel{sec:framework}{{2}{1}{Categorical framework}{section.9}{}}",
-        "\\newlabel{sec:morita@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
+        "\\newlabel{sec:morita@cref}{{[section][3][]3}{[1][1][]2}{}{}{}}",
         "\\newlabel{sec:morita}{{3}{2}{Morita product factors}{section.19}{}}",
         "\\newlabel{sec:restate@cref}{{[section][4][]4}{[1][2][]2}{}{}{}}",
         "\\newlabel{sec:restate}{{4}{2}{Restated results}{section.27}{}}",
@@ -160,7 +151,7 @@
         "\\newlabel{thm:morita_equiv@cref}{{[theorem][2][]3.2}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:morita_equiv}{{3.2}{2}{}{theorem.22}{}}",
         "\\newlabel{thmt@@MoritaEquiv@cref}{{[theorem][2][]3.2}{[1][2][]2}{}{}{}}",
-        "\\newlabel{thmt@@MoritaEquiv@data@cref}{{[atom][1][3]3.1}{[1][2][]2}{}{}{}}",
+        "\\newlabel{thmt@@MoritaEquiv@data@cref}{{[atom][1][3]3.1}{[1][1][]2}{}{}{}}",
         "\\newlabel{thmt@@MoritaEquiv@data}{{\\def \\theequation {3.\\@arabic {\\c@equation }}\\def \\theHequation {(restate \\theHthmt@dummyctr )0}\\setcounter {equation}{0}}{2}{Morita product factors}{atom.20}{}}",
         "\\newlabel{thmt@@MoritaEquiv}{{3.2}{2}{}{theorem.22}{}}"
       ],
@@ -175,8 +166,8 @@
         "\\newlabel{def:bimodule_tensor}{{2.1}{1}{}{definition.11}{}}",
         "\\newlabel{eq:inner_outer@cref}{{[equation][1][1]1.1}{[1][1][]1}{}{}{}}",
         "\\newlabel{eq:inner_outer}{{1.1}{1}{}{equation.8}{}}",
-        "\\newlabel{eq:square@cref}{{[equation][2][2]2.2}{[1][1][]2}{}{}{}}",
-        "\\newlabel{eq:square}{{2.2}{2}{Categorical framework}{equation.16}{}}",
+        "\\newlabel{eq:square@cref}{{[equation][2][2]2.2}{[1][1][]1}{}{}{}}",
+        "\\newlabel{eq:square}{{2.2}{1}{Categorical framework}{equation.16}{}}",
         "\\newlabel{eq:tensor_compose@cref}{{[equation][1][2]2.1}{[1][1][]1}{}{}{}}",
         "\\newlabel{eq:tensor_compose}{{2.1}{1}{}{equation.12}{}}",
         "\\newlabel{lem:adjunction@cref}{{[lemma][3][2]2.3}{[1][1][]1}{}{}{}}",
@@ -189,7 +180,7 @@
         "\\newlabel{sec:avatars}{{1}{1}{Three avatars of matrix product factors}{section.1}{}}",
         "\\newlabel{sec:framework@cref}{{[section][2][]2}{[1][1][]1}{}{}{}}",
         "\\newlabel{sec:framework}{{2}{1}{Categorical framework}{section.9}{}}",
-        "\\newlabel{sec:morita@cref}{{[section][3][]3}{[1][2][]2}{}{}{}}",
+        "\\newlabel{sec:morita@cref}{{[section][3][]3}{[1][1][]2}{}{}{}}",
         "\\newlabel{sec:morita}{{3}{2}{Morita product factors}{section.19}{}}",
         "\\newlabel{sec:restate@cref}{{[section][4][]4}{[1][2][]2}{}{}{}}",
         "\\newlabel{sec:restate}{{4}{2}{Restated results}{section.27}{}}",
@@ -198,7 +189,7 @@
         "\\newlabel{thm:morita_equiv@cref}{{[theorem][2][]3.2}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:morita_equiv}{{3.2}{2}{}{theorem.22}{}}",
         "\\newlabel{thmt@@MoritaEquiv@cref}{{[theorem][2][]3.2}{[1][2][]2}{}{}{}}",
-        "\\newlabel{thmt@@MoritaEquiv@data@cref}{{[atom][1][3]3.1}{[1][2][]2}{}{}{}}",
+        "\\newlabel{thmt@@MoritaEquiv@data@cref}{{[atom][1][3]3.1}{[1][1][]2}{}{}{}}",
         "\\newlabel{thmt@@MoritaEquiv@data}{{\\def \\theequation {3.\\@arabic {\\c@equation }}\\def \\theHequation {(restate \\theHthmt@dummyctr )0}\\setcounter {equation}{0}}{2}{Morita product factors}{atom.20}{}}",
         "\\newlabel{thmt@@MoritaEquiv}{{3.2}{2}{}{theorem.22}{}}"
       ]

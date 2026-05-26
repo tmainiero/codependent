@@ -1,9 +1,8 @@
 {
-  "captured_at": "2026-05-23T19:13:30.007444+00:00",
-  "superseded_by": "W05-XPARSE-VMODE-FIXES",
+  "captured_at": "2026-05-26T06:27:20.685973+00:00",
   "fixtures": [
     {
-      "aux_sha": "e5cbc449b56aacdc954fb1b2bf8647d88cbce67858effcad47acb42154cd7218",
+      "aux_sha": "e6db37dd5a9bafac175e49f21480783946893593b4f717daa792834eba4b3335",
       "cdp_sha": "9a27f773a32b40c51d9da94b733f11433c5281966d00a3adc5bfac15024ef0a4",
       "name": "integ-appendix",
       "pdf_objects_sha": null
@@ -27,13 +26,13 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "a07f1c606825ec487eab6438046708f042d6e1427579ce4277f89db4da43cba2",
+      "aux_sha": "19f2f2fa5a68fc0cf795a67e24c75d2188d7b67a60186e9a5cdbf33bd7f284fe",
       "cdp_sha": "a3307bb75b9a3b4640f4337575f55ed1ac7666ecf068b522b6bf69364d1eaf0d",
       "name": "integ-no-cleveref",
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "a07f1c606825ec487eab6438046708f042d6e1427579ce4277f89db4da43cba2",
+      "aux_sha": "19f2f2fa5a68fc0cf795a67e24c75d2188d7b67a60186e9a5cdbf33bd7f284fe",
       "cdp_sha": "a3307bb75b9a3b4640f4337575f55ed1ac7666ecf068b522b6bf69364d1eaf0d",
       "name": "integ-no-cleveref [warm-changed]",
       "pdf_objects_sha": null
@@ -45,7 +44,7 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "323fb19b15a29bbe82a647d432db015530f30519a964ccb6e8fedbedb44524a0",
+      "aux_sha": "33e6bba5690ff93b7d4877b9d140db7190fa24b3ee8c096bcdaeefce328ed9d1",
       "cdp_sha": "5c758c873d71f13b0586c275d65b28c915a271a2d185bd10ca0a884a265ac51c",
       "name": "integ-no-paragraphs",
       "pdf_objects_sha": null
@@ -129,8 +128,8 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "3ae54b22ff42130b22bf41e4b1cff7dba412be5c24c8b6f37b676195eb913ec2",
-      "cdp_sha": "1d9851295641167801f16c62c2b3be0b6c3fc7235afdad9831f9e801e074e3b2",
+      "aux_sha": "8fa77b2cd0d7c199e0261b706413f803b6f35b6b15a5e5b574b1610032c1e3f0",
+      "cdp_sha": "3c0ba42f3b6ecf4478b7443a9125651fbb524c44396edfd8c24393bb14725071",
       "name": "integ-proofauto-repeated-explicit",
       "pdf_objects_sha": null
     },
@@ -141,13 +140,13 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "42b4f7ec1c7cb3349e3ae13ef9cfe09f9be9652fdb89eeb7a8f358bf444ca4fe",
-      "cdp_sha": "bcd8d84aa8237dc94c3684d702364080e8d149fc6f40ee5c3047076109dbf984",
+      "aux_sha": "c3a38022ad466d570b20fd0ac6af46183031f98c99564a9e829f9936cb46885d",
+      "cdp_sha": "03edf7315ef72a8e0f760ffcd5b08db87b7e74d9fd96078c5fae6067b5634000",
       "name": "integ-stress-all-features",
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "f48c61de7be3d10ad6118c24971dfeb6e082564635ac38dc71651481ad7d17ed",
+      "aux_sha": "aa5ac4551537b125524afb829f01c423f0a1d7220c520a642a4d97749967c143",
       "cdp_sha": "e226edc56235c07bb42d38c4ccc42519a82f873f00181a8c5c3d52984c3a32cb",
       "name": "test-integration-kitchen-sink",
       "pdf_objects_sha": null
@@ -159,35 +158,35 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "90bb5e43269cd0919d10f342e36ea5679f6fc36493071cf1ad694dcbbfb3e6df",
+      "aux_sha": "66c4d44c25bcf06a27a0eeabbc15ced94525281d0009456358205c65418ea813",
       "cdp_sha": "71fc11d8e9158507875094d36a363de718f504f18e4400c1d0e6befa080d8a52",
       "name": "test-trinity-stripped",
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "0de35a20f7933ea39c704e70064f440e57e0d997201abd14b8dba224ae546e40",
-      "cdp_sha": "cd2b268433de58ab15c43bef15edbe3e100c9865539aad336416214f5da58694",
+      "aux_sha": "44f90ef7bbbf29d1ad1a7263ec6ab4e581623d7544d20b08d2305e65cff16088",
+      "cdp_sha": "8984b0c3e00893826a5ccd2048f1a9d1e07c5b5ddf44d077ca63899d1dee3866",
       "name": "trinity-test",
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "0415515d7f001f6248ff6776097915124f61b30dd4467a3fc70aee79d4d29c22",
-      "cdp_sha": "5627f6ab69cd85f9429e54bfc1eefc9321077483fcff28e550ba28f7fa919e1c",
+      "aux_sha": "cde92e31337e28e4c6e30370e82b4388b877adef9aba9d743faf17c41d07657c",
+      "cdp_sha": "01a59062abaebd54328544c99ebe33196a2b91778f51b02e4a2d7197382e0da0",
       "name": "stress-ta-appendix-gray",
-      "pdf_objects_sha": "28dc6b878501f4677c1ca071bbc710ba5fc54141e009fafa9145f52c6e62de03"
+      "pdf_objects_sha": "1f3b4622ca6084f999e2839c2562aca5e32a6159f3aabac66d64e78201fe1930"
     },
     {
-      "aux_sha": "4604a793d4de1b1490f02d841595e6e3dbd84c0ee083b17dfbc6f5654bbe9533",
-      "cdp_sha": "5a77c80292fffc85f40173f55d0fa3803a64443e3cc39cbcc5d5a02b7f2698f6",
+      "aux_sha": "630b3df51803de4c7c2d049288d925964d46da7a9c25f3f84c5758ee16ca6dc7",
+      "cdp_sha": "a5c498aec4fab1b72b115dd079ffb61c4a5718bc7b420253900e4a7b07670282",
       "name": "stress-ta-inline",
-      "pdf_objects_sha": "4ca62c43652f84f15f1761cd26c4115ebf486d84fd1b0a8bb6b22b5964975404"
+      "pdf_objects_sha": "0f43f84585c08eaf802c3b8cb88c63d75e61423b871c3ecb8b00417a70b22344"
     },
     {
-      "aux_sha": "4604a793d4de1b1490f02d841595e6e3dbd84c0ee083b17dfbc6f5654bbe9533",
-      "cdp_sha": "9be4b1b94d2d48ad51fa3252d3feb779e215a9d8e7cd1843b3c9b12e3c4cde44",
+      "aux_sha": "630b3df51803de4c7c2d049288d925964d46da7a9c25f3f84c5758ee16ca6dc7",
+      "cdp_sha": "8af7a71b9ce624c8480b74902c33ea2f1ec2340e52991be691183cd152a1198a",
       "name": "stress-ta-inline-gray",
-      "pdf_objects_sha": "d6a19737fa0aef55458e9ae1bbaf1ce6d49720901311805b960f0e1d719100a3"
+      "pdf_objects_sha": "b9e1b5943c4e50b8709060a0322043089ab96edd4392643c72dee79771e71a52"
     }
   ],
-  "wave": "W05-D"
+  "wave": "W05-XPARSE-VMODE-FIXES"
 }

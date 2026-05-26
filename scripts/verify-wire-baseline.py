@@ -7,8 +7,11 @@ values against the committed manifest, and exit non-zero on any mismatch.
 
 Run under nix develop:
   nix develop --command python3 scripts/verify-wire-baseline.py
+  nix develop --command python3 scripts/verify-wire-baseline.py \\
+      --manifest testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json
 """
 
+import argparse
 import importlib.util
 import json
 import sys
@@ -23,7 +26,24 @@ _cap = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_cap)
 
 PROJECT_ROOT = _cap.PROJECT_ROOT
-MANIFEST_PATH = _cap.MANIFEST_PATH
+
+# Default manifest path (backward-compat with unaudited callsites)
+_DEFAULT_MANIFEST_PATH = _cap.MANIFEST_PATH
+
+
+def _parse_args() -> "argparse.Namespace":
+    parser = argparse.ArgumentParser(
+        description="Verify wire-format baseline sha256 manifest."
+    )
+    parser.add_argument(
+        "--manifest",
+        default=None,
+        help=(
+            "Path to the manifest JSON to verify against. "
+            f"Default: {_DEFAULT_MANIFEST_PATH}"
+        ),
+    )
+    return parser.parse_args()
 
 
 def _compare(
@@ -46,17 +66,25 @@ def _compare(
 
 
 def main() -> None:
-    if not MANIFEST_PATH.exists():
+    args = _parse_args()
+
+    if args.manifest is not None:
+        manifest_path = Path(args.manifest)
+        if not manifest_path.is_absolute():
+            manifest_path = PROJECT_ROOT / manifest_path
+    else:
+        manifest_path = _DEFAULT_MANIFEST_PATH
+
+    if not manifest_path.exists():
         print(
-            f"ERROR: manifest not found at {MANIFEST_PATH}\n"
+            f"ERROR: manifest not found at {manifest_path}\n"
             "Run capture-wire-baseline.py first.",
             file=sys.stderr,
         )
         sys.exit(2)
 
-    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     expected_list: "list[dict]" = manifest.get("fixtures", [])
-    expected_by_name = {e["name"]: e for e in expected_list}
 
     fixture_map = _cap.find_fixture_files()
     mismatches: "list[str]" = []
