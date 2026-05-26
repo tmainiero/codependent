@@ -1821,13 +1821,15 @@
 %   Entry point prepended to proof's internal optional-heading body.
 %% @implements \codep@hookproof
 \def\codep@autoproofof@heading#1#2{%
-  \codep@autoproofof@markseen{#1}%
-  \ifcodep@autoproofof@eligible%
-    \codep@autoproofof@scan{#2}%
-    \codep@proof@adjacent@finalize%
-    \global\codep@autoproofof@eligiblefalse%
-  \fi%
-  \codep@proof@captureheadinganchor{\codep@currentproofid}%
+  \ifbool{codep@tracked}{%
+    \codep@autoproofof@markseen{#1}%
+    \ifcodep@autoproofof@eligible%
+      \codep@autoproofof@scan{#2}%
+      \codep@proof@adjacent@finalize%
+      \global\codep@autoproofof@eligiblefalse%
+    \fi%
+    \codep@proof@captureheadinganchor{\codep@currentproofid}%
+  }{}%
 }%
 
 \begingroup
@@ -2013,31 +2015,15 @@
   \global\codep@proof@adjcommit@neededfalse%
 }%
 
-% Proof-heading anchors are emitted after optional-argument parsing.
-% pdfsavepos captures the top of the line box; the visible baseline in
-% the default amsthm proof heading is about 3pt lower.  The offset was
-% chosen empirically against integ-proof-link-target's 10pt tolerance.
-\newdimen\codep@proof@anchoroffset
-\codep@proof@anchoroffset=3pt
-
 %% @utility
-% \codep@proof@emitanchorname{anchor-name}
-%   Emit a zero-size hyperref destination at the current location.
-\newcommand*{\codep@proof@emitanchorname}[1]{%
-  \@ifpackageloaded{hyperref}{%
-    \Hy@raisedlink{\hyper@anchorstart{#1}\hyper@anchorend}%
-  }{}%
-}%
-
-%% @utility
-% \codep@proof@emitheadinganchorname{anchor-name}
-%   Emit a proof destination after optional-argument parsing, lowered
-%   to match the visible amsthm proof-heading baseline.
-\newcommand*{\codep@proof@emitheadinganchorname}[1]{%
-  \@ifpackageloaded{hyperref}{%
-    \smash{\lower\codep@proof@anchoroffset\hbox{%
-      \hyper@anchorstart{#1}\hyper@anchorend}}%
-  }{}%
+% Callers MUST ensure #1 is non-empty before calling.
+% Helper does NOT validate; lint forbids raw destination primitives
+% outside this body. Possibly-empty callers wrap in \ifx\<name>\@empty
+% guard. Structurally-non-empty callers (e.g. Track-2 align where
+% anchor name has literal prefix codep.eq.) document the structural
+% argument and omit the guard.
+\def\codep@emit@destination#1{%
+  \Hy@raisedlink{\hyper@anchorstart{#1}\hyper@anchorend}%
 }%
 
 %% @utility
@@ -2063,7 +2049,7 @@
 \newcommand*{\codep@proof@capturebeginanchor}[1]{%
   \@ifpackageloaded{hyperref}{%
     \codep@proof@beginanchorname{#1}{\codep@tmp@proofbeginanchor}%
-    \codep@proof@emitanchorname{\codep@tmp@proofbeginanchor}%
+    \codep@emit@destination{\codep@tmp@proofbeginanchor}%
     \expandafter\xdef\csname codep@proofbeginanchor@#1\endcsname{%
       \codep@tmp@proofbeginanchor}%
   }{}%
@@ -2071,9 +2057,11 @@
 
 %% @implements \codep@proof@capturebeginanchor
 % \codep@proof@captureheadinganchor{proof-id}
-%   Emit the proof destination after the proof optional argument is parsed.
+%   Stage the proof destination after the proof optional argument is
+%   parsed.  para/begin emits at the heading-adjacent body paragraph;
+%   proof end remains an idempotent fallback for empty proofs.
 \newcommand*{\codep@proof@captureheadinganchor}[1]{%
-  \def\codep@tmp@headingproofid{#1}%
+  \edef\codep@tmp@headingproofid{#1}%
   \ifx\codep@tmp@headingproofid\@empty\else%
     \expandafter\ifx%
         \csname codep@proofbeginanchor@\codep@tmp@headingproofid\endcsname%
@@ -2081,11 +2069,41 @@
       \@ifpackageloaded{hyperref}{%
         \codep@proof@beginanchorname{\codep@tmp@headingproofid}{%
           \codep@tmp@proofbeginanchor}%
-        \codep@proof@emitheadinganchorname{\codep@tmp@proofbeginanchor}%
-        \expandafter\xdef%
-          \csname codep@proofbeginanchor@%
-            \codep@tmp@headingproofid\endcsname{\codep@tmp@proofbeginanchor}%
+        \ifx\codep@tmp@proofbeginanchor\@empty\else%
+          \expandafter\xdef%
+            \csname codep@proofbeginanchor@%
+              \codep@tmp@headingproofid\endcsname{%
+                \codep@tmp@proofbeginanchor}%
+          \expandafter\xdef%
+            \csname codep@proofpendingheadinganchor@%
+              \codep@tmp@headingproofid\endcsname{%
+                \codep@tmp@proofbeginanchor}%
+        \fi%
       }{}%
+    \fi%
+  \fi%
+}%
+
+%% @behavior B-LINK-PROOF-DEST
+%% @behavior B-PROOF-ANCHOR-NEAR-HEADING
+% \codep@proof@emitpendingheadinganchor
+%   Emit the current proof heading destination once.
+\def\codep@proof@emitpendingheadinganchor{%
+  \edef\codep@tmp@pendingproofid{\codep@currentproofid}%
+  \ifx\codep@tmp@pendingproofid\@empty\else%
+    \expandafter\ifx\csname codep@proofpendingheadinganchor@%
+        \codep@tmp@pendingproofid\endcsname\relax%
+    \else%
+      \edef\codep@tmp@pendingproofanchor{%
+        \csname codep@proofpendingheadinganchor@%
+          \codep@tmp@pendingproofid\endcsname}%
+      \ifx\codep@tmp@pendingproofanchor\@empty\else%
+        \@ifpackageloaded{hyperref}{%
+          \codep@emit@destination{\codep@tmp@pendingproofanchor}%
+        }{}%
+      \fi%
+      \global\expandafter\let\csname codep@proofpendingheadinganchor@%
+        \codep@tmp@pendingproofid\endcsname\relax%
     \fi%
   \fi%
 }%
@@ -2253,6 +2271,7 @@
     \codep@ctxpeekkind\codep@tmp@ctxkind%
     \def\codep@tmp@proofkind{proof}%
     \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
+      \codep@proof@emitpendingheadinganchor%
       \ifcodep@proofdisplaypending%
         \codep@proof@materialize%
       \fi%
@@ -2408,7 +2427,8 @@
     \fi%
     \@ifpackageloaded{hyperref}{%
       \xdef\codep@eq@anchor{codep.eq.\the\c@equation}%
-      \codep@proof@emitanchorname{\codep@eq@anchor}%
+      % Structurally non-empty: literal codep.eq. prefix plus equation value.
+      \codep@emit@destination{\codep@eq@anchor}%
     }{}%
   }%
   \AtEndEnvironment{#1}{%
@@ -2846,6 +2866,7 @@
 \newcommand*{\codep@installparahook}{%
   \AddToHook{para/begin}{%
     \ifbool{codep@tracked}{%
+      \codep@proof@emitpendingheadinganchor%
       \global\let\codep@pendingresultid\@empty%
       \ifcodep@proofdisplaypending%
         \codep@ctxpeekkind\codep@tmp@ctxkind%

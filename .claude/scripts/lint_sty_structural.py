@@ -14,6 +14,7 @@ Checks:
   5. \\errmessage / \\message  (must use \\PackageError etc.)
   6. \\usepackage in .sty  (must use \\RequirePackage)
   7. \\everypar  (must use \\AddToHook{para/begin})
+  8. Raw destination primitives outside \\codep@emit@destination
 
 Exit code: 0 if no errors (warnings OK), 1 if any errors.
 
@@ -79,6 +80,23 @@ def is_comment_line(line: str) -> bool:
 
 def is_blank_line(line: str) -> bool:
     return line.strip() == ''
+
+
+def line_number_for_offset(content: str, offset: int) -> int:
+    """Return a 1-indexed line number for a character offset."""
+    return content.count('\n', 0, offset) + 1
+
+
+def is_commented_offset(content: str, offset: int) -> bool:
+    """True if offset is preceded by an unescaped % on the same line."""
+    line_start = content.rfind('\n', 0, offset) + 1
+    prefix = content[line_start:offset]
+    stripped = re.sub(r'\\%', '', prefix)
+    return '%' in stripped
+
+
+def in_any_range(offset: int, ranges: List[Tuple[int, int]]) -> bool:
+    return any(start <= offset <= end for start, end in ranges)
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +217,108 @@ def check_whole_file(basename: str, lineno: int, code: str) -> List[Issue]:
         issues.append(Issue(basename, lineno, None, "ERROR",
             "\\everypar found — use \\AddToHook{para/begin}{...}"))
 
+    return issues
+
+
+# ---------------------------------------------------------------------------
+# Destination primitive centralization (LD1)
+# ---------------------------------------------------------------------------
+
+_DESTINATION_PRIMITIVES = (
+    r'Hy@raisedlink',
+    r'hyper@anchorstart',
+    r'hyper@anchorend',
+    r'hypertarget',
+    r'hyperdef',
+    r'pdfdest',
+    r'pdfobj',
+)
+_DESTINATION_PRIMITIVE_NAMES_RE = r'(?:' + '|'.join(
+    _DESTINATION_PRIMITIVES) + r')'
+_DESTINATION_PRIMITIVE_RE = re.compile(
+    r'(?:'
+    r'\\' + _DESTINATION_PRIMITIVE_NAMES_RE + r'(?=[^a-zA-Z@]|$)'
+    r'|'
+    r'\\csname\s+' + _DESTINATION_PRIMITIVE_NAMES_RE + r'\s*\\endcsname'
+    r')'
+)
+
+_DESTINATION_HELPER_DEF_RE = re.compile(
+    r'\\(?:def|newcommand\*?|providecommand\*?|DeclareRobustCommand\*?)'
+    r'\s*\{?\\codep@emit@destination\}?'
+)
+
+
+def _extract_brace_span(content: str, start: int) -> Optional[Tuple[int, int]]:
+    """Return the inclusive span of a balanced {...} group."""
+    if start < 0 or start >= len(content) or content[start] != '{':
+        return None
+    depth = 1
+    i = start + 1
+    while i < len(content) and depth > 0:
+        c = content[i]
+        if c == '\\' and i + 1 < len(content):
+            i += 2
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return (start, i)
+        i += 1
+    return None
+
+
+def _first_unescaped_open_brace(content: str, start: int) -> Optional[int]:
+    i = start
+    while i < len(content):
+        c = content[i]
+        if c == '\\' and i + 1 < len(content):
+            i += 2
+            continue
+        if c == '{':
+            return i
+        if c == '\n':
+            # TeX definitions in this codebase keep the body opener on the
+            # definition line; do not accidentally swallow later definitions.
+            return None
+        i += 1
+    return None
+
+
+def destination_helper_body_ranges(content: str) -> List[Tuple[int, int]]:
+    """Find bodies of \\codep@emit@destination definitions by exact name."""
+    ranges: List[Tuple[int, int]] = []
+    for match in _DESTINATION_HELPER_DEF_RE.finditer(content):
+        if is_commented_offset(content, match.start()):
+            continue
+        open_brace = _first_unescaped_open_brace(content, match.end())
+        if open_brace is None:
+            continue
+        body_span = _extract_brace_span(content, open_brace)
+        if body_span is not None:
+            ranges.append(body_span)
+    return ranges
+
+
+def check_destination_primitives(basename: str, content: str) -> List[Issue]:
+    """Forbid raw destination primitives outside the canonical helper body."""
+    helper_ranges = destination_helper_body_ranges(content)
+    issues: List[Issue] = []
+    for match in _DESTINATION_PRIMITIVE_RE.finditer(content):
+        if is_commented_offset(content, match.start()):
+            continue
+        if in_any_range(match.start(), helper_ranges):
+            continue
+        primitive = match.group(0)
+        issues.append(Issue(
+            basename,
+            line_number_for_offset(content, match.start()),
+            None,
+            "ERROR",
+            f"raw destination primitive {primitive} outside "
+            "\\codep@emit@destination body"))
     return issues
 
 
@@ -455,7 +575,9 @@ def lint_file(filename: str) -> List[Issue]:
         return [Issue(basename, 0, None, "ERROR", f"file not found: {filename}")]
 
     lines = content.splitlines(keepends=True)
-    return _lint_file_linewise(basename, lines)
+    issues = _lint_file_linewise(basename, lines)
+    issues.extend(check_destination_primitives(basename, content))
+    return issues
 
 
 # ---------------------------------------------------------------------------
@@ -568,6 +690,11 @@ def check_enddoc_hook_inventory(filenames: List[str]) -> List[Issue]:
 # Entry point
 # ---------------------------------------------------------------------------
 
+def should_check_enddoc_inventory(filenames: List[str]) -> bool:
+    basenames = {os.path.basename(fn) for fn in filenames}
+    return {"codependent.sty", "codependent-render.sty"}.issubset(basenames)
+
+
 def main() -> int:
     if len(sys.argv) > 1:
         filenames = sys.argv[1:]
@@ -584,7 +711,8 @@ def main() -> int:
         all_issues.extend(lint_file(fn))
 
     # Cross-file check: enddocument hook inventory (v12 A6).
-    all_issues.extend(check_enddoc_hook_inventory(filenames))
+    if should_check_enddoc_inventory(filenames):
+        all_issues.extend(check_enddoc_hook_inventory(filenames))
 
     all_issues.sort(key=lambda iss: (iss.filename, iss.line_start))
 

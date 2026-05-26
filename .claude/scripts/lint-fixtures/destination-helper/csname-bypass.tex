@@ -1,0 +1,7 @@
+% destination-helper csname-bypass fixture: raw primitives via \csname outside
+% the canonical helper must still be rejected.
+\def\someothermacro#1{%
+  \csname Hy@raisedlink\endcsname{%
+    \csname hyper@anchorstart\endcsname{foo}%
+    \csname hyper@anchorend\endcsname}%
+}%

@@ -430,8 +430,12 @@
         \def\codep@tmp@entrycontent{%
           \hyperlink{\codep@tmp@entryanchor}{\codep@tmp@entrylabel}}%
       \fi%
-      \Hy@raisedlink{%
-        \hyper@anchorstart{codep-appendix:#1}\hyper@anchorend}%
+      \edef\codep@tmp@appendixdestsource{#1}%
+      \ifx\codep@tmp@appendixdestsource\@empty\else%
+        \edef\codep@tmp@appendixdest{%
+          codep-appendix:\codep@tmp@appendixdestsource}%
+        \codep@emit@destination{\codep@tmp@appendixdest}%
+      \fi%
     }{}%
     \hspace{1.5em}%
     \codep@tmp@entrycontent%

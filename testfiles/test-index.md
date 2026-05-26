@@ -166,7 +166,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (45 fixtures)
+## Integration (46 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -181,6 +181,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-backrefsof-basic.lvt | LIVE | B-REND-BACKREFSOF | Public \codepbackrefsof reads another tracked atom label's Used-In list. |
 | testfiles/integration/integ-backrefsof-forward.lvt | LIVE | B-REND-BACKREFSOF | Forward \codepbackrefsof warns on pass one, then emits after label hydration. |
 | testfiles/integration/integ-custom-headformat-doubled.lvt | LIVE | B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR | Custom headformat with doubled theorem name (Q3 case): |
+| testfiles/integration/integ-empty-proof-destination.lvt | LIVE | B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Empty adjacent proofs still emit their proof-begin named destination |
 | testfiles/integration/integ-equations-all.lvt | LIVE | B-EQ-ALL | Verify that equations=all causes equations INSIDE tracked theorem |
 | testfiles/integration/integ-equations-off.lvt | LIVE | B-EQ-OFF | Verify that equations=off fully suppresses equation tracking: |
 | testfiles/integration/integ-full-stack-inline.lvt | LIVE | B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Full-stack integration: amsmath, amsthm, thmtools, hyperref, |
