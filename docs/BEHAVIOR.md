@@ -200,7 +200,9 @@ displays "Used in A" in the PDF.
 - [B-PROOF-ANCHOR-NEAR-HEADING] Adjacent, standalone, and rebound proofs all place exactly one proof-local anchor at proof-begin, so proof backlinks land near the rendered proof heading, not after the proof or on a later in-proof equation anchor.
 - [B-LINK-PROOFOF-STAR] Both `\codepproofof` and `\codepproofof*` bind separated proofs to the proof's own anchor; the starred form is retained as an explicit compatibility spelling for the same proof-begin aliasing path.
 - [B-LINK-ADJ-PROOF] Backref entries for adjacent proofs resolve through the adjacent proof's own `\codep@anchormap` target, not the parent theorem anchor. Effective-anchor rewrites on the parent theorem do not collapse the proof backlink onto the theorem target.
-- [B-LINK-APPENDIX-BIDIR] In `backrefs=appendix` mode, links are bidirectional: a dagger marker emitted with the body-side backref rail links forward to `codep-appendix:<key>`, and each appendix entry label links back to the atom's effective body anchor. Proof-source entries within appendix rows resolve through the proof key's `\codep@anchormap` target.
+- [B-LINK-APPENDIX-BIDIR] In `backrefs=appendix` mode, links are bidirectional: the typeset theorem name (amsthm-family backends) links forward to `codep-appendix:<key>`, and each appendix entry label links back to the atom's effective body anchor. Proof-source entries within appendix rows resolve through the proof key's `\codep@anchormap` target.
+
+  Forward navigation requires an amsthm-family backend (amsthm, thmtools, sty-theorems-ta). The ntheorem backend skips forward link; see `.claude/agent_memory/decisions.md` 2026-05-26 entry.
 - [B-LINK-NO-ORPHAN] No orphan links: every link resolves to a valid PDF destination.
 
 ### 3.4 Equation tracking

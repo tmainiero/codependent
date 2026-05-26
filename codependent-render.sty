@@ -484,22 +484,6 @@
 %% Redefine the no-op hook points to wire them to the live
 %% rendering implementations.
 
-%% @implements \codep@hooktheorem
-% \codep@appendix@forwardlink{atom-key}
-%   Emit a small theorem-side link to the appendix entry in
-%   appendix mode when the atom has at least one back-reference.
-\def\codep@appendix@forwardlink#1{%
-  \ifbool{codep@appendix}{%
-    \@ifpackageloaded{hyperref}{%
-      \codep@graph@hasrefs{#1}{%
-        \nobreak\hspace{0.25em}%
-        \textsuperscript{%
-          \hyperlink{codep-appendix:#1}{\ensuremath{\dagger}}}%
-      }{}%
-    }{}%
-  }{}%
-}%
-
 % \codep@render@thm@preparebackref{envname}
 %   Refresh backrefs for the outermost atom and auto-flush inline.
 %   Callable at cmd/end#1/before inside the tracked env body.
@@ -514,7 +498,6 @@
   \ifcsname codep@manuallyemitted@\codep@outeratom\endcsname%
   \else%
     \codep@render@refresh{\codep@outeratom}%
-    \codep@appendix@forwardlink{\codep@outeratom}%
     \codep@render@flushbackref{\codep@outeratom}%
   \fi%
 }%

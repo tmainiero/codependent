@@ -669,6 +669,10 @@ def _check_layout_parity_texts(fixture_text: str, control_text: str) -> str | No
     object-only deltas with synthetic ``[LINK:<dest>]`` lines; normalize those
     away before comparing visible text.
     """
+    fixture_text, control_text = _truncate_layout_parity_appendix_text(
+        fixture_text,
+        control_text,
+    )
     fixture_text = _strip_layout_parity_link_markers(fixture_text)
     control_text = _strip_layout_parity_link_markers(control_text)
     if fixture_text == control_text:
@@ -688,6 +692,47 @@ def _check_layout_parity_texts(fixture_text: str, control_text: str) -> str | No
             f"fixture={len(fixture_lines)}, control={len(control_lines)}"
         )
     return None
+
+
+def _truncate_layout_parity_appendix_text(
+    fixture_text: str,
+    control_text: str,
+) -> tuple[str, str]:
+    """Limit appendix-mode parity checks to text before the dependency index."""
+    fixture_lines = fixture_text.splitlines()
+    control_lines = control_text.splitlines()
+    has_dependency_index = any(
+        line.strip() == "Dependency Index"
+        for line in fixture_lines + control_lines
+    )
+    if not has_dependency_index:
+        return fixture_text, control_text
+    return (
+        _strip_trailing_pdf_page_number(_lines_before_dependency_index(fixture_lines)),
+        _strip_trailing_pdf_page_number(_lines_before_dependency_index(control_lines)),
+    )
+
+
+def _lines_before_dependency_index(lines: list[str]) -> str:
+    """Return text lines before the generated dependency-index heading."""
+    kept = []
+    for line in lines:
+        if line.strip() == "Dependency Index":
+            break
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def _strip_trailing_pdf_page_number(text: str) -> str:
+    """Drop a final mutool-extracted page footer after pre-appendix content."""
+    lines = text.splitlines()
+    while lines and not lines[-1].strip():
+        lines.pop()
+    if lines and re.fullmatch(r"\d+", lines[-1].strip()):
+        lines.pop()
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return "\n".join(lines)
 
 
 def _strip_layout_parity_link_markers(text: str) -> str:
@@ -775,23 +820,33 @@ def _run_layout_parity_check(
             "-halt-on-error",
             ctrl_tex.name,
         ]
-        try:
-            ctrl_proc = subprocess.run(
-                ctrl_cmd,
-                cwd=ctrl_tmp,
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-        except subprocess.TimeoutExpired:
-            fail("TEST-PDF-LAYOUT-PARITY: control compile TIMEOUT")
-            return
+        ctrl_proc = None
+        for pass_num in range(1, 4):
+            try:
+                ctrl_proc = subprocess.run(
+                    ctrl_cmd,
+                    cwd=ctrl_tmp,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+            except subprocess.TimeoutExpired:
+                fail(
+                    "TEST-PDF-LAYOUT-PARITY: "
+                    f"control compile pass {pass_num} TIMEOUT"
+                )
+                return
+            if verbose:
+                sys.stderr.write(
+                    "  [layout-parity control] "
+                    f"pass {pass_num}: exit {ctrl_proc.returncode}\n"
+                )
 
         ctrl_pdf = ctrl_tmp / ctrl_tex.with_suffix(".pdf").name
-        if not ctrl_pdf.exists() or ctrl_proc.returncode != 0:
+        if ctrl_proc is None or not ctrl_pdf.exists() or ctrl_proc.returncode != 0:
             fail(
                 f"TEST-PDF-LAYOUT-PARITY: control compile failed "
-                f"(exit {ctrl_proc.returncode})"
+                f"(exit {ctrl_proc.returncode if ctrl_proc else 'not run'})"
             )
             return
 

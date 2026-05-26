@@ -1150,6 +1150,52 @@
 %   \codep@hooktheorem is a thin orchestrator that wires them
 %   into the five hook points.
 
+%% @utility
+\let\codep@thmwrap@activeenv\@empty
+
+%% @implements \codep@hooktheorem
+% \codep@hooktheorem@derivekey{envname}
+%   Derive and persist the theorem's legacy prefixed key once the
+%   theorem counter has stepped.
+\def\codep@hooktheorem@derivekey#1{%
+  \ifnum\codep@replaydepth=0\relax%
+    \ifnum\codep@trackeddepth=1\relax%
+      \codep@ctxpeekid\codep@thisatomid%
+      \ifx\codep@thisatomid\@empty\else%
+        \codep@atomgetkey{\codep@thisatomid}{\codep@tmp@existingkey}%
+        \ifx\codep@tmp@existingkey\@empty%
+          \xdef\codep@outeratom{#1:\theatom}%
+          \codep@atomsetkey{\codep@thisatomid}{\codep@outeratom}%
+        \else%
+          \xdef\codep@outeratom{\codep@tmp@existingkey}%
+        \fi%
+      \fi%
+    \fi%
+  \fi%
+}%
+
+%% @implements \codep@hooktheorem
+% \codep@hooktheorem@writeanchorandpage
+%   Idempotently write the theorem body anchor/page records after begin.
+\def\codep@hooktheorem@writeanchorandpage{%
+  \ifnum\codep@trackeddepth=1\relax%
+    \codep@ctxpeekid\codep@thisatomid%
+    \ifx\codep@thisatomid\@empty\else%
+      \expandafter\ifx%
+          \csname codep@theoremanchorwritten@\codep@thisatomid\endcsname%
+          \relax%
+        \codep@getcurrentatomkey\codep@tmp@anchorkey%
+        \ifx\codep@tmp@anchorkey\@empty\else%
+          \codep@writeanchormap{\codep@tmp@anchorkey}%
+          \codep@writeanchorpagecurrent{\codep@tmp@anchorkey}%
+          \expandafter\xdef\csname codep@theoremanchorwritten@%
+            \codep@thisatomid\endcsname{1}%
+        \fi%
+      \fi%
+    \fi%
+  \fi%
+}%
+
 %% @behavior B-NUM-NESTED
 %% @behavior B-EDGE-NESTED
 %% @behavior B-EDGE-RESTATE
@@ -1158,6 +1204,7 @@
 \def\codep@hooktheorem@begin#1{%
   \codep@closeparagraphifopen%
   \global\let\codep@pendingresultid\@empty%
+  \gdef\codep@thmwrap@activeenv{#1}%
   \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
     \global\advance\codep@trackeddepth by 1\relax%
     \global\advance\codep@suppressdepth by 1\relax%
@@ -1177,19 +1224,17 @@
 
 %% @behavior B-NUM-STARRED
 % \codep@hooktheorem@after{envname}
-%   Capture the theorem's legacy prefixed key after its counter steps.
-%   Anchor written here captures the theorem's own \@currentHref;
-%   the extractanchor mechanism (§8a.5) overwrites codep@anchor@<key>
-%   on pass 2+ with the equation-shifted anchor when an equation inside
-%   the theorem shares the same display number.
+%   Finalize theorem key derivation and write the post-begin anchor/page.
+%   Anchor capture uses the theorem's own \@currentHref; the extractanchor
+%   mechanism (§8a.5) may overwrite codep@anchor@<key> on pass 2+ when
+%   an in-theorem equation with the same display number is the effective
+%   anchor.
 \def\codep@hooktheorem@after#1{%
   \ifnum\codep@trackeddepth=1\relax%
-    \codep@ctxpeekid\codep@thisatomid%
-    \xdef\codep@outeratom{#1:\theatom}%
-    \codep@atomsetkey{\codep@thisatomid}{\codep@outeratom}%
-    \codep@writeanchormap{\codep@outeratom}%
-    \codep@writeanchorpagecurrent{\codep@outeratom}%
+    \codep@hooktheorem@derivekey{#1}%
+    \codep@hooktheorem@writeanchorandpage%
   \fi%
+  \global\let\codep@thmwrap@activeenv\@empty%
 }%
 
 %% @behavior B-NUM-SEQ
@@ -1382,6 +1427,79 @@
   \codep@lifecycle@register@afterenv{#1}{\codep@hooktheorem@afterend{#1}}%
   \codep@lifecycle@register@postend{#1}{\codep@manuallyemitted@end@outer@clear}%
 }
+
+%% @implements \codep@hooktheorem
+% \codep@thmwrap@deriveactivekey
+%   Derive the current tracked theorem key at \@begintheorem time.
+\def\codep@thmwrap@deriveactivekey{%
+  \ifx\codep@thmwrap@activeenv\@empty\else%
+    \expandafter\codep@hooktheorem@derivekey%
+      \expandafter{\codep@thmwrap@activeenv}%
+  \fi%
+}%
+
+%% @behavior B-LINK-APPENDIX-BIDIR
+% \codep@thmwrap@wrapname{name}{macro}
+%   Conditionally wrap a theorem heading name with an appendix link.
+\def\codep@thmwrap@wrapname#1#2{%
+  \def#2{#1}%
+  \ifx\codep@thmwrap@activeenv\@empty\else%
+    \ifnum\codep@replaydepth=0\relax%
+      \ifnum\codep@trackeddepth=1\relax%
+        \codep@getcurrentatomkey\codep@tmp@wrapkey%
+        \ifx\codep@tmp@wrapkey\@empty\else%
+          \ifbool{codep@appendix}{%
+            \@ifpackageloaded{hyperref}{%
+              \codep@graph@hasrefs{\codep@tmp@wrapkey}{%
+                \edef\codep@tmp@wrapdest{%
+                  codep-appendix:\codep@tmp@wrapkey}%
+                \expandafter\codep@thmwrap@wrapname@withdest%
+                  \expandafter{\codep@tmp@wrapdest}{#1}{#2}%
+              }{}%
+            }{}%
+          }{}%
+        \fi%
+      \fi%
+    \fi%
+  \fi%
+}%
+
+%% @behavior B-LINK-APPENDIX-BIDIR
+% \codep@thmwrap@wrapname@withdest{dest}{name}{macro}
+%   Snapshot a resolved destination into the deferred theorem name tokens.
+\def\codep@thmwrap@wrapname@withdest#1#2#3{%
+  \def#3{\hyperlink{#1}{#2}}%
+}%
+
+%% @behavior B-LINK-APPENDIX-BIDIR
+% \codep@thmwrap@install
+%   Install the amsthm-family \@begintheorem name-link shim once.
+\def\codep@thmwrap@install{%
+  \@ifundefined{@begintheorem}{}{%
+    \@ifundefined{codep@orig@begintheorem}{%
+      \let\codep@orig@begintheorem\@begintheorem%
+      \def\@begintheorem##1##2[##3]{%
+        \codep@thmwrap@deriveactivekey%
+        \codep@thmwrap@wrapname{##1}{\codep@tmp@wrappedthmname}%
+        \expandafter\codep@orig@begintheorem\expandafter{%
+          \codep@tmp@wrappedthmname}{##2}[##3]%
+      }%
+    }{}%
+  }%
+}%
+
+%% @behavior B-LINK-APPENDIX-BIDIR
+% \codep@thmwrap@install@eventually
+%   Install immediately when amsthm is loaded, else retry at begin-document.
+\def\codep@thmwrap@install@eventually{%
+  \@ifpackageloaded{amsthm}{%
+    \codep@thmwrap@install%
+  }{%
+    \AtBeginDocument{%
+      \@ifpackageloaded{amsthm}{\codep@thmwrap@install}{}%
+    }%
+  }%
+}%
 
 % \codep@hookproof
 %   Install hooks for the proof environment.
@@ -5143,6 +5261,7 @@
       }%
     \fi
   }%
+  \codep@thmwrap@install@eventually%
   \codep@hookproof%
   % Install suppression and paragraph hooks.
   \codep@installsuppress%
