@@ -21,8 +21,9 @@
             mupdf    # mutool: stext extraction (positions/fonts), object dump, link counting
             qpdf     # fallback link counting, PDF inspection
 
-            # Test runner
-            python3
+            # Test runner + harness scripts (wave-open.py, apply-staged.py use
+            # staging_contract → graph_contract which import pydantic).
+            (python3.withPackages (ps: with ps; [ pydantic ]))
           ];
           # TeX Live is intentionally excluded — use system-wide installation
           # to avoid pulling the huge dependency into the Nix store / GC.
@@ -40,7 +41,7 @@
           nativeBuildInputs = with pkgs; [
             mupdf
             qpdf
-            python3
+            (python3.withPackages (ps: with ps; [ pydantic ]))
           ];
 
           # Make system PATH available so pdflatex is reachable.

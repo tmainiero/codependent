@@ -39,6 +39,7 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 
 **Dev iteration**: `nix develop --command python3 scripts/run-tests.py ...` (above).
 **CI / wave-close reproducibility**: `nix flake check` (runs the equivalent inside the flake build sandbox).
+**Standalone stress PDF for visual review**: `scripts/build-stress-pdf.sh [SUFFIX]` (compiles all 3 variants into `pdf-out/stress-ta-<variant>[-SUFFIX].pdf` using a temp workdir with the correct TEXINPUTS layout; bypasses the runner's TEST-PDF assertions). Pair with `xdg-open` to surface PDFs for `feedback_visual_verification_required.md` review.
 
 ## Key Files
 
