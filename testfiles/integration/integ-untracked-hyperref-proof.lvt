@@ -1,0 +1,47 @@
+%% TEST-NAME: integ-untracked-hyperref-proof
+%% TEST-PURPOSE: codependent + hyperref loaded, proof env present, NO
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-ADJ
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: codependent + hyperref loaded, proof env present, NO
+%%            \codeptrack call.  The package must NOT inject extra vertical
+%%            space at the theorem→proof transition even when no environments
+%%            are registered.  Root cause: codep@autoproofof@heading fires
+%%            unconditionally regardless of \codeptrack; the captureheadinganchor
+%%            smash-hbox path must be gated on \codep@tracked.
+%%            This fixture passes ONLY after P02 installs the tracked-gate fix.
+%% TEST-SOURCE: .claude/comms/stress-vertical-gap-explorer-report.md
+%% TEST-SECTION: untracked proof spacing regression (hyperref loaded)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-NOT: Used in
+%% TEST-PDF-VSPACE-BETWEEN: "^Theorem\\s+1\\." "^Proof\\." 14.0
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsthm,codependent,hyperref
+%% TEST-RERUN: 2
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+
+%% Load codependent but do NOT call \codeptrack
+\usepackage{codependent}
+\codepsetup{backrefs=inline, paragraphs=off, equations=off}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Untracked}
+
+\begin{theorem}
+  Theorem body (no \verb|\codeptrack| called; no atom numbering).
+\end{theorem}
+\begin{proof}
+  Proof body.
+\end{proof}
+
+\END
+\end{document}

@@ -25,6 +25,9 @@ pdf-out/*
 !pdf-out/goldens/*-manifest.json
 !pdf-out/goldens/README.md
 
+# Generated VSPACE inventory (ephemeral; committed classification is vspace-inventory-manifest.json)
+testfiles/output/vspace-inventory.json
+
 # Ephemeral agent state (findings, comms, candidate claims, wave tracker, locks)
 .claude/agent_memory/
 .claude/comms/

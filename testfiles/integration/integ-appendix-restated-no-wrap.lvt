@@ -1,0 +1,67 @@
+%% TEST-NAME: integ-appendix-restated-no-wrap
+%% TEST-PURPOSE: Restated theorem in appendix mode: the restate replay must NOT
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REST-NODUP, B-REND-APPENDIX
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Restated theorem in appendix mode: the restate replay must NOT
+%%            get a second hyperlink wrap.  Only the original occurrence has
+%%            the name wrapped; the restate fires at \codep@replaydepth > 0
+%%            so the shim bypasses it.  qpdf negative: no link annotation
+%%            exists on the restated theorem name position.
+%%            This fixture passes ONLY after P03 installs the @begintheorem shim
+%%            with the restate-guard.
+%% TEST-SOURCE: .claude/comms/waves/W05-XPARSE-VMODE-FIXES/planner-w05-xparse-vmode-fixes-rev3.md
+%% TEST-SECTION: restated theorem no-double-wrap (R1-B3)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-DEST-NOT-EXISTS: codep-appendix:theorem:1\.1\.restate
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+\declaretheorem[name=Theorem, numberwithin=section]{theorem}
+\declaretheorem[name=Lemma, sibling=theorem]{lemma}
+
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codeptrack{theorem,lemma}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Restatable theorems}
+
+\begin{restatable}{theorem}{MainThm}\label{thm:main}
+  Main theorem stated here; will be restated later.
+\end{restatable}
+
+\begin{lemma}\label{lem:helper}
+  Helper lemma citing \ref{thm:main}.
+\end{lemma}
+
+\begin{proof}
+  Trivial.
+\end{proof}
+
+\section{Restate}
+
+%% Restate: must NOT create a duplicate atom or double-wrap
+\MainThm*
+
+\codepappendix
+
+\END
+\end{document}

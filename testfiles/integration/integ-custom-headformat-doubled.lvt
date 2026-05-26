@@ -1,0 +1,69 @@
+%% TEST-NAME: integ-custom-headformat-doubled
+%% TEST-PURPOSE: Custom headformat with doubled theorem name (Q3 case):
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Custom headformat with doubled theorem name (Q3 case):
+%%            headformat={\NAME\quad\NAME~\NUMBER}.  The appendix-mode
+%%            shim must wrap only the FIRST occurrence of the theorem name in
+%%            the hyperlink; the second name must NOT be double-wrapped.
+%%            Layout parity: pre-appendix body must match the control sibling.
+%% TEST-SOURCE: .claude/comms/waves/W05-XPARSE-VMODE-FIXES/planner-w05-xparse-vmode-fixes-rev3.md
+%% TEST-SECTION: custom headformat / doubled name (Q3)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PDF-LAYOUT-PARITY: testfiles/controls/integ-custom-headformat-doubled-control.tex 2
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+%% Custom headformat: doubled theorem name (Q3 test case)
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  headformat={\NAME\quad\NAME~\NUMBER},
+  bodyfont=\slshape,
+]{doubledstyle}
+
+\declaretheorem[name=Theorem, style=doubledstyle, numberwithin=section]{theorem}
+
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codeptrack{theorem}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Custom headformat}
+
+\begin{theorem}\label{thm:doubled}
+  Theorem with doubled-name headformat.  This theorem is cited later
+  so it has backrefs in appendix mode.
+\end{theorem}
+
+%% Cite the theorem so it has backrefs
+\begin{theorem}\label{thm:citer}
+  This theorem cites \ref{thm:doubled} to give it an appendix entry.
+\end{theorem}
+
+\begin{proof}
+  Trivial by construction.
+\end{proof}
+
+\codepappendix
+
+\END
+\end{document}

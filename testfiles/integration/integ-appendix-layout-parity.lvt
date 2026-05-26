@@ -1,0 +1,92 @@
+%% TEST-NAME: integ-appendix-layout-parity
+%% TEST-PURPOSE: Pre-appendix-section text+bbox must be byte-identical to the
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Pre-appendix-section text+bbox must be byte-identical to the
+%%            no-codependent control compile, except for link annotations.
+%%            The dagger marker emitted by codep@appendix@forwardlink must be
+%%            ABSENT (LD4 invariant: the dagger trap is deleted by P03; this
+%%            fixture fails until P03 ships the deletion).
+%%            Uses TEST-PDF-LAYOUT-PARITY against the control sibling at
+%%            testfiles/controls/integ-appendix-layout-parity-control.tex.
+%% TEST-SOURCE: .claude/comms/waves/W05-XPARSE-VMODE-FIXES/planner-w05-xparse-vmode-fixes-rev3.md
+%% TEST-SECTION: appendix mode layout parity (LD4 invariant)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{definition}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PDF-LAYOUT-PARITY: testfiles/controls/integ-appendix-layout-parity-control.tex 2
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\slshape,
+]{thmstyle}
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\normalfont,
+]{defstyle}
+
+\declaretheorem[name=Theorem,   style=thmstyle, numberwithin=section]{theorem}
+\declaretheorem[name=Lemma,     style=thmstyle, sibling=theorem]{lemma}
+\declaretheorem[name=Definition,style=defstyle, sibling=theorem]{definition}
+
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codeptrack{theorem,lemma,definition}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=gray}
+\usepackage{cleveref}
+
+\begin{document}
+\START
+
+\section{Groups and subgroups}
+
+\begin{definition}\label{def:group}
+  A \emph{group} is a set $G$ with a binary operation satisfying
+  associativity, identity, and inverse axioms.
+\end{definition}
+
+\begin{theorem}\label{thm:lagrange}
+  If $H \le G$ (\cref{def:group}) and $G$ is finite, then $|H|$ divides $|G|$.
+\end{theorem}
+
+\begin{proof}
+  The left cosets $gH$ partition $G$ into sets of equal size $|H|$.
+\end{proof}
+
+\section{Normal subgroups}
+
+\begin{definition}\label{def:normal}
+  A subgroup $N \le G$ (\cref{def:group}) is \emph{normal}, written
+  $N \trianglelefteq G$, if $gNg^{-1} = N$ for all $g \in G$.
+\end{definition}
+
+\begin{theorem}\label{thm:quotient}
+  If $N \trianglelefteq G$ (\cref{def:normal}), then $G/N$ is a group
+  (\cref{def:group}).
+\end{theorem}
+
+\begin{proof}
+  Well-definedness follows from normality (\cref{def:normal}).
+\end{proof}
+
+\codepappendix
+
+\END
+\end{document}

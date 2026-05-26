@@ -1,0 +1,43 @@
+%% TEST-NAME: test-proof-spacing-invariant-hyperref
+%% TEST-PURPOSE: Hyperref-loaded twin: adjacent tracked theorem/proof spacing
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Hyperref-loaded twin of test-proof-spacing-invariant.lvt.
+%%            When hyperref is loaded, the proof-begin anchor emission must NOT
+%%            inject extra vertical space.  The theorem→proof gap must stay
+%%            within the same 14pt bound as the no-hyperref baseline.
+%%            Root cause: codep@proof@captureheadinganchor emits a smash-hbox
+%%            in vmode, breaking amsthm's env→env glue coalescence (+17.9pt).
+%%            This fixture pins that regression.
+%% TEST-SOURCE: .claude/comms/stress-vertical-gap-explorer-report.md
+%% TEST-SECTION: theorem/proof adjacency spacing (hyperref loaded)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a2}{theorem:1.1}{1.1}{*}
+%% TEST-PDF-VSPACE-BETWEEN: "^Theorem\\s+1\\.1\\." "^Proof\\." 14.0
+%% TEST-PACKAGES: amsthm,codependent,hyperref
+%% TEST-RERUN: 2
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+\usepackage[hypertexnames=false]{hyperref}
+
+\begin{document}
+\START
+
+\section{Spacing}
+
+\begin{theorem}
+  Statement with an adjacent proof (hyperref loaded).
+\end{theorem}
+\begin{proof}
+  Proof text.
+\end{proof}
+
+\END
+\end{document}

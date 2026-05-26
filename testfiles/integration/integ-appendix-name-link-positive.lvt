@@ -1,0 +1,62 @@
+%% TEST-NAME: integ-appendix-name-link-positive
+%% TEST-PURPOSE: Positive regression: appendix-mode theorem name is wrapped in a
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR, B-LINK-CLICKABLE
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Positive regression: appendix-mode theorem name is wrapped in a
+%%            hyperlink to its codep-appendix:<key> destination.  qpdf verifies
+%%            that a link annotation whose destination matches
+%%            codep-appendix:theorem:1\.1 exists on page 1.  This is a
+%%            positive regression gate: it passes today via the existing
+%%            dagger+appendix-entry path, and must still pass post-P03 after
+%%            dagger deletion when the theorem-name shim owns the link role.
+%%            A post-P03 failure means the shim regressed link minting.
+%% TEST-SOURCE: .claude/comms/waves/W05-XPARSE-VMODE-FIXES/planner-w05-xparse-vmode-fixes-rev3.md
+%% TEST-SECTION: appendix name-link positive regression
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codeptrack{theorem,lemma}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Main results}
+
+\begin{theorem}\label{thm:main}
+  Main theorem.
+\end{theorem}
+
+\begin{lemma}\label{lem:aux}
+  Auxiliary lemma used by \ref{thm:main}.
+\end{lemma}
+
+\begin{proof}
+  Proof using \ref{lem:aux}.
+\end{proof}
+
+\codepappendix
+
+\END
+\end{document}

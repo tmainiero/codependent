@@ -13,7 +13,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable
 
-SKIP_DIR_NAMES = {"output", "tmp", "corpus", "__pycache__"}
+SKIP_DIR_NAMES = {"output", "tmp", "corpus", "__pycache__", "controls"}
 HEADER_RE = re.compile(
     r"^%{1,2}\s+(TEST-[A-Z0-9-]+)(?:\[(cold|warm|warm_changed)\])?:\s*(.*)$"
 )

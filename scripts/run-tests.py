@@ -139,6 +139,9 @@ METADATA_KEYS = {
     # Census instrumentation (SW5c commit 1)
     "TEST-CENSUS": "census",
     "TEST-CENSUS-PASS": "census_pass",
+    # Layout parity assertion: text+bbox must match no-codependent control compile
+    # (link annotations are the only permitted difference)
+    "TEST-PDF-LAYOUT-PARITY": "pdf_layout_parity",  # "<control-fixture-path> <max-pages>"
 }
 
 REPEATING_KEYS = {
@@ -306,6 +309,8 @@ class Fixture:
     allow_undefined_refs: bool = False
     census: bool = False
     census_pass: bool = False
+    # Layout parity assertion (LD4 invariant)
+    pdf_layout_parity: str = ""  # "<control-fixture-path> <max-pages>"
     # Phase-qualified assertion overrides: {"cold": {"log_contains": [...], "stable_at": N, ...}}
     # Keys match METADATA_KEYS attribute names; non-repeating int fields stored directly.
     phase_assertions: dict = dataclasses.field(default_factory=dict)
@@ -646,6 +651,169 @@ def _measure_pdf_vspace_between(
 
     gap = max(0.0, block2.bbox[1] - block1.bbox[3])
     return gap, None
+
+
+def _check_layout_parity_texts(fixture_text: str, control_text: str) -> str | None:
+    """Compare text-level output between fixture and control for layout parity.
+
+    Returns None if parity holds (texts are identical), or an error string
+    describing the first divergence if they differ.
+
+    This is the runner's public entry point used by test_layout_parity_directive.py
+    for self-testing.  The full layout-parity check also covers per-block bboxes
+    (via mutool draw -F html); that requires an actual PDF and is handled in
+    _run_layout_parity_check() during fixture execution.
+
+    Link annotations are a permitted delta.  Normal PDF text extraction does
+    not include qpdf link objects, but the direct self-test represents such
+    object-only deltas with synthetic ``[LINK:<dest>]`` lines; normalize those
+    away before comparing visible text.
+    """
+    fixture_text = _strip_layout_parity_link_markers(fixture_text)
+    control_text = _strip_layout_parity_link_markers(control_text)
+    if fixture_text == control_text:
+        return None
+    # Produce a compact diff summary (first diverging line).
+    fixture_lines = fixture_text.splitlines()
+    control_lines = control_text.splitlines()
+    for i, (fl, cl) in enumerate(zip(fixture_lines, control_lines), 1):
+        if fl != cl:
+            return (
+                f"text divergence at line {i}: "
+                f"fixture={fl!r} vs control={cl!r}"
+            )
+    if len(fixture_lines) != len(control_lines):
+        return (
+            f"text line count differs: "
+            f"fixture={len(fixture_lines)}, control={len(control_lines)}"
+        )
+    return None
+
+
+def _strip_layout_parity_link_markers(text: str) -> str:
+    """Remove synthetic link-annotation marker lines from parity text."""
+    return "\n".join(
+        line
+        for line in text.splitlines()
+        if not re.fullmatch(r"\s*\[LINK:[^\]]+\]\s*", line)
+    )
+
+
+def _extract_pdf_text_for_parity(pdf_path: Path) -> str | None:
+    """Extract plain text from a PDF using mutool draw -F text.
+
+    Returns the text string, or None if mutool is unavailable or fails.
+    """
+    if PDF_STEXT_TOOL is None:
+        return None
+    try:
+        proc = subprocess.run(
+            [PDF_STEXT_TOOL, "draw", "-F", "text", str(pdf_path)],
+            capture_output=True, text=True, timeout=60,
+        )
+        return proc.stdout if proc.returncode == 0 else None
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
+def _run_layout_parity_check(
+    fix: "Fixture",
+    fail: "callable",
+    tmp_path: Path,
+    engine_bin: Path,
+    verbose: bool,
+) -> None:
+    """Execute TEST-PDF-LAYOUT-PARITY: compile control + compare text with fixture PDF.
+
+    Parses fix.pdf_layout_parity as "<control-path> <max-pages>" (space-separated).
+    Compiles the control file, extracts text from both PDFs, and asserts identity
+    (link annotations are the only permitted difference at the PDF-text level).
+    """
+    spec = fix.pdf_layout_parity.strip()
+    if not spec:
+        return
+
+    parts = spec.split(None, 1)
+    control_rel = parts[0]
+    # max_pages not yet used (reserved for future bbox comparison); parse for validation.
+    try:
+        _max_pages = int(parts[1]) if len(parts) > 1 else 2
+    except ValueError:
+        fail(f"TEST-PDF-LAYOUT-PARITY: invalid max-pages in spec {spec!r}")
+        return
+
+    control_path = REPO_ROOT / control_rel
+    if not control_path.exists():
+        fail(f"TEST-PDF-LAYOUT-PARITY: control file not found: {control_path}")
+        return
+
+    if PDF_STEXT_TOOL is None:
+        fail(
+            "TEST-PDF-LAYOUT-PARITY requires mutool "
+            "(not on PATH). Run inside 'nix develop'."
+        )
+        return
+
+    # Compile control in a temporary directory.
+    with tempfile.TemporaryDirectory(prefix="codep_ctrl_") as ctrl_tmp_str:
+        ctrl_tmp = Path(ctrl_tmp_str)
+        ctrl_tex = ctrl_tmp / control_path.name
+        ctrl_src = control_path.read_text(encoding="utf-8")
+        # Control files are standalone .tex (not .lvt), so do NOT inject l3build
+        # no-ops — those must come before \documentclass and would break LaTeX.
+        ctrl_tex.write_text(ctrl_src, encoding="utf-8")
+
+        # Copy support .sty files from testfiles/support/.
+        support_dir = REPO_ROOT / "testfiles" / "support"
+        if support_dir.exists():
+            for sty in support_dir.glob("*.sty"):
+                shutil.copy2(sty, ctrl_tmp / sty.name)
+
+        ctrl_cmd = [
+            str(engine_bin),
+            "-interaction=nonstopmode",
+            "-halt-on-error",
+            ctrl_tex.name,
+        ]
+        try:
+            ctrl_proc = subprocess.run(
+                ctrl_cmd,
+                cwd=ctrl_tmp,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        except subprocess.TimeoutExpired:
+            fail("TEST-PDF-LAYOUT-PARITY: control compile TIMEOUT")
+            return
+
+        ctrl_pdf = ctrl_tmp / ctrl_tex.with_suffix(".pdf").name
+        if not ctrl_pdf.exists() or ctrl_proc.returncode != 0:
+            fail(
+                f"TEST-PDF-LAYOUT-PARITY: control compile failed "
+                f"(exit {ctrl_proc.returncode})"
+            )
+            return
+
+        # Extract text from both PDFs.
+        fix_pdf = tmp_path / f"{fix.name}.pdf"
+        if not fix_pdf.exists():
+            fail("TEST-PDF-LAYOUT-PARITY: fixture PDF not found")
+            return
+
+        fix_text = _extract_pdf_text_for_parity(fix_pdf)
+        ctrl_text = _extract_pdf_text_for_parity(ctrl_pdf)
+
+        if fix_text is None:
+            fail("TEST-PDF-LAYOUT-PARITY: failed to extract text from fixture PDF")
+            return
+        if ctrl_text is None:
+            fail("TEST-PDF-LAYOUT-PARITY: failed to extract text from control PDF")
+            return
+
+        err = _check_layout_parity_texts(fix_text, ctrl_text)
+        if err is not None:
+            fail(f"TEST-PDF-LAYOUT-PARITY: {err}")
 
 
 def _find_stext_line_for_text(
@@ -2044,6 +2212,7 @@ def _run_assertions(
     tmp_path: Path,
     last_exit: int,
     prefix: str = "",
+    engine_bin: "Path | None" = None,
 ) -> None:
     """Evaluate fix's assertions against current artifacts in tmp_path."""
     log_file = tmp_path / f"{fix.name}.log"
@@ -2147,6 +2316,7 @@ def _run_assertions(
         or fix.pdf_backref_sources_rendered
         or fix.pdf_vspace_between
         or fix.pdf_pages >= 0
+        or fix.pdf_layout_parity
     )
     if has_pdf_checks:
         pdf_file = tmp_path / f"{fix.name}.pdf"
@@ -2630,6 +2800,13 @@ def _run_assertions(
                 for spec in fix.pdf_dest_page:
                     _check_pdf_dest_page(y_link_data, y_stext, spec, fail)
 
+    # 18. Layout parity assertion.
+    if fix.pdf_layout_parity:
+        if engine_bin is None:
+            fail("TEST-PDF-LAYOUT-PARITY: engine_bin not available (internal runner error)")
+        else:
+            _run_layout_parity_check(fix, fail, tmp_path, engine_bin, False)
+
 
 # ----------------------------------------------------------------------
 # Multi-phase runner
@@ -2652,7 +2829,7 @@ def _run_multi_phase(
         result.failures.extend(
             _check_convergence(engine_bin, fix, tmp_path, verbose, "cold", cold_n)
         )
-    _run_assertions(_effective_fix(fix, "cold"), result, tmp_path, last_exit, prefix="[cold] ")
+    _run_assertions(_effective_fix(fix, "cold"), result, tmp_path, last_exit, prefix="[cold] ", engine_bin=engine_bin)
 
     # WARM: .aux/.cdp intact from COLD
     warm_n = _effective_pass_count(fix, "warm")
@@ -2661,7 +2838,7 @@ def _run_multi_phase(
         result.failures.extend(
             _check_convergence(engine_bin, fix, tmp_path, verbose, "warm", warm_n)
         )
-    _run_assertions(_effective_fix(fix, "warm"), result, tmp_path, last_exit, prefix="[warm] ")
+    _run_assertions(_effective_fix(fix, "warm"), result, tmp_path, last_exit, prefix="[warm] ", engine_bin=engine_bin)
 
     # WARM-CHANGED: apply mutation, recompile, revert
     if not fix.warm_mutation:
@@ -2699,7 +2876,7 @@ def _run_multi_phase(
             )
         _run_assertions(
             _effective_fix(fix, "warm_changed"), result, tmp_path, last_exit,
-            prefix="[warm_changed] "
+            prefix="[warm_changed] ", engine_bin=engine_bin,
         )
     finally:
         fix.path.write_text(original_content, encoding="utf-8")
@@ -2823,7 +3000,7 @@ def run_fixture(
                         sys.stderr.write(f"  pass {pass_num}: exit {proc.returncode}\n")
 
                 last_exit = run_log[-1][2] if run_log else -1
-                _run_assertions(fix, result, tmp_path, last_exit, prefix="")
+                _run_assertions(fix, result, tmp_path, last_exit, prefix="", engine_bin=engine_bin)
 
         if keep_temp:
             persistent = TESTFILES_DIR / "tmp" / fix.name
@@ -3155,6 +3332,42 @@ def main():
     index_rc = sync_test_index(check=args.check_test_index)
     if index_rc != 0:
         return index_rc
+
+    # VSPACE verify gate (R3-M2 corrected order: generate BEFORE validate).
+    # Step 1: generate inventory (writes testfiles/output/vspace-inventory.json).
+    # Step 2: validate manifest against freshly generated inventory.
+    vspace_inventory_path = OUTPUT_DIR / "vspace-inventory.json"
+    generate_script = SCRIPT_DIR / "generate-vspace-inventory.sh"
+    validate_script = SCRIPT_DIR / "validate-vspace-manifest.py"
+    if generate_script.exists():
+        try:
+            gen_proc = subprocess.run(
+                ["bash", str(generate_script), "--output", str(vspace_inventory_path)],
+                capture_output=True, text=True, timeout=60,
+            )
+            if gen_proc.returncode != 0:
+                sys.stderr.write(
+                    f"WARN: generate-vspace-inventory.sh failed "
+                    f"(exit {gen_proc.returncode}): {gen_proc.stderr.strip()}\n"
+                )
+            elif validate_script.exists():
+                val_proc = subprocess.run(
+                    [
+                        sys.executable, str(validate_script),
+                        "--inventory", str(vspace_inventory_path),
+                    ],
+                    capture_output=True, text=True, timeout=30,
+                )
+                if val_proc.returncode != 0:
+                    sys.stderr.write(
+                        f"ERROR: validate-vspace-manifest.py FAILED:\n"
+                        f"{val_proc.stderr}\n"
+                    )
+                    return 1
+                else:
+                    sys.stderr.write(f"VSPACE verify gate: {val_proc.stdout.strip()}\n")
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            sys.stderr.write(f"WARN: VSPACE verify gate error: {exc}\n")
 
     # Engine binary.
     engine_bin = assert_engine_available(args.engine)

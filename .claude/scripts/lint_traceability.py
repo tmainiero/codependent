@@ -55,6 +55,10 @@ STY_FILES = [
 TEST_DIRS = [
     os.path.join(PROJ_ROOT, "testfiles", "unit"),
     os.path.join(PROJ_ROOT, "testfiles", "integration"),
+    # testfiles/controls/ is intentionally excluded: control .tex files are not
+    # fixtures and do not need TEST-BEHAVIOR headers.
+    # .claude/scripts/lint-fixtures/ is excluded: linter self-test fixtures
+    # live outside the standard fixture dirs.
 ]
 
 RE_BEHAVIOR_ID = re.compile(r'\[((?:B|BCDP)-[A-Z0-9]+(?:-[A-Z0-9]+)*)\]')
@@ -299,6 +303,7 @@ PDF_ASSERTION_DIRECTIVES = {
     "TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY",
     "TEST-PDF-OBJECTS",
     "TEST-PDF-VSPACE-BETWEEN",
+    "TEST-PDF-LAYOUT-PARITY",
 }
 
 

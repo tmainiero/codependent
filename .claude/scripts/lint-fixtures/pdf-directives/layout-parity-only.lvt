@@ -1,0 +1,29 @@
+%% TEST-NAME: layout-parity-only
+%% TEST-PURPOSE: Linter self-test: fixture with TEST-PDF-LAYOUT-PARITY scores as
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-REND-APPENDIX
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Linter self-test: fixture with TEST-PDF-LAYOUT-PARITY scores as
+%%            "has PDF assertion" in lint_traceability.py.  The distinctive
+%%            directive under test is TEST-PDF-LAYOUT-PARITY.
+%%            Neutral fillers satisfy the minimum-4-assertion gate.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PDF-LAYOUT-PARITY: testfiles/controls/integ-appendix-layout-parity-control.tex 2
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
+\begin{document}
+\START
+\begin{theorem}
+  Body.
+\end{theorem}
+\END
+\end{document}

@@ -1,0 +1,65 @@
+%% TEST-NAME: integ-appendix-joint-name-link
+%% TEST-PURPOSE: Joint atom in appendix mode: the @begintheorem shim wraps the
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-JOINT, B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Joint atom in appendix mode: the @begintheorem shim wraps the
+%%            theorem name with the first-resolved key when two theorems are
+%%            part of a joint proof.  qpdf verifies a link annotation pointing
+%%            to codep-appendix:<key> exists for both theorem entries.
+%%            This fixture passes ONLY after P03 installs the @begintheorem shim.
+%% TEST-SOURCE: .claude/comms/waves/W05-XPARSE-VMODE-FIXES/planner-w05-xparse-vmode-fixes-rev3.md
+%% TEST-SECTION: joint atom appendix name-link (R1-B3)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.2
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codeptrack{theorem}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Joint atom}
+
+\begin{theorem}\label{thm:joint-a}
+  First theorem in the joint pair.
+\end{theorem}
+
+\begin{theorem}\label{thm:joint-b}
+  Second theorem in the joint pair, citing \ref{thm:joint-a}.
+\end{theorem}
+
+%% Joint proof naming both theorems
+\begin{proof}[\codepproofof{thm:joint-a} and \codepproofof{thm:joint-b}]
+  Joint proof body.
+\end{proof}
+
+%% A third theorem that cites both, so both get appendix entries
+\begin{theorem}\label{thm:citer}
+  Cites \ref{thm:joint-a} and \ref{thm:joint-b}.
+\end{theorem}
+
+\codepappendix
+
+\END
+\end{document}

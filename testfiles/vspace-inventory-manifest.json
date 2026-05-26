@@ -1,0 +1,42 @@
+{
+  "_schema": "vspace-inventory-manifest@v1",
+  "_note": "Committed classification of theorem→proof and env→env transitions. Status: asserted (covered by TEST-PDF-VSPACE-BETWEEN) or waived (explicitly exempted with reason). Generated inventory lives at testfiles/output/vspace-inventory.json (gitignored). See scripts/validate-vspace-manifest.py.",
+  "entries": [
+    {
+      "status": "asserted",
+      "fixture": "testfiles/unit/test-proof-spacing-invariant.lvt",
+      "from_env": "theorem",
+      "to_env": "proof",
+      "line_span": [32, 33],
+      "assertion_line": 15,
+      "max_points": 14.0
+    },
+    {
+      "status": "asserted",
+      "fixture": "testfiles/unit/test-proof-spacing-invariant-hyperref.lvt",
+      "from_env": "theorem",
+      "to_env": "proof",
+      "line_span": [37, 38],
+      "assertion_line": 19,
+      "max_points": 14.0
+    },
+    {
+      "status": "asserted",
+      "fixture": "testfiles/integration/integ-stress-spacing.lvt",
+      "from_env": "theorem",
+      "to_env": "proof",
+      "line_span": [58, 62],
+      "assertion_line": 19,
+      "max_points": 14.0
+    },
+    {
+      "status": "asserted",
+      "fixture": "testfiles/integration/integ-untracked-hyperref-proof.lvt",
+      "from_env": "theorem",
+      "to_env": "proof",
+      "line_span": [41, 42],
+      "assertion_line": 18,
+      "max_points": 14.0
+    }
+  ]
+}

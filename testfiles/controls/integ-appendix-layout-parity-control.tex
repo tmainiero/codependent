@@ -1,0 +1,68 @@
+%% Control file for integ-appendix-layout-parity.lvt
+%% Compiles WITHOUT codependent; same theorem/proof structure as the main
+%% fixture but no tracking.  The layout-parity assertion checks that
+%% text+bbox output is byte-identical except for link annotations.
+%%
+%% This file is EXCLUDED from fixture discovery, traceability linter, and
+%% test-kind linter (testfiles/controls/ is not a fixture directory).
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\slshape,
+]{thmstyle}
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  bodyfont=\normalfont,
+]{defstyle}
+
+\declaretheorem[name=Theorem,   style=thmstyle, numberwithin=section]{theorem}
+\declaretheorem[name=Lemma,     style=thmstyle, sibling=theorem]{lemma}
+\declaretheorem[name=Definition,style=defstyle, sibling=theorem]{definition}
+
+%% hyperref loaded (same as main fixture) but NO codependent
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=gray}
+\usepackage{cleveref}
+
+\begin{document}
+
+\section{Groups and subgroups}
+
+\begin{definition}\label{def:group}
+  A \emph{group} is a set $G$ with a binary operation satisfying
+  associativity, identity, and inverse axioms.
+\end{definition}
+
+\begin{theorem}\label{thm:lagrange}
+  If $H \le G$ and $G$ is finite, then $|H|$ divides $|G|$.
+\end{theorem}
+
+\begin{proof}
+  The left cosets $gH$ partition $G$ into sets of equal size $|H|$.
+\end{proof}
+
+\section{Normal subgroups}
+
+\begin{definition}\label{def:normal}
+  A subgroup $N \le G$ is \emph{normal}, written $N \trianglelefteq G$,
+  if $gNg^{-1} = N$ for all $g \in G$.
+\end{definition}
+
+\begin{theorem}\label{thm:quotient}
+  If $N \trianglelefteq G$ (\cref{def:normal}), then $G/N$ is a group.
+\end{theorem}
+
+\begin{proof}
+  Well-definedness follows from normality (\cref{def:normal}).
+\end{proof}
+
+\end{document}

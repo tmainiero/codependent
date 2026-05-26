@@ -1,0 +1,59 @@
+%% TEST-NAME: integ-appendix-no-backrefs-no-link
+%% TEST-PURPOSE: Appendix mode, tracked theorem with NO incoming backrefs:
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-EDGE-ZERO-REF, B-REND-APPENDIX
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Appendix mode, tracked theorem with NO incoming backrefs:
+%%            the @begintheorem shim must NOT wrap the theorem name (the
+%%            codep@graph@hasrefs gate returns false).  No codep-appendix
+%%            destination must be minted.  qpdf negative assertion verifies.
+%%            Tests the \codep@graph@hasrefs{<key>} gate in the shim (P03).
+%%            NOTE: this fixture passes by coincidence pre-shim (shim is not
+%%            installed, so no wrapping or destination minting occurs at all).
+%%            After P03 installs the shim the assertions must still pass
+%%            because the gate blocks wrapping for zero-backref theorems.
+%% TEST-SOURCE: .claude/comms/waves/W05-XPARSE-VMODE-FIXES/planner-w05-xparse-vmode-fixes-rev3.md
+%% TEST-SECTION: no-backrefs gate in @begintheorem shim (R2-M3)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-PDF-NOT: Used in
+%% TEST-PDF-DEST-NOT-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Zero-backref theorem}
+
+%% This theorem is NEVER cited by any other atom in this document.
+%% Therefore codep@graph@hasrefs must return false for its key.
+%% The shim must NOT wrap its name; no codep-appendix destination must be minted.
+\begin{theorem}\label{thm:orphan}
+  Theorem with no incoming backrefs.  No other atom in this document
+  references this theorem, so \verb|\codep@graph@hasrefs{theorem:1.1}|
+  should be false on pass 2.
+\end{theorem}
+
+%% No \codepappendix call here: zero-backref gate fires before appendix emit.
+
+\END
+\end{document}

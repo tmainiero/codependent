@@ -1,0 +1,33 @@
+%% TEST-NAME: vspace-between-only
+%% TEST-PURPOSE: Linter self-test: fixture with TEST-PDF-VSPACE-BETWEEN scores as
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PROOF-ADJ
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Linter self-test: fixture with TEST-PDF-VSPACE-BETWEEN scores as
+%%            "has PDF assertion" in lint_traceability.py.  The distinctive
+%%            directive under test is TEST-PDF-VSPACE-BETWEEN.
+%%            Neutral fillers satisfy the minimum-4-assertion gate.
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-CDP-CONTAINS: \codep@cdp@atom
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PDF-VSPACE-BETWEEN: "^Theorem\\s+1\\." "^Proof\\." 14.0
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 2
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{codependent}
+\codeptrack{theorem}
+\begin{document}
+\START
+\section{S}
+\begin{theorem}
+  Body.
+\end{theorem}
+\begin{proof}
+  Proof.
+\end{proof}
+\END
+\end{document}

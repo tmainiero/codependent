@@ -1,0 +1,47 @@
+%% Control file for integ-custom-headformat-doubled.lvt
+%% Compiles WITHOUT codependent; same custom headformat structure as the
+%% main fixture but no tracking.  Used as the layout-parity baseline.
+%%
+%% This file is EXCLUDED from fixture discovery, traceability linter, and
+%% test-kind linter (testfiles/controls/ is not a fixture directory).
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+%% Custom headformat: doubled theorem name (Q3 test case)
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\normalfont\bfseries,
+  headformat={\NAME\quad\NAME~\NUMBER},
+  bodyfont=\slshape,
+]{doubledstyle}
+
+\declaretheorem[name=Theorem, style=doubledstyle, numberwithin=section]{theorem}
+
+%% hyperref loaded (same as main fixture) but NO codependent
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+
+\section{Custom headformat}
+
+\begin{theorem}\label{thm:doubled}
+  Theorem with doubled-name headformat.  This theorem is cited later
+  so it has backrefs in appendix mode.
+\end{theorem}
+
+%% Second theorem mirrors the fixture's second theorem.
+\begin{theorem}\label{thm:citer}
+  This theorem cites \ref{thm:doubled} to give it an appendix entry.
+\end{theorem}
+
+\begin{proof}
+  Trivial by construction.
+\end{proof}
+
+\end{document}

@@ -1,0 +1,67 @@
+%% TEST-NAME: integ-stress-spacing
+%% TEST-PURPOSE: Integration stress: theorem/proof spacing with hyperref+cleveref.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PROOF-ADJ, B-LINK-CLICKABLE
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Integration stress: theorem/proof spacing with hyperref+cleveref.
+%%            Two tracked theorems with adjacent proofs.  The theorem→proof
+%%            gap must stay within the 14pt bound even with hyperref loaded
+%%            (proof-begin anchor emission in vmode must not add extra glue).
+%%            Covers the regression introduced by codep@proof@captureheadinganchor
+%%            emitting a smash-hbox in vmode at every proof begin.
+%% TEST-SOURCE: .claude/comms/stress-vertical-gap-explorer-report.md
+%% TEST-SECTION: theorem/proof adjacency spacing (full integration stack)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@proof{proof:a
+%% TEST-PDF-VSPACE-BETWEEN: "^Theorem\\s+1\\.2\\." "^Alternative proof\\." 14.0
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\usepackage{codependent}
+\codepsetup{backrefs=inline, proofs=on, paragraphs=off, equations=off}
+\codeptrack{theorem,lemma}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+\usepackage{cleveref}
+
+\begin{document}
+\START
+
+\section{Section 9: Integration spacing}
+
+\begin{theorem}\label{thm:first}
+  First theorem statement, used by \cref{thm:second}.
+\end{theorem}
+
+\begin{proof}
+  Proof of the first theorem.
+\end{proof}
+
+\begin{theorem}\label{thm:second}
+  Second theorem statement, using \cref{thm:first}.
+\end{theorem}
+
+%% Adjacent proof: the gap between Theorem 1.2 and this proof
+%% heading must stay within the 14pt bound.
+\begin{proof}[Alternative proof]
+  Proof of the second theorem.
+\end{proof}
+
+\END
+\end{document}

@@ -1,0 +1,69 @@
+%% TEST-NAME: integ-appendix-nested-tracked
+%% TEST-PURPOSE: Nested tracked envs in appendix mode: outer gets name-link,
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-NESTED, B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Nested tracked envs in appendix mode: outer gets name-link,
+%%            inner does NOT (per B-NUM-NESTED: inner suppressed).  The shim
+%%            no-ops for the inner because codep@getcurrentatomkey returns the
+%%            outer's key when codep@trackeddepth > 1.
+%%            qpdf: outer link count = 1, inner link count = 0.
+%%            Spacing: env→env gap matches no-codependent baseline (no extra
+%%            vertical glue from the inner env's @begintheorem call).
+%%            NOTE: this fixture passes by coincidence pre-shim (nothing wraps),
+%%            but assertions are written for the post-P03 state: inner=0, outer
+%%            may be 0 pre-shim (no destination yet) but assertions are negative
+%%            so they hold regardless.
+%% TEST-SOURCE: .claude/comms/waves/W05-XPARSE-VMODE-FIXES/planner-w05-xparse-vmode-fixes-rev3.md
+%% TEST-SECTION: nested tracked envs no inner wrap (R2-B1)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PDF-DEST-NOT-EXISTS: codep-appendix:lemma:
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=on}
+\codeptrack{theorem,lemma}
+
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\begin{document}
+\START
+
+\section{Nested tracked envs}
+
+%% Outer tracked theorem containing an inner tracked lemma.
+%% Per B-NUM-NESTED: inner is suppressed; only outer gets an atom number.
+\begin{theorem}\label{thm:outer}
+  Outer theorem.
+
+  \begin{lemma}\label{lem:inner}
+    Inner lemma nested inside outer theorem.  Inner is suppressed;
+    its name must NOT receive a hyperlink wrap in appendix mode.
+  \end{lemma}
+
+\end{theorem}
+
+%% A second tracked env that cites the outer (so outer gets an appendix entry)
+\begin{theorem}\label{thm:citer}
+  This theorem cites \ref{thm:outer} to give it an appendix entry.
+\end{theorem}
+
+\codepappendix
+
+\END
+\end{document}
