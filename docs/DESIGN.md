@@ -833,8 +833,11 @@ existing in-scope hyperref anchor by recording
 Appendix entries now carry the target atom's start page,
 bidirectional links, and a hangindent + leaders layout:
 
-- the body-side tracked atom emits a dagger forward link to the
-  appendix destination `codep-appendix:<key>`;
+- the body-side tracked atom's typeset theorem name (amsthm-family
+  backends) hyperlinks forward to the appendix destination
+  `codep-appendix:<key>` via the `\@begintheorem` shim installed in
+  appendix mode (ntheorem backend deferred — see `.claude/agent_memory/
+  decisions.md` 2026-05-26 entry);
 - the appendix entry label hyperlinks back to the body's effective
   anchor (for theorem-like atoms this is usually the surrounding
   heading anchor, unless a same-typed same-display in-atom label

@@ -992,3 +992,56 @@ Reworded: `B-LINK-CORRECT`, `B-LINK-EFFECTIVE-ANCHOR`,
 `B-LINK-PROOF-DEST`, `B-LINK-PROOFOF-STAR`,
 `B-LINK-ADJ-PROOF`, `B-LINK-APPENDIX-BIDIR`,
 `B-PROOF-ADJ`, `B-PROOF-SEP`.
+
+## Wave 5 — W05-XPARSE family (in progress)
+
+### W05-XPARSE-SUBSTRATE (SHIPPED 2026-05-24, `50821e3`)
+
+5-slot temporal lifecycle abstraction over amsthm/thmtools/sty-theorems-ta. Locked lattice: `pre-begin → post-begin → pre-end → post-end → after-env`. Register macros are direct 1:1 shims to `\AddToHook`/`\AfterEndEnvironment`. Descriptor `{strategy, quirks-key}` with 1-arm dispatch. Non-theorem hooks UNCHANGED. Byte-equivalent to W05-D — wire-format baseline preserved.
+
+Decomposition rationale: original 8-item W05-XPARSE wave bumped into NEW design-class blockers in 3+ consecutive planner rev-rounds. Decomposition pattern (`feedback_wave_decomposition_trigger.md`) split it into SUBSTRATE → BACKENDS → HYGIENE.
+
+### W05-XPARSE-VMODE-FIXES (SHIPPED 2026-05-26, `ab0771a..f520bc8`)
+
+Bug-fix sibling of SUBSTRATE-EXTENSION (further decomposition: both adversarial reviewers independently flagged two co-equal goals bundled). Single semantic invariant: **destination emission in vmode is byte-stable and centrally helper-mediated**.
+
+Source changes:
+
+- `\codep@emit@destination{<name>}` helper added at `codependent.sty:2025-2027` with locked one-line body `\Hy@raisedlink{\hyper@anchorstart{#1}\hyper@anchorend}`. Body guarantees vmode safety via hyperref's internal `\leavevmode`; no `\smash`, no `\hbox`, no conditionals.
+- `\codep@proof@emitheadinganchorname` DELETED (the trap; its `\smash{\lower...\hbox{...}}` was the +17.9pt vmode-break source on every `\begin{proof}` under hyperref). Newdimen `\codep@proof@anchoroffset` retired.
+- `\codep@proof@emitanchorname` renamed to `\codep@emit@destination`; Track-2 align callsite auto-routed via rename.
+- Quadruple-lock fix at `\codep@proof@captureheadinganchor`: `\def → \edef` for empty-proof-id guard; `\codep@autoproofof@heading` body gated on `\codep@tracked`; possibly-empty callers wrap in `\ifx\@empty` check. Track-2 align exempted (structurally non-empty per R2-M2).
+- Appendix-entry destination at `codependent-render.sty:433-434` migrated to `\codep@emit@destination{codep-appendix:#1}`.
+- Proof-destination emission staged via `\csname codep@proofpendingheadinganchor@<id>\endcsname`; emitted at `para/begin` under `\codep@tracked`, with proof-end fallback in `\codep@hookproof@end` ensuring empty/zero-paragraph proofs still emit (closes a liveness regression caught by cross-model audit; regression gate `integ-empty-proof-destination.lvt`).
+- `\@begintheorem` shim installed at `codependent.sty:1477-1486` per probe-locked mechanism (5 working POCs in `.claude/comms/waves/W05-XPARSE-SUBSTRATE-EXTENSION/probe-w05-sub-ext-name-wrap.md`). Wraps theorem name with `\hyperlink{codep-appendix:<key>}{...}` when appendix mode + hyperref + `\codep@graph@hasrefs{<key>}` all hold. Nested-tracked no-wrap enforced by `\codep@trackeddepth=1` short-circuit at `:1447-1449` (R2-B1; matches `B-NUM-NESTED`).
+- Key derivation via `\codep@getcurrentatomkey` (handles starred + auto-registered env variants uniformly).
+- `\codep@hooktheorem@begin/@after` refactored into idempotent split: `\codep@hooktheorem@derivekey` (early, before shim wraps `#1`) + `\codep@hooktheorem@writeanchorandpage` (post-begin, idempotent via `\csname codep@*<id>\endcsname \relax` check).
+- `\codep@appendix@forwardlink` (the dagger emitter) DELETED globally at `codependent-render.sty`. Callsite in `\codep@render@thm@preparebackref` also deleted. ntheorem backend loses appendix forward navigation (deferred to follow-on micro-wave per R1-M4; spacing-fix benefit retained).
+- LD1 lint added to `.claude/scripts/lint_sty_structural.py`: raw `\Hy@raisedlink`, `\hyper@anchorstart`, `\hyper@anchorend`, `\hypertarget`, `\hyperdef`, `\pdfdest`, `\pdfobj` forbidden outside the helper's single definition body. Allowlist is structural (macro-name regex). NO annotation-based escape hatch. Hardened against `\csname Hy@raisedlink\endcsname` bypass (caught by cross-model auditor).
+
+Wire-format gate:
+
+- New baseline at `testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json` (31 fixtures; identical coverage to W05-D).
+- W05-D manifest carries `superseded_by: W05-XPARSE-VMODE-FIXES` top-level metadata.
+- `scripts/capture-wire-baseline.py` + `scripts/verify-wire-baseline.py` parameterized: `--wave <id>` + `--manifest <path>` flags. 5 W05-D-coupled locations now CLI-derived; defaults retained for backward compat.
+
+Tests and documentation:
+
+- 10 new fixtures (1 unit + 9 integration) added in P01 covering proof-spacing invariants under hyperref, appendix layout-parity, custom headformat, untracked-hyperref-proof, and 5 appendix-shim edge cases (name-link-positive, joint, restated-no-wrap, nested-tracked, no-backrefs-no-link).
+- `TEST-PDF-LAYOUT-PARITY` directive added to the runner: text + bbox identity vs a no-codependent control sibling. Multi-pass control compile (matching the fixture pipeline). `_truncate_layout_parity_appendix_text` helper handles the appendix-section boundary.
+- `TEST-PDF-VSPACE-BETWEEN` regex gap closed in `lint-tests.sh:51`.
+- `testfiles/controls/` directory excluded from fixture discovery + all three linters.
+- `BEHAVIOR.md` `B-LINK-APPENDIX-BIDIR` clause 1 reworded: "dagger marker" replaced with "typeset theorem name (amsthm-family backends)" + amsthm-family scope-note added. Clauses 2 and 3 verbatim unchanged. `B-NUM-NESTED` unchanged (R2-B1 lock).
+
+Verifier history: 4 plan items P01-P04 all shipped with sonnet-validator + gpt-xhigh-test-auditor at each step. Cross-model audit caught 2 real defects (P02 proof-destination liveness regression; P03 P01-control-file content gaps) that single-tier validation missed; both reworked + green.
+
+### B-IDs
+
+Reworded: `B-LINK-APPENDIX-BIDIR` clause 1 only.
+
+Deferred follow-on items:
+
+- ntheorem appendix forward navigation (decisions.md 2026-05-26 entry).
+- Stray atom-number orphans (`5.4`/`5.6`/`5.7` in stress-ta-appendix-gray) — pre-existing render-pathway bug made more visible by dagger removal; 3 firing patterns documented in `~/.claude/projects/.../memory/project_stray_atom_number_after_example.md`.
+- TD-01 mutool link-annotation stripping in layout-parity directive (DORMANT-FIX; harmless after P03 body alignment made fixture/control text identical pre-appendix).
+- Standalone `\newtheorem*{}` (counterless theorem) tracking — currently `\codeptrack` hard-errors; deferred to W05-XPARSE-SUB-EFFECT or own micro-wave.
