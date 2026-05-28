@@ -1380,6 +1380,323 @@
   \AfterEndEnvironment{#1}{#2}%
 }
 
+%% ===================================================================
+%% W05-INSTALL-DISCIPLINE-CORE P01: typed installer substrate
+%% INERT until later CORE items migrate call sites onto these wrappers.
+%% ===================================================================
+%% Install-kinds (frozen CORE enum):
+%%   pretocmd              — etoolbox pre-patch
+%%   apptocmd              — etoolbox post-patch
+%%   AddToHook             — LaTeX2e named hook
+%%   backend-hook          — reserved BACKENDS adapter slot
+%%   macro-append          — typed \g@addto@macro-shaped append
+%%   theorem-name-link-wrap — amsthm-family theorem-name wrapper
+%%   lifecycle-rewrap      — per-begin ntheorem-style lifecycle rewrap
+%%   command-wrap          — static saved-original command wrapper
+%% Lifecycle slots: pre-begin, post-begin, pre-end, post-end, after-env.
+%% Effects: state-only, immediate-write, deferred-write,
+%%   zero-visible-destination, inline-material.
+%% Typed exception: track2-shipout-order-write.
+%% command-wrap invariants:
+%%   1. save a package-owned original exactly once;
+%%   2. preserve declaration mechanism;
+%%   3. preserve signature (arity, star, optional/required, long, CSV);
+%%   4. preserve wrapper ordering;
+%%   5. replacement body references only the saved original;
+%%   6. dynamic \protected\edef#2 shape is rejected/deferred.
+%% See planner-w05-install-discipline-core-rev2.md
+%%   §Command-wrap installer contract.
+
+% \codep@install@slot@allow{slot}{register-name}
+%   Register one lifecycle slot and its existing lifecycle register suffix.
+%% @utility
+\newcommand*{\codep@install@slot@allow}[2]{%
+  \expandafter\gdef\csname codep@install@slot@#1\endcsname{#2}%
+}
+
+\codep@install@slot@allow{pre-begin}{prebegin}%
+\codep@install@slot@allow{post-begin}{postbegin}%
+\codep@install@slot@allow{pre-end}{preend}%
+\codep@install@slot@allow{post-end}{postend}%
+\codep@install@slot@allow{after-env}{afterenv}%
+
+% \codep@install@effect@allow{effect}
+%   Register one install effect as part of the CORE effect vocabulary.
+%% @utility
+\newcommand*{\codep@install@effect@allow}[1]{%
+  \expandafter\gdef\csname codep@install@effect@#1\endcsname{1}%
+}
+
+\codep@install@effect@allow{state-only}%
+\codep@install@effect@allow{immediate-write}%
+\codep@install@effect@allow{deferred-write}%
+\codep@install@effect@allow{zero-visible-destination}%
+\codep@install@effect@allow{inline-material}%
+\codep@install@effect@allow{track2-shipout-order-write}%
+
+% \codep@install@kind@allow{install-kind}{handler-name}
+%   Register one frozen install-kind and its target dispatcher suffix.
+%% @utility
+\newcommand*{\codep@install@kind@allow}[2]{%
+  \expandafter\gdef\csname codep@install@kind@#1\endcsname{#2}%
+}
+
+\codep@install@kind@allow{pretocmd}{pretocmd}%
+\codep@install@kind@allow{apptocmd}{apptocmd}%
+\codep@install@kind@allow{AddToHook}{addtohook}%
+\codep@install@kind@allow{backend-hook}{backendhook}%
+\codep@install@kind@allow{macro-append}{macroappend}%
+\codep@install@kind@allow{theorem-name-link-wrap}{theoremname}%
+\codep@install@kind@allow{lifecycle-rewrap}{lifecyclerewrap}%
+\codep@install@kind@allow{command-wrap}{commandwrap}%
+
+% \codep@install@matrix@allow{slot}{effect}
+%   Mark one lifecycle slot/effect pair compatible.
+%% @utility
+\newcommand*{\codep@install@matrix@allow}[2]{%
+  \expandafter\gdef\csname codep@install@effectslot@#1@#2\endcsname{1}%
+}
+
+% Placeholder compat matrix.  P03 fills the full taxonomy; CORE P01 keeps
+% the load-bearing Track-2 exception row available from the start.
+\codep@install@matrix@allow{after-env}{track2-shipout-order-write}%
+
+% \codep@install@assert@known@slot{slot}
+%   Fail fast when a lifecycle caller uses a slot outside the 5-slot lattice.
+%% @utility
+\newcommand*{\codep@install@assert@known@slot}[1]{%
+  \ifcsname codep@install@slot@#1\endcsname%
+  \else%
+    \PackageError{codependent}{unknown lifecycle slot #1}{%
+      Expected one of pre-begin, post-begin, pre-end, post-end, after-env.}%
+  \fi%
+}
+
+% \codep@install@assert@known@effect{effect}
+%   Fail fast when an install caller uses an effect outside CORE vocabulary.
+%% @utility
+\newcommand*{\codep@install@assert@known@effect}[1]{%
+  \ifcsname codep@install@effect@#1\endcsname%
+  \else%
+    \PackageError{codependent}{unknown install effect #1}{%
+      Expected state-only, immediate-write, deferred-write, %
+      zero-visible-destination, inline-material, or %
+      track2-shipout-order-write.}%
+  \fi%
+}
+
+% \codep@install@assert@known@kind{install-kind}
+%   Fail fast when a target caller uses a kind outside the frozen enum.
+%% @utility
+\newcommand*{\codep@install@assert@known@kind}[1]{%
+  \ifcsname codep@install@kind@#1\endcsname%
+  \else%
+    \PackageError{codependent}{%
+      unknown install-kind #1; CORE enum is frozen at 8 members}{%
+      Expected pretocmd, apptocmd, AddToHook, backend-hook, macro-append, %
+      theorem-name-link-wrap, lifecycle-rewrap, or command-wrap.}%
+  \fi%
+}
+
+% \codep@install@assert@compatible{slot}{effect}
+%   Enforce the lifecycle slot/effect compatibility matrix at install time.
+%% @utility
+\newcommand*{\codep@install@assert@compatible}[2]{%
+  \ifcsname codep@install@effectslot@#1@#2\endcsname%
+  \else%
+    \PackageError{codependent}{%
+      effect #2 incompatible with slot #1; see compat matrix}{%
+      P03 owns the full slot/effect matrix.  Until then only explicit %
+      placeholder rows are valid.}%
+  \fi%
+}
+
+% \codep@hook@install@register{register-name}{slot}{env}{callback}
+%   Call a verified lifecycle register macro; error if the mapping drifts.
+%% @utility
+\newcommand*{\codep@hook@install@register}[4]{%
+  \@ifundefined{codep@lifecycle@register@#1}{%
+    \PackageError{codependent}{lifecycle slot #2 has no register mapping}{%
+      Expected \string\codep@lifecycle@register@#1\space to exist.}%
+  }{%
+    \csname codep@lifecycle@register@#1\endcsname{#3}{#4}%
+  }%
+}
+
+% \codep@hook@install{slot}{env-name}{effect}{callback}
+%   Typed dispatcher for the five lifecycle slots.
+%% @utility
+\newcommand*{\codep@hook@install}[4]{%
+  \codep@install@assert@known@slot{#1}%
+  \codep@install@assert@known@effect{#3}%
+  \codep@install@assert@compatible{#1}{#3}%
+  \edef\codep@install@registername{%
+    \csname codep@install@slot@#1\endcsname}%
+  \codep@hook@install@register{\codep@install@registername}{#1}{#2}{#4}%
+}
+
+% \codep@install@settargetname{control-sequence}
+%   Store a bare target control-sequence name for codep@orig@... construction.
+%% @utility
+\newcommand*{\codep@install@settargetname}[1]{%
+  \edef\codep@install@targetname{\expandafter\@gobble\string#1}%
+}
+
+% \codep@install@saveoriginal@named{target}{orig-csname}{replacement}
+%   Save a package-owned original once, then run the replacement installer.
+%% @utility
+\newcommand*{\codep@install@saveoriginal@named}[3]{%
+  \ifcsname #2\endcsname%
+    \PackageWarning{codependent}{%
+      typed installer already saved original for \string#1; skipping reinstall}%
+  \else%
+    \global\expandafter\let\csname #2\endcsname#1%
+    #3%
+  \fi%
+}
+
+% \codep@install@saveoriginal@auto{target}{replacement}
+%   Save target as \codep@orig@<target-name> and install replacement.
+%% @utility
+\newcommand*{\codep@install@saveoriginal@auto}[2]{%
+  \codep@install@settargetname{#1}%
+  \edef\codep@install@origname{codep@orig@\codep@install@targetname}%
+  \codep@install@saveoriginal@named{#1}{\codep@install@origname}{#2}%
+}
+
+% \codep@install@sentinel
+%   Sentinel token used by replacement-body scanners.
+%% @utility
+\def\codep@install@sentinel{\codep@install@sentinel}%
+
+% \codep@install@stop
+%   Delimiter token used by replacement-body scanners.
+%% @utility
+\def\codep@install@stop{\codep@install@stop}%
+
+% \codep@install@ifprotectededefTF{tokens}{true}{false}
+%   Detect CORE-forbidden \protected\edef in a command-wrap replacement.
+%% @utility
+\long\def\codep@install@ifprotectededefTF#1#2#3{%
+  \long\def\codep@install@ifprotectededefTF@scan%
+      ##1\protected\edef##2\codep@install@stop{%
+    \ifx\codep@install@sentinel##2%
+      #3%
+    \else%
+      #2%
+    \fi%
+  }%
+  \codep@install@ifprotectededefTF@scan#1%
+    \protected\edef\codep@install@sentinel\codep@install@stop%
+}
+
+% \codep@target@install@pretocmd{target}{effect}{prepend-body}
+%   Typed etoolbox pre-patch wrapper.
+%% @utility
+\newcommand*{\codep@target@install@pretocmd}[3]{%
+  \pretocmd{#1}{#3}{}{%
+    \PackageError{codependent}{pretocmd install failed for \string#1}{%
+      The target could not be patched by etoolbox.}%
+  }%
+}
+
+% \codep@target@install@apptocmd{target}{effect}{append-body}
+%   Typed etoolbox post-patch wrapper.
+%% @utility
+\newcommand*{\codep@target@install@apptocmd}[3]{%
+  \apptocmd{#1}{#3}{}{%
+    \PackageError{codependent}{apptocmd install failed for \string#1}{%
+      The target could not be patched by etoolbox.}%
+  }%
+}
+
+% \codep@target@install@addtohook{hook-name}{effect}{hook-body}
+%   Typed LaTeX2e named-hook wrapper.
+%% @utility
+\newcommand*{\codep@target@install@addtohook}[3]{%
+  \AddToHook{#1}{#3}%
+}
+
+% \codep@target@install@backendhook{target}{effect}{body}
+%   Reserved install-kind for BACKENDS; CORE has no backend body.
+%% @utility
+\newcommand*{\codep@target@install@backendhook}[3]{%
+  \PackageError{codependent}{%
+    backend-hook install-kind is reserved; no backends loaded in CORE}{%
+    W05-XPARSE-BACKENDS owns backend-hook installers.}%
+}
+
+% \codep@target@install@macroappend{target}{effect}{append-body}
+%   Typed macro-append scaffold.
+%% @utility
+\newcommand*{\codep@target@install@macroappend}[3]{%
+  %@effect state-only
+  \g@addto@macro#1{#3}%
+}
+
+% \codep@target@install@theoremname{target}{effect}{replacement}
+%   Saved-original wrapper for amsthm-family theorem-name linking.
+%% @utility
+\newcommand*{\codep@target@install@theoremname}[3]{%
+  \ifx#1\@begintheorem%
+    \codep@install@saveoriginal@named{#1}{codep@orig@begintheorem}{#3}%
+  \else%
+    \codep@install@saveoriginal@auto{#1}{#3}%
+  \fi%
+}
+
+% \codep@target@install@lifecyclerewrap{target}{effect}{replacement}
+%   Saved-original scaffold for per-begin lifecycle rewrap adapters.
+%% @utility
+\newcommand*{\codep@target@install@lifecyclerewrap}[3]{%
+  \codep@install@saveoriginal@auto{#1}{#3}%
+}
+
+% \codep@target@install@commandwrap{target}{effect}{replacement}
+%   Static saved-original command wrapper; rejects dynamic \protected\edef.
+%% @utility
+\long\def\codep@target@install@commandwrap#1#2#3{%
+  \codep@install@ifprotectededefTF{#3}{%
+    \PackageError{codependent}{%
+      command-wrap install-kind rejects dynamic \string\protected\string\edef%
+      \space target shape}{%
+      Dynamic saved-original wrappers are deferred to %
+      W05-INSTALL-DISCIPLINE-CONTRACT.}%
+  }{%
+    \codep@install@saveoriginal@auto{#1}{#3}%
+  }%
+}
+
+% \codep@target@install{install-kind}{target}{effect}{replacement-body}
+%   Typed dispatcher for target-level installs.
+%% @utility
+\long\def\codep@target@install#1#2#3#4{%
+  \codep@install@assert@known@kind{#1}%
+  \codep@install@assert@known@effect{#3}%
+  \edef\codep@install@handlername{%
+    \csname codep@install@kind@#1\endcsname}%
+  \ifcsname codep@target@install@\codep@install@handlername\endcsname%
+    \csname codep@target@install@\codep@install@handlername\endcsname%
+      {#2}{#3}{#4}%
+  \else%
+    \PackageError{codependent}{install-kind #1 dispatch drift}{%
+      Kind passed enum assertion but has no dispatcher branch.}%
+  \fi%
+}
+
+% \codep@proof@install@heading{target-cs}{effect}{prepend}{failure}
+%   Patch proof's generated optional-heading body under catcode-12 #.
+%   target-cs -- expandable control-sequence expression, e.g.
+%     \csname\string\proof\endcsname
+%   effect -- install effect, usually inline-material
+%   prepend -- body to prepend to the proof heading macro
+%   failure -- diagnostic body used if etoolbox cannot patch the target
+%% @utility
+\long\def\codep@proof@install@heading#1#2#3#4{%
+  \codep@install@assert@known@effect{#2}%
+  \expandafter\pretocmd#1{#3}{}{#4}%
+}
+
 % \codep@envtrack@config@write{env}{field}{value}
 %   Store a token-list descriptor field keyed by environment and field.
 %% @utility
