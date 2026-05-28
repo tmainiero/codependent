@@ -1,7 +1,7 @@
 %% TEST-NAME: stress-ta-inline-gray
 %% TEST-PURPOSE: Inline TA stress fixture with gray backrefs.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER
 %% TEST-STATUS: EXPLORATORY
 %% TEST-RENDER-MODES: inline, gray-backrefs
 %% TEST-PDF-PAGES: 3
@@ -137,6 +137,35 @@ for related results.
 
 A second cross-section remote read: see also \codepbackrefsof{thm:idempotent}
 for display-math dependencies.
+
+
+\subsection*{Track-2 reading-order stress}
+
+\begin{theorem}\label{thm:stress-tracktwo-target}
+Stress target theorem for Track-2 ordering.
+\end{theorem}
+
+\begin{lemma}\label{lem:stress-tracktwo-before}
+A theorem-source citation encountered before the align cites
+\cref{thm:stress-tracktwo-target}.
+\end{lemma}
+
+\begin{align}
+  U_1 &= V_1 \qquad\text{first stress reading-order row}
+    \label{eq:stress-tracktwo-first} \\
+  U_2 &= V_2 \qquad\text{second stress reading-order row}
+    \label{eq:stress-tracktwo-second} \\
+  U_3 &= V_3 \qquad\text{third row cites }\cref{thm:stress-tracktwo-target}
+    \label{eq:stress-tracktwo-third}
+\end{align}
+
+Stress reverse row references: \ref{eq:stress-tracktwo-third},
+\ref{eq:stress-tracktwo-first}, then \ref{eq:stress-tracktwo-second}.
+
+\begin{corollary}\label{cor:stress-tracktwo-after}
+A theorem-source citation encountered after the align cites
+\cref{thm:stress-tracktwo-target}.
+\end{corollary}
 
 
 %% ====================================================================

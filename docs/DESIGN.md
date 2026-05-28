@@ -224,6 +224,42 @@ wrong source numbers.
 number — its counter also steps late (via `\make@display@tag`),
 not at `\begin{multline}`.
 
+**Why after-env timing is essential.**  Track 2 finalizes its
+range/fallback decision at `\AfterEndEnvironment` time, not
+during the env.  This is a deliberate design constraint, not an
+implementation accident:
+
+1. `\\` separators advance the equation counter mid-env, so the
+   final equation set isn't knowable until the env closes.
+2. The numbered-vs-fallback dispatch (whether to emit a `(N--M)`
+   range, a single `(N)`, or fall through entirely for all-`\notag`)
+   can only be decided once the full env has been seen.
+3. User-defined Track 2 envs (registered via `\codeptrackalign`)
+   may have non-`\\` row-separation mechanisms that further
+   delay row-set stabilization.
+
+This forces Track 2's aux emission to be `deferred-write @ after-env`
+in the W05-XPARSE-SUB-EFFECT typed-installer taxonomy.  That cell
+is normally forbidden by the slot/effect compat matrix (deferred
+writes at after-env create ordering ambiguity vs. immediate-write
+state cleanups in the same slot).  Track 2 holds a typed exception
+`track2-shipout-order-write` to preserve the after-env timing
+while keeping the rest of the matrix a hard rule.  Do NOT refactor
+Track 2 to emit immediate writes at after-env: doing so changes
+the user-visible semantics of "Used in" lists from shipout order
+(reader-facing) to source order (author-facing), which has been
+user-rejected.  See `[B-USEDIN-READING-ORDER]`.
+
+LaTeXML caveat: the shipout-order property documented in
+`[B-USEDIN-READING-ORDER]` is a PDF-backend statement.  Under
+LaTeXML (single-pass execution, no shipout), the deferred/immediate
+distinction collapses and ordering naturally falls to source order,
+which coincides with DOM/visual order in that medium.  Track 2's
+typed exception does not need to carry forward to LaTeXML; the
+LaTeXML backend should re-derive its own ordering mechanism from
+the *principle* (match reader encounter order), not enforce the
+PDF mechanism literally.
+
 **Range-based recording.**  Instead of tracking per-line equation
 numbers, attribute all `\ref`s in the block to the block's
 equation range:

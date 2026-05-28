@@ -1,10 +1,10 @@
 %% TEST-NAME: stress-ta-appendix-gray
 %% TEST-PURPOSE: Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER
 %% TEST-STATUS: EXPLORATORY
 %% TEST-RENDER-MODES: appendix, gray-backrefs, custom-page-format
-%% TEST-PDF-PAGES: 6
+%% TEST-PDF-PAGES: 7
 %% TEST-PDF-STEXT: Stress fixture appendix gray
 %%
 %% W05-A2 RED gate: joint-atom rendering for Section 9 (thm:s9-jatom-x, thm:s9-jatom-y)
@@ -190,6 +190,35 @@ for related results.
 
 A second cross-section remote read: see also \codepbackrefsof{thm:idempotent}
 for display-math dependencies.
+
+
+\subsection*{Track-2 reading-order stress}
+
+\begin{theorem}\label{thm:stress-tracktwo-target}
+Stress target theorem for Track-2 ordering.
+\end{theorem}
+
+\begin{lemma}\label{lem:stress-tracktwo-before}
+A theorem-source citation encountered before the align cites
+\cref{thm:stress-tracktwo-target}.
+\end{lemma}
+
+\begin{align}
+  U_1 &= V_1 \qquad\text{first stress reading-order row}
+    \label{eq:stress-tracktwo-first} \\
+  U_2 &= V_2 \qquad\text{second stress reading-order row}
+    \label{eq:stress-tracktwo-second} \\
+  U_3 &= V_3 \qquad\text{third row cites }\cref{thm:stress-tracktwo-target}
+    \label{eq:stress-tracktwo-third}
+\end{align}
+
+Stress reverse row references: \ref{eq:stress-tracktwo-third},
+\ref{eq:stress-tracktwo-first}, then \ref{eq:stress-tracktwo-second}.
+
+\begin{corollary}\label{cor:stress-tracktwo-after}
+A theorem-source citation encountered after the align cites
+\cref{thm:stress-tracktwo-target}.
+\end{corollary}
 
 
 %% ====================================================================

@@ -1,7 +1,7 @@
 %% TEST-NAME: trinity-test
 %% TEST-PURPOSE: Enriched integration fixture combining the trinity-stripped
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP, B-USEDIN-READING-ORDER
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Enriched integration fixture combining the trinity-stripped
 %%            scenario with the user's real theorem style (sty-theorems-ta).
@@ -76,6 +76,7 @@
 %% TEST-PDF-STEXT: (?s)Used in 3\.4, 4\.3\.
 %% TEST-PDF-STEXT: (?s)Remote read of thm:main Used-In list:.*Used in.*1\.4\*, 1\.11, 2\.5, \(2\.6&#x2013;2\.7\), 3\.1, 3\.4, 4\.3\.
 %% TEST-PDF-STEXT: (?s)Remote read of thm:with-eq Used-In list:.*Used in.*3\.4\.
+%% TEST-PDF-STEXT: (?s)Trinity target theorem for Track-2 ordering\..*Used in 6\.2, \(6\.1&#x2013;6\.3\),.*6\.4\.
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%
@@ -643,6 +644,38 @@ The tracked entity and the section reference play different roles here.
   Section-only heading; tracked-entity gate must produce zero attribution.
   References \cref{thm:main}.
 \end{proof}
+
+%% ====================================================================
+%%  Section 6: Track-2 reading-order sentinel
+%% ====================================================================
+\section{Track-2 reading-order sentinel}%
+\label{sec:tracktwo-order}
+
+\begin{theorem}\label{thm:trinity-tracktwo-target}
+  Trinity target theorem for Track-2 ordering.
+\end{theorem}
+
+\begin{lemma}\label{lem:trinity-tracktwo-before}
+  A theorem-source citation encountered before the align cites
+  \cref{thm:trinity-tracktwo-target}.
+\end{lemma}
+
+\begin{align}
+  R_1 &= S_1 \qquad\text{first trinity reading-order row}
+    \label{eq:trinity-tracktwo-first} \\
+  R_2 &= S_2 \qquad\text{second trinity reading-order row}
+    \label{eq:trinity-tracktwo-second} \\
+  R_3 &= S_3 \qquad\text{third row cites }\cref{thm:trinity-tracktwo-target}
+    \label{eq:trinity-tracktwo-third}
+\end{align}
+
+Trinity reverse row references: \ref{eq:trinity-tracktwo-third},
+\ref{eq:trinity-tracktwo-first}, then \ref{eq:trinity-tracktwo-second}.
+
+\begin{corollary}\label{cor:trinity-tracktwo-after}
+  A theorem-source citation encountered after the align cites
+  \cref{thm:trinity-tracktwo-target}.
+\end{corollary}
 
 \END
 \end{document}
