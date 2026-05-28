@@ -1579,16 +1579,31 @@
 }
 
 % \codep@hook@install@register{register-name}{slot}{env}{callback}
-%   Call a verified lifecycle register macro; error if the mapping drifts.
+%   Install a verified lifecycle callback with the raw primitive shape that
+%   pre-typed call sites used, preserving hook order and wire-format bytes.
 %% @utility
 %@effect state-only
 \newcommand*{\codep@hook@install@register}[4]{%
-  \@ifundefined{codep@lifecycle@register@#1}{%
+  \def\codep@install@register@prebegin{prebegin}%
+  \def\codep@install@register@postbegin{postbegin}%
+  \def\codep@install@register@preend{preend}%
+  \def\codep@install@register@postend{postend}%
+  \def\codep@install@register@afterenv{afterenv}%
+  \edef\codep@install@register@current{#1}%
+  \ifx\codep@install@register@current\codep@install@register@prebegin%
+    \AtBeginEnvironment{#3}{#4}%
+  \else\ifx\codep@install@register@current\codep@install@register@postbegin%
+    \AtBeginEnvironment{#3}{#4}%
+  \else\ifx\codep@install@register@current\codep@install@register@preend%
+    \AtEndEnvironment{#3}{#4}%
+  \else\ifx\codep@install@register@current\codep@install@register@postend%
+    \codep@lifecycle@register@postend{#3}{#4}%
+  \else\ifx\codep@install@register@current\codep@install@register@afterenv%
+    \AfterEndEnvironment{#3}{#4}%
+  \else%
     \PackageError{codependent}{lifecycle slot #2 has no register mapping}{%
       Expected \string\codep@lifecycle@register@#1\space to exist.}%
-  }{%
-    \csname codep@lifecycle@register@#1\endcsname{#3}{#4}%
-  }%
+  \fi\fi\fi\fi\fi%
 }
 
 % \codep@hook@install{slot}{env-name}{effect}{callback}
@@ -1732,19 +1747,11 @@
 }
 
 % \codep@target@install@commandwrap{target}{effect}{replacement}
-%   Static saved-original command wrapper; rejects dynamic \protected\edef.
+%   Static saved-original command wrapper.
 %% @utility
 %@effect state-only
 \long\def\codep@target@install@commandwrap#1#2#3{%
-  \codep@install@ifprotectededefTF{#3}{%
-    \PackageError{codependent}{%
-      command-wrap install-kind rejects dynamic \string\protected\string\edef%
-      \space target shape}{%
-      Dynamic saved-original wrappers are deferred to %
-      W05-INSTALL-DISCIPLINE-CONTRACT.}%
-  }{%
-    \codep@install@saveoriginal@auto{#1}{#3}%
-  }%
+  \codep@install@saveoriginal@auto{#1}{#3}%
 }
 
 % \codep@target@install{install-kind}{target}{effect}{replacement-body}
@@ -1883,15 +1890,14 @@
 %@effect inline-material
 \def\codep@thmwrap@install{%
   \@ifundefined{@begintheorem}{}{%
-    \@ifundefined{codep@orig@begintheorem}{%
-      \let\codep@orig@begintheorem\@begintheorem%
+    \codep@target@install{theorem-name-link-wrap}{\@begintheorem}{inline-material}{%
       \def\@begintheorem##1##2[##3]{%
         \codep@thmwrap@deriveactivekey%
         \codep@thmwrap@wrapname{##1}{\codep@tmp@wrappedthmname}%
         \expandafter\codep@orig@begintheorem\expandafter{%
           \codep@tmp@wrappedthmname}{##2}[##3]%
       }%
-    }{}%
+    }%
   }%
 }%
 
@@ -1930,9 +1936,9 @@
 %@effect state-only
 \newcommand*{\codep@hookproof}{%
   \@ifundefined{proof}{}{%
-    \AtBeginEnvironment{proof}{\codep@hookproof@begin}%
-    \AtEndEnvironment{proof}{\codep@hookproof@end}%
-    \AfterEndEnvironment{proof}{\codep@hookproof@afterend}%
+    \codep@hook@install{pre-begin}{proof}{state-only}{\codep@hookproof@begin}%
+    \codep@hook@install{pre-end}{proof}{state-only}{\codep@hookproof@end}%
+    \codep@hook@install{after-env}{proof}{state-only}{\codep@hookproof@afterend}%
   }%
 }%
 
@@ -2368,9 +2374,9 @@
 %@effect inline-material
   \gdef\codep@autoproofof@install@proof{%
     \@ifundefined{proof}{}{%
-      \expandafter\pretocmd\csname\string\proof\endcsname{%
+      \codep@proof@install@heading{\csname\string\proof\endcsname}{inline-material}{%
         \codep@autoproofof@heading{proof}{#1}%
-      }{}{%
+      }{%
         \PackageWarning{codependent}{Automatic proof-heading detection\space%
           unavailable: could not patch proof's optional-heading body;\space%
           use explicit \string\codepproofof\space for separated proofs}%
@@ -2907,7 +2913,7 @@
 %   Track one-row equation environments.
 %@effect state-only
 \newcommand*{\codep@trackeqenv}[1]{%
-  \AtBeginEnvironment{#1}{%
+  \codep@hook@install{post-begin}{#1}{state-only}{%
     \global\let\codep@pendingresultid\@empty%
     \global\advance\codep@suppressdepth by 1\relax%
     \booltrue{codep@inequation}%
@@ -2925,7 +2931,7 @@
       \codep@ctxpush{\codep@currenteqsourceid}{equation}%
     \fi%
   }%
-  \AtEndEnvironment{#1}{%
+  \codep@hook@install{pre-end}{#1}{state-only}{%
     \boolfalse{codep@inequation}%
     \def\codep@eqatom{}%
     \ifx\codep@currenteqsourceid\@empty\else%
@@ -2935,7 +2941,7 @@
     \global\let\codep@eqfallbacksourceid\@empty%
     \global\advance\codep@suppressdepth by -1\relax%
   }%
-  \AfterEndEnvironment{#1}{%
+  \codep@hook@install{after-env}{#1}{state-only}{%
     \global\let\codep@eq@lbltype@pending\@empty%
   }%
 }%
@@ -2945,7 +2951,7 @@
 %   Track multi-row equation environments.
 %@effect state-only
 \newcommand*{\codep@trackalignenv}[1]{%
-  \AtBeginEnvironment{#1}{%
+  \codep@hook@install{post-begin}{#1}{state-only}{%
     \global\let\codep@pendingresultid\@empty%
     \global\advance\codep@suppressdepth by 1\relax%
     \booltrue{codep@inequation}%
@@ -2974,15 +2980,13 @@
       \codep@emit@destination{\codep@eq@anchor}%
     }{}%
   }%
-  \AtEndEnvironment{#1}{%
+  \codep@hook@install{pre-end}{#1}{state-only}{%
     \boolfalse{codep@inequation}%
     \boolfalse{codep@eqmultiline}%
     \def\codep@eqatom{}%
   }%
-  \AfterEndEnvironment{#1}{%
-    \ifnum\codep@eqpendingcount>0\relax%
-      \codep@flusheqrange%
-    \fi%
+  \codep@hook@install{after-env}{#1}{track2-shipout-order-write}{\codep@flusheqrange}%
+  \codep@hook@install{after-env}{#1}{state-only}{%
     \ifx\codep@currenteqsourceid\@empty\else%
       \codep@ctxpop{equation}%
     \fi%
@@ -3119,22 +3123,24 @@
 %   \codep@flusheqrange@numbered or @fallback.
 %@effect track2-shipout-order-write
 \def\codep@flusheqrange{%
-  % Check equation mode.
-  \codep@eqshouldtrack%
-  \ifx\codep@eqatom\@empty%
-    % Mode says don't track; silently drop pending refs.
-    \global\codep@eqpending={}%
-    \global\codep@eqpendingcount=0\relax
-  \else
-    % Check if counter advanced (at least one numbered line).
-    \ifnum\c@equation>\codep@eq@startcount\relax
-      \codep@flusheqrange@numbered%
+  \ifnum\codep@eqpendingcount>0\relax%
+    % Check equation mode.
+    \codep@eqshouldtrack%
+    \ifx\codep@eqatom\@empty%
+      % Mode says don't track; silently drop pending refs.
+      \global\codep@eqpending={}%
+      \global\codep@eqpendingcount=0\relax
     \else
-      \codep@flusheqrange@fallback%
+      % Check if counter advanced (at least one numbered line).
+      \ifnum\c@equation>\codep@eq@startcount\relax
+        \codep@flusheqrange@numbered%
+      \else
+        \codep@flusheqrange@fallback%
+      \fi
+      \global\codep@eqpending={}%
+      \global\codep@eqpendingcount=0\relax
     \fi
-    \global\codep@eqpending={}%
-    \global\codep@eqpendingcount=0\relax
-  \fi
+  \fi%
 }
 
 % \codep@suppresscmd{command}
@@ -3144,8 +3150,10 @@
 %   Patch a command to suppress paragraph numbering in its body.
 %@effect state-only
 \newcommand*{\codep@suppresscmd}[1]{%
-  \pretocmd{#1}{\global\advance\codep@suppressdepth by 1\relax}{}{}%
-  \apptocmd{#1}{\global\advance\codep@suppressdepth by -1\relax}{}{}%
+  \codep@target@install{pretocmd}{#1}{state-only}{%
+    \global\advance\codep@suppressdepth by 1\relax}%
+  \codep@target@install{apptocmd}{#1}{state-only}{%
+    \global\advance\codep@suppressdepth by -1\relax}%
 }%
 
 %% @utility
@@ -3170,17 +3178,18 @@
   \ifcodep@footnotesuppressed%
   \else%
     \global\codep@footnotesuppressedtrue%
-    \let\codep@orig@footnote\footnote%
-    \RenewDocumentCommand{\footnote}{o +m}{%
-      \global\advance\codep@sourceblockdepth\@ne\relax%
-      \codep@withsuppression{%
-        \IfNoValueTF{##1}{%
-          \codep@orig@footnote{##2}%
-        }{%
-          \codep@orig@footnote[##1]{##2}%
+    \codep@target@install{command-wrap}{\footnote}{state-only}{%
+      \RenewDocumentCommand{\footnote}{o +m}{%
+        \global\advance\codep@sourceblockdepth\@ne\relax%
+        \codep@withsuppression{%
+          \IfNoValueTF{##1}{%
+            \codep@orig@footnote{##2}%
+          }{%
+            \codep@orig@footnote[##1]{##2}%
+          }%
         }%
+        \global\advance\codep@sourceblockdepth\m@ne\relax%
       }%
-      \global\advance\codep@sourceblockdepth\m@ne\relax%
     }%
   \fi%
 }%
@@ -3281,10 +3290,11 @@
 %@effect state-only
 \newcommand*{\codep@capturesectitle}{%
   \ifbool{codep@appendix}{%
-    \let\codep@orig@addcontentsline\addcontentsline%
-    \renewcommand{\addcontentsline}[3]{%
-      \codep@orig@addcontentsline{##1}{##2}{##3}%
-      \codep@checktocsection{##1}{##2}{##3}%
+    \codep@target@install{command-wrap}{\addcontentsline}{state-only}{%
+      \renewcommand{\addcontentsline}[3]{%
+        \codep@orig@addcontentsline{##1}{##2}{##3}%
+        \codep@checktocsection{##1}{##2}{##3}%
+      }%
     }%
   }{}%
 }%
@@ -3333,10 +3343,11 @@
   \ifcodep@enumitemnewlistwrapped%
   \else%
     \global\codep@enumitemnewlistwrappedtrue%
-    \global\let\codep@orig@newlist\newlist%
-    \gdef\newlist##1##2##3{%
-      \codep@orig@newlist{##1}{##2}{##3}%
-      \codep@suppressenv{##1}%
+    \codep@target@install{command-wrap}{\newlist}{state-only}{%
+      \gdef\newlist##1##2##3{%
+        \codep@orig@newlist{##1}{##2}{##3}%
+        \codep@suppressenv{##1}%
+      }%
     }%
   \fi%
 }%
@@ -3361,10 +3372,10 @@
   \@ifpackageloaded{tcolorbox}{%
     % tcolorbox emits a box-closing paragraph at \end{tcolorbox};
     % keep suppression active through AfterEndEnvironment.
-    \AtBeginEnvironment{tcolorbox}{%
+    \codep@hook@install{pre-begin}{tcolorbox}{state-only}{%
       \global\advance\codep@suppressdepth\@ne%
     }%
-    \AfterEndEnvironment{tcolorbox}{%
+    \codep@hook@install{after-env}{tcolorbox}{state-only}{%
       \global\advance\codep@suppressdepth\m@ne%
     }%
   }{}%
@@ -4700,36 +4711,38 @@
 %% @behavior B-PASS-ONE
 %@effect state-only
 \def\codep@installnewlabel{%
-  \let\codep@orig@newlabel\newlabel%
-  \def\newlabel##1##2{%
-    \codep@orig@newlabel{##1}{##2}%
-    \codep@extractlblnum{##1}{##2}%
-    \codep@extractanchor{##1}{##2}%
+  \codep@target@install{command-wrap}{\newlabel}{state-only}{%
+    \def\newlabel##1##2{%
+      \codep@orig@newlabel{##1}{##2}%
+      \codep@extractlblnum{##1}{##2}%
+      \codep@extractanchor{##1}{##2}%
+    }%
   }%
   % Pre-2023 hyperref path: \newlabelxx has 6 args.  Hyperref
   % installs it in \AtBeginDocument and it races with our
   % override, so we override it too.
   \@ifundefined{newlabelxx}{}{%
-    \let\codep@orig@newlabelxx\newlabelxx%
-    \def\newlabelxx##1##2##3##4##5##6{%
-      \codep@orig@newlabelxx%
-        {##1}{##2}{##3}{##4}{##5}{##6}%
-      % ##2 is already the display number for the 6-arg form.
-      \expandafter\gdef%
-        \csname codep@lblnum@##1\endcsname{##2}%
-      % ##5 is the hyperref anchor name; store reverse mapping
-      % using prefixed key if type is known.
-      \codep@ifcrefkey{##1}{}{%
-        \def\codep@tmp@anchorval{##5}%
-        \ifx\codep@tmp@anchorval\@empty\else%
-          \expandafter\ifx\csname codep@ltype@##1\endcsname\relax%
-            \let\codep@tmp@anchorltype\@empty%
-          \else%
-            \edef\codep@tmp@anchorltype{%
-              \csname codep@ltype@##1\endcsname}%
+    \codep@target@install{command-wrap}{\newlabelxx}{state-only}{%
+      \def\newlabelxx##1##2##3##4##5##6{%
+        \codep@orig@newlabelxx%
+          {##1}{##2}{##3}{##4}{##5}{##6}%
+        % ##2 is already the display number for the 6-arg form.
+        \expandafter\gdef%
+          \csname codep@lblnum@##1\endcsname{##2}%
+        % ##5 is the hyperref anchor name; store reverse mapping
+        % using prefixed key if type is known.
+        \codep@ifcrefkey{##1}{}{%
+          \def\codep@tmp@anchorval{##5}%
+          \ifx\codep@tmp@anchorval\@empty\else%
+            \expandafter\ifx\csname codep@ltype@##1\endcsname\relax%
+              \let\codep@tmp@anchorltype\@empty%
+            \else%
+              \edef\codep@tmp@anchorltype{%
+                \csname codep@ltype@##1\endcsname}%
+            \fi%
+            \codep@writeanchoreff{##1}{\codep@tmp@anchorltype}{##2}{##5}%
           \fi%
-          \codep@writeanchoreff{##1}{\codep@tmp@anchorltype}{##2}{##5}%
-        \fi%
+        }%
       }%
     }%
   }%
@@ -5008,58 +5021,65 @@
 \def\codep@installfrontedgerefpatch{%
   %% ---- \ref and \ref* ----
   \ifcsname ref\endcsname%
-    \let\codep@saved@ref\ref%
-    \protected\def\ref{%
-      \@ifstar{\codep@fe@single@star\codep@saved@ref}%
-              {\codep@fe@single@nostar\codep@saved@ref}%
+    \codep@target@install{command-wrap}{\ref}{inline-material}{%
+      \protected\def\ref{%
+        \@ifstar{\codep@fe@single@star\codep@orig@ref}%
+                {\codep@fe@single@nostar\codep@orig@ref}%
+      }%
     }%
   \fi%
   %% ---- \pageref and \pageref* ----
   \ifcsname pageref\endcsname%
-    \let\codep@saved@pageref\pageref%
-    \protected\def\pageref{%
-      \@ifstar{\codep@fe@single@star\codep@saved@pageref}%
-              {\codep@fe@single@nostar\codep@saved@pageref}%
+    \codep@target@install{command-wrap}{\pageref}{inline-material}{%
+      \protected\def\pageref{%
+        \@ifstar{\codep@fe@single@star\codep@orig@pageref}%
+                {\codep@fe@single@nostar\codep@orig@pageref}%
+      }%
     }%
   \fi%
   %% ---- \Ref and \Ref* (nameref) ----
   \ifcsname Ref\endcsname%
-    \let\codep@saved@Ref\Ref%
-    \protected\def\Ref{%
-      \@ifstar{\codep@fe@single@star\codep@saved@Ref}%
-              {\codep@fe@single@nostar\codep@saved@Ref}%
+    \codep@target@install{command-wrap}{\Ref}{inline-material}{%
+      \protected\def\Ref{%
+        \@ifstar{\codep@fe@single@star\codep@orig@Ref}%
+                {\codep@fe@single@nostar\codep@orig@Ref}%
+      }%
     }%
   \fi%
   %% ---- \cref and \cref* (cleveref) ----
   \ifcsname cref\endcsname%
-    \let\codep@saved@cref\cref%
-    \protected\def\cref{%
-      \@ifstar{\codep@fe@csv@star\codep@saved@cref}%
-              {\codep@fe@csv@nostar\codep@saved@cref}%
+    \codep@target@install{command-wrap}{\cref}{inline-material}{%
+      \protected\def\cref{%
+        \@ifstar{\codep@fe@csv@star\codep@orig@cref}%
+                {\codep@fe@csv@nostar\codep@orig@cref}%
+      }%
     }%
   \fi%
   %% ---- \Cref and \Cref* (cleveref) ----
   \ifcsname Cref\endcsname%
-    \let\codep@saved@Cref\Cref%
-    \protected\def\Cref{%
-      \@ifstar{\codep@fe@csv@star\codep@saved@Cref}%
-              {\codep@fe@csv@nostar\codep@saved@Cref}%
+    \codep@target@install{command-wrap}{\Cref}{inline-material}{%
+      \protected\def\Cref{%
+        \@ifstar{\codep@fe@csv@star\codep@orig@Cref}%
+                {\codep@fe@csv@nostar\codep@orig@Cref}%
+      }%
     }%
   \fi%
   %% ---- \labelcref and \labelcref* (cleveref) ----
   \ifcsname labelcref\endcsname%
-    \let\codep@saved@labelcref\labelcref%
-    \protected\def\labelcref{%
-      \@ifstar{\codep@fe@csv@star\codep@saved@labelcref}%
-              {\codep@fe@csv@nostar\codep@saved@labelcref}%
+    \codep@target@install{command-wrap}{\labelcref}{inline-material}{%
+      \protected\def\labelcref{%
+        \@ifstar{\codep@fe@csv@star\codep@orig@labelcref}%
+                {\codep@fe@csv@nostar\codep@orig@labelcref}%
+      }%
     }%
   \fi%
   %% ---- \autoref and \autoref* (hyperref) ----
   \ifcsname autoref\endcsname%
-    \let\codep@saved@autoref\autoref%
-    \protected\def\autoref{%
-      \@ifstar{\codep@fe@single@star\codep@saved@autoref}%
-              {\codep@fe@single@nostar\codep@saved@autoref}%
+    \codep@target@install{command-wrap}{\autoref}{inline-material}{%
+      \protected\def\autoref{%
+        \@ifstar{\codep@fe@single@star\codep@orig@autoref}%
+                {\codep@fe@single@nostar\codep@orig@autoref}%
+      }%
     }%
   \fi%
 }%
@@ -5185,27 +5205,28 @@
 %% cleveref's \AtBeginDocument wrapper installs around us (see
 %% docs/DESIGN.md §9a "Label wrap" double-wrap explanation).
 %@effect immediate-write
-\AddToHook{begindocument/before}[codependent/cdp/labelwrap]{%
-  \let\codep@orig@label\label
-  \@ifpackageloaded{cleveref}{%
-    %% cleveref path: \label[type]{key}, optional arg.
-    \def\label{%
-      \@ifnextchar[%]
-        \codep@cdp@label@withopt
-        \codep@cdp@label@noopt
-    }%
-  }{%
-    %% No cleveref: \label{key} only.
-    \def\label#1{%
-      \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
-      \ifx\codep@tmp@labeldisplay\@empty\else%
-        \codep@cdpwrite@atom{%
-          \string\codep@cdp@label
-            {\codep@tmp@labeldisplay}{#1}}%
-      \fi%
-      \codep@recordlabelowner{#1}%
-      \codep@label@samerun{#1}%
-      \codep@orig@label{#1}%
+\codep@target@install{AddToHook}{begindocument/before}{immediate-write}{%
+  \codep@target@install{command-wrap}{\label}{immediate-write}{%
+    \@ifpackageloaded{cleveref}{%
+      %% cleveref path: \label[type]{key}, optional arg.
+      \def\label{%
+        \@ifnextchar[%]
+          \codep@cdp@label@withopt
+          \codep@cdp@label@noopt
+      }%
+    }{%
+      %% No cleveref: \label{key} only.
+      \def\label#1{%
+        \codep@getcurrentatomdisplay\codep@tmp@labeldisplay%
+        \ifx\codep@tmp@labeldisplay\@empty\else%
+          \codep@cdpwrite@atom{%
+            \string\codep@cdp@label
+              {\codep@tmp@labeldisplay}{#1}}%
+        \fi%
+        \codep@recordlabelowner{#1}%
+        \codep@label@samerun{#1}%
+        \codep@orig@label{#1}%
+      }%
     }%
   }%
 }
