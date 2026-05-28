@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/fail-raw-appto.sty:2: unclassified-raw-install-primitive: raw \appto outside typed installer allowlist; CORE surfaces this as WARN, CONTRACT owns hard closure

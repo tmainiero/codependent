@@ -1,0 +1,5 @@
+% CONTRACT-owned kernel reset-list survivor.
+\def\fixture#1#2{%
+  \expandafter\g@addto@macro%
+    \csname cl@#2\endcsname{\@elt{#1}}%
+}%

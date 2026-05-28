@@ -1,0 +1,1 @@
+The no-rotation linter self-test plants an empty testfiles/baselines/W05-INSTALL-DISCIPLINE-CORE directory in a temp root and must flag it.

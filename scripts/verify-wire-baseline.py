@@ -7,6 +7,7 @@ values against the committed manifest, and exit non-zero on any mismatch.
 
 Run under nix develop:
   nix develop --command python3 scripts/verify-wire-baseline.py
+      # default manifest is W05-XPARSE-VMODE-FIXES via capture-wire-baseline.py
   nix develop --command python3 scripts/verify-wire-baseline.py \\
       --manifest testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json
 """

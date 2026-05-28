@@ -1,0 +1,1 @@
+ERROR: .claude/scripts/lint-fixtures/track2-exception/track2-missing-error.sty:2: track2-effect-annotation: expected exactly one %@effect track2-shipout-order-write annotation on \codep@flusheqrange; found 0

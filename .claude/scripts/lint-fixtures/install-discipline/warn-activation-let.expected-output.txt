@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/warn-activation-let.sty:3: activation-let-raw: raw activation \let to @active callback is deferred to CONTRACT classification

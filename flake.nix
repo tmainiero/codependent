@@ -31,22 +31,31 @@
       });
 
       checks = forEachSystem ({ pkgs, system }: {
-        default = pkgs.stdenv.mkDerivation {
+        default = builtins.trace
+          "WARN: install-discipline lint is wired; CORE bootstrap expected WARN classes are pending-p03-track2-effect-annotation, pending-p05-missing-* migrations, contract-owned-gaddto-macro, kernel-reset-list-raw-gaddto-macro, counter-alias-raw-let, activation-let-raw, dynamic-command-wrap-protected-edef, and unclassified-raw-install-primitive. Full callsite diagnostics are in the check build log."
+          (pkgs.stdenv.mkDerivation {
           name = "codependent-tests";
           src = self;
-
-          # Allow access to system pdflatex (texlive not in flake).
-          __noChroot = true;
 
           nativeBuildInputs = with pkgs; [
             mupdf
             qpdf
+            # Checks run in the Nix build sandbox, so unlike the dev shell they
+            # must declare TeX Live rather than reaching into
+            # /run/current-system/sw.  Full is intentionally check-only because
+            # the integration/stress fixtures exercise broad LaTeX packages.
+            texlive.combined.scheme-full
             (python3.withPackages (ps: with ps; [ pydantic ]))
           ];
 
-          # Make system PATH available so pdflatex is reachable.
           buildPhase = ''
-            export PATH="/run/current-system/sw/bin:$PATH"
+            # P02 wires the install-discipline lint now.  P03/P05 are not yet
+            # landed in this branch, so their known pending source ERRORs are
+            # demoted to visible WARNs for this bootstrap flake gate; parse,
+            # enum, fixture, and no-rotation ERRORs remain fatal.
+            python3 .claude/scripts/lint_install_discipline.py --allow-pending-core-errors
+            python3 .claude/scripts/lint_wire_format_no_rotation.py
+            python3 .claude/scripts/lint_wire_format_no_rotation.py --self-test
             python3 scripts/run-tests.py --check-test-index --full
           '';
 
@@ -54,7 +63,7 @@
             mkdir -p $out
             touch $out/ok
           '';
-        };
+        });
       });
     };
 }

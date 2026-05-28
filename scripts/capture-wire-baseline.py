@@ -7,6 +7,7 @@ Compile all census fixtures + 3 stress variants, sha256 their final-pass
 
 Run under nix develop:
   nix develop --command python3 scripts/capture-wire-baseline.py
+      # no-arg self-test: verifies DEFAULT_WAVE resolution without writes
   nix develop --command python3 scripts/capture-wire-baseline.py --wave W05-XPARSE-VMODE-FIXES
   nix develop --command python3 scripts/capture-wire-baseline.py \\
       --wave W05-XPARSE-VMODE-FIXES \\
@@ -30,8 +31,10 @@ TESTFILES_DIR = PROJECT_ROOT / "testfiles"
 COMPILED_EXAMPLES_DIR = TESTFILES_DIR / "compiled-examples"
 BASELINE_SIZES = PROJECT_ROOT / ".claude" / "baseline-sizes.json"
 
-# Defaults (backward-compat with unaudited callsites that pass no flags)
-_DEFAULT_WAVE = "W05-D"
+# W05-INSTALL-DISCIPLINE-CORE P02 rotates the default wire baseline to the
+# current canonical VMODE-FIXES manifest.  A no-argument invocation self-tests
+# this resolution and exits before writing; pass --wave to capture.
+_DEFAULT_WAVE = "W05-XPARSE-VMODE-FIXES"
 _DEFAULT_MANIFEST_DIR = PROJECT_ROOT / "testfiles" / "baselines" / _DEFAULT_WAVE
 MANIFEST_DIR = _DEFAULT_MANIFEST_DIR
 MANIFEST_PATH = _DEFAULT_MANIFEST_DIR / "baseline.sha256.json"
@@ -367,7 +370,7 @@ def compile_stress(
 # Main
 # ---------------------------------------------------------------------------
 
-def _parse_args() -> "argparse.Namespace":
+def _parse_args(argv: "list[str] | None" = None) -> "argparse.Namespace":
     parser = argparse.ArgumentParser(
         description="Capture wire-format baseline sha256 manifest."
     )
@@ -387,12 +390,26 @@ def _parse_args() -> "argparse.Namespace":
             "Default: testfiles/baselines/<wave>/baseline.sha256.json"
         ),
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> None:
-    args = _parse_args()
+def main(argv: "list[str] | None" = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    args = _parse_args(argv)
     wave_id: str = args.wave
+
+    if not argv:
+        print("DEFAULT_WAVE self-test")
+        print(f"Resolved wave: {wave_id}")
+        print(f"Manifest path: {MANIFEST_PATH}")
+        if wave_id != "W05-XPARSE-VMODE-FIXES":
+            print(
+                "ERROR: no-arg DEFAULT_WAVE did not resolve to "
+                "W05-XPARSE-VMODE-FIXES",
+                file=sys.stderr,
+            )
+            return 2
+        return 0
 
     if args.manifest is not None:
         manifest_path = Path(args.manifest)
@@ -482,7 +499,8 @@ def main() -> None:
     )
     print(f"\nManifest → {manifest_path}")
     print(f"Fixtures captured: {len(results)}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

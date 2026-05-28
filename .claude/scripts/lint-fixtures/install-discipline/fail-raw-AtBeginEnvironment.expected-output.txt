@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/fail-raw-AtBeginEnvironment.sty:2: unclassified-raw-install-primitive: raw \AtBeginEnvironment outside typed installer allowlist; CORE surfaces this as WARN, CONTRACT owns hard closure

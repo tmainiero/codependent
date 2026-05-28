@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/warn-dynamic-protected-edef.sty:3: dynamic-command-wrap-protected-edef: raw \protected\edef#2 dynamic command wrapper is deferred to CONTRACT

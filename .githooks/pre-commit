@@ -20,6 +20,34 @@ set -euo pipefail
 staged="$(git diff --cached --name-only --diff-filter=ACMR)"
 [ -z "$staged" ] && exit 0
 
+# W05-INSTALL-DISCIPLINE-CORE must not rotate wire-format baselines.  Block a
+# repo-root CORE baseline directory even if it is empty; allow only with an
+# explicit sibling justification file in that same directory.
+core_baseline_dir="testfiles/baselines/W05-INSTALL-DISCIPLINE-CORE"
+core_baseline_justification="$core_baseline_dir/.justification"
+baseline_violations=""
+if [ -d "$core_baseline_dir" ] && [ ! -f "$core_baseline_justification" ]; then
+  baseline_violations="${baseline_violations}${core_baseline_dir}/"$'\n'
+fi
+while IFS= read -r path; do
+  [ -z "$path" ] && continue
+  case "$path" in
+    "$core_baseline_dir"/*)
+      if [ ! -f "$core_baseline_justification" ]; then
+        baseline_violations="${baseline_violations}${path}"$'\n'
+      fi
+      ;;
+  esac
+done <<< "$staged"
+
+if [ -n "$baseline_violations" ]; then
+  printf '\n\033[1;31mBLOCK:\033[0m W05-INSTALL-DISCIPLINE-CORE baseline rotation is forbidden:\n' >&2
+  printf '%s' "$baseline_violations" | sed 's/^/  /' >&2
+  printf '\nCORE must verify against testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json.\n' >&2
+  printf 'If this is an intentional exceptional rotation, add %s with the rationale.\n' "$core_baseline_justification" >&2
+  exit 1
+fi
+
 # `git check-ignore` returns 0 if a path WOULD be ignored by .gitignore.
 # We check each staged path; collect violations.
 violations=""

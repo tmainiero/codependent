@@ -1,0 +1,1 @@
+ERROR: testfiles/baselines/W05-INSTALL-DISCIPLINE-CORE: unexpected CORE baseline directory; verify against testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json instead
