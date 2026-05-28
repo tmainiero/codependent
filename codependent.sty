@@ -313,6 +313,7 @@
 %   subsystems list.  Called four times at package load (see
 %   Section 9b).
 %% @utility
+%@effect state-only
 \def\codep@subsystem@init#1{%
   \expandafter\newcount\csname codep@subsys@#1@total\endcsname%
   \csname codep@subsys@#1@total\endcsname=0\relax%
@@ -794,6 +795,7 @@
 %   (W03-P03) populate the in-memory label->entity binding table +
 %   emit the \codep@lblentity aux record.  Same replay guard covers
 %   both.
+%@effect immediate-write
 \def\codep@recordlabelowner#1{%
   \if@filesw%
     \ifnum\codep@replaydepth>0\relax%
@@ -837,6 +839,7 @@
 %% @behavior B-EDGE-HEADING
 % \codep@writerefevent{label}
 %   Emit one legacy atomref write from the active source atom.
+%@effect immediate-write
 \def\codep@writerefevent#1{%
   \if@filesw%
     \codep@autoproofof@ifheadsuppressed{#1}{}{%
@@ -976,6 +979,7 @@
 % \codep@removefromreset{counter}{parent}
 %   Remove counter from parent's reset list.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@removefromreset}[2]{%
   \@ifundefined{@removefromreset}{%
     % Manual: rewrite \cl@parent without #1.
@@ -1004,6 +1008,7 @@
 %   (auto-detected from the first env in \codeptrack).
 %   Called by \codeptrack.
 %% @behavior B-NUM-SHARED
+%@effect state-only
 \newcommand*{\codep@setupcounter}{%
   \newcounter{atom}%
   % Copy current base counter value (if it exists).
@@ -1027,6 +1032,7 @@
 %% @behavior B-NUM-DEPTH1
 %% @behavior B-NUM-DEPTH2
 %% @behavior B-NUM-RESET
+%@effect state-only
 \newcommand*{\codep@configuredepth}{%
   % Remove base counter from any existing reset parent.
   \@ifundefined{c@\codep@basecounter}{}{%
@@ -1046,6 +1052,7 @@
 
 % Article-class depth configuration.
 %% @implements \codep@configuredepth
+%@effect state-only
 \newcommand*{\codep@configuredepth@article}{%
   \ifcase\codep@depth\relax
     % 0: invalid
@@ -1071,6 +1078,7 @@
 
 % Book/report-class depth configuration.
 %% @implements \codep@configuredepth
+%@effect state-only
 \newcommand*{\codep@configuredepth@book}{%
   \ifcase\codep@depth\relax
     % 0: invalid
@@ -1157,6 +1165,7 @@
 % \codep@hooktheorem@derivekey{envname}
 %   Derive and persist the theorem's legacy prefixed key once the
 %   theorem counter has stepped.
+%@effect state-only
 \def\codep@hooktheorem@derivekey#1{%
   \ifnum\codep@replaydepth=0\relax%
     \ifnum\codep@trackeddepth=1\relax%
@@ -1177,6 +1186,7 @@
 %% @implements \codep@hooktheorem
 % \codep@hooktheorem@writeanchorandpage
 %   Idempotently write the theorem body anchor/page records after begin.
+%@effect immediate-write
 \def\codep@hooktheorem@writeanchorandpage{%
   \ifnum\codep@trackeddepth=1\relax%
     \codep@ctxpeekid\codep@thisatomid%
@@ -1201,6 +1211,7 @@
 %% @behavior B-EDGE-RESTATE
 % \codep@hooktheorem@begin{envname}
 %   Begin-hook body for tracked theorem-like environments.
+%@effect state-only
 \def\codep@hooktheorem@begin#1{%
   \codep@closeparagraphifopen%
   \global\let\codep@pendingresultid\@empty%
@@ -1229,6 +1240,7 @@
 %   mechanism (§8a.5) may overwrite codep@anchor@<key> on pass 2+ when
 %   an in-theorem equation with the same display number is the effective
 %   anchor.
+%@effect immediate-write
 \def\codep@hooktheorem@after#1{%
   \ifnum\codep@trackeddepth=1\relax%
     \codep@hooktheorem@derivekey{#1}%
@@ -1240,6 +1252,7 @@
 %% @behavior B-NUM-SEQ
 % \codep@hooktheorem@record{envname}
 %   Emit the theorem's legacy .cdp records and appendix entry.
+%@effect immediate-write
 \def\codep@hooktheorem@record#1{%
   \expandafter\codep@splitprefix\codep@outeratom\@nil%
   \codep@cdpwrite@atom{%
@@ -1257,6 +1270,7 @@
 %   Block/margin styles flush later in \AfterEndEnvironment.
 %   Delegates to the rendering hook point.
 %% @implements \codep@hooktheorem
+%@effect inline-material
 \def\codep@hooktheorem@preparebackref#1{%
   \codep@render@thm@preparebackref{#1}%
 }%
@@ -1269,6 +1283,7 @@
 %   undefine the per-atom \codep@manuallyemitted@<key> flag once
 %   the env's group has fully closed (atom-key no longer
 %   resolvable from the ctx stack at that point).
+%@effect immediate-write
 \def\codep@hooktheorem@end@outer#1{%
   \codep@ctxpeekid\codep@thisatomid%
   \codep@hooktheorem@record{#1}%
@@ -1291,6 +1306,7 @@
 %% @behavior B-EDGE-RESTATE
 % \codep@hooktheorem@end{envname}
 %   End-hook body: unwind replay, nested, or outer theorem state.
+%@effect immediate-write
 \def\codep@hooktheorem@end#1{%
   \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
     \ifnum\codep@trackeddepth>1\relax%
@@ -1316,6 +1332,7 @@
 %   cmd/end hook above.  Retained as a hook point so the theorem
 %   orchestrator body stays stable across future rendering variants.
 %% @implements \codep@hooktheorem
+%@effect inline-material
 \def\codep@hooktheorem@afterend#1{%
   \codep@render@thm@afterend{#1}%
 }
@@ -1331,6 +1348,7 @@
 %   end (the stash is only populated for the OUTER env's
 %   \codep@hooktheorem@end@outer path, never inner).
 %% @utility
+%@effect state-only
 \def\codep@manuallyemitted@end@outer@clear{%
   \ifnum\codep@replaydepth=0\relax%
     \ifx\codep@endenv@pendingclear\@empty\else%
@@ -1348,6 +1366,7 @@
 % \codep@lifecycle@register@prebegin{env}{callback}
 %   Register code at cmd/<env>/before without changing hook semantics.
 %% @utility
+%@effect state-only
 \newcommand{\codep@lifecycle@register@prebegin}[2]{%
   \AddToHook{cmd/#1/before}{#2}%
 }
@@ -1355,6 +1374,7 @@
 % \codep@lifecycle@register@postbegin{env}{callback}
 %   Register code at cmd/<env>/after without changing hook semantics.
 %% @utility
+%@effect state-only
 \newcommand{\codep@lifecycle@register@postbegin}[2]{%
   \AddToHook{cmd/#1/after}{#2}%
 }
@@ -1362,6 +1382,7 @@
 % \codep@lifecycle@register@preend{env}{callback}
 %   Register code at cmd/end<env>/before without changing hook semantics.
 %% @utility
+%@effect state-only
 \newcommand{\codep@lifecycle@register@preend}[2]{%
   \AddToHook{cmd/end#1/before}{#2}%
 }
@@ -1369,6 +1390,7 @@
 % \codep@lifecycle@register@postend{env}{callback}
 %   Register code at cmd/end<env>/after without changing hook semantics.
 %% @utility
+%@effect state-only
 \newcommand{\codep@lifecycle@register@postend}[2]{%
   \AddToHook{cmd/end#1/after}{#2}%
 }
@@ -1376,6 +1398,7 @@
 % \codep@lifecycle@register@afterenv{env}{callback}
 %   Register code after an environment without changing hook semantics.
 %% @utility
+%@effect state-only
 \newcommand{\codep@lifecycle@register@afterenv}[2]{%
   \AfterEndEnvironment{#1}{#2}%
 }
@@ -1396,7 +1419,7 @@
 %% Lifecycle slots: pre-begin, post-begin, pre-end, post-end, after-env.
 %% Effects: state-only, immediate-write, deferred-write,
 %%   zero-visible-destination, inline-material.
-%% Typed exception: track2-shipout-order-write.
+%% Typed exception: Track-2 shipout-order write.
 %% command-wrap invariants:
 %%   1. save a package-owned original exactly once;
 %%   2. preserve declaration mechanism;
@@ -1410,6 +1433,7 @@
 % \codep@install@slot@allow{slot}{register-name}
 %   Register one lifecycle slot and its existing lifecycle register suffix.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@slot@allow}[2]{%
   \expandafter\gdef\csname codep@install@slot@#1\endcsname{#2}%
 }
@@ -1423,6 +1447,7 @@
 % \codep@install@effect@allow{effect}
 %   Register one install effect as part of the CORE effect vocabulary.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@effect@allow}[1]{%
   \expandafter\gdef\csname codep@install@effect@#1\endcsname{1}%
 }
@@ -1437,6 +1462,7 @@
 % \codep@install@kind@allow{install-kind}{handler-name}
 %   Register one frozen install-kind and its target dispatcher suffix.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@kind@allow}[2]{%
   \expandafter\gdef\csname codep@install@kind@#1\endcsname{#2}%
 }
@@ -1453,17 +1479,54 @@
 % \codep@install@matrix@allow{slot}{effect}
 %   Mark one lifecycle slot/effect pair compatible.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@matrix@allow}[2]{%
   \expandafter\gdef\csname codep@install@effectslot@#1@#2\endcsname{1}%
 }
 
-% Placeholder compat matrix.  P03 fills the full taxonomy; CORE P01 keeps
-% the load-bearing Track-2 exception row available from the start.
+%% Compat matrix for lifecycle slot/effect assertions.
+%% Allowed:
+%%   pre-begin, post-begin, pre-end, post-end, after-env
+%%     × state-only
+%%   pre-begin, post-begin, pre-end, post-end
+%%     × immediate-write / deferred-write / inline-material
+%%   pre-begin, post-begin, pre-end, post-end, after-env
+%%     × zero-visible-destination
+%%   after-env × the Track-2 shipout-order write typed exception
+%% Forbidden:
+%%   after-env × immediate-write / deferred-write / inline-material.
+%%   Those effects would silently re-order writes or visible tokens after
+%%   the environment's natural stream position; only the Track-2 typed
+%%   exception is allowed there because its shipout-order behavior is
+%%   the documented equation-reading-order contract.
+\codep@install@matrix@allow{pre-begin}{state-only}%
+\codep@install@matrix@allow{post-begin}{state-only}%
+\codep@install@matrix@allow{pre-end}{state-only}%
+\codep@install@matrix@allow{post-end}{state-only}%
+\codep@install@matrix@allow{after-env}{state-only}%
+\codep@install@matrix@allow{pre-begin}{immediate-write}%
+\codep@install@matrix@allow{post-begin}{immediate-write}%
+\codep@install@matrix@allow{pre-end}{immediate-write}%
+\codep@install@matrix@allow{post-end}{immediate-write}%
+\codep@install@matrix@allow{pre-begin}{deferred-write}%
+\codep@install@matrix@allow{post-begin}{deferred-write}%
+\codep@install@matrix@allow{pre-end}{deferred-write}%
+\codep@install@matrix@allow{post-end}{deferred-write}%
+\codep@install@matrix@allow{pre-begin}{zero-visible-destination}%
+\codep@install@matrix@allow{post-begin}{zero-visible-destination}%
+\codep@install@matrix@allow{pre-end}{zero-visible-destination}%
+\codep@install@matrix@allow{post-end}{zero-visible-destination}%
+\codep@install@matrix@allow{after-env}{zero-visible-destination}%
+\codep@install@matrix@allow{pre-begin}{inline-material}%
+\codep@install@matrix@allow{post-begin}{inline-material}%
+\codep@install@matrix@allow{pre-end}{inline-material}%
+\codep@install@matrix@allow{post-end}{inline-material}%
 \codep@install@matrix@allow{after-env}{track2-shipout-order-write}%
 
 % \codep@install@assert@known@slot{slot}
 %   Fail fast when a lifecycle caller uses a slot outside the 5-slot lattice.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@assert@known@slot}[1]{%
   \ifcsname codep@install@slot@#1\endcsname%
   \else%
@@ -1475,19 +1538,21 @@
 % \codep@install@assert@known@effect{effect}
 %   Fail fast when an install caller uses an effect outside CORE vocabulary.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@assert@known@effect}[1]{%
   \ifcsname codep@install@effect@#1\endcsname%
   \else%
     \PackageError{codependent}{unknown install effect #1}{%
       Expected state-only, immediate-write, deferred-write, %
-      zero-visible-destination, inline-material, or %
-      track2-shipout-order-write.}%
+      zero-visible-destination, inline-material, or the Track-2 %
+      shipout-order write typed exception.}%
   \fi%
 }
 
 % \codep@install@assert@known@kind{install-kind}
 %   Fail fast when a target caller uses a kind outside the frozen enum.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@assert@known@kind}[1]{%
   \ifcsname codep@install@kind@#1\endcsname%
   \else%
@@ -1501,19 +1566,22 @@
 % \codep@install@assert@compatible{slot}{effect}
 %   Enforce the lifecycle slot/effect compatibility matrix at install time.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@assert@compatible}[2]{%
   \ifcsname codep@install@effectslot@#1@#2\endcsname%
   \else%
     \PackageError{codependent}{%
       effect #2 incompatible with slot #1; see compat matrix}{%
-      P03 owns the full slot/effect matrix.  Until then only explicit %
-      placeholder rows are valid.}%
+      The lifecycle compat matrix forbids after-env immediate/deferred %
+      writes and inline material; use the typed Track-2 exception only %
+      for the equation-range dispatcher.}%
   \fi%
 }
 
 % \codep@hook@install@register{register-name}{slot}{env}{callback}
 %   Call a verified lifecycle register macro; error if the mapping drifts.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@hook@install@register}[4]{%
   \@ifundefined{codep@lifecycle@register@#1}{%
     \PackageError{codependent}{lifecycle slot #2 has no register mapping}{%
@@ -1526,6 +1594,7 @@
 % \codep@hook@install{slot}{env-name}{effect}{callback}
 %   Typed dispatcher for the five lifecycle slots.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@hook@install}[4]{%
   \codep@install@assert@known@slot{#1}%
   \codep@install@assert@known@effect{#3}%
@@ -1538,6 +1607,7 @@
 % \codep@install@settargetname{control-sequence}
 %   Store a bare target control-sequence name for codep@orig@... construction.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@settargetname}[1]{%
   \edef\codep@install@targetname{\expandafter\@gobble\string#1}%
 }
@@ -1545,6 +1615,7 @@
 % \codep@install@saveoriginal@named{target}{orig-csname}{replacement}
 %   Save a package-owned original once, then run the replacement installer.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@saveoriginal@named}[3]{%
   \ifcsname #2\endcsname%
     \PackageWarning{codependent}{%
@@ -1558,6 +1629,7 @@
 % \codep@install@saveoriginal@auto{target}{replacement}
 %   Save target as \codep@orig@<target-name> and install replacement.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@install@saveoriginal@auto}[2]{%
   \codep@install@settargetname{#1}%
   \edef\codep@install@origname{codep@orig@\codep@install@targetname}%
@@ -1577,6 +1649,7 @@
 % \codep@install@ifprotectededefTF{tokens}{true}{false}
 %   Detect CORE-forbidden \protected\edef in a command-wrap replacement.
 %% @utility
+%@effect state-only
 \long\def\codep@install@ifprotectededefTF#1#2#3{%
   \long\def\codep@install@ifprotectededefTF@scan%
       ##1\protected\edef##2\codep@install@stop{%
@@ -1593,6 +1666,7 @@
 % \codep@target@install@pretocmd{target}{effect}{prepend-body}
 %   Typed etoolbox pre-patch wrapper.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@target@install@pretocmd}[3]{%
   \pretocmd{#1}{#3}{}{%
     \PackageError{codependent}{pretocmd install failed for \string#1}{%
@@ -1603,6 +1677,7 @@
 % \codep@target@install@apptocmd{target}{effect}{append-body}
 %   Typed etoolbox post-patch wrapper.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@target@install@apptocmd}[3]{%
   \apptocmd{#1}{#3}{}{%
     \PackageError{codependent}{apptocmd install failed for \string#1}{%
@@ -1613,6 +1688,7 @@
 % \codep@target@install@addtohook{hook-name}{effect}{hook-body}
 %   Typed LaTeX2e named-hook wrapper.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@target@install@addtohook}[3]{%
   \AddToHook{#1}{#3}%
 }
@@ -1620,6 +1696,7 @@
 % \codep@target@install@backendhook{target}{effect}{body}
 %   Reserved install-kind for BACKENDS; CORE has no backend body.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@target@install@backendhook}[3]{%
   \PackageError{codependent}{%
     backend-hook install-kind is reserved; no backends loaded in CORE}{%
@@ -1629,14 +1706,15 @@
 % \codep@target@install@macroappend{target}{effect}{append-body}
 %   Typed macro-append scaffold.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@target@install@macroappend}[3]{%
-  %@effect state-only
   \g@addto@macro#1{#3}%
 }
 
 % \codep@target@install@theoremname{target}{effect}{replacement}
 %   Saved-original wrapper for amsthm-family theorem-name linking.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@target@install@theoremname}[3]{%
   \ifx#1\@begintheorem%
     \codep@install@saveoriginal@named{#1}{codep@orig@begintheorem}{#3}%
@@ -1648,6 +1726,7 @@
 % \codep@target@install@lifecyclerewrap{target}{effect}{replacement}
 %   Saved-original scaffold for per-begin lifecycle rewrap adapters.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@target@install@lifecyclerewrap}[3]{%
   \codep@install@saveoriginal@auto{#1}{#3}%
 }
@@ -1655,6 +1734,7 @@
 % \codep@target@install@commandwrap{target}{effect}{replacement}
 %   Static saved-original command wrapper; rejects dynamic \protected\edef.
 %% @utility
+%@effect state-only
 \long\def\codep@target@install@commandwrap#1#2#3{%
   \codep@install@ifprotectededefTF{#3}{%
     \PackageError{codependent}{%
@@ -1670,6 +1750,7 @@
 % \codep@target@install{install-kind}{target}{effect}{replacement-body}
 %   Typed dispatcher for target-level installs.
 %% @utility
+%@effect state-only
 \long\def\codep@target@install#1#2#3#4{%
   \codep@install@assert@known@kind{#1}%
   \codep@install@assert@known@effect{#3}%
@@ -1692,6 +1773,7 @@
 %   prepend -- body to prepend to the proof heading macro
 %   failure -- diagnostic body used if etoolbox cannot patch the target
 %% @utility
+%@effect inline-material
 \long\def\codep@proof@install@heading#1#2#3#4{%
   \codep@install@assert@known@effect{#2}%
   \expandafter\pretocmd#1{#3}{}{#4}%
@@ -1700,6 +1782,7 @@
 % \codep@envtrack@config@write{env}{field}{value}
 %   Store a token-list descriptor field keyed by environment and field.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@envtrack@config@write}[3]{%
   \expandafter\def\csname codep@envtrack@cfg@#1@#2\endcsname{#3}%
 }
@@ -1707,6 +1790,7 @@
 % \codep@envtrack@config@read{env}{field}{cs}
 %   Bind a control sequence to a stored env-track descriptor field.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@envtrack@config@read}[3]{%
   \expandafter\let\expandafter#3\csname codep@envtrack@cfg@#1@#2\endcsname%
 }
@@ -1719,6 +1803,7 @@
 % \codep@envtrack@dispatch{env}
 %   Route an env through its configured env-track strategy.
 %% @utility
+%@effect state-only
 \newcommand*{\codep@envtrack@dispatch}[1]{%
   \codep@envtrack@config@read{#1}{strategy}{\codep@tmp@strategy}%
   \ifx\codep@tmp@strategy\codep@strategy@cmdhookobservable%
@@ -1737,6 +1822,7 @@
 % \codep@manuallyemitted@end@outer@clear helper above.
 %% @behavior B-NUM-SEQ
 %% @behavior B-PROOF-ADJ
+%@effect state-only
 \newcommand*{\codep@hooktheorem}[1]{%
   \codep@lifecycle@register@prebegin{#1}{\codep@hooktheorem@begin{#1}}%
   \codep@lifecycle@register@postbegin{#1}{\codep@hooktheorem@after{#1}}%
@@ -1748,6 +1834,7 @@
 %% @implements \codep@hooktheorem
 % \codep@thmwrap@deriveactivekey
 %   Derive the current tracked theorem key at \@begintheorem time.
+%@effect state-only
 \def\codep@thmwrap@deriveactivekey{%
   \ifx\codep@thmwrap@activeenv\@empty\else%
     \expandafter\codep@hooktheorem@derivekey%
@@ -1758,6 +1845,7 @@
 %% @behavior B-LINK-APPENDIX-BIDIR
 % \codep@thmwrap@wrapname{name}{macro}
 %   Conditionally wrap a theorem heading name with an appendix link.
+%@effect inline-material
 \def\codep@thmwrap@wrapname#1#2{%
   \def#2{#1}%
   \ifx\codep@thmwrap@activeenv\@empty\else%
@@ -1784,6 +1872,7 @@
 %% @behavior B-LINK-APPENDIX-BIDIR
 % \codep@thmwrap@wrapname@withdest{dest}{name}{macro}
 %   Snapshot a resolved destination into the deferred theorem name tokens.
+%@effect inline-material
 \def\codep@thmwrap@wrapname@withdest#1#2#3{%
   \def#3{\hyperlink{#1}{#2}}%
 }%
@@ -1791,6 +1880,7 @@
 %% @behavior B-LINK-APPENDIX-BIDIR
 % \codep@thmwrap@install
 %   Install the amsthm-family \@begintheorem name-link shim once.
+%@effect inline-material
 \def\codep@thmwrap@install{%
   \@ifundefined{@begintheorem}{}{%
     \@ifundefined{codep@orig@begintheorem}{%
@@ -1808,6 +1898,7 @@
 %% @behavior B-LINK-APPENDIX-BIDIR
 % \codep@thmwrap@install@eventually
 %   Install immediately when amsthm is loaded, else retry at begin-document.
+%@effect inline-material
 \def\codep@thmwrap@install@eventually{%
   \@ifpackageloaded{amsthm}{%
     \codep@thmwrap@install%
@@ -1836,6 +1927,7 @@
 %     \codep@hookproof@afterend  — block/margin flush
 %% @behavior B-PROOF-ADJ
 %% @behavior B-PROOF-NONADJ
+%@effect state-only
 \newcommand*{\codep@hookproof}{%
   \@ifundefined{proof}{}{%
     \AtBeginEnvironment{proof}{\codep@hookproof@begin}%
@@ -2255,6 +2347,7 @@
 % \codep@autoproofof@heading{envname}{heading}
 %   Entry point prepended to proof's internal optional-heading body.
 %% @implements \codep@hookproof
+%@effect state-only
 \def\codep@autoproofof@heading#1#2{%
   \ifbool{codep@tracked}{%
     \codep@autoproofof@markseen{#1}%
@@ -2272,6 +2365,7 @@
   % \codep@autoproofof@install@proof
   %   Patch proof's generated optional-argument body under catcode-12 #.
   %% @implements \codep@hookproof
+%@effect inline-material
   \gdef\codep@autoproofof@install@proof{%
     \@ifundefined{proof}{}{%
       \expandafter\pretocmd\csname\string\proof\endcsname{%
@@ -2391,6 +2485,7 @@
 %% @behavior B-PROOF-NONADJ
 % \codep@hookproof@begin
 %   Begin dispatch for proof environments.
+%@effect state-only
 \newcommand*{\codep@hookproof@begin}{%
   \codep@closeparagraphifopen%
   \global\codep@autoproofof@eligiblefalse%
@@ -2457,6 +2552,7 @@
 % guard. Structurally-non-empty callers (e.g. Track-2 align where
 % anchor name has literal prefix codep.eq.) document the structural
 % argument and omit the guard.
+%@effect zero-visible-destination
 \def\codep@emit@destination#1{%
   \Hy@raisedlink{\hyper@anchorstart{#1}\hyper@anchorend}%
 }%
@@ -2481,6 +2577,7 @@
 % \codep@proof@capturebeginanchor{proof-id}
 %   Emit a zero-size proof-begin destination and remember its
 %   anchor name for later proof-key binding.
+%@effect zero-visible-destination
 \newcommand*{\codep@proof@capturebeginanchor}[1]{%
   \@ifpackageloaded{hyperref}{%
     \codep@proof@beginanchorname{#1}{\codep@tmp@proofbeginanchor}%
@@ -2495,6 +2592,7 @@
 %   Stage the proof destination after the proof optional argument is
 %   parsed.  para/begin emits at the heading-adjacent body paragraph;
 %   proof end remains an idempotent fallback for empty proofs.
+%@effect state-only
 \newcommand*{\codep@proof@captureheadinganchor}[1]{%
   \edef\codep@tmp@headingproofid{#1}%
   \ifx\codep@tmp@headingproofid\@empty\else%
@@ -2523,6 +2621,7 @@
 %% @behavior B-PROOF-ANCHOR-NEAR-HEADING
 % \codep@proof@emitpendingheadinganchor
 %   Emit the current proof heading destination once.
+%@effect zero-visible-destination
 \def\codep@proof@emitpendingheadinganchor{%
   \edef\codep@tmp@pendingproofid{\codep@currentproofid}%
   \ifx\codep@tmp@pendingproofid\@empty\else%
@@ -2546,6 +2645,7 @@
 %% @behavior B-LINK-ADJ-PROOF
 % \codep@proof@bindbeginanchor{proof-id}{proof-key}
 %   Bind proof-key to the proof-begin destination emitted for proof-id.
+%@effect immediate-write
 \newcommand*{\codep@proof@bindbeginanchor}[2]{%
   \expandafter\ifx\csname codep@proofbeginanchor@#1\endcsname\relax%
     \codep@proof@beginanchorname{#1}{\codep@tmp@proofanchor}%
@@ -2569,6 +2669,7 @@
 %% @utility
 % \codep@proof@writebeginpage{proof-id}{proof-key}
 %   Persist the proof-start page under the current proof key.
+%@effect immediate-write
 \newcommand*{\codep@proof@writebeginpage}[2]{%
   \expandafter\ifx\csname codep@proofbeginpage@#1\endcsname\relax%
     \codep@writeanchorpagecurrent{#2}%
@@ -2591,6 +2692,7 @@
 %   Adjacent and \codepproofof-rebound proofs continue to bind a
 %   "proof:N.M" key via \codep@proof@adjacent / \codep@proofof@resolve;
 %   only the standalone path lands here.
+%@effect immediate-write
 \newcommand*{\codep@proof@materialize}{%
   \global\codep@proofdisplaypendingfalse%
   \global\codep@autoproofof@eligiblefalse%
@@ -2616,6 +2718,7 @@
 %% @behavior B-PROOF-DELAYED-COMMIT
 % \codep@proof@adjacent
 %   Stage the pending adjacent theorem/result atom for delayed binding.
+%@effect immediate-write
 \newcommand*{\codep@proof@adjacent}{%
   \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@adjtargetkey}%
   \codep@atomgetdisplay{\codep@pendingresultid}{\codep@tmp@adjtargetdisplay}%
@@ -2701,6 +2804,7 @@
 %   \codep@proofstaterestore overwrites \codep@currentproofid, so
 %   \codep@hookproof@afterend can later clear the per-atom
 %   \codep@manuallyemitted@<key> flag after the environment closes.
+%@effect immediate-write
 \newcommand*{\codep@hookproof@end}{%
   \ifbool{codep@proofsnumbered}{%
     \codep@ctxpeekkind\codep@tmp@ctxkind%
@@ -2748,6 +2852,7 @@
 %   proof-begin; this afterend hook only runs the rendering
 %   follow-up and clears the per-atom \codep@manuallyemitted@<key>
 %   flag for the proof that just closed.
+%@effect inline-material
 \newcommand*{\codep@hookproof@afterend}{%
   \codep@render@proof@afterend%
   \ifnum\codep@replaydepth=0\relax%
@@ -2765,6 +2870,7 @@
 %% @behavior B-SUPP-EXTEND
 % \codep@suppressenv{envname}
 %   Increment suppressdepth on entry, decrement it on exit.
+%@effect state-only
 \newcommand*{\codep@suppressenv}[1]{%
   \AtBeginEnvironment{#1}{%
     \global\advance\codep@suppressdepth by 1\relax
@@ -2799,6 +2905,7 @@
 %% @behavior B-EQ-TRACK1
 % \codep@trackeqenv{envname}
 %   Track one-row equation environments.
+%@effect state-only
 \newcommand*{\codep@trackeqenv}[1]{%
   \AtBeginEnvironment{#1}{%
     \global\let\codep@pendingresultid\@empty%
@@ -2836,6 +2943,7 @@
 %% @behavior B-EQ-TRACK2
 % \codep@trackalignenv{envname}
 %   Track multi-row equation environments.
+%@effect state-only
 \newcommand*{\codep@trackalignenv}[1]{%
   \AtBeginEnvironment{#1}{%
     \global\let\codep@pendingresultid\@empty%
@@ -2892,6 +3000,7 @@
 %   codep@arw@<src>@<tgt> is undefined (\relax), set it to
 %   \@empty and write \codep@atomref{src}{tgt} to the .aux
 %   file.  Otherwise skip (already written this run).
+%@effect immediate-write
 \def\codep@dedupwrite#1#2{%
   \expandafter\ifx%
       \csname codep@arw@#1@#2\endcsname\relax
@@ -3007,6 +3116,7 @@
 %   Compute the equation range and flush all pending refs.
 %   Called at \end{align} (Track 2).  Dispatches to
 %   \codep@flusheqrange@numbered or @fallback.
+%@effect track2-shipout-order-write
 \def\codep@flusheqrange{%
   % Check equation mode.
   \codep@eqshouldtrack%
@@ -3031,6 +3141,7 @@
 %% @behavior B-SUPP-EXTEND
 % \codep@suppresscmd{command}
 %   Patch a command to suppress paragraph numbering in its body.
+%@effect state-only
 \newcommand*{\codep@suppresscmd}[1]{%
   \pretocmd{#1}{\global\advance\codep@suppressdepth by 1\relax}{}{}%
   \apptocmd{#1}{\global\advance\codep@suppressdepth by -1\relax}{}{}%
@@ -3053,6 +3164,7 @@
 % \codep@suppressfootnote
 %   Suppress paragraph atoms and source attribution while the footnote
 %   body is typeset; direct wrapping avoids \footnote's \unskip path.
+%@effect state-only
 \newcommand*{\codep@suppressfootnote}{%
   \ifcodep@footnotesuppressed%
   \else%
@@ -3082,6 +3194,7 @@
 %% @behavior B-SUPP-TABLES
 %% @behavior B-SUPP-MATH
 %% @behavior B-EQ-UNNUM
+%@effect state-only
 \newcommand*{\codep@installsuppress}{%
   \codep@suppressenv{enumerate}%
   \codep@suppressenv{itemize}%
@@ -3129,6 +3242,7 @@
 %% @behavior B-SUPP-SECTION
 % \codep@suppresssectioning
 %   One-shot suppression for heading paragraphs.
+%@effect state-only
 \newcommand*{\codep@suppresssectioning}{%
   \AddToHook{cmd/section/before}[codependent/sectioning]{%
     \codep@closeparagraphifopen%
@@ -3163,6 +3277,7 @@
 %   and store it in \codep@cursecnum / \codep@cursectitle.
 %   Only active in appendix mode.
 %% @implements \codep@checktocsection
+%@effect state-only
 \newcommand*{\codep@capturesectitle}{%
   \ifbool{codep@appendix}{%
     \let\codep@orig@addcontentsline\addcontentsline%
@@ -3212,6 +3327,7 @@
 %   for paragraph-number suppression.
 \newif\ifcodep@enumitemnewlistwrapped
 %% @behavior B-SUPP-LISTS
+%@effect state-only
 \newcommand*{\codep@wrapenumitemnewlist}{%
   \ifcodep@enumitemnewlistwrapped%
   \else%
@@ -3239,6 +3355,7 @@
 % Auto-suppress tcolorbox / mdframed environments.
 %   Conditionally suppresses boxed-content environments when
 %   the respective package is loaded.
+%@effect state-only
 \AddToHook{begindocument/before}[codependent/suppress/boxes]{%
   \@ifpackageloaded{tcolorbox}{%
     % tcolorbox emits a box-closing paragraph at \end{tcolorbox};
@@ -3263,6 +3380,7 @@
 %   inside figure/table environments, which are already
 %   suppressed at the env level.
 %% @implements \codep@installsuppress
+%@effect state-only
 \newcommand*{\codep@suppresscommands}{%
   \codep@suppressfootnote%
   \codep@suppresscmd{\parbox}%
@@ -3272,6 +3390,7 @@
 %% @behavior B-NUM-PARA
 % \codep@parahook@paragraph
 %   Open a paragraph atom at top level.
+%@effect immediate-write
 \def\codep@parahook@paragraph{%
   \codep@allocatomid{\codep@thisatomid}{paragraph}%
   \codep@ctxpush{\codep@thisatomid}{paragraph}%
@@ -3298,6 +3417,7 @@
 %% @behavior B-PROOF-ADJRULE
 % \codep@installparahook
 %   Install the top-level para/begin paragraph allocator.
+%@effect state-only
 \newcommand*{\codep@installparahook}{%
   \AddToHook{para/begin}{%
     \ifbool{codep@tracked}{%
@@ -4577,6 +4697,7 @@
 \newif\ifcodep@isdata
 
 %% @behavior B-PASS-ONE
+%@effect state-only
 \def\codep@installnewlabel{%
   \let\codep@orig@newlabel\newlabel%
   \def\newlabel##1##2{%
@@ -4673,6 +4794,7 @@
 % Install the \newlabel override AND the active aux callbacks at
 % begindocument/before so they are live before the .aux read in
 % \begin{document}.
+%@effect state-only
 \AddToHook{begindocument/before}[codependent/backref/install]{%
   \codep@installnewlabel
   % Swap the providecommand no-ops for the active callbacks.
@@ -4737,6 +4859,7 @@
 
 % Swap the providecommand no-ops for the active callbacks
 % at begindocument/before, before the .aux read.
+%@effect state-only
 \AddToHook{begindocument/before}[codependent/concept/install]{%
   \let\codep@concept\codep@concept@active
   \let\codep@conceptref\codep@conceptref@active
@@ -4880,6 +5003,7 @@
 %% produces a live link but does not participate in the codependent
 %% backref graph; omitting \hyperref from the wrapped-primitive list
 %% below is the carrier of that behavior.
+%@effect inline-material
 \def\codep@installfrontedgerefpatch{%
   %% ---- \ref and \ref* ----
   \ifcsname ref\endcsname%
@@ -4961,6 +5085,7 @@
 %   paragraph atom from the ctx stack.  Empty-key branch is the
 %   natural replay guard (\codep@getcurrentatomkey returns
 %   \@empty during replay via \codep@getcurrentownerid).
+%@effect state-only
 \newcommand*{\codep@installparendhook}{%
   \AddToHook{para/end}{%
     \ifbool{codep@tracked}{%
@@ -4990,6 +5115,7 @@
 % \codep@cdpwrite{text}
 %   Guarded write to the .cdp stream.  No-op when the stream
 %   is not open (e.g. \if@filesw is false).
+%@effect immediate-write
 \newcommand*{\codep@cdpwrite}[1]{%
   \ifbool{codep@cdpopen}{%
     \immediate\write\codep@cdpout{#1}%
@@ -5002,6 +5128,7 @@
 %   atom (\codep@currentatom is empty).  Every per-atom .cdp
 %   record (label, tag, edge, use, …) routes through this guard;
 %   record-specific emitters own their concrete arity and payload shape.
+%@effect immediate-write
 \newcommand*{\codep@cdpwrite@atom}[1]{%
   \codep@getcurrentatomdisplay\codep@tmp@cdpdisplay%
   \ifx\codep@tmp@cdpdisplay\@empty\else%
@@ -5020,6 +5147,7 @@
 %% @behavior tag must reference a real .sty macro").
 %% @behavior BCDP-VERSION
 %% @behavior BCDP-SOURCE
+%@effect immediate-write
 \def\codep@cdp@writeheader{%
   \immediate\write\codep@cdpout{%
     \string\codep@cdp@version{2}}%
@@ -5055,6 +5183,7 @@
 %% Installed at begindocument/before so we capture \label BEFORE
 %% cleveref's \AtBeginDocument wrapper installs around us (see
 %% docs/DESIGN.md §9a "Label wrap" double-wrap explanation).
+%@effect immediate-write
 \AddToHook{begindocument/before}[codependent/cdp/labelwrap]{%
   \let\codep@orig@label\label
   \@ifpackageloaded{cleveref}{%
@@ -5161,6 +5290,7 @@
 %   transient macros like \codep@tmp@name) because \g@addto@macro
 %   does not expand its argument.  Callers use \edef to pre-build
 %   the record string.
+%@effect deferred-write
 \newcommand*{\codep@cdpwrite@deferred}[1]{%
   \ifbool{codep@cdpopen}{%
     % Stream already open (late declaration): write immediately.
@@ -5291,6 +5421,7 @@
 %      codep@nostar@<name> via \edef.
 %   4. Redefine \cmd as a \protected\edef \@ifstar dispatcher.
 %   5. Emit three deferred .cdp cmddef records: kind, key2/val2, src.
+%@effect deferred-write
 \def\codep@definetrackedcmd#1#2#3#4#5{%
   % 2. Save the original definition.
   \expandafter\let%
@@ -5478,6 +5609,7 @@
 % user-visible behaviors (error-on-fatal, warn-on-residual) are
 % asserted via the evaluator bodies populated in commit 3.
 %% @utility
+%@effect deferred-write
 \def\codep@enddoc@orchestrator{%
   \codep@enddoc@evaluator@pre%
   \ifcodep@abortfinalize%
@@ -5502,6 +5634,7 @@
 %% @implements \codeptrack
 % \codep@extractfirst  env1,env2,...\@nil
 %   Extract the first comma-separated element into \codep@basecounter.
+%@effect state-only
 \def\codep@extractfirst#1,#2\@nil{\def\codep@basecounter{#1}}
 
 % \codeptrack{env1,env2,...}
@@ -5514,6 +5647,7 @@
 %% @behavior B-EDGE-TRACK-TWICE
 % Generic env-hook surface: covers thmtools[continued] via generic hooks;
 % no per-package shim.
+%@effect state-only
 \newcommand*{\codeptrack}[1]{%
   % Guard against double invocation (newcounter{atom} would crash).
   \ifbool{codep@tracked}{%
@@ -5948,10 +6082,12 @@
 %% @behavior B-EQ-TRACK1
 % \codeptrackeq{envname}
 %   Register a custom single-number equation environment (Track 1).
+%@effect state-only
 \newcommand*{\codeptrackeq}[1]{\codep@trackeqenv{#1}}
 %% @behavior B-EQ-TRACK2
 % \codeptrackalign{envname}
 %   Register a custom multi-number equation environment (Track 2).
+%@effect state-only
 \newcommand*{\codeptrackalign}[1]{\codep@trackalignenv{#1}}
 
 %% @behavior B-SUPP-EXTEND
