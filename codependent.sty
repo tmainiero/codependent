@@ -1955,6 +1955,21 @@
 %% @utility
 \def\codep@quirks@tcolorboxtheorem{tcolorbox-theorem}%
 
+% \codep@quirks@keytheorems
+%   Quirks-key row for tracked keytheorems environments.
+%% @utility
+\def\codep@quirks@keytheorems{keytheorems}%
+
+% keytheorems adapter state.
+%% @utility
+\newif\ifcodep@keythms@begun
+%% @utility
+\newif\ifcodep@keythms@begintracked
+%% @utility
+\newif\ifcodep@keythms@storestarerror
+%% @utility
+\newif\ifcodep@keythms@materialized
+
 % tcolorbox theorem adapter state.
 %% @utility
 \protected\def\codep@tcb@canary{}%
@@ -2255,6 +2270,214 @@
   \codep@tcb@env@install{#1}%
 }%
 
+% \codep@keythms@resetstate
+%   Clear one-occurrence keytheorems adapter state.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@resetstate{%
+  \global\codep@keythms@begunfalse%
+  \global\codep@keythms@begintrackedfalse%
+  \global\codep@keythms@storestarerrorfalse%
+  \global\codep@keythms@materializedfalse%
+  \global\let\codep@thmwrap@activeenv\@empty%
+}%
+
+% \codep@keythms@ifstorestarTF{true}{false}
+%   Test keytheorems' private store* tl after key parsing.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\ExplSyntaxOn
+\def\codep@keythms@ifstorestarTF#1#2{%
+  \cs_if_exist:NTF \l__keythms_thmuse_storereversed_tl%
+    {%
+      \tl_if_empty:NTF \l__keythms_thmuse_storereversed_tl%
+        {#2}%
+        {#1}%
+    }%
+    {#2}%
+}%
+\ExplSyntaxOff
+
+% \codep@keythms@ifrestatingTF{true}{false}
+%   Prefer keytheorems' public restating predicate, with private fallback.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@ifrestatingTF#1#2{%
+  \@ifundefined{IfRestatingTF}{%
+    \@ifundefined{keythms_if_restating:TF}{#2}{%
+      \csname keythms_if_restating:TF\endcsname{#1}{#2}}%
+  }{%
+    \IfRestatingTF{#1}{#2}%
+  }%
+}%
+
+% \codep@keythms@storestarunsupported{env}
+%   Visible unsupported boundary for tracked keytheorems store*.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@storestarunsupported#1{%
+  \ifcodep@keythms@storestarerror%
+  \else%
+    \global\codep@keythms@storestarerrortrue%
+    \global\let\codep@thmwrap@activeenv\@empty%
+    \PackageError{codependent}%
+      {keytheorems store* not yet supported for tracked environments\MessageBreak%
+       Use store=... instead, or remove tracking. W06 roadmap:\space%
+       project_keytheorems_storestar_future_micro_wave.md}%
+      {Full store* support is planned as a future micro-wave.}%
+  \fi%
+}%
+
+% \codep@keythms@begin{env}
+%   Env-begin phase: allocate/arm only; posthead captures anchor/page.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@begin#1{%
+  \global\codep@keythms@beguntrue%
+  \global\codep@keythms@storestarerrorfalse%
+  \global\codep@keythms@materializedfalse%
+  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+    \global\codep@keythms@begintrackedtrue%
+  \else%
+    \global\codep@keythms@begintrackedfalse%
+  \fi%
+  \codep@hooktheorem@begin{#1}%
+}%
+
+% \codep@keythms@prehead{env}
+%   Early store* gate after key parsing and before theorem heading emission.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@prehead#1{%
+  \codep@keythms@ifstorestarTF{%
+    \codep@keythms@storestarunsupported{#1}%
+  }{}%
+}%
+
+% \codep@keythms@materialize{env}
+%   Posthead phase: derive key and snapshot theorem-scoped anchor/page.
+%% @implements \codep@hooktheorem
+%@effect immediate-write
+\def\codep@keythms@materialize#1{%
+  \ifnum\codep@trackeddepth=1\relax%
+    \codep@hooktheorem@derivekey{#1}%
+    \codep@hooktheorem@writeanchorandpage%
+    \global\codep@keythms@materializedtrue%
+  \fi%
+  \global\let\codep@thmwrap@activeenv\@empty%
+}%
+
+% \codep@keythms@posthead@skip
+%   Shared no-write posthead cleanup for store* and ordinary replays.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@posthead@skip{%
+  \global\let\codep@thmwrap@activeenv\@empty%
+  \ifcodep@keythms@begun\else%
+    \codep@keythms@resetstate%
+  \fi%
+}%
+
+% \codep@keythms@posthead{env}
+%   Backend posthead phase for original keytheorems occurrences only.
+%% @implements \codep@hooktheorem
+%@effect immediate-write
+\def\codep@keythms@posthead#1{%
+  \ifcodep@keythms@storestarerror%
+    \codep@keythms@posthead@skip%
+  \else%
+    \codep@keythms@ifstorestarTF{%
+      \codep@keythms@storestarunsupported{#1}%
+      \codep@keythms@posthead@skip%
+    }{%
+      \codep@keythms@ifrestatingTF{%
+        \codep@keythms@posthead@skip%
+      }{%
+        \codep@keythms@materialize{#1}%
+      }%
+    }%
+  \fi%
+}%
+
+% \codep@keythms@cancel{env}
+%   Unwind begin-time state after a store* error without record/render writes.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@cancel#1{%
+  \ifcodep@keythms@begun%
+    \ifcodep@keythms@begintracked%
+      \ifnum\codep@trackeddepth>1\relax%
+        \global\advance\codep@trackeddepth by -1\relax%
+        \global\advance\codep@suppressdepth by -1\relax%
+      \else\ifnum\codep@trackeddepth>0\relax%
+        \codep@ctxpop{#1}%
+        \global\advance\codep@trackeddepth by -1\relax%
+        \global\advance\codep@suppressdepth by -1\relax%
+        \global\let\codep@pendingresultid\@empty%
+      \fi\fi%
+    \else%
+      \ifnum\codep@replaydepth>0\relax%
+        \global\advance\codep@replaydepth by -1\relax%
+        \global\advance\codep@suppressdepth by -1\relax%
+      \fi%
+    \fi%
+  \fi%
+}%
+
+% \codep@keythms@end{env}
+%   Env-end phase: normal record/render/pop unless store* error fired.
+%% @implements \codep@hooktheorem
+%@effect inline-material
+\def\codep@keythms@end#1{%
+  \ifcodep@keythms@storestarerror%
+    \codep@keythms@cancel{#1}%
+  \else%
+    \codep@hooktheorem@end{#1}%
+  \fi%
+  \codep@keythms@resetstate%
+}%
+
+% \codep@keythms@restated{env}
+%   State-only signal for keytheorems ordinary replay suppression.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@restated#1{%
+  \global\let\codep@thmwrap@activeenv\@empty%
+  \codep@keythms@ifstorestarTF{}{%
+    \advance\codep@suppressdepth by 1\relax%
+  }%
+}%
+
+% \codep@keythms@env@install{env}
+%   Per tracked keytheorems environment install surface.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@keythms@env@install#1{%
+  \ifcsname codep@keythms@patched@#1\endcsname%
+  \else%
+    \codep@target@install{AddToHook}{env/#1/begin}{state-only}{%
+      \codep@keythms@begin{#1}}%
+    \codep@target@install{backend-hook}{keytheorems/#1/prehead}{state-only}{%
+      \codep@keythms@prehead{#1}}%
+    \codep@target@install{backend-hook}{keytheorems/#1/posthead}%
+      {immediate-write}{\codep@keythms@posthead{#1}}%
+    \codep@target@install{backend-hook}{keytheorems/#1/restated}{state-only}{%
+      \codep@keythms@restated{#1}}%
+    \codep@target@install{AddToHook}{env/#1/end}{inline-material}{%
+      \codep@keythms@end{#1}}%
+    \expandafter\gdef\csname codep@keythms@patched@#1\endcsname{1}%
+  \fi%
+}%
+
+% \codep@hooktheorem@keytheorems{env}
+%   Quirks-row installer for tracked keytheorems environments.
+%% @behavior B-NUM-SEQ
+%% @behavior B-LINK-APPENDIX-BIDIR
+%@effect state-only
+\def\codep@hooktheorem@keytheorems#1{%
+  \codep@keythms@env@install{#1}%
+}%
+
 % \codep@hooktheorem@envhookobservable{env}
 %   Register begin allocation and end record/render/pop through env hooks.
 %% @implements \codep@hooktheorem
@@ -2263,12 +2486,14 @@
   \codep@envtrack@config@read{#1}{quirks-key}{\codep@tmp@quirks}%
   \ifx\codep@tmp@quirks\codep@quirks@tcolorboxtheorem%
     \codep@hooktheorem@tcolorbox{#1}%
+  \else\ifx\codep@tmp@quirks\codep@quirks@keytheorems%
+    \codep@hooktheorem@keytheorems{#1}%
   \else%
     \codep@target@install{AddToHook}{env/#1/begin}{state-only}{%
       \codep@hooktheorem@begin{#1}}%
     \codep@target@install{AddToHook}{env/#1/end}{immediate-write}{%
       \codep@hooktheorem@end{#1}}%
-  \fi%
+  \fi\fi%
 }
 
 % \codep@envtrack@dispatch{env}
