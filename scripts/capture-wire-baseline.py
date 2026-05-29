@@ -62,6 +62,31 @@ STRESS_VARIANTS = [
     "stress-ta-appendix-gray",
     "stress-ta-inline",
     "stress-ta-inline-gray",
+    "stress-backends-tcolorbox-appendix",
+    "stress-backends-tcolorbox-inline",
+    "stress-backends-tcolorbox-inline-gray",
+    "stress-backends-keytheorems-appendix",
+    "stress-backends-keytheorems-inline",
+    "stress-backends-keytheorems-inline-gray",
+]
+
+# New backend fixtures that have stable wire output worth pinning but do NOT
+# carry traceability census ratchets (wire baseline and census ratchet are
+# separate gates — see .claude/baseline-sizes.json for census scope).
+EXTRA_INTEGRATION_FIXTURES = [
+    "integ-tcolorbox-appendix-name-link-plain",
+    "integ-tcolorbox-appendix-name-link-optional-heading",
+    "integ-tcolorbox-appendix-no-orphan",
+    "integ-tcolorbox-phantom-no-atom",
+    "integ-tcolorbox-no-double-increment",
+    "integ-keytheorems-appendix-name-link-plain",
+    "integ-keytheorems-appendix-name-link-optional-heading",
+    "integ-keytheorems-appendix-no-orphan-body-anchor",
+    "integ-keytheorems-restated-no-duplicate",
+    "integ-keytheorems-getkeytheorem-replay",
+    "integ-keytheorems-posthead-anchor-body-equation",
+    "integ-keytheorems-storestar-tracked-errors",
+    "integ-keytheorems-store-ordinary-no-regression",
 ]
 
 
@@ -484,6 +509,31 @@ def main(argv: "list[str] | None" = None) -> int:
                 "aux_sha": aux_sha,
                 "cdp_sha": cdp_sha,
                 "pdf_objects_sha": pdf_objects_sha,
+            }
+        )
+
+    for name in EXTRA_INTEGRATION_FIXTURES:
+        fixture_path = fixture_map.get(name)
+        if fixture_path is None:
+            print(f"  ERROR: no fixture for {name!r}", file=sys.stderr)
+            results.append(
+                {
+                    "name": name,
+                    "aux_sha": None,
+                    "cdp_sha": None,
+                    "pdf_objects_sha": None,
+                }
+            )
+            continue
+
+        print(f"  [extra] {name}")
+        aux_sha, cdp_sha = compile_regular(fixture_path, name, n_passes=3)
+        results.append(
+            {
+                "name": name,
+                "aux_sha": aux_sha,
+                "cdp_sha": cdp_sha,
+                "pdf_objects_sha": None,
             }
         )
 

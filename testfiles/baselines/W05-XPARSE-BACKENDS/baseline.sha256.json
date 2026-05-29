@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-26T06:27:20.685973+00:00",
+  "captured_at": "2026-05-29T17:08:18.169283+00:00",
   "fixtures": [
     {
       "aux_sha": "e6db37dd5a9bafac175e49f21480783946893593b4f717daa792834eba4b3335",
@@ -164,30 +164,143 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "44f90ef7bbbf29d1ad1a7263ec6ab4e581623d7544d20b08d2305e65cff16088",
-      "cdp_sha": "8984b0c3e00893826a5ccd2048f1a9d1e07c5b5ddf44d077ca63899d1dee3866",
+      "aux_sha": "acf31e82d66b844b92bcd923b29b19c9c889ccda0fd68b6a22c2bc42bd1c3a81",
+      "cdp_sha": "58f3dc82505a40737987129d4772882cee42778ad31c20e41e72bf79bba2807a",
       "name": "trinity-test",
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "cde92e31337e28e4c6e30370e82b4388b877adef9aba9d743faf17c41d07657c",
-      "cdp_sha": "01a59062abaebd54328544c99ebe33196a2b91778f51b02e4a2d7197382e0da0",
+      "aux_sha": "064b14920848a25c7222db34d513ba58e5b6cb47a60eac4293616c5f4e23b947",
+      "cdp_sha": "d14d3281f42756eb45d49ac4a3ae353f818dae854d6b12925495929da74b980c",
       "name": "stress-ta-appendix-gray",
-      "pdf_objects_sha": "1f3b4622ca6084f999e2839c2562aca5e32a6159f3aabac66d64e78201fe1930"
+      "pdf_objects_sha": "66ed04795d5d30f764935558165b7aa4fdea73778309b674b05cd02734fbde09"
     },
     {
-      "aux_sha": "630b3df51803de4c7c2d049288d925964d46da7a9c25f3f84c5758ee16ca6dc7",
-      "cdp_sha": "a5c498aec4fab1b72b115dd079ffb61c4a5718bc7b420253900e4a7b07670282",
+      "aux_sha": "49ae7fc6e4146a6d9a624a33b8145a6d67e2283149a146ee09aeaf5a3a720b17",
+      "cdp_sha": "6a69282f2bc51e219c5673408bd261d6d3aa1b71406f136f13f070e63b868f7c",
       "name": "stress-ta-inline",
-      "pdf_objects_sha": "0f43f84585c08eaf802c3b8cb88c63d75e61423b871c3ecb8b00417a70b22344"
+      "pdf_objects_sha": "c7e065b28b414e02ba6bbfdccccebd9fd292bd15922e623ed7521775e6dfaadb"
     },
     {
-      "aux_sha": "630b3df51803de4c7c2d049288d925964d46da7a9c25f3f84c5758ee16ca6dc7",
-      "cdp_sha": "8af7a71b9ce624c8480b74902c33ea2f1ec2340e52991be691183cd152a1198a",
+      "aux_sha": "49ae7fc6e4146a6d9a624a33b8145a6d67e2283149a146ee09aeaf5a3a720b17",
+      "cdp_sha": "6c301e8b0740ceb25439f0142ad7bc7ecd7da1f27bb4b969478336359d4f353e",
       "name": "stress-ta-inline-gray",
-      "pdf_objects_sha": "b9e1b5943c4e50b8709060a0322043089ab96edd4392643c72dee79771e71a52"
+      "pdf_objects_sha": "c7bc63d0f33e5c4240a893fa5a1d0711cdc5c98e9f340dc234f820ae32ad3c58"
+    },
+    {
+      "aux_sha": "5dc1f628f7d493d3acf0feb1583d42309cfccd39455d2924363e5316a6882372",
+      "cdp_sha": "da2a9bec91cff281536a833171de1ad5dd9d3366fd70c6632c7985de02d02e15",
+      "name": "stress-backends-tcolorbox-appendix",
+      "pdf_objects_sha": "1b3508efb3a246f6cc1c0d33b92f748a151987ae03016e8da74b5c0f320b2cc9"
+    },
+    {
+      "aux_sha": "5dc1f628f7d493d3acf0feb1583d42309cfccd39455d2924363e5316a6882372",
+      "cdp_sha": "7ceb068625c6d393e97d11ba4b70e40d7d50f69574ecb44a837f05ece548c8f3",
+      "name": "stress-backends-tcolorbox-inline",
+      "pdf_objects_sha": "c7825060f3310287f7762971a8e8d6c391219269fd2afd8529056b63db550769"
+    },
+    {
+      "aux_sha": "5dc1f628f7d493d3acf0feb1583d42309cfccd39455d2924363e5316a6882372",
+      "cdp_sha": "7687b908e8d5f144bec29da2666ab7f34ad17242b915bfd9ebd6431d9273e9d9",
+      "name": "stress-backends-tcolorbox-inline-gray",
+      "pdf_objects_sha": "6ba0a4b67489edc992d060561b57ab3247dcb09e188d0e6a8ac213a83a745684"
+    },
+    {
+      "aux_sha": "8e99b94f0268ab2e12910a11e8a88261a3a9fe3b988fdffcda760caf260c8ba2",
+      "cdp_sha": "c4cb9f0cd205d251e511c276fe8ebaa6733840572625430fad31577e5eb1e9b8",
+      "name": "stress-backends-keytheorems-appendix",
+      "pdf_objects_sha": "c0412ee863137d6bbaa34c3ab3758ee9aa18c817010e46618d178199591b36d9"
+    },
+    {
+      "aux_sha": "8e99b94f0268ab2e12910a11e8a88261a3a9fe3b988fdffcda760caf260c8ba2",
+      "cdp_sha": "4d3318c943155b18cf83560ac59e6e889f97e1d6ccb25ef4fabf45e119209112",
+      "name": "stress-backends-keytheorems-inline",
+      "pdf_objects_sha": "0e458030e583e01cf16d779f16fe27859dbbdfe0c689b841270a5497f8493a3e"
+    },
+    {
+      "aux_sha": "8e99b94f0268ab2e12910a11e8a88261a3a9fe3b988fdffcda760caf260c8ba2",
+      "cdp_sha": "95e5662dbab2e7a9db9a1a44c9785fa4136fc3ddb36164089404abc2d5cfb37c",
+      "name": "stress-backends-keytheorems-inline-gray",
+      "pdf_objects_sha": "e04677845d5432329831d051fc6bd593463792368bb5ccb148bcd973b589ebc4"
+    },
+    {
+      "aux_sha": "f43329afceb1d02b1f529a5321cfb67857e05c560bbca93195deb2ff94bc161b",
+      "cdp_sha": "521093fe248add7b2b0513b710c8927e6b3aa855f4bd5f496012ed301d4d6f0e",
+      "name": "integ-tcolorbox-appendix-name-link-plain",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "995d74f312aea34c9e10f01626f3878bb0be5b6ba56e751e98d101426bae72ea",
+      "cdp_sha": "d3af2f63bbcd6c564376ab592cbbc3ec37d1185ad3e37b156d0a9de0490bafb1",
+      "name": "integ-tcolorbox-appendix-name-link-optional-heading",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "3ee8d51ed049374dfd1e080df41566102801b3a861546b2ad45df5d6b23f85e9",
+      "cdp_sha": "8faa5e563c563ce697462dc46d490f26bde5f894e07ee54aec84cda50b89d035",
+      "name": "integ-tcolorbox-appendix-no-orphan",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "64a9fa29ec58d2e9899fccd49e99310f591c536742681e5c27cd184e3cf50dd4",
+      "cdp_sha": "4db6c716e5fd4158b3407d82244aacf67b800e3d76f7cf38d37ecbb5cd061c79",
+      "name": "integ-tcolorbox-phantom-no-atom",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "dba21d245f77eafad51d9cb8584d686d0dcee4f4aff23c380e30c21f564f7901",
+      "cdp_sha": "4aaeda508e73925ce2e41a9cea44b010c0a7f1530c4c35b944f3dd1e91f023d2",
+      "name": "integ-tcolorbox-no-double-increment",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "31c9e4d6c1b67a37a69065da05487084ce135f4dc3224b762d6893573dfc21b9",
+      "cdp_sha": "b8a071dc76a7bc25a71abef89513372fe69de9c42a2192ca7c1429f20cc1c0ce",
+      "name": "integ-keytheorems-appendix-name-link-plain",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "50953157a8231d21cf6ee474d16193b411701a736ce8306d510de2c0d73ffa5c",
+      "cdp_sha": "949241a4f1360c3afd982bec71519d8b65c5162903653f374de92d83e7291613",
+      "name": "integ-keytheorems-appendix-name-link-optional-heading",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "31c9e4d6c1b67a37a69065da05487084ce135f4dc3224b762d6893573dfc21b9",
+      "cdp_sha": "371adfca7ccb6bda7c7e6a1b63f5187e66bcd91dd684116195e82889e2a9d550",
+      "name": "integ-keytheorems-appendix-no-orphan-body-anchor",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "adbeebe61e88ef783ba9992ea53c6db8b5a4a7380bcf9df0cd9c4ef70004cf6b",
+      "cdp_sha": "32594643d7af81dde4c15d07ccbcce79e3c45f7ebee576041033aa47bebcd7c4",
+      "name": "integ-keytheorems-restated-no-duplicate",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "cde7186f8ad69e09ed1e4013105c2f13bc83ac4c966004571d3c48fbb8fb98ed",
+      "cdp_sha": "54837a5507d6421659195d05876db5e1bb1286da9061ae2dbff0640eb2457b50",
+      "name": "integ-keytheorems-getkeytheorem-replay",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "91e971dca78d88cfc4a6c4dcc45c97927d72642b6c292453f9b4736ba13b00b4",
+      "cdp_sha": "805e16b0daaacf850ce52f164a7850b80af4c7a64ccea963aceeb7e0000efcca",
+      "name": "integ-keytheorems-posthead-anchor-body-equation",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "c11b9095bba22a04ff04fa43fe49d7b17bbb033276a8422d267434ca545ad106",
+      "cdp_sha": "3a9e43ce314df5a2abdcd05e5da6fb6f8d60837f9ba240364ca4ac2692236144",
+      "name": "integ-keytheorems-storestar-tracked-errors",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "2a155e43df8b9db4e5744c8e264366b8aab59980e46103544ed13c5585504b8c",
+      "cdp_sha": "2b20614ac497b9f003dfe94c1cd0d9b6b97be85522cd1a2650e2b46d01bfbe4c",
+      "name": "integ-keytheorems-store-ordinary-no-regression",
+      "pdf_objects_sha": null
     }
   ],
-  "superseded_by": "W05-XPARSE-BACKENDS",
-  "wave": "W05-XPARSE-VMODE-FIXES"
+  "wave": "W05-XPARSE-BACKENDS"
 }
