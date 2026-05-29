@@ -1950,15 +1950,325 @@
 %% @utility
 \def\codep@strategy@envhookobservable{env-hook-observable}%
 
+% \codep@quirks@tcolorboxtheorem
+%   Quirks-key row for tracked tcolorbox \newtcbtheorem environments.
+%% @utility
+\def\codep@quirks@tcolorboxtheorem{tcolorbox-theorem}%
+
+% tcolorbox theorem adapter state.
+%% @utility
+\protected\def\codep@tcb@canary{}%
+%% @utility
+\def\codep@tcb@stop{\codep@tcb@stop}%
+%% @utility
+\let\codep@tcb@armedenv\@empty
+%% @utility
+\newif\ifcodep@tcb@afteroptionsinstalled
+%% @utility
+\newif\ifcodep@tcb@begun
+%% @utility
+\newif\ifcodep@tcb@enabled
+%% @utility
+\newif\ifcodep@tcb@materialized
+%% @utility
+\newif\ifcodep@tcb@thmwrapinstalled
+
+% \codep@tcb@resetboxstate
+%   Clear one-box tcolorbox adapter state after env end or disablement.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@resetboxstate{%
+  \global\codep@tcb@begunfalse%
+  \global\codep@tcb@enabledfalse%
+  \global\codep@tcb@materializedfalse%
+  \global\let\codep@tcb@armedenv\@empty%
+  \global\let\codep@thmwrap@activeenv\@empty%
+}%
+
+% \codep@tcb@begin{env}
+%   Per-env typed pretocmd body: arm state and inject canary-bearing
+%   tcolorbox phantom material before user options can clear it.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@begin#1{%
+  \codep@closeparagraphifopen%
+  \global\let\codep@pendingresultid\@empty%
+  \codep@hooktheorem@begin{#1}%
+  \global\codep@tcb@beguntrue%
+  \global\codep@tcb@enabledfalse%
+  \global\codep@tcb@materializedfalse%
+  \gdef\codep@tcb@armedenv{#1}%
+  \tcbset{phantom={%
+    \codep@tcb@materialize{#1}%
+    \codep@tcb@canary}}%
+}%
+
+% \codep@tcb@ifcanaryTF{true}{false}
+%   Test whether the protected canary token survived in \kvtcb@phantom
+%   without expanding user phantom material.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@ifcanaryTF#1#2{%
+  \def\codep@tcb@ifcanaryTF@scan##1\codep@tcb@canary##2%
+      \codep@tcb@stop{%
+    \def\codep@tmp@tail{##2}%
+    \ifx\codep@tmp@tail\@empty%
+      #2%
+    \else%
+      #1%
+    \fi%
+  }%
+  \expandafter\codep@tcb@ifcanaryTF@scan\kvtcb@phantom%
+    \codep@tcb@canary\codep@tcb@stop%
+}%
+
+% \codep@tcb@disable@thisbox
+%   Loss-of-canary path: no atom, no name link, no hard error.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@disable@thisbox{%
+  \PackageWarning{codependent}{%
+    Tracked tcolorbox theorem '\codep@tcb@armedenv' cleared\space%
+    codependent phantom material (nophantom or another\space%
+    phantom-clearing option); no codependent atom or appendix\space%
+    theorem-name link will be emitted for this box}%
+  \global\codep@tcb@enabledfalse%
+  \global\codep@tcb@materializedfalse%
+  \global\let\codep@tcb@armedenv\@empty%
+  \global\let\codep@thmwrap@activeenv\@empty%
+}%
+
+% \codep@tcb@afteroptions@maybe
+%   Private tcolorbox after-options hook callback.  It observes the
+%   effect of nophantom without expanding the phantom token list.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@afteroptions@maybe{%
+  \ifx\codep@tcb@armedenv\@empty\else%
+    \codep@tcb@ifcanaryTF{%
+      \global\codep@tcb@enabledtrue%
+      \global\let\codep@tcb@armedenv\@empty%
+    }{%
+      \codep@tcb@disable@thisbox%
+    }%
+  \fi%
+}%
+
+% \codep@tcb@capturecounter{env}
+%   Capture tcolorbox's already-stepped theorem display number.  The first
+%   edef asks \thetcbcounterof for the env display macro; the second expands
+%   that display macro to digits without stepping any counter.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@capturecounter#1{%
+  \edef\codep@tmp@tcbcounter{\thetcbcounterof{#1}}%
+  \edef\codep@tmp@tcbcounter{\codep@tmp@tcbcounter}%
+}%
+
+% \codep@tcb@materialize{env}
+%   Phantom-time atom materialization for a tracked tcolorbox theorem.
+%% @implements \codep@hooktheorem
+%@effect immediate-write
+\def\codep@tcb@materialize#1{%
+  \ifcodep@tcb@enabled%
+    \ifcodep@tcb@materialized%
+    \else%
+      \global\codep@tcb@materializedtrue%
+      \ifnum\codep@trackeddepth=1\relax%
+        \codep@ctxpeekid\codep@thisatomid%
+        \ifx\codep@thisatomid\@empty\else%
+          \codep@atomgetkey{\codep@thisatomid}{\codep@tmp@existingkey}%
+          \ifx\codep@tmp@existingkey\@empty%
+            \codep@tcb@capturecounter{#1}%
+            \xdef\codep@outeratom{#1:\codep@tmp@tcbcounter}%
+            \codep@atomsetkey{\codep@thisatomid}{\codep@outeratom}%
+          \else%
+            \xdef\codep@outeratom{\codep@tmp@existingkey}%
+          \fi%
+          \codep@hooktheorem@writeanchorandpage%
+        \fi%
+      \fi%
+    \fi%
+  \fi%
+}%
+
+% \codep@tcb@end@outer{env}
+%   Record/render a tcolorbox theorem atom while leaving suppression and
+%   ctx stack active until env/<env>/after closes the box.
+%% @implements \codep@hooktheorem
+%@effect inline-material
+\def\codep@tcb@end@outer#1{%
+  \codep@ctxpeekid\codep@thisatomid%
+  \codep@hooktheorem@record{#1}%
+  \codep@hooktheorem@preparebackref{#1}%
+  \codep@captureentitymeta{\codep@outeratom}{theorem}%
+    {\codep@tmp@num}{#1}{}%
+  \xdef\codep@pendingresultid{\codep@thisatomid}%
+  \xdef\codep@endenv@pendingclear{\codep@outeratom}%
+}%
+
+% \codep@tcb@end{env}
+%   Env-end renderer for materialized tcolorbox theorem atoms.
+%% @implements \codep@hooktheorem
+%@effect inline-material
+\def\codep@tcb@end#1{%
+  \ifcodep@tcb@materialized%
+    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+      \ifnum\codep@trackeddepth>1\relax%
+      \else%
+        \codep@tcb@end@outer{#1}%
+      \fi%
+    \fi%
+  \fi%
+}%
+
+% \codep@tcb@after{env}
+%   Pop/cancel tcolorbox theorem state after the box closing material.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@after#1{%
+  \ifcodep@tcb@begun%
+    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+      \ifnum\codep@trackeddepth>1\relax%
+        \global\advance\codep@trackeddepth by -1\relax%
+        \global\advance\codep@suppressdepth by -1\relax%
+      \else%
+        \codep@ctxpop{#1}%
+        \global\advance\codep@trackeddepth by -1\relax%
+        \global\advance\codep@suppressdepth by -1\relax%
+        \ifcodep@tcb@materialized%
+          \codep@manuallyemitted@end@outer@clear%
+        \else%
+          \global\let\codep@pendingresultid\@empty%
+        \fi%
+      \fi%
+    \else%
+      \global\advance\codep@replaydepth by -1\relax%
+      \global\advance\codep@suppressdepth by -1\relax%
+    \fi%
+  \fi%
+  \codep@tcb@resetboxstate%
+}%
+
+% \codep@tcb@afteroptions@install
+%   Idempotently append the tcolorbox after-options canary callback.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@afteroptions@install{%
+  \ifcodep@tcb@afteroptionsinstalled%
+  \else%
+    \@ifundefined{tcb@afteroptions@hook}{%
+      \PackageWarning{codependent}{%
+        tcolorbox theorem adapter could not find\space%
+        \string\tcb@afteroptions@hook; nophantom canary disabled}%
+    }{%
+      \global\codep@tcb@afteroptionsinstalledtrue%
+      \codep@target@install{macro-append}{\tcb@afteroptions@hook}%
+        {state-only}{\codep@tcb@afteroptions@maybe}%
+    }%
+  \fi%
+}%
+
+% \codep@tcb@thmwrap@title{name}{number}{description}
+%   Wrapper body for tcolorbox theorem headings.
+%% @implements \codep@thmwrap@install
+%@effect inline-material
+\def\codep@tcb@thmwrap@title#1#2#3{%
+  \codep@thmwrap@wrapname{#1}{\codep@tmp@wrappedthmname}%
+  \csname codep@orig@__tcobox_theo_title:nnn\endcsname%
+    {\codep@tmp@wrappedthmname}{#2}{#3}%
+  \global\let\codep@thmwrap@activeenv\@empty%
+}%
+
+% \codep@tcb@thmwrap@install@target{target-cs}
+%   Install the tcolorbox theorem-title wrapper through the CORE kind.
+%% @implements \codep@thmwrap@install
+%@effect inline-material
+\def\codep@tcb@thmwrap@install@target#1{%
+  \codep@target@install{theorem-name-link-wrap}{#1}{inline-material}{%
+    \def#1##1##2##3{%
+      \codep@tcb@thmwrap@title{##1}{##2}{##3}%
+    }%
+  }%
+}%
+
+% \codep@tcb@thmwrap@install
+%   Install tcolorbox theorem-name forward linking once.
+%% @behavior B-LINK-APPENDIX-BIDIR
+%@effect inline-material
+\def\codep@tcb@thmwrap@install{%
+  \ifcodep@tcb@thmwrapinstalled%
+  \else%
+    \@ifundefined{__tcobox_theo_title:nnn}{%
+      \PackageWarning{codependent}{%
+        tcolorbox theorem adapter could not find the theorem title\space%
+        renderer; appendix theorem-name links disabled for tcolorbox}%
+    }{%
+      \global\codep@tcb@thmwrapinstalledtrue%
+      \expandafter\codep@tcb@thmwrap@install@target%
+        \csname __tcobox_theo_title:nnn\endcsname%
+    }%
+  \fi%
+}%
+
+% \codep@tcb@pretocmd@install@target{target-cs}{env}
+%   Install the per-env tcolorbox begin adapter through typed pretocmd.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@pretocmd@install@target#1#2{%
+  \codep@target@install{pretocmd}{#1}{state-only}{%
+    \codep@tcb@begin{#2}}%
+}%
+
+% \codep@tcb@env@install{env}
+%   Per tracked tcolorbox theorem environment install surface.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@env@install#1{%
+  \ifcsname codep@tcb@patched@#1\endcsname%
+  \else%
+    \@ifundefined{#1}{%
+      \PackageError{codependent}{%
+        Tracked tcolorbox theorem environment '#1' is undefined}{%
+        Define the \string\newtcbtheorem\space environment before%
+        \MessageBreak calling \string\codeptrack.}%
+    }{%
+      \expandafter\codep@tcb@pretocmd@install@target%
+        \csname #1\endcsname{#1}%
+      \codep@target@install{AddToHook}{env/#1/end}{inline-material}{%
+        \codep@tcb@end{#1}}%
+      \codep@target@install{AddToHook}{env/#1/after}{state-only}{%
+        \codep@tcb@after{#1}}%
+      \expandafter\gdef\csname codep@tcb@patched@#1\endcsname{1}%
+    }%
+  \fi%
+}%
+
+% \codep@hooktheorem@tcolorbox{env}
+%   Quirks-row installer for tracked \newtcbtheorem environments.
+%% @behavior B-NUM-SEQ
+%% @behavior B-LINK-APPENDIX-BIDIR
+%@effect state-only
+\def\codep@hooktheorem@tcolorbox#1{%
+  \codep@tcb@afteroptions@install%
+  \codep@tcb@thmwrap@install%
+  \codep@tcb@env@install{#1}%
+}%
+
 % \codep@hooktheorem@envhookobservable{env}
 %   Register begin allocation and end record/render/pop through env hooks.
 %% @implements \codep@hooktheorem
 %@effect state-only
 \newcommand*{\codep@hooktheorem@envhookobservable}[1]{%
-  \codep@target@install{AddToHook}{env/#1/begin}{state-only}{%
-    \codep@hooktheorem@begin{#1}}%
-  \codep@target@install{AddToHook}{env/#1/end}{immediate-write}{%
-    \codep@hooktheorem@end{#1}}%
+  \codep@envtrack@config@read{#1}{quirks-key}{\codep@tmp@quirks}%
+  \ifx\codep@tmp@quirks\codep@quirks@tcolorboxtheorem%
+    \codep@hooktheorem@tcolorbox{#1}%
+  \else%
+    \codep@target@install{AddToHook}{env/#1/begin}{state-only}{%
+      \codep@hooktheorem@begin{#1}}%
+    \codep@target@install{AddToHook}{env/#1/end}{immediate-write}{%
+      \codep@hooktheorem@end{#1}}%
+  \fi%
 }
 
 % \codep@envtrack@dispatch{env}
