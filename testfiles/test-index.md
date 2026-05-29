@@ -166,7 +166,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (53 fixtures)
+## Integration (66 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -186,6 +186,14 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-equations-all.lvt | LIVE | B-EQ-ALL | Verify that equations=all causes equations INSIDE tracked theorem |
 | testfiles/integration/integ-equations-off.lvt | LIVE | B-EQ-OFF | Verify that equations=off fully suppresses equation tracking: |
 | testfiles/integration/integ-full-stack-inline.lvt | LIVE | B-REND-INLINE, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Full-stack integration: amsmath, amsthm, thmtools, hyperref, |
+| testfiles/integration/integ-keytheorems-appendix-name-link-optional-heading.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems optional heading path keeps appendix forward link |
+| testfiles/integration/integ-keytheorems-appendix-name-link-plain.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems plain theorem heading gets appendix forward link |
+| testfiles/integration/integ-keytheorems-appendix-no-orphan-body-anchor.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems appendix entry targets theorem destination not body anchor |
+| testfiles/integration/integ-keytheorems-getkeytheorem-replay.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems getkeytheorem replay remains inert for codependent tracking |
+| testfiles/integration/integ-keytheorems-posthead-anchor-body-equation.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems posthead capture beats in-body equation anchors |
+| testfiles/integration/integ-keytheorems-restated-no-duplicate.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems store replay does not duplicate or overwrite original destination |
+| testfiles/integration/integ-keytheorems-store-ordinary-no-regression.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems ordinary store replay has no storestar regression |
+| testfiles/integration/integ-keytheorems-storestar-tracked-errors.lvt | LIVE | B-COMPAT-KEYTHEOREMS-STORESTAR | tracked keytheorems store* raises visible unsupported error |
 | testfiles/integration/integ-no-cleveref.lvt | LIVE | B-PASS-ONE | Correct patch-site selection when cleveref is absent. |
 | testfiles/integration/integ-no-hyperref.lvt | LIVE | B-REND-INLINE | Graceful degradation when hyperref is absent. Verifies that |
 | testfiles/integration/integ-no-paragraphs.lvt | LIVE | B-EDGE-PARAOFF-EQ | Integration test with paragraphs=off. Verifies that |
@@ -217,17 +225,28 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-stress-all-features.lvt | LIVE | B-NUM-SEQ, B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-NONADJ, B-DISP-THM, B-DISP-PARA, B-LINK-CLICKABLE, B-LINK-EFFECTIVE-ANCHOR, B-LINK-NO-ORPHAN, B-LINK-ADJ-PROOF, B-LINK-PROOFOF-STAR, B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING, B-REND-INLINE, B-CONC-DEFSITE, B-CONC-EDGES, B-SUPP-CMDS, B-SUPP-TRACKED, B-EQ-OUTER, B-EQ-TRACK1, B-EQ-TRACK2, B-PASS-ONE, B-PASS-TWO | Wave 3 holistic stress fixture: exercises every codependent feature |
 | testfiles/integration/integ-stress-spacing.lvt | LIVE | B-PROOF-ADJ, B-LINK-CLICKABLE | Integration stress: theorem/proof spacing with hyperref+cleveref. |
 | testfiles/integration/integ-supp-tracked-env.lvt | LIVE | B-SUPP-TRACKED | Verify paragraph numbering is suppressed inside tracked |
+| testfiles/integration/integ-tcolorbox-appendix-name-link-optional-heading.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox optional heading path keeps appendix forward link |
+| testfiles/integration/integ-tcolorbox-appendix-name-link-plain.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox plain theorem heading gets appendix forward link |
+| testfiles/integration/integ-tcolorbox-appendix-no-orphan.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox appendix links have no orphan destinations |
+| testfiles/integration/integ-tcolorbox-no-double-increment.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox counter capture does not double increment boxes |
+| testfiles/integration/integ-tcolorbox-phantom-no-atom.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox nophantom tracked box emits warning and no atom |
 | testfiles/integration/integ-thmtools-continued-generic-hooks.lvt | LIVE | B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST, B-COMPAT-THMTOOLS-CONTINUED | thmtools continued theorem tracks via generic hooks; continued copy gets its own atom. |
 | testfiles/integration/integ-untracked-hyperref-proof.lvt | LIVE | B-PROOF-ADJ | codependent + hyperref loaded, proof env present, NO |
 | testfiles/integration/integ-usedin-reading-order.lvt | LIVE | B-USEDIN-READING-ORDER | Track-2 equation-range sources keep Used-In lists in reader order |
 | testfiles/integration/test-integration-kitchen-sink.lvt | LIVE | B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP | Exercise every codependent.sty feature in a single document that |
 | testfiles/integration/test-trinity-stripped.lvt | LIVE | B-NUM-SHARED, B-LINK-CLICKABLE, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP | Stripped integration fixture modelled on a real category-theory |
-| testfiles/integration/trinity-test.lvt | LIVE | B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP, B-USEDIN-READING-ORDER | Enriched integration fixture combining the trinity-stripped |
+| testfiles/integration/trinity-test.lvt | LIVE | B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP, B-USEDIN-READING-ORDER, B-COMPAT-TCOLORBOX-THEOREM | Enriched integration fixture combining the trinity-stripped |
 
-## Stress (3 fixtures)
+## Stress (9 fixtures)
 
 | Path | Status | Render modes | Behavior | Purpose |
 |---|---|---|---|---|
+| testfiles/compiled-examples/stress-backends-keytheorems-appendix.tex | LIVE | appendix, default-color | B-COMPAT-KEYTHEOREMS | keytheorems backend stress fixture (appendix) |
+| testfiles/compiled-examples/stress-backends-keytheorems-inline-gray.tex | LIVE | inline, gray-backrefs | B-COMPAT-KEYTHEOREMS | keytheorems backend stress fixture (inline-gray) |
+| testfiles/compiled-examples/stress-backends-keytheorems-inline.tex | LIVE | inline, default-color | B-COMPAT-KEYTHEOREMS | keytheorems backend stress fixture (inline) |
+| testfiles/compiled-examples/stress-backends-tcolorbox-appendix.tex | LIVE | appendix, default-color | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox backend stress fixture (appendix) |
+| testfiles/compiled-examples/stress-backends-tcolorbox-inline-gray.tex | LIVE | inline, gray-backrefs | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox backend stress fixture (inline-gray) |
+| testfiles/compiled-examples/stress-backends-tcolorbox-inline.tex | LIVE | inline, default-color | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox backend stress fixture (inline) |
 | testfiles/compiled-examples/stress-ta-appendix-gray.tex | EXPLORATORY | appendix, gray-backrefs, custom-page-format | B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER | Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting. |
 | testfiles/compiled-examples/stress-ta-inline-gray.tex | EXPLORATORY | inline, gray-backrefs | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER | Inline TA stress fixture with gray backrefs. |
 | testfiles/compiled-examples/stress-ta-inline.tex | LIVE | inline, default-color | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER | Inline TA stress fixture using default backref color. |

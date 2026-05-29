@@ -4646,6 +4646,39 @@ The `.sty` hooks into theorem environments by name via
   environment begin/end hook surface as ordinary tracked theorem
   instances; no per-package shim is installed.  The GREEN fixture is
   `testfiles/integration/integ-thmtools-continued-generic-hooks.lvt`.
+
+### tcolorbox and keytheorems backend parity (W05-XPARSE-BACKENDS)
+
+`codependent` treats `tcolorbox` `\newtcbtheorem` environments and
+`keytheorems` declarations as first-class theorem backends, beside the
+existing amsthm, ntheorem, thmtools, and generic environment-hook paths.
+Both backends resolve through the xparse descriptor table and keep their
+backend-specific timing in quirks rows rather than render-layer branches.
+
+For `tcolorbox`, the adapter uses the backend's already-stepped theorem
+counter and a phantom canary.  Ordinary tracked boxes therefore produce
+sequential theorem keys without double-incrementing, while boxes that clear
+phantom material (for example `nophantom`) warn and deliberately emit no
+codependent theorem atom, label entity, appendix theorem-name link, or body
+/ closing paragraph atoms.  The tcolorbox title renderer is wrapped so both
+plain and optional-heading boxes participate in appendix bidirectional
+linking.
+
+For `keytheorems`, begin-time hooks allocate state only; the posthead hook
+materializes the atom after the theorem counter and theorem destination are
+current.  That timing is load-bearing: body anchors or numbered equations
+inside the theorem must not overwrite the theorem destination used by the
+appendix entry.  Ordinary `store=` plus `\getkeytheorem` replay is supported
+as an inert replay: the first occurrence keeps its anchor/page record and no
+duplicate theorem or paragraph atoms are emitted from the replay body.
+
+Tracked keytheorems `store*` remains an explicit Option-0 caveat for this
+release.  It raises a visible `PackageError` that names `store*`, suggests
+`store=...`, and points at `project_keytheorems_storestar_future_micro_wave.md`
+/ W06.  If TeX continues in nonstop mode, codependent unwinds the occurrence
+without theorem, label, anchor, page, or destination writes.  The W06 upgrade
+path is to add full reversed-replay semantics rather than silently treating
+`store*` as ordinary `store=`.
   See [B-COMPAT-THMTOOLS-CONTINUED](BEHAVIOR.md#compatibility-matrix).
 - **hyperref:** optional, detected at load time.
 

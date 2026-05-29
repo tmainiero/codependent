@@ -1,0 +1,49 @@
+%% TEST-NAME: integ-keytheorems-appendix-no-orphan-body-anchor
+%% TEST-PURPOSE: keytheorems appendix entry targets theorem destination not body anchor
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems appendix entry targets theorem destination not body anchor.  Exercises the W05 keytheorems quirks row with PDF and sidecar assertions.
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04
+%% TEST-SECTION: keytheorems backend parity
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:target}{theorem:1.1}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-AUX-CONTAINS: \codep@anchormap{theorem:1.1}{theorem.
+%% TEST-PDF-LINK-DEST: theorem\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: keythms-body-anchor
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{theorem}[name=Theorem,numberwithin=section]
+\newkeytheorem{lemma}[name=Lemma,sibling=theorem]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{theorem,lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Keytheorems backend}
+
+\begin{theorem}\label{thm:target}
+Target before a body anchor.\hypertarget{keythms-body-anchor}{Body anchor text.}
+\end{theorem}
+
+\begin{lemma}\label{lem:source}
+This source cites \cref{thm:target}.
+\end{lemma}
+
+\codepappendix
+\END
+\end{document}

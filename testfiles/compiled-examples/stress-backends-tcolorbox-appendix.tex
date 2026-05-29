@@ -1,0 +1,44 @@
+%% TEST-NAME: stress-backends-tcolorbox-appendix
+%% TEST-PURPOSE: tcolorbox backend stress fixture (appendix)
+%% TEST-KIND: stress
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-RENDER-MODES: appendix, default-color
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-STEXT: Stress backend tcolorbox appendix
+%% TEST-PDF-DEST-EXISTS: codep-appendix:tcbstress:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:tcbstress:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+
+\def\START{}\def\END{}
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsthm}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{tcbstress}{TBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{tcbstress}
+\usepackage[backrefs=appendix]{codependent}
+\codepsetup{paragraphs=off,equations=outer,proofs=off}
+\codeptrack{tcbstress}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\title{Stress backend tcolorbox appendix}
+\author{Test}
+\date{}
+\begin{document}
+\START
+\maketitle
+\section{Backend stress}
+\begin{tcbstress}{Stress target}{target}
+Stress tcolorbox target.
+\end{tcbstress}
+
+\begin{tcbstress}{Stress source}{source}
+Stress source cites \ref{tcbstress:target}.
+\end{tcbstress}
+
+\codepappendix
+\END
+\end{document}

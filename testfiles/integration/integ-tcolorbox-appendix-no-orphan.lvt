@@ -1,0 +1,47 @@
+%% TEST-NAME: integ-tcolorbox-appendix-no-orphan
+%% TEST-PURPOSE: tcolorbox appendix links have no orphan destinations
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: tcolorbox appendix links have no orphan destinations.  Exercises the W05 tcolorbox theorem quirks row with PDF and sidecar assertions.
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04
+%% TEST-SECTION: tcolorbox theorem backend parity
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{codetcb}
+%% TEST-AUX-CONTAINS: \codep@lblentity{codetcb:target}{codetcb:1.1}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:codetcb:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:codetcb:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PDF-LINK-DEST-NOT: tcbox-body-anchor
+%% TEST-AUX-CONTAINS: \codep@anchormap{codetcb:1.1}
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{codetcb}{TBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{codetcb}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{codetcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Tcolorbox backend}
+
+\begin{codetcb}{Target with body anchor}{target}
+Target box before a manual body anchor.\hypertarget{tcbox-body-anchor}{Body anchor text.}
+\end{codetcb}
+
+\begin{codetcb}{Source box}{source}
+This source cites \ref{codetcb:target}.
+\end{codetcb}
+
+\codepappendix
+\END
+\end{document}

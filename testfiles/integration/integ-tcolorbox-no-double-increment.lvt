@@ -1,0 +1,38 @@
+%% TEST-NAME: integ-tcolorbox-no-double-increment
+%% TEST-PURPOSE: tcolorbox counter capture does not double increment boxes
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Three ordinary tracked \newtcbtheorem boxes produce theorem keys 1.1, 1.2, and 1.3, proving codependent captures tcolorbox's already-stepped counter without stepping again.
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04
+%% TEST-SECTION: tcolorbox no double increment
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{codetcb}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{codetcb}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{codetcb}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.4}{codetcb}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.6}{codetcb}
+%% TEST-AUX-CONTAINS: \codep@lblentity{codetcb:first}{codetcb:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{codetcb:third}{codetcb:1.3}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{codetcb}{TBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{codetcb}
+\usepackage{codependent}
+\codepsetup{paragraphs=off, equations=off, proofs=off}
+\codeptrack{codetcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Counter capture}
+\begin{codetcb}{First}{first}First tracked box.\end{codetcb}
+\begin{codetcb}{Second}{second}Second tracked box.\end{codetcb}
+\begin{codetcb}{Third}{third}Third tracked box.\end{codetcb}
+\END
+\end{document}

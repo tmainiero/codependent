@@ -1,0 +1,54 @@
+%% TEST-NAME: integ-keytheorems-restated-no-duplicate
+%% TEST-PURPOSE: keytheorems store replay does not duplicate or overwrite original destination
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems store replay does not duplicate or overwrite original destination.  Exercises the W05 keytheorems quirks row with PDF and sidecar assertions.
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04
+%% TEST-SECTION: keytheorems backend parity
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:target}{theorem:1.1}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{lemma} = 1
+%% TEST-AUX-CONTAINS: \codep@anchormap{theorem:1.1}{theorem.
+%% TEST-AUX-NOT-CONTAINS: theorem.restate
+%% TEST-PDF-LINK-DEST: theorem\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: theorem\.restate
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{theorem}[name=Theorem,numberwithin=section]
+\newkeytheorem{lemma}[name=Lemma,sibling=theorem]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{theorem,lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Keytheorems backend}
+
+\begin{theorem}[store=mainstore]\label{thm:target}
+Stored first occurrence.
+\end{theorem}
+
+\begin{lemma}\label{lem:source}
+This source cites \cref{thm:target}.
+\end{lemma}
+
+\getkeytheorem{mainstore}
+
+\codepappendix
+\END
+\end{document}

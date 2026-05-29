@@ -2039,7 +2039,7 @@
 
 % \codep@tcb@disable@thisbox
 %   Loss-of-canary path: no atom, no name link, no hard error.
-%% @implements \codep@hooktheorem
+%% @behavior B-COMPAT-TCOLORBOX-THEOREM
 %@effect state-only
 \def\codep@tcb@disable@thisbox{%
   \PackageWarning{codependent}{%
@@ -2209,6 +2209,7 @@
 
 % \codep@tcb@thmwrap@install
 %   Install tcolorbox theorem-name forward linking once.
+%% @behavior B-COMPAT-TCOLORBOX-THEOREM
 %% @behavior B-LINK-APPENDIX-BIDIR
 %@effect inline-material
 \def\codep@tcb@thmwrap@install{%
@@ -2261,6 +2262,7 @@
 
 % \codep@hooktheorem@tcolorbox{env}
 %   Quirks-row installer for tracked \newtcbtheorem environments.
+%% @behavior B-COMPAT-TCOLORBOX-THEOREM
 %% @behavior B-NUM-SEQ
 %% @behavior B-LINK-APPENDIX-BIDIR
 %@effect state-only
@@ -2313,7 +2315,7 @@
 
 % \codep@keythms@storestarunsupported{env}
 %   Visible unsupported boundary for tracked keytheorems store*.
-%% @implements \codep@hooktheorem
+%% @behavior B-COMPAT-KEYTHEOREMS-STORESTAR
 %@effect state-only
 \def\codep@keythms@storestarunsupported#1{%
   \ifcodep@keythms@storestarerror%
@@ -2356,7 +2358,7 @@
 
 % \codep@keythms@materialize{env}
 %   Posthead phase: derive key and snapshot theorem-scoped anchor/page.
-%% @implements \codep@hooktheorem
+%% @behavior B-COMPAT-KEYTHEOREMS
 %@effect immediate-write
 \def\codep@keythms@materialize#1{%
   \ifnum\codep@trackeddepth=1\relax%
@@ -2439,7 +2441,7 @@
 
 % \codep@keythms@restated{env}
 %   State-only signal for keytheorems ordinary replay suppression.
-%% @implements \codep@hooktheorem
+%% @behavior B-COMPAT-KEYTHEOREMS
 %@effect state-only
 \def\codep@keythms@restated#1{%
   \global\let\codep@thmwrap@activeenv\@empty%
@@ -2471,6 +2473,7 @@
 
 % \codep@hooktheorem@keytheorems{env}
 %   Quirks-row installer for tracked keytheorems environments.
+%% @behavior B-COMPAT-KEYTHEOREMS
 %% @behavior B-NUM-SEQ
 %% @behavior B-LINK-APPENDIX-BIDIR
 %@effect state-only

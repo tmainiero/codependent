@@ -1,0 +1,44 @@
+%% TEST-NAME: stress-backends-tcolorbox-inline-gray
+%% TEST-PURPOSE: tcolorbox backend stress fixture (inline-gray)
+%% TEST-KIND: stress
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-RENDER-MODES: inline, gray-backrefs
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-STEXT: Stress backend tcolorbox inline-gray
+%% TEST-PDF-STEXT: Used in 1\.2
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+
+\def\START{}\def\END{}
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsthm}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{tcbstress}{TBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{tcbstress}
+\usepackage[backref-style=inline]{codependent}
+\codepsetup{backref-color=gray}
+\codepsetup{paragraphs=off,equations=outer,proofs=off}
+\codeptrack{tcbstress}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\title{Stress backend tcolorbox inline-gray}
+\author{Test}
+\date{}
+\begin{document}
+\START
+\maketitle
+\section{Backend stress}
+\begin{tcbstress}{Stress target}{target}
+Stress tcolorbox target.
+\end{tcbstress}
+
+\begin{tcbstress}{Stress source}{source}
+Stress source cites \ref{tcbstress:target}.
+\end{tcbstress}
+
+
+\END
+\end{document}

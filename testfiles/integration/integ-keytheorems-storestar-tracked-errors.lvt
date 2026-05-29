@@ -1,0 +1,39 @@
+%% TEST-NAME: integ-keytheorems-storestar-tracked-errors
+%% TEST-PURPOSE: tracked keytheorems store* raises visible unsupported error
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS-STORESTAR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: A tracked keytheorems environment using store* raises codependent's visible PackageError with store*, not yet supported, store=..., and W06 roadmap text; the occurrence emits no codependent theorem or label records if TeX continues.
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04
+%% TEST-SECTION: keytheorems store* Option 0 caveat
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: keytheorems store\* not yet supported
+%% TEST-LOG-CONTAINS: store\*
+%% TEST-LOG-CONTAINS: not yet supported
+%% TEST-LOG-CONTAINS: store=\.\.\.
+%% TEST-LOG-CONTAINS: W06
+%% TEST-LOG-CONTAINS: project_keytheorems_storestar_future_micro_wave\.md
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{thm:storestar}
+%% TEST-PDF-NOT: Used in
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 1
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{theorem}[name=Theorem,numberwithin=section]
+\usepackage{codependent}
+\codepsetup{paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Store star}
+\begin{theorem}[store*=future]\label{thm:storestar}
+Unsupported reversed replay occurrence.
+\end{theorem}
+\END
+\end{document}

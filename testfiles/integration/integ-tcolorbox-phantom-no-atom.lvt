@@ -1,0 +1,41 @@
+%% TEST-NAME: integ-tcolorbox-phantom-no-atom
+%% TEST-PURPOSE: tcolorbox nophantom tracked box emits warning and no atom
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: A tracked \newtcbtheorem box with nophantom clears codependent phantom material; it warns and emits no theorem atom, no label entity, and no paragraph atoms from the box body or closing material.
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04
+%% TEST-SECTION: tcolorbox phantom canary negative path
+%% TEST-EXIT: 0
+%% TEST-EXPECT-PACKAGE-WARNING: nophantom or another.*phantom-clearing option
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-NOT-CONTAINS: {codetcb}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{codetcb:suppressed}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{paragraph} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{paragraph} = 1
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2}{paragraph}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{codetcb}{TBox}{colback=red!3,colframe=red!50!black,fonttitle=\bfseries}{codetcb}
+\usepackage{codependent}
+\codepsetup{paragraphs=on, equations=off, proofs=off}
+\codeptrack{codetcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Phantom clearing}
+Paragraph before the suppressed box.
+
+\begin{codetcb}[nophantom]{Suppressed target}{suppressed}
+Body paragraph inside the nophantom box must not become a paragraph atom.
+\end{codetcb}
+
+Paragraph after the suppressed box.
+\END
+\end{document}

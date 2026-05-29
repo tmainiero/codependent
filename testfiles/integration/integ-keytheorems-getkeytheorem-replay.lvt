@@ -1,0 +1,52 @@
+%% TEST-NAME: integ-keytheorems-getkeytheorem-replay
+%% TEST-PURPOSE: keytheorems getkeytheorem replay remains inert for codependent tracking
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems getkeytheorem replay remains inert for codependent tracking.  Exercises the W05 keytheorems quirks row with PDF and sidecar assertions.
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04
+%% TEST-SECTION: keytheorems backend parity
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:target}{theorem:1.1}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{lemma} = 1
+%% TEST-CDP-NOT-CONTAINS: theorem.restate
+%% TEST-AUX-CONTAINS: \codep@atomref{lemma:1.2}{thm:target}
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{theorem}[name=Theorem,numberwithin=section]
+\newkeytheorem{lemma}[name=Lemma,sibling=theorem]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{theorem,lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Keytheorems backend}
+
+\begin{theorem}[store=replaytag]\label{thm:target}
+Stored theorem for replay.
+\end{theorem}
+
+\getkeytheorem{replaytag}
+
+\begin{lemma}\label{lem:source}
+This source cites the stored theorem \cref{thm:target} after replay.
+\end{lemma}
+
+\codepappendix
+\END
+\end{document}

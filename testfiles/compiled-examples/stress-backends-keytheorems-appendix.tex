@@ -1,0 +1,43 @@
+%% TEST-NAME: stress-backends-keytheorems-appendix
+%% TEST-PURPOSE: keytheorems backend stress fixture (appendix)
+%% TEST-KIND: stress
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-RENDER-MODES: appendix, default-color
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-PDF-STEXT: Stress backend keytheorems appendix
+%% TEST-PDF-DEST-EXISTS: codep-appendix:kthm:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:kthm:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+
+\def\START{}\def\END{}
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{kthm}[name=KeyStress,numberwithin=section]
+\usepackage[backrefs=appendix]{codependent}
+\codepsetup{paragraphs=off,equations=outer,proofs=off}
+\codeptrack{kthm}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\title{Stress backend keytheorems appendix}
+\author{Test}
+\date{}
+\begin{document}
+\START
+\maketitle
+\section{Backend stress}
+\begin{kthm}\label{kthm:target}
+Stress keytheorems target.
+\end{kthm}
+
+\begin{kthm}\label{kthm:source}
+Stress source cites \ref{kthm:target}.
+\end{kthm}
+
+\codepappendix
+\END
+\end{document}
