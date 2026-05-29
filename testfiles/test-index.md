@@ -166,7 +166,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (48 fixtures)
+## Integration (53 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -189,6 +189,11 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-no-cleveref.lvt | LIVE | B-PASS-ONE | Correct patch-site selection when cleveref is absent. |
 | testfiles/integration/integ-no-hyperref.lvt | LIVE | B-REND-INLINE | Graceful degradation when hyperref is absent. Verifies that |
 | testfiles/integration/integ-no-paragraphs.lvt | LIVE | B-EDGE-PARAOFF-EQ | Integration test with paragraphs=off. Verifies that |
+| testfiles/integration/integ-ntheorem-appendix-name-link-break-after-load.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem break style chosen after codependent load keeps name link |
+| testfiles/integration/integ-ntheorem-appendix-name-link-custom-style.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem custom post-load style rewraps both heading signatures |
+| testfiles/integration/integ-ntheorem-appendix-name-link-opargs.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem optional-heading path keeps appendix forward link |
+| testfiles/integration/integ-ntheorem-appendix-name-link-plain.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem plain style gets appendix forward link on theorem name |
+| testfiles/integration/integ-ntheorem-appendix-no-backrefs-no-link.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem lifecycle rewrap is gated off when backrefs are none |
 | testfiles/integration/integ-ntheorem.lvt | LIVE | B-NUM-SHARED | Verify codependent works with ntheorem as the theorem backend |
 | testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
 | testfiles/integration/integ-proofauto-adjacent-delayed-commit-probe.lvt | LIVE | B-PROOF-ADJ, B-PROOF-SEP, B-PROOF-ADJRULE, B-FRONTEDGE-CAPTURE, B-PROOF-DELAYED-COMMIT | Probe delayed adjacent proof binding across adjacent, same-run, and forward-heading paths. |

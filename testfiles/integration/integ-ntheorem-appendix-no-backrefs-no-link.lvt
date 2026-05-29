@@ -1,0 +1,48 @@
+%% TEST-NAME: integ-ntheorem-appendix-no-backrefs-no-link
+%% TEST-PURPOSE: ntheorem lifecycle rewrap is gated off when backrefs are none
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Even with an incoming reference, backrefs=none must keep the
+%%            ntheorem lifecycle rewrap from installing any codep-appendix
+%%            forward link.  qpdf negative assertions prove the rewrap is
+%%            gated by codependent's normal appendix/backref activation.
+%% TEST-SOURCE: W05-INSTALL-DISCIPLINE-CORE P06
+%% TEST-SECTION: ntheorem no-backrefs negative gate
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-PDF-DEST-NOT-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:theorem:1\.1
+%% TEST-PDF-NOT: Dependency Index
+%% TEST-PDF-NOT: Used in
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[amsmath,hyperref]{ntheorem}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=none, paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+
+\section{No backrefs}
+
+\begin{theorem}\label{thm:no-backrefs-target}
+Target cited while backref features are disabled.
+\end{theorem}
+
+\begin{lemma}\label{lem:no-backrefs-source}
+This source cites \cref{thm:no-backrefs-target}, but no appendix link is active.
+\end{lemma}
+
+\END
+\end{document}

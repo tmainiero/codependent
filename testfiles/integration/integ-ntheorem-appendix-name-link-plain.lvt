@@ -1,0 +1,51 @@
+%% TEST-NAME: integ-ntheorem-appendix-name-link-plain
+%% TEST-PURPOSE: ntheorem plain style gets appendix forward link on theorem name
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: ntheorem's default/plain style emits the theorem heading through
+%%            \@begintheorem#1#2.  The lifecycle rewrap must wrap the rendered
+%%            theorem name in a link to codep-appendix:<key>.  qpdf verifies
+%%            both the named destination and the forward link annotation.
+%% TEST-SOURCE: W05-INSTALL-DISCIPLINE-CORE P06
+%% TEST-SECTION: ntheorem lifecycle-rewrap plain two-arg path
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-AUX-CONTAINS: \codep@atomref{lemma:1.2}{thm:plain-target}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[amsmath,hyperref]{ntheorem}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+
+\section{Plain ntheorem}
+
+\begin{theorem}\label{thm:plain-target}
+Plain ntheorem target.
+\end{theorem}
+
+\begin{lemma}\label{lem:plain-source}
+This source cites \cref{thm:plain-target}.
+\end{lemma}
+
+\codepappendix
+
+\END
+\end{document}

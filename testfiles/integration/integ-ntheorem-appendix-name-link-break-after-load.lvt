@@ -1,0 +1,55 @@
+%% TEST-NAME: integ-ntheorem-appendix-name-link-break-after-load
+%% TEST-PURPOSE: ntheorem break style chosen after codependent load keeps name link
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: ntheorem stores \theoremstyle{break} after codependent is loaded,
+%%            then binds the style when the theorem environment is declared.
+%%            At begin time ntheorem refreshes \@begintheorem; the lifecycle
+%%            rewrap must still catch that fresh two-arg style binding and emit
+%%            the codep-appendix forward-link annotation.
+%% TEST-SOURCE: W05-INSTALL-DISCIPLINE-CORE P06
+%% TEST-SECTION: ntheorem post-load break style rewrap
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-AUX-CONTAINS: \codep@atomref{lemma:1.2}{thm:break-target}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[amsmath,hyperref]{ntheorem}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage{codependent}
+
+\theoremstyle{break}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+
+\section{Break ntheorem}
+
+\begin{theorem}\label{thm:break-target}
+Break-style ntheorem target.
+\end{theorem}
+
+\begin{lemma}\label{lem:break-source}
+This source cites \cref{thm:break-target}.
+\end{lemma}
+
+\codepappendix
+
+\END
+\end{document}

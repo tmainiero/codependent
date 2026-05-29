@@ -1907,6 +1907,58 @@
   }%
 }%
 
+%% @behavior B-LINK-APPENDIX-BIDIR
+% \codep@ntheorem@thmwrap@rewrap
+%   Per ntheorem theorem begin, locally wrap the active style's two heading
+%   emitters.  ntheorem refreshes \@begintheorem/\@opargbegintheorem from the
+%   active style before every \@thm call, so this must not be a one-shot shim.
+%@effect inline-material
+\def\codep@ntheorem@thmwrap@rewrap{%
+  \let\codep@orig@ntheorem@begintheorem\@begintheorem%
+  \let\codep@orig@ntheorem@opargbegintheorem\@opargbegintheorem%
+  \def\@begintheorem##1##2{%
+    \codep@thmwrap@deriveactivekey%
+    \codep@thmwrap@wrapname{##1}{\codep@tmp@wrappedthmname}%
+    \expandafter\codep@orig@ntheorem@begintheorem\expandafter{%
+      \codep@tmp@wrappedthmname}{##2}%
+  }%
+  \def\@opargbegintheorem##1##2##3{%
+    \codep@thmwrap@deriveactivekey%
+    \codep@thmwrap@wrapname{##1}{\codep@tmp@wrappedthmname}%
+    \expandafter\codep@orig@ntheorem@opargbegintheorem\expandafter{%
+      \codep@tmp@wrappedthmname}{##2}{##3}%
+  }%
+}%
+
+%% @behavior B-LINK-APPENDIX-BIDIR
+% \codep@ntheorem@thmwrap@install
+%   Install the ntheorem lifecycle rewrap once around \@thm.
+%@effect inline-material
+\def\codep@ntheorem@thmwrap@install{%
+  \@ifundefined{@thm}{}{%
+    \codep@target@install{lifecycle-rewrap}{\@thm}{inline-material}{%
+      \def\@thm##1##2##3{%
+        \codep@ntheorem@thmwrap@rewrap%
+        \codep@orig@@thm{##1}{##2}{##3}%
+      }%
+    }%
+  }%
+}%
+
+%% @behavior B-LINK-APPENDIX-BIDIR
+% \codep@ntheorem@thmwrap@install@eventually
+%   Install immediately when ntheorem is loaded, else retry at begin-document.
+%@effect inline-material
+\def\codep@ntheorem@thmwrap@install@eventually{%
+  \@ifpackageloaded{ntheorem}{%
+    \codep@ntheorem@thmwrap@install%
+  }{%
+    \AtBeginDocument{%
+      \@ifpackageloaded{ntheorem}{\codep@ntheorem@thmwrap@install}{}%
+    }%
+  }%
+}%
+
 % \codep@hookproof
 %   Install hooks for the proof environment.
 %   When proofs=on (default), adjacent proofs inherit the
@@ -5727,6 +5779,7 @@
     \fi
   }%
   \codep@thmwrap@install@eventually%
+  \codep@ntheorem@thmwrap@install@eventually%
   \codep@hookproof%
   % Install suppression and paragraph hooks.
   \codep@installsuppress%

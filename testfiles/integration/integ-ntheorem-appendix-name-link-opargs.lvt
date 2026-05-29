@@ -1,0 +1,51 @@
+%% TEST-NAME: integ-ntheorem-appendix-name-link-opargs
+%% TEST-PURPOSE: ntheorem optional-heading path keeps appendix forward link
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: ntheorem routes optional theorem headings through the separate
+%%            \@opargbegintheorem#1#2#3 macro.  The lifecycle rewrap must wrap
+%%            that three-arg path independently, so the optional-heading render
+%%            still carries a link to codep-appendix:<key>.
+%% TEST-SOURCE: W05-INSTALL-DISCIPLINE-CORE P06
+%% TEST-SECTION: ntheorem lifecycle-rewrap optional-heading path
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-AUX-CONTAINS: \codep@atomref{lemma:1.2}{thm:oparg-target}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[amsmath,hyperref]{ntheorem}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+
+\section{Optional ntheorem}
+
+\begin{theorem}[Optional Heading]\label{thm:oparg-target}
+Optional-heading ntheorem target.
+\end{theorem}
+
+\begin{lemma}\label{lem:oparg-source}
+This source cites \cref{thm:oparg-target}.
+\end{lemma}
+
+\codepappendix
+
+\END
+\end{document}

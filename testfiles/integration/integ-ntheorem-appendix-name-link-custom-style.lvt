@@ -1,0 +1,69 @@
+%% TEST-NAME: integ-ntheorem-appendix-name-link-custom-style
+%% TEST-PURPOSE: ntheorem custom post-load style rewraps both heading signatures
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: A custom ntheorem style is defined after codependent load.  Two
+%%            theorem instances under that style exercise both style-generated
+%%            heading bindings: one no-optional-heading theorem for
+%%            \@begintheorem#1#2 and one optional-heading theorem for
+%%            \@opargbegintheorem#1#2#3.  qpdf verifies forward links for both
+%%            codep-appendix destinations.
+%% TEST-SOURCE: W05-INSTALL-DISCIPLINE-CORE P06
+%% TEST-SECTION: ntheorem custom-style dual-signature rewrap
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{theorem}
+%% TEST-AUX-CONTAINS: \codep@atomref{lemma:1.3}{thm:custom-plain}
+%% TEST-AUX-CONTAINS: \codep@atomref{lemma:1.3}{thm:custom-oparg}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.2
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.2
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[amsmath,hyperref]{ntheorem}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage{codependent}
+
+\makeatletter
+\newtheoremstyle{codepcustom}%
+  {\item[\hskip\labelsep\theorem@headerfont ##1\ ##2\ -- custom]}%
+  {\item[\hskip\labelsep\theorem@headerfont ##1\ ##2\ (##3)\ -- custom]}
+\makeatother
+\theoremstyle{codepcustom}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem,lemma}
+
+\begin{document}
+\START
+
+\section{Custom ntheorem}
+
+\begin{theorem}\label{thm:custom-plain}
+Custom style theorem without an optional heading.
+\end{theorem}
+
+\begin{theorem}[Custom Optional]\label{thm:custom-oparg}
+Custom style theorem with an optional heading.
+\end{theorem}
+
+\begin{lemma}\label{lem:custom-source}
+This source cites \cref{thm:custom-plain} and \cref{thm:custom-oparg}.
+\end{lemma}
+
+\codepappendix
+
+\END
+\end{document}
