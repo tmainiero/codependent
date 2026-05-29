@@ -1,0 +1,66 @@
+%% TEST-NAME: integ-commandwrap-edef-guard
+%% TEST-PURPOSE: Guard command-wrap against dynamic \protected\edef bodies
+%% TEST-KIND: integration
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Directly exercise the typed command-wrap installer boundary.
+%%            Parameter-token replacement bodies must install normally, while
+%%            dynamic \protected\edef bodies are rejected even when the same
+%%            replacement body also contains #1/#2 parameter tokens.
+%% TEST-SOURCE: W05-INSTALL-DISCIPLINE-CORE P05-FIX
+%% TEST-SECTION: command-wrap install invariant 6
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: command-wrap install-kind rejects dynamic
+%% TEST-LOG-CONTAINS: CODEP-PFIX-PARAM=param:A/B
+%% TEST-LOG-CONTAINS: CODEP-PFIX-DYNAMIC=old-dynamic
+%% TEST-LOG-CONTAINS: CODEP-PFIX-COMBO=old-combo
+%% TEST-LOG-CONTAINS: CODEP-PFIX-COMBO-FLAG=old-combo-flag
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-EXEMPT: utility
+%% TEST-PACKAGES: codependent
+%% TEST-RERUN: 1
+
+\documentclass{article}
+\usepackage{codependent}
+
+\makeatletter
+\newcommand*{\codep@pfix@param}[2]{old-param}
+\newcommand*{\codep@pfix@dynamic}{old-dynamic}
+\newcommand*{\codep@pfix@combo}[2]{old-combo}
+\newcommand*{\codep@pfix@combo@flag}{old-combo-flag}
+
+\def\codep@pfix@param@install{%
+  \codep@target@install{command-wrap}{\codep@pfix@param}{state-only}{%
+    \renewcommand*{\codep@pfix@param}[2]{param:##1/##2}%
+  }%
+}
+
+\def\codep@pfix@dynamic@install{%
+  \codep@target@install{command-wrap}{\codep@pfix@dynamic}{state-only}{%
+    \protected\edef\codep@pfix@dynamic{dynamic-installed}%
+  }%
+}
+
+\def\codep@pfix@combo@install{%
+  \codep@target@install{command-wrap}{\codep@pfix@combo}{state-only}{%
+    \renewcommand*{\codep@pfix@combo}[2]{combo:##1/##2}%
+    \protected\edef\codep@pfix@combo@flag{combo-installed}%
+  }%
+}
+\makeatother
+
+\begin{document}
+\START
+\makeatletter
+\codep@pfix@param@install
+\edef\codep@pfix@param@result{\codep@pfix@param{A}{B}}
+\typeout{CODEP-PFIX-PARAM=\codep@pfix@param@result}
+
+\codep@pfix@dynamic@install
+\typeout{CODEP-PFIX-DYNAMIC=\codep@pfix@dynamic}
+
+\codep@pfix@combo@install
+\typeout{CODEP-PFIX-COMBO=\codep@pfix@combo{A}{B}}
+\typeout{CODEP-PFIX-COMBO-FLAG=\codep@pfix@combo@flag}
+\makeatother
+\END
+\end{document}

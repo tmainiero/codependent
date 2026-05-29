@@ -166,7 +166,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (47 fixtures)
+## Integration (48 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -180,6 +180,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-appendix.lvt | LIVE | B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-LINK-APPENDIX-BIDIR | Integration test for backrefs=appendix mode. |
 | testfiles/integration/integ-backrefsof-basic.lvt | LIVE | B-REND-BACKREFSOF | Public \codepbackrefsof reads another tracked atom label's Used-In list. |
 | testfiles/integration/integ-backrefsof-forward.lvt | LIVE | B-REND-BACKREFSOF | Forward \codepbackrefsof warns on pass one, then emits after label hydration. |
+| testfiles/integration/integ-commandwrap-edef-guard.lvt | LIVE | (exempt: utility) | Guard command-wrap against dynamic \protected\edef bodies |
 | testfiles/integration/integ-custom-headformat-doubled.lvt | LIVE | B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR | Custom headformat with doubled theorem name (Q3 case): |
 | testfiles/integration/integ-empty-proof-destination.lvt | LIVE | B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Empty adjacent proofs still emit their proof-begin named destination |
 | testfiles/integration/integ-equations-all.lvt | LIVE | B-EQ-ALL | Verify that equations=all causes equations INSIDE tracked theorem |

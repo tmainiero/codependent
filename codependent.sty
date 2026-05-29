@@ -1651,32 +1651,16 @@
   \codep@install@saveoriginal@named{#1}{\codep@install@origname}{#2}%
 }
 
-% \codep@install@sentinel
-%   Sentinel token used by replacement-body scanners.
-%% @utility
-\def\codep@install@sentinel{\codep@install@sentinel}%
-
-% \codep@install@stop
-%   Delimiter token used by replacement-body scanners.
-%% @utility
-\def\codep@install@stop{\codep@install@stop}%
-
 % \codep@install@ifprotectededefTF{tokens}{true}{false}
 %   Detect CORE-forbidden \protected\edef in a command-wrap replacement.
 %% @utility
 %@effect state-only
+\ExplSyntaxOn
 \long\def\codep@install@ifprotectededefTF#1#2#3{%
-  \long\def\codep@install@ifprotectededefTF@scan%
-      ##1\protected\edef##2\codep@install@stop{%
-    \ifx\codep@install@sentinel##2%
-      #3%
-    \else%
-      #2%
-    \fi%
-  }%
-  \codep@install@ifprotectededefTF@scan#1%
-    \protected\edef\codep@install@sentinel\codep@install@stop%
+  \tl_set:Nx \l_tmpa_tl { \tl_to_str:n {#1} }%
+  \str_if_in:NnTF \l_tmpa_tl { \protected \edef } {#2} {#3}%
 }
+\ExplSyntaxOff
 
 % \codep@target@install@pretocmd{target}{effect}{prepend-body}
 %   Typed etoolbox pre-patch wrapper.
@@ -1751,7 +1735,15 @@
 %% @utility
 %@effect state-only
 \long\def\codep@target@install@commandwrap#1#2#3{%
-  \codep@install@saveoriginal@auto{#1}{#3}%
+  \codep@install@ifprotectededefTF{#3}{%
+    \PackageError{codependent}{%
+      command-wrap install-kind rejects dynamic \string\protected\string\edef%
+      \space target shape}{%
+      Dynamic saved-original wrappers are deferred to %
+      W05-INSTALL-DISCIPLINE-CONTRACT.}%
+  }{%
+    \codep@install@saveoriginal@auto{#1}{#3}%
+  }%
 }
 
 % \codep@target@install{install-kind}{target}{effect}{replacement-body}
