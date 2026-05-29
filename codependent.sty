@@ -1411,7 +1411,7 @@
 %%   pretocmd              — etoolbox pre-patch
 %%   apptocmd              — etoolbox post-patch
 %%   AddToHook             — LaTeX2e named hook
-%%   backend-hook          — reserved BACKENDS adapter slot
+%%   backend-hook          — package-created LaTeX hook path
 %%   macro-append          — typed \g@addto@macro-shaped append
 %%   theorem-name-link-wrap — amsthm-family theorem-name wrapper
 %%   lifecycle-rewrap      — per-begin ntheorem-style lifecycle rewrap
@@ -1692,14 +1692,15 @@
   \AddToHook{#1}{#3}%
 }
 
-% \codep@target@install@backendhook{target}{effect}{body}
-%   Reserved install-kind for BACKENDS; CORE has no backend body.
+% \codep@target@install@backendhook{hook-name}{effect}{body}
+%   Typed wrapper for backend-created LaTeX hook paths.  BACKENDS uses
+%   this for package hook names such as keytheorems/<env>/posthead
+%   and keytheorems/<env>/restated; they are ordinary l3hook names,
+%   not a new install-kind and not a raw \AddToHook escape hatch.
 %% @utility
 %@effect state-only
 \newcommand*{\codep@target@install@backendhook}[3]{%
-  \PackageError{codependent}{%
-    backend-hook install-kind is reserved; no backends loaded in CORE}{%
-    W05-XPARSE-BACKENDS owns backend-hook installers.}%
+  \AddToHook{#1}{#3}%
 }
 
 % \codep@target@install@macroappend{target}{effect}{append-body}
@@ -1794,10 +1795,171 @@
   \expandafter\let\expandafter#3\csname codep@envtrack@cfg@#1@#2\endcsname%
 }
 
+% \codep@envtrack@ifkeytheoremsTF{env}{true}{false}
+%   Detect keytheorems envs after \newkeytheorem has keyified them.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@ifkeytheoremsTF}[3]{%
+  \@ifpackageloaded{keytheorems}{%
+    \ifcsname keythms_orig_#1\endcsname%
+      #2%
+    \else%
+      #3%
+    \fi%
+  }{#3}%
+}
+
+% \codep@envtrack@iftcolorboxTF{env}{true}{false}
+%   Detect tcolorbox-created environments with saved option rows.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@iftcolorboxTF}[3]{%
+  \@ifpackageloaded{tcolorbox}{%
+    \ifcsname tcb@opt@#1\endcsname%
+      #2%
+    \else%
+      #3%
+    \fi%
+  }{#3}%
+}
+
+% \codep@envtrack@ifxparseTF{env}{true}{false}
+%   True for xparse theorem backends that need resolver validation.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@ifxparseTF}[3]{%
+  \codep@envtrack@ifkeytheoremsTF{#1}{#2}{%
+    \codep@envtrack@iftcolorboxTF{#1}{#2}{#3}%
+  }%
+}
+
+% \codep@envtrack@ifnumberedresolverTF{env}{true}{false}
+%   Check whether an xparse theorem exposes a numbered counter resolver.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@ifnumberedresolverTF}[3]{%
+  \codep@envtrack@ifkeytheoremsTF{#1}{%
+    \ifcsname c@#1\endcsname%
+      #2%
+    \else%
+      #3%
+    \fi%
+  }{%
+    \codep@envtrack@iftcolorboxTF{#1}{%
+      \ifcsname tcb@cnt@#1\endcsname%
+        #2%
+      \else%
+        #3%
+      \fi%
+    }{#2}%
+  }%
+}
+
+% \codep@envtrack@missingresolver{env}{backend}
+%   W05-XPARSE-BACKENDS P01 precondition: tracked xparse theorem
+%   environments must expose a numbered counter/resolver.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@missingresolver}[2]{%
+  \PackageError{codependent}{%
+    Tracked #2 theorem '#1' lacks a numbered counter resolver}{%
+    codependent can track only xparse theorem backends with a usable\space%
+    numbered counter. Use a numbered theorem or remove '#1' from%
+    \MessageBreak \string\codeptrack.}%
+}
+
+% \codep@envtrack@resolvecounter{env}{cs}
+%   Resolve an env name to the counter name codependent should alias.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@resolvecounter}[2]{%
+  \let#2\@empty%
+  \codep@envtrack@ifkeytheoremsTF{#1}{%
+    \ifcsname c@#1\endcsname%
+      \edef#2{#1}%
+    \else%
+      \codep@envtrack@missingresolver{#1}{keytheorems}%
+    \fi%
+  }{%
+    \codep@envtrack@iftcolorboxTF{#1}{%
+      \ifcsname tcb@cnt@#1\endcsname%
+        \edef#2{tcb@cnt@#1}%
+      \else%
+        \codep@envtrack@missingresolver{#1}{tcolorbox}%
+      \fi%
+    }{%
+      \ifcsname c@#1\endcsname%
+        \edef#2{#1}%
+      \fi%
+    }%
+  }%
+}
+
+% \codep@envtrack@write@cmdhook{env}
+%   Descriptor row: exactly {strategy, quirks-key}; no effect field.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@write@cmdhook}[1]{%
+  \codep@envtrack@config@write{#1}{strategy}{cmd-hook-observable}%
+  \codep@envtrack@config@write{#1}{quirks-key}{none}%
+}
+
+% \codep@envtrack@write@tcolorbox{env}
+%   Descriptor row for tcolorbox theorem quirks: phantom canary and
+%   already-stepped counter capture are consumed by the P02 adapter.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@write@tcolorbox}[1]{%
+  \codep@envtrack@config@write{#1}{strategy}{env-hook-observable}%
+  \codep@envtrack@config@write{#1}{quirks-key}{tcolorbox-theorem}%
+}
+
+% \codep@envtrack@write@keytheorems{env}
+%   Descriptor row for keytheorems quirks: posthead anchor capture,
+%   restated suppression, and store* hard-error are consumed by P03.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@write@keytheorems}[1]{%
+  \codep@envtrack@config@write{#1}{strategy}{env-hook-observable}%
+  \codep@envtrack@config@write{#1}{quirks-key}{keytheorems}%
+}
+
+% \codep@envtrack@resolve{env}
+%   Write the two-field descriptor row selected by backend probes.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@resolve}[1]{%
+  \codep@envtrack@ifkeytheoremsTF{#1}{%
+    \codep@envtrack@write@keytheorems{#1}%
+  }{%
+    \codep@envtrack@iftcolorboxTF{#1}{%
+      \codep@envtrack@write@tcolorbox{#1}%
+    }{%
+      \codep@envtrack@write@cmdhook{#1}%
+    }%
+  }%
+}
+
 % \codep@strategy@cmdhookobservable
 %   Strategy ID for the legacy command-hook-observable theorem path.
 %% @utility
 \def\codep@strategy@cmdhookobservable{cmd-hook-observable}%
+
+% \codep@strategy@envhookobservable
+%   Strategy ID for xparse-compatible env/<env>/begin+end observation.
+%% @utility
+\def\codep@strategy@envhookobservable{env-hook-observable}%
+
+% \codep@hooktheorem@envhookobservable{env}
+%   Register begin allocation and end record/render/pop through env hooks.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\newcommand*{\codep@hooktheorem@envhookobservable}[1]{%
+  \codep@target@install{AddToHook}{env/#1/begin}{state-only}{%
+    \codep@hooktheorem@begin{#1}}%
+  \codep@target@install{AddToHook}{env/#1/end}{immediate-write}{%
+    \codep@hooktheorem@end{#1}}%
+}
 
 % \codep@envtrack@dispatch{env}
 %   Route an env through its configured env-track strategy.
@@ -1807,11 +1969,14 @@
   \codep@envtrack@config@read{#1}{strategy}{\codep@tmp@strategy}%
   \ifx\codep@tmp@strategy\codep@strategy@cmdhookobservable%
     \codep@hooktheorem{#1}%
+  \else\ifx\codep@tmp@strategy\codep@strategy@envhookobservable%
+    \codep@hooktheorem@envhookobservable{#1}%
   \else%
-    \PackageError{codependent}{Unknown env-track strategy for #1}%
-      {Expected strategy='cmd-hook-observable'. Got something else or unset.%
-       \MessageBreak Did \codeptrack run before dispatch?}%
-  \fi%
+    \PackageError{codependent}{Unknown env-track strategy for #1}{%
+      Expected strategy='cmd-hook-observable' or 'env-hook-observable'.%
+      \MessageBreak Got something else or unset; did \string\codeptrack%
+      \space run before dispatch?}%
+  \fi\fi%
 }
 
 % Thin orchestrator: wire the named helpers into the five hook points.
@@ -5725,16 +5890,20 @@
   \booltrue{codep@tracked}%
   % Auto-detect the base counter from the first environment name.
   \codep@extractfirst#1,\@nil%
-  % Check that the base counter exists (i.e. \newtheorem was called).
-  \@ifundefined{c@\codep@basecounter}{%
-    \PackageError{codependent}%
-      {Counter '\codep@basecounter' undefined -- %
-       \string\codeptrack\space called before%
-       \string\newtheorem}%
-      {Declare all theorem environments with%
-       \string\newtheorem\space before calling%
-       \string\codeptrack.}%
-  }{}%
+  \codep@envtrack@resolvecounter{\codep@basecounter}{\codep@tmp@counter}%
+  \ifx\codep@tmp@counter\@empty%
+    \codep@envtrack@ifxparseTF{\codep@basecounter}{}{%
+      \PackageError{codependent}%
+        {Counter '\codep@basecounter' undefined -- %
+         \string\codeptrack\space called before%
+         \string\newtheorem}%
+        {Declare all theorem environments with%
+         \string\newtheorem\space before calling%
+         \string\codeptrack.}%
+    }%
+  \else%
+    \let\codep@basecounter\codep@tmp@counter%
+  \fi%
   \codep@setupcounter%
   % Hook each listed environment and its starred variant.
   % Note: \expandafter ensures the env name is fully expanded
@@ -5750,20 +5919,18 @@
       % \c@atom; the sibling counters still point to the old
       % register.  This re-let ensures every tracked env's
       % counter is \c@atom, regardless of declaration order.
-      \expandafter\@ifundefined\expandafter{%
-        \expandafter c@\codep@tmp@envname%
-      }{}{%
-        \expandafter\let\csname c@\codep@tmp@envname\endcsname\c@atom%
-        % Also alias the display macro \the<env> to \theatom.
+      \codep@envtrack@resolvecounter{\codep@tmp@envname}{\codep@tmp@counter}%
+      \ifx\codep@tmp@counter\@empty\else%
+        \expandafter\let\csname c@\codep@tmp@counter\endcsname\c@atom%
+        % Also alias the resolved display macro \the<counter> to \theatom.
         % When thmtools declares an env with sibling=<base>, it
         % snapshots \the<base> at declaration time.  If codependent
         % later rewires \the<base> to \theatom, the sibling's
-        % display macro still has the old format.  This re-let
-        % ensures every tracked env uses the atom display format.
-        \expandafter\let\csname the\codep@tmp@envname\endcsname\theatom%
-      }%
-      \codep@envtrack@config@write{\codep@tmp@envname}{strategy}{cmd-hook-observable}%
-      \codep@envtrack@config@write{\codep@tmp@envname}{quirks-key}{none}%
+        % display macro still has the old format.  tcolorbox theorem
+        % envs resolve to their internal tcb@cnt@<env> counter here.
+        \expandafter\let\csname the\codep@tmp@counter\endcsname\theatom%
+      \fi%
+      \codep@envtrack@resolve{\codep@tmp@envname}%
       \expandafter\codep@envtrack@dispatch%
         \expandafter{\codep@tmp@envname}%
       % Auto-register starred variant (amsthm creates foo*).
@@ -5771,10 +5938,11 @@
       \expandafter\@ifundefined\expandafter{%
         \codep@starred%
       }{}{%
-        \codep@envtrack@config@write{\codep@starred}{strategy}{cmd-hook-observable}%
-        \codep@envtrack@config@write{\codep@starred}{quirks-key}{none}%
-        \expandafter\codep@envtrack@dispatch%
-          \expandafter{\codep@starred}%
+        \codep@envtrack@ifnumberedresolverTF{\codep@starred}{%
+          \codep@envtrack@resolve{\codep@starred}%
+          \expandafter\codep@envtrack@dispatch%
+            \expandafter{\codep@starred}%
+        }{}%
       }%
     \fi
   }%
