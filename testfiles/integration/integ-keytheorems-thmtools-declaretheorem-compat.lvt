@@ -1,0 +1,57 @@
+%% TEST-NAME: integ-keytheorems-thmtools-declaretheorem-compat
+%% TEST-PURPOSE: keytheorems thmtools declaretheorem compat is tracked
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems thmtools-compat \declaretheoremstyle and \declaretheorem declarations behave like \newkeytheorem for descriptor detection, appendix links, and aux ownership.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems thmtools-compat declaretheorem coverage
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{compatthm}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{compatlem}
+%% TEST-AUX-CONTAINS: \codep@lblentity{compat:target}{compatthm:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{compat:source}{compatlem:1.2}
+%% TEST-AUX-CONTAINS: \codep@atomref{compatlem:1.2}{compat:target}
+%% TEST-AUX-CONTAINS: \codep@anchormap{compatthm:1.1}{compatthm.
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{compat:target}{theorem:1.1}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:compatthm:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:compatthm:1\.1
+%% TEST-PDF-LINK-DEST: compatthm\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage[thmtools-compat]{keytheorems}
+\declaretheoremstyle[headfont=\bfseries,bodyfont=\itshape,postheadspace=0.5em]{codepcompat}
+\declaretheorem[name=Compat Theorem,style=codepcompat,numberwithin=section]{compatthm}
+\declaretheorem[name=Compat Lemma,sibling=compatthm]{compatlem}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{compatthm,compatlem}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{compatthm}{compat theorem}{compat theorems}
+\Crefname{compatthm}{Compat Theorem}{Compat Theorems}
+\crefname{compatlem}{compat lemma}{compat lemmas}
+\Crefname{compatlem}{Compat Lemma}{Compat Lemmas}
+\begin{document}
+\START
+\section{Declare theorem compat}
+
+\begin{compatthm}\label{compat:target}
+The compat-declared theorem is a first-class keytheorems target.
+\end{compatthm}
+
+\begin{compatlem}\label{compat:source}
+The compat-declared lemma cites \cref{compat:target}.
+\end{compatlem}
+
+\codepappendix
+\END
+\end{document}

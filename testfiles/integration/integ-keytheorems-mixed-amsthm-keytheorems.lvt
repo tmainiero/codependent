@@ -1,0 +1,75 @@
+%% TEST-NAME: integ-keytheorems-mixed-amsthm-keytheorems
+%% TEST-PURPOSE: amsthm and keytheorems tracked envs do not leak state
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-NUM-SHARED
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: An amsthm theorem and a keytheorems theorem in the same document emit separate atoms/backrefs, with entry-pinned PDF checks proving backend state and currentHref values do not collide.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: mixed amsthm and keytheorems backend coverage
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{atheorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{ktheorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{atheorem}
+%% TEST-AUX-CONTAINS: \codep@lblentity{mixed:am-target}{atheorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{mixed:key-target}{ktheorem:1.2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{mixed:am-source}{atheorem:1.3}
+%% TEST-AUX-CONTAINS: \codep@atomref{ktheorem:1.2}{mixed:am-target}
+%% TEST-AUX-CONTAINS: \codep@atomref{atheorem:1.3}{mixed:am-target}
+%% TEST-AUX-CONTAINS: \codep@atomref{atheorem:1.3}{mixed:key-target}
+%% TEST-AUX-CONTAINS: \codep@anchormap{atheorem:1.1}{atheorem.
+%% TEST-AUX-CONTAINS: \codep@anchormap{ktheorem:1.2}{ktheorem.
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{ktheorem:1.2}{atheorem.
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{atheorem:1.1}{ktheorem.
+%% TEST-PDF-LINK-DEST: atheorem\.[0-9]+
+%% TEST-PDF-LINK-DEST: ktheorem\.[0-9]+
+%% TEST-PDF-BACKREF-TARGETS: atheorem\.[0-9]+ = ktheorem\.[0-9]+, atheorem\.[0-9]+
+%% TEST-PDF-BACKREF-ENTRY-TARGET: ktheorem\.[0-9]+ | 1.2 = ktheorem\.[0-9]+
+%% TEST-PDF-BACKREF-ENTRY-TARGET: ktheorem\.[0-9]+ | 1.3 = atheorem\.[0-9]+
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% TEST-PDF-STEXT: (?s)Used in 1\.2, 1\.3\.
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\newtheorem{atheorem}{A-Theorem}[section]
+\usepackage{keytheorems}
+\newkeytheorem{ktheorem}[name=K-Theorem,sibling=atheorem]
+\usepackage{codependent}
+\codepsetup{backrefs=inline, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{atheorem,ktheorem}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{atheorem}{amsthm theorem}{amsthm theorems}
+\Crefname{atheorem}{Amsthm Theorem}{Amsthm Theorems}
+\crefname{ktheorem}{key theorem}{key theorems}
+\Crefname{ktheorem}{Key Theorem}{Key Theorems}
+\begin{document}
+\START
+\section{Mixed backends}
+
+\begin{atheorem}\label{mixed:am-target}
+The amsthm target is first.
+\[
+  a=a.
+\]
+\end{atheorem}
+
+\begin{ktheorem}\label{mixed:key-target}
+The keytheorems theorem cites the amsthm target \cref{mixed:am-target}.
+\[
+  k=k.
+\]
+\end{ktheorem}
+
+\begin{atheorem}\label{mixed:am-source}
+The second amsthm theorem cites both \cref{mixed:am-target,mixed:key-target}.
+\end{atheorem}
+
+\END
+\end{document}

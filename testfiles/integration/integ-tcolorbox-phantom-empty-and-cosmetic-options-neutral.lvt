@@ -1,0 +1,49 @@
+%% TEST-NAME: integ-tcolorbox-phantom-empty-and-cosmetic-options-neutral
+%% TEST-PURPOSE: Empty phantom and cosmetic tcolorbox options still track.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: phantom={} appends no material and does not clear codependent's phantom canary, while color and font cosmetics leave atoms, labels, and links intact.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P02
+%% TEST-SECTION: tcolorbox empty phantom positive control
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: phantom-clearing option
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{cosmtcb}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{cosmtcb}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{cosmtcb}
+%% TEST-AUX-CONTAINS: \codep@lblentity{cosmtcb:target}{cosmtcb:1.1}
+%% TEST-AUX-CONTAINS: \codep@atomref{cosmtcb:1.2}{cosmtcb:target}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:cosmtcb:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:cosmtcb:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{cosmtcb}{CosmeticBox}{%
+  colback=blue!3,colframe=blue!55!black,fonttitle=\bfseries}{cosmtcb}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{cosmtcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Empty phantom}
+
+\begin{cosmtcb}[phantom={},colback=purple!4,colframe=purple!60!black,fonttitle=\itshape]{Empty Phantom Target}{target}
+The empty phantom option appends nothing and must not suppress codependent tracking.
+\end{cosmtcb}
+
+\begin{cosmtcb}[colback=orange!5,colframe=orange!70!black]{Cosmetic Source}{source}
+Cosmetic per-instance overrides still allow this source to cite \ref{cosmtcb:target}.
+\end{cosmtcb}
+
+\codepappendix
+\END
+\end{document}

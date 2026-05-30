@@ -1,0 +1,81 @@
+%% TEST-NAME: integ-keytheorems-shared-counter-distinct-envs
+%% TEST-PURPOSE: keytheorems sibling and sharenumber envs keep distinct atom keys
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-NUM-SHARED
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Multiple keytheorems envs sharing one counter through sibling= and sharenumber= keep env-prefixed atom keys, distinct labels, and exact backref link targets.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems shared-counter distinct-env coverage
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{baseclaim} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{siblingclaim} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{shareclaim} = 1
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.4}{baseclaim}
+%% TEST-AUX-CONTAINS: \codep@lblentity{shared:base}{baseclaim:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{shared:sibling}{siblingclaim:1.2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{shared:share}{shareclaim:1.3}
+%% TEST-AUX-CONTAINS: \codep@lblentity{shared:base-source}{baseclaim:1.4}
+%% TEST-AUX-CONTAINS: \codep@atomref{siblingclaim:1.2}{shared:base}
+%% TEST-AUX-CONTAINS: \codep@atomref{shareclaim:1.3}{shared:base}
+%% TEST-AUX-CONTAINS: \codep@atomref{shareclaim:1.3}{shared:sibling}
+%% TEST-AUX-CONTAINS: \codep@atomref{baseclaim:1.4}{shared:share}
+%% TEST-AUX-CONTAINS: \codep@renderlist{baseclaim:1.1}{inline}{\hyperlink {siblingclaim.
+%% TEST-AUX-CONTAINS: \codep@renderlist{baseclaim:1.1}{inline}{\hyperlink {siblingclaim.3}{1.2}, \hyperlink {shareclaim.
+%% TEST-AUX-CONTAINS: \codep@renderlist{siblingclaim:1.2}{inline}{\hyperlink {shareclaim.
+%% TEST-AUX-CONTAINS: \codep@renderlist{shareclaim:1.3}{inline}{\hyperlink {baseclaim.
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{shared:sibling}{baseclaim:1.2}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{shared:share}{baseclaim:1.3}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:baseclaim:1\.1
+%% TEST-PDF-DEST-EXISTS: codep-appendix:siblingclaim:1\.2
+%% TEST-PDF-DEST-EXISTS: codep-appendix:shareclaim:1\.3
+%% TEST-PDF-LINK-DEST: baseclaim\.[0-9]+
+%% TEST-PDF-LINK-DEST: siblingclaim\.[0-9]+
+%% TEST-PDF-LINK-DEST: shareclaim\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:baseclaim:1\.2
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{baseclaim}[name=Base Claim,numberwithin=section]
+\newkeytheorem{siblingclaim}[name=Sibling Claim,sibling=baseclaim]
+\newkeytheorem{shareclaim}[name=Share Claim,sharenumber=baseclaim]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{baseclaim,siblingclaim,shareclaim}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{baseclaim}{base claim}{base claims}
+\Crefname{baseclaim}{Base Claim}{Base Claims}
+\crefname{siblingclaim}{sibling claim}{sibling claims}
+\Crefname{siblingclaim}{Sibling Claim}{Sibling Claims}
+\crefname{shareclaim}{share claim}{share claims}
+\Crefname{shareclaim}{Share Claim}{Share Claims}
+\begin{document}
+\START
+\section{Shared counters}
+
+\begin{baseclaim}\label{shared:base}
+The base claim is a target.
+\end{baseclaim}
+
+\begin{siblingclaim}\label{shared:sibling}
+The sibling claim cites the base claim \cref{shared:base}.
+\end{siblingclaim}
+
+\begin{shareclaim}\label{shared:share}
+The sharenumber claim cites both \cref{shared:base,shared:sibling}.
+\end{shareclaim}
+
+\begin{baseclaim}\label{shared:base-source}
+This later base-claim source cites the sharenumber target \cref{shared:share}.
+\end{baseclaim}
+
+\codepappendix
+\END
+\end{document}

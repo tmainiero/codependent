@@ -1,0 +1,71 @@
+%% TEST-NAME: integ-keytheorems-style-builtins-posthead
+%% TEST-PURPOSE: keytheorems built-in styles keep posthead capture and links
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems style=plain, style=definition, and style=remark environments each emit one atom and retain appendix/name-link destinations with no style-specific orphan links.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems built-in style posthead coverage
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{plainstyled} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{definitionstyled} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.3}{remarkstyled} = 1
+%% TEST-AUX-CONTAINS: \codep@lblentity{style:plain}{plainstyled:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{style:definition}{definitionstyled:1.2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{style:remark}{remarkstyled:1.3}
+%% TEST-AUX-CONTAINS: \codep@atomref{plainstyled:1.4}{style:plain}
+%% TEST-AUX-CONTAINS: \codep@atomref{plainstyled:1.4}{style:definition}
+%% TEST-AUX-CONTAINS: \codep@atomref{plainstyled:1.4}{style:remark}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:plainstyled:1\.1
+%% TEST-PDF-DEST-EXISTS: codep-appendix:definitionstyled:1\.2
+%% TEST-PDF-DEST-EXISTS: codep-appendix:remarkstyled:1\.3
+%% TEST-PDF-LINK-DEST: codep-appendix:plainstyled:1\.1
+%% TEST-PDF-LINK-DEST: plainstyled\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:unstyled:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{plainstyled}[name=Plain Styled,style=plain,numberwithin=section]
+\newkeytheorem{definitionstyled}[name=Definition Styled,style=definition,sibling=plainstyled]
+\newkeytheorem{remarkstyled}[name=Remark Styled,style=remark,sibling=plainstyled]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{plainstyled,definitionstyled,remarkstyled}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{plainstyled}{plain styled}{plain styled}
+\Crefname{plainstyled}{Plain Styled}{Plain Styled}
+\crefname{definitionstyled}{definition styled}{definition styled}
+\Crefname{definitionstyled}{Definition Styled}{Definition Styled}
+\crefname{remarkstyled}{remark styled}{remark styled}
+\Crefname{remarkstyled}{Remark Styled}{Remark Styled}
+\begin{document}
+\START
+\section{Built-in styles}
+
+\begin{plainstyled}\label{style:plain}
+The plain built-in style is the target.
+\end{plainstyled}
+
+\begin{definitionstyled}\label{style:definition}
+The definition built-in style also emits a theorem atom.
+\end{definitionstyled}
+
+\begin{remarkstyled}\label{style:remark}
+The remark built-in style also emits a theorem atom.
+\end{remarkstyled}
+
+\begin{plainstyled}\label{style:source}
+This final styled source cites all three built-in style targets \cref{style:plain,style:definition,style:remark}.
+\end{plainstyled}
+
+\codepappendix
+\END
+\end{document}

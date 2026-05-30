@@ -1,0 +1,66 @@
+%% TEST-NAME: integ-keytheorems-heading-custom-name-link
+%% TEST-PURPOSE: keytheorems heading title and name aliases keep appendix name links
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems declaration aliases heading=, title=, and name= all produce tracked theorem atoms; custom display text is present while appendix links remain object-correct without exact PRINTKIND assertions.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems custom display-name link path
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{headingres}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{titleres}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{nameres}
+%% TEST-AUX-CONTAINS: \codep@lblentity{res:heading}{headingres:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{res:title}{titleres:1.2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{res:name-source}{nameres:1.3}
+%% TEST-AUX-CONTAINS: \codep@atomref{nameres:1.3}{res:heading}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:headingres:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:headingres:1\.1
+%% TEST-PDF-LINK-DEST: headingres\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:theorem:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-STEXT: Heading Alias Result
+%% TEST-PDF-STEXT: Title Alias Result
+%% TEST-PDF-STEXT: Name Alias Result
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{headingres}[heading=Heading Alias Result,numberwithin=section]
+\newkeytheorem{titleres}[title=Title Alias Result,sibling=headingres]
+\newkeytheorem{nameres}[name=Name Alias Result,sibling=headingres]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{headingres,titleres,nameres}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{headingres}{heading result}{heading results}
+\Crefname{headingres}{Heading Result}{Heading Results}
+\crefname{titleres}{title result}{title results}
+\Crefname{titleres}{Title Result}{Title Results}
+\crefname{nameres}{name result}{name results}
+\Crefname{nameres}{Name Result}{Name Results}
+\begin{document}
+\START
+\section{Custom displays}
+
+\begin{headingres}\label{res:heading}
+The heading alias names this target.
+\end{headingres}
+
+\begin{titleres}\label{res:title}
+The title alias also creates a tracked theorem atom.
+\end{titleres}
+
+\begin{nameres}\label{res:name-source}
+The name alias source cites the heading alias target \cref{res:heading}.
+\end{nameres}
+
+\codepappendix
+\END
+\end{document}

@@ -1,0 +1,42 @@
+%% TEST-NAME: integ-keytheorems-numbered-no-heading-silent-no-track
+%% TEST-PURPOSE: keytheorems numbered=no with custom heading is silent no-track
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: This composite extends integ-keytheorems-numbered-no-silent-no-track: a custom named numbered=no keytheorems env passed to \codeptrack emits no warning, atom, label entity, appendix destination, or paragraph/body atom.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems numbered=no composite silent no-track
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: codependent.*Warning.*silentheading
+%% TEST-CDP-NOT-CONTAINS: {silentheading}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{0}{silentheading}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{}{silentheading}
+%% TEST-CDP-NOT-CONTAINS: {paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{silent:heading}
+%% TEST-AUX-NOT-CONTAINS: codep-appendix:silentheading
+%% TEST-PDF-DEST-NOT-EXISTS: codep-appendix:silentheading
+%% TEST-PDF-NOT: Used in
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{silentheading}[name=Silent Heading Remark,numbered=no]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=on, equations=off, proofs=off}
+\codeptrack{silentheading}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Custom unnumbered keytheorems}
+\begin{silentheading}\label{silent:heading}
+The custom unnumbered keytheorems body must not produce a tracked atom.
+\end{silentheading}
+\codepappendix
+\END
+\end{document}

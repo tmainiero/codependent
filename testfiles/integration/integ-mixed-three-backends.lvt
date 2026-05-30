@@ -1,0 +1,96 @@
+%% TEST-NAME: integ-mixed-three-backends
+%% TEST-PURPOSE: amsthm, keytheorems, and tcolorbox coexist in one document.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM, B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR, B-REND-BACKREFSOF
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Mixed amsthm, keytheorems, and tcolorbox tracked theorem environments emit independent atom keys and a saturated Used-In row whose source entries link back to each backend.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P02
+%% TEST-SECTION: mixed three-backend parity
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.1}{ktlemma}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{3.1}{mixedtcb}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{4.1}{theorem}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{3.1}{theorem}
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:mixed-target}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{lem:mixed-source}{ktlemma:2.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{mixedtcb:tcb-source}{mixedtcb:3.1}
+%% TEST-AUX-CONTAINS: \codep@atomref{ktlemma:2.1}{thm:mixed-target}
+%% TEST-AUX-CONTAINS: \codep@atomref{mixedtcb:3.1}{thm:mixed-target}
+%% TEST-AUX-CONTAINS: \codep@atomref{mixedtcb:3.1}{lem:mixed-source}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:4.1}{thm:mixed-target}
+%% TEST-AUX-CONTAINS: \codep@atomref{theorem:4.1}{mixedtcb:tcb-source}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-DEST-EXISTS: codep-appendix:ktlemma:2\.1
+%% TEST-PDF-DEST-EXISTS: codep-appendix:mixedtcb:3\.1
+%% TEST-PDF-DEST-NOT-EXISTS: codep-appendix:theorem:3\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:ktlemma:2\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:mixedtcb:3\.1
+%% TEST-PDF-BACKREF-TARGETS: theorem\.1\.1 = ktlemma\.[0-9]+, tcb@cnt@mixedtcb\.[0-9]+, theorem\.[0-9]+
+%% TEST-PDF-BACKREF-ENTRY-TARGET: ktlemma\.[0-9]+ | 2.1 = ktlemma\.[0-9]+
+%% TEST-PDF-BACKREF-ENTRY-TARGET: tcb@cnt@mixedtcb\.[0-9]+ | 3.1 = tcb@cnt@mixedtcb\.[0-9]+
+%% TEST-PDF-BACKREF-ENTRY-TARGET: theorem\.[0-9]+ | 4.1 = theorem\.[0-9]+
+%% TEST-PDF-ALL-BACKREFS-LINKED: yes
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:missing-backend
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\usepackage{keytheorems}
+\newkeytheorem{ktlemma}[name=Key Lemma,numberwithin=section]
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{mixedtcb}{TBox}{%
+  colback=green!3,colframe=green!50!black,fonttitle=\bfseries}{mixedtcb}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem,ktlemma,mixedtcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{ktlemma}{key lemma}{key lemmas}
+\Crefname{ktlemma}{Key Lemma}{Key Lemmas}
+\crefname{mixedtcb}{tcolorbox theorem}{tcolorbox theorems}
+\Crefname{mixedtcb}{Tcolorbox Theorem}{Tcolorbox Theorems}
+\begin{document}
+\START
+\section{Amsthm target}
+
+\begin{theorem}\label{thm:mixed-target}
+The amsthm target is cited by all three backend families.
+\end{theorem}
+
+\section{Keytheorems source}
+
+\begin{ktlemma}\label{lem:mixed-source}
+The keytheorems source cites \cref{thm:mixed-target}.
+\end{ktlemma}
+
+\section{Tcolorbox source}
+
+\begin{mixedtcb}{Tcolorbox Source}{tcb-source}
+The tcolorbox source cites \ref{thm:mixed-target} and \ref{lem:mixed-source}.
+\end{mixedtcb}
+
+\section{Amsthm source}
+
+\begin{theorem}\label{thm:mixed-source}
+The amsthm source cites \autoref{thm:mixed-target}, \ref{lem:mixed-source}, and \ref{mixedtcb:tcb-source}.
+\end{theorem}
+
+\begingroup
+\codepsetup{backrefs=inline}
+\noindent\codepbackrefsof{thm:mixed-target}
+\par
+\endgroup
+\codepsetup{backrefs=appendix}
+
+\codepappendix
+\END
+\end{document}

@@ -1,0 +1,60 @@
+%% TEST-NAME: integ-keytheorems-renew-style-posthead-survives
+%% TEST-PURPOSE: keytheorems renewed custom style still captures posthead anchors
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: A \newkeytheoremstyle redefined with \renewkeytheoremstyle still uses the keytheorems posthead hook before an in-body equation can steal the theorem anchor.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems renewed style posthead coverage
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{renewedstyled}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{renewedsource}
+%% TEST-AUX-CONTAINS: \codep@lblentity{renewed:target}{renewedstyled:1.1}
+%% TEST-AUX-CONTAINS: \codep@atomref{renewedsource:1.2}{renewed:target}
+%% TEST-AUX-CONTAINS: \codep@anchormap{renewedstyled:1.1}{renewedstyled.
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{renewedstyled:1.1}{equation
+%% TEST-PDF-DEST-EXISTS: codep-appendix:renewedstyled:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:renewedstyled:1\.1
+%% TEST-PDF-LINK-DEST: renewedstyled\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: equation\.
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheoremstyle{codeprenew}{headfont=\bfseries,bodyfont=\itshape,postheadspace=0.5em}
+\renewkeytheoremstyle{codeprenew}{headfont=\scshape,bodyfont=\normalfont,postheadspace=1em}
+\newkeytheorem{renewedstyled}[name=Renewed Styled,style=codeprenew,numberwithin=section]
+\newkeytheorem{renewedsource}[name=Renewed Source,sibling=renewedstyled]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{renewedstyled,renewedsource}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{renewedstyled}{renewed styled}{renewed styled}
+\Crefname{renewedstyled}{Renewed Styled}{Renewed Styled}
+\crefname{renewedsource}{renewed source}{renewed sources}
+\Crefname{renewedsource}{Renewed Source}{Renewed Sources}
+\begin{document}
+\START
+\section{Renewed styles}
+
+\begin{renewedstyled}\label{renewed:target}
+The renewed-style theorem opens before this body equation.
+\begin{equation}\label{eq:renewed-body}
+  x=x.
+\end{equation}
+\end{renewedstyled}
+
+\begin{renewedsource}\label{renewed:source}
+This source cites the renewed-style target \cref{renewed:target}.
+\end{renewedsource}
+
+\codepappendix
+\END
+\end{document}

@@ -1,0 +1,50 @@
+%% TEST-NAME: integ-tcolorbox-nophantom-and-clearing-styles
+%% TEST-PURPOSE: Only nophantom-style clearing disables tcolorbox tracking.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Bare nophantom and a local style expanding to nophantom both warn and suppress theorem, label, and body paragraph atoms; source review found no other direct phantom clearer.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P02
+%% TEST-SECTION: tcolorbox nophantom clearing semantics
+%% TEST-EXIT: 0
+%% TEST-EXPECT-PACKAGE-WARNING: nophantom or another.*phantom-clearing option
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-NOT-CONTAINS: {cleartcb}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{cleartcb:bare}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{cleartcb:style}
+%% TEST-CDP-COUNT: \codep@cdp@atom = 3
+%% TEST-CDP-COUNT: {paragraph} = 3
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\tcbset{codep local phantom clear/.style={nophantom}}
+\newtcbtheorem[number within=section]{cleartcb}{ClearBox}{%
+  colback=red!3,colframe=red!55!black,fonttitle=\bfseries}{cleartcb}
+\usepackage{codependent}
+\codepsetup{paragraphs=on, equations=off, proofs=off}
+\codeptrack{cleartcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Clearing options}
+Paragraph before the clearing boxes.
+
+\begin{cleartcb}[nophantom]{Bare nophantom}{bare}
+Body paragraph inside the bare nophantom box must not become a paragraph atom.
+\end{cleartcb}
+
+Paragraph between the clearing boxes.
+
+\begin{cleartcb}[codep local phantom clear]{Style nophantom}{style}
+Body paragraph inside the style-cleared box must not become a paragraph atom.
+\end{cleartcb}
+
+Paragraph after the clearing boxes.
+\END
+\end{document}

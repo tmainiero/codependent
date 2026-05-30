@@ -1,0 +1,55 @@
+%% TEST-NAME: integ-keytheorems-thmtools-restatable-store-ordinary
+%% TEST-PURPOSE: keytheorems thmtools restatable ordinary store replays inertly
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems thmtools-compat non-star restatable maps to ordinary store=; the first occurrence gets one atom/destination and the replay creates no duplicate atom or theorem.restate link.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems thmtools-compat ordinary restatable store path
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: store\* not yet supported
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{theorem}
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.1}{theorem} = 1
+%% TEST-CDP-COUNT: \codep@cdp@atom{1.2}{lemma} = 1
+%% TEST-CDP-NOT-CONTAINS: theorem.restate
+%% TEST-AUX-CONTAINS: \codep@lblentity{thm:restatable-ordinary}{theorem:1.1}
+%% TEST-AUX-CONTAINS: \codep@atomref{lemma:1.2}{thm:restatable-ordinary}
+%% TEST-AUX-CONTAINS: \codep@anchormap{theorem:1.1}{theorem.
+%% TEST-PDF-DEST-EXISTS: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:theorem:1\.1
+%% TEST-PDF-LINK-DEST: theorem\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: theorem\.restate
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage[thmtools-compat]{keytheorems}
+\declaretheorem[name=Theorem,numberwithin=section]{theorem}
+\declaretheorem[name=Lemma,sibling=theorem]{lemma}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{theorem,lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Restatable ordinary}
+
+\begin{restatable}{theorem}{RestatableOrdinary}\label{thm:restatable-ordinary}
+The ordinary stored theorem is the first occurrence.
+\end{restatable}
+
+\RestatableOrdinary*
+
+\begin{lemma}\label{lem:restatable-source}
+This source cites the ordinary restatable theorem \cref{thm:restatable-ordinary}.
+\end{lemma}
+
+\codepappendix
+\END
+\end{document}

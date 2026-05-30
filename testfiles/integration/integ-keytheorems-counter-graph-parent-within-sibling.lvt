@@ -1,0 +1,101 @@
+%% TEST-NAME: integ-keytheorems-counter-graph-parent-within-sibling
+%% TEST-PURPOSE: keytheorems parent numberwithin within and sibling aliases share graph safely
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-NUM-SHARED
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: keytheorems parent=, numberwithin=, and within= are equivalent section-parent aliases, while sibling= and numberlike= share the counter sequence without env-prefix collisions.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
+%% TEST-SECTION: keytheorems counter graph alias equivalence
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{parentgraph}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{siblinggraph}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{likegraph}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.4}{numberwithingraph}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.5}{withingraph}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.1}{parentgraph}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.2}{numberwithingraph}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.3}{withingraph}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:parent:a}{parentgraph:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:sibling:a}{siblinggraph:1.2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:numberlike:a}{likegraph:1.3}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:numberwithin:a}{numberwithingraph:1.4}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:within:a}{withingraph:1.5}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:parent:b}{parentgraph:2.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:numberwithin:b}{numberwithingraph:2.2}
+%% TEST-AUX-CONTAINS: \codep@lblentity{kg:within:b}{withingraph:2.3}
+%% TEST-AUX-CONTAINS: \codep@atomref{withingraph:2.3}{kg:parent:a}
+%% TEST-PDF-DEST-EXISTS: codep-appendix:parentgraph:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:parentgraph:1\.1
+%% TEST-PDF-LINK-DEST: parentgraph\.[0-9]+
+%% TEST-PDF-LINK-DEST-NOT: codep-appendix:graph:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{parentgraph}[name=Parent Graph,parent=section]
+\newkeytheorem{siblinggraph}[name=Sibling Graph,sibling=parentgraph]
+\newkeytheorem{likegraph}[name=Numberlike Graph,numberlike=parentgraph]
+\newkeytheorem{numberwithingraph}[name=Numberwithin Graph,numberwithin=section]
+\newkeytheorem{withingraph}[name=Within Graph,within=section]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codeptrack{parentgraph,siblinggraph,likegraph,numberwithingraph,withingraph}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{parentgraph}{parent graph}{parent graphs}
+\Crefname{parentgraph}{Parent Graph}{Parent Graphs}
+\crefname{siblinggraph}{sibling graph}{sibling graphs}
+\Crefname{siblinggraph}{Sibling Graph}{Sibling Graphs}
+\crefname{likegraph}{numberlike graph}{numberlike graphs}
+\Crefname{likegraph}{Numberlike Graph}{Numberlike Graphs}
+\crefname{numberwithingraph}{numberwithin graph}{numberwithin graphs}
+\Crefname{numberwithingraph}{Numberwithin Graph}{Numberwithin Graphs}
+\crefname{withingraph}{within graph}{within graphs}
+\Crefname{withingraph}{Within Graph}{Within Graphs}
+\begin{document}
+\START
+\section{First graph}
+
+\begin{parentgraph}\label{kg:parent:a}
+The parent= row starts the shared sequence in section one.
+\end{parentgraph}
+
+\begin{siblinggraph}\label{kg:sibling:a}
+The sibling= row shares numbering without reusing the parent env prefix.
+\end{siblinggraph}
+
+\begin{likegraph}\label{kg:numberlike:a}
+The numberlike= row is a sibling alias and keeps its own env prefix.
+\end{likegraph}
+
+\begin{numberwithingraph}\label{kg:numberwithin:a}
+The numberwithin= row uses the same section reset semantics as parent=.
+\end{numberwithingraph}
+
+\begin{withingraph}\label{kg:within:a}
+The within= alias row is explicitly present in section one.
+\end{withingraph}
+
+\section{Second graph}
+
+\begin{parentgraph}\label{kg:parent:b}
+The parent= row resets at the new section.
+\end{parentgraph}
+
+\begin{numberwithingraph}\label{kg:numberwithin:b}
+The numberwithin= row follows the same reset phase.
+\end{numberwithingraph}
+
+\begin{withingraph}\label{kg:within:b}
+The within= row cites the first parent row \cref{kg:parent:a} after the reset.
+\end{withingraph}
+
+\codepappendix
+\END
+\end{document}

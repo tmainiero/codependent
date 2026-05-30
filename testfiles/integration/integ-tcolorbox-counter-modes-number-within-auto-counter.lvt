@@ -1,0 +1,57 @@
+%% TEST-NAME: integ-tcolorbox-counter-modes-number-within-auto-counter
+%% TEST-PURPOSE: tcolorbox counter modes are captured after one step.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM, B-NUM-SEQ
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: auto counter, number within, use counter, and use counter from boxes produce env-prefixed atom keys from tcolorbox's already-stepped counters without skipped numbers.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P02
+%% TEST-SECTION: tcolorbox counter modes
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{autobox}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{usectrbox}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{frombox}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2}{usectrbox}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{frombox}
+%% TEST-AUX-CONTAINS: \codep@lblentity{autobox:first}{autobox:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{usectrbox:first}{usectrbox:1.1}
+%% TEST-AUX-CONTAINS: \codep@lblentity{frombox:first}{frombox:1.2}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newcounter{sharedtcb}[section]
+\renewcommand{\thesharedtcb}{\thesection.\arabic{sharedtcb}}
+\newtcbtheorem[auto counter,number within=section]{autobox}{AutoBox}{%
+  colback=blue!3,colframe=blue!55!black,fonttitle=\bfseries}{autobox}
+\newtcbtheorem[use counter=sharedtcb,number within=section]{usectrbox}{UseCounterBox}{%
+  colback=green!3,colframe=green!50!black,fonttitle=\bfseries}{usectrbox}
+\newtcbtheorem[use counter from=autobox]{frombox}{FromBox}{%
+  colback=yellow!6,colframe=yellow!45!black,fonttitle=\bfseries}{frombox}
+\usepackage{codependent}
+\codepsetup{paragraphs=off, equations=off, proofs=off}
+\codeptrack{autobox,usectrbox,frombox}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Counter modes}
+
+\begin{autobox}{Auto counter target}{first}
+The auto counter with number within section should be captured as 1.1.
+\end{autobox}
+
+\begin{usectrbox}{Use counter target}{first}
+The external shared counter starts at 1.1 for the first use-counter box.
+\end{usectrbox}
+
+\begin{frombox}{Use counter from target}{first}
+The frombox uses the autobox counter and advances that shared tcolorbox counter once to 1.2.
+\end{frombox}
+
+\END
+\end{document}

@@ -1,0 +1,57 @@
+%% TEST-NAME: integ-tcolorbox-breakable-page-start-dest
+%% TEST-PURPOSE: tcolorbox breakable theorem anchors stay on the start page.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM, B-LINK-APPENDIX-BIDIR
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: A breakable tcolorbox theorem spans pages while codependent keeps the theorem destination on the first page, emits one atom per numbered box, and leaves appendix/backref links non-orphaned.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P02
+%% TEST-SECTION: tcolorbox breakable start-page destination
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{breaktcb}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{breaktcb}
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.3}{breaktcb}
+%% TEST-AUX-CONTAINS: \codep@lblentity{breaktcb:target}{breaktcb:1.1}
+%% TEST-AUX-CONTAINS: \codep@atomref{breaktcb:1.2}{breaktcb:target}
+%% TEST-PDF-DEST-PAGE: breaktcb\.[0-9]+ | Breakable Start Target
+%% TEST-PDF-DEST-EXISTS: codep-appendix:breaktcb:1\.1
+%% TEST-PDF-LINK-DEST: codep-appendix:breaktcb:1\.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{breakable,theorems}
+\newtcbtheorem[number within=section]{breaktcb}{BreakBox}{%
+  enhanced,breakable,colback=blue!3,colframe=blue!55!black,fonttitle=\bfseries}{breaktcb}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{breaktcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Breakable tcolorbox}
+
+\begin{breaktcb}[breakable]{Breakable Start Target}{target}
+Breakable start sentinel on the first page of the tracked theorem box.
+
+\newcount\codepbreakline
+\codepbreakline=0
+\loop
+  Long breakable filler line \the\codepbreakline\ that forces the box onto a continuation page.\par
+  \advance\codepbreakline by 1
+\ifnum\codepbreakline<105
+\repeat
+\end{breaktcb}
+
+\begin{breaktcb}{Breakable Source}{source}
+This source cites the page-spanning target by \ref{breaktcb:target}.
+\end{breaktcb}
+
+\codepappendix
+\END
+\end{document}

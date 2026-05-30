@@ -1,0 +1,51 @@
+%% TEST-NAME: integ-tcolorbox-nested-tracked-untracked
+%% TEST-PURPOSE: Nested untracked tcolorboxes do not leak atoms.
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: A tracked tcolorbox theorem can contain an untracked raw tcolorbox and an untracked newtcolorbox without inner atoms or suppression-depth leakage after close.
+%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P02
+%% TEST-SECTION: tcolorbox nested suppression reset
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{outertcb}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{paragraph}
+%% TEST-CDP-NOT-CONTAINS: {innerplain}
+%% TEST-CDP-NOT-CONTAINS: raw inner tcolorbox
+%% TEST-CDP-COUNT: \codep@cdp@atom = 2
+%% TEST-AUX-CONTAINS: \codep@lblentity{outertcb:target}{outertcb:1.1}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{innerplain:target}
+%% TEST-PDF-NOT: codependent Error
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{outertcb}{OuterBox}{%
+  colback=blue!3,colframe=blue!55!black,fonttitle=\bfseries}{outertcb}
+\newtcolorbox{innerplain}{colback=gray!8,colframe=gray!60!black}
+\usepackage{codependent}
+\codepsetup{paragraphs=on, equations=off, proofs=off}
+\codeptrack{outertcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Nested boxes}
+
+\begin{outertcb}{Tracked Outer}{target}
+Outer theorem body before the raw inner tcolorbox.
+\begin{tcolorbox}[colback=white,colframe=black,title=Raw inner tcolorbox]
+Body in a raw inner tcolorbox must stay suppressed.
+\end{tcolorbox}
+\begin{innerplain}
+Body in an untracked newtcolorbox must also stay suppressed.
+\end{innerplain}
+Outer theorem body after the inner boxes.
+\end{outertcb}
+
+Paragraph after the tracked box proves suppression depth resets after the outer close.
+\END
+\end{document}
