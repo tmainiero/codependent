@@ -1,0 +1,35 @@
+%% TEST-NAME: integ-tcolorbox-starred-explicit-silent-no-track
+%% TEST-PURPOSE: explicitly tracking a tcolorbox starred env is silent no-track
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Explicitly passing a tcolorbox starred env (codetcb*) to \codeptrack must compile cleanly, emit no codependent error or warning, produce no theorem atom, and produce no label entity. Pins the new tcolorbox parity behavior introduced in W05-RESOLVER-SILENT (missingresolver silenced).
+%% TEST-SOURCE: W05-RESOLVER-SILENT
+%% TEST-SECTION: tcolorbox starred explicit silent no-track
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Error
+%% TEST-LOG-NOT: codependent.*Warning.*codetcb\*
+%% TEST-CDP-NOT-CONTAINS: {codetcb*}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{tcb:star}
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{codetcb}{TBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{codetcb}
+\usepackage{codependent}
+\codepsetup{paragraphs=off, equations=off, proofs=off}
+\codeptrack{codetcb*}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Starred tcolorbox}
+\begin{codetcb*}{Unnumbered box}
+Unnumbered tcolorbox body -- codependent must not emit an atom.
+\end{codetcb*}
+\END
+\end{document}

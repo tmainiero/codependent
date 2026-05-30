@@ -1,0 +1,34 @@
+%% TEST-NAME: integ-keytheorems-numbered-no-silent-no-track
+%% TEST-PURPOSE: explicitly tracking a keytheorems [numbered=no] env is silent no-track
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Explicitly passing a keytheorems environment declared with [numbered=no] (remarkno) to \codeptrack must compile cleanly, emit no codependent error or warning, produce no theorem atom, and produce no label entity. Pins the new keytheorems parity behavior introduced in W05-RESOLVER-SILENT (missingresolver silenced).
+%% TEST-SOURCE: W05-RESOLVER-SILENT
+%% TEST-SECTION: keytheorems numbered=no explicit silent no-track
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Error
+%% TEST-CDP-NOT-CONTAINS: {remarkno}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{rem:no}
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{remarkno}[name=Remark,numbered=no]
+\usepackage{codependent}
+\codepsetup{paragraphs=off, equations=off, proofs=off}
+\codeptrack{remarkno}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Unnumbered keytheorems}
+\begin{remarkno}\label{rem:no}
+Unnumbered keytheorems body -- codependent must not emit an atom.
+\end{remarkno}
+\END
+\end{document}

@@ -1,0 +1,35 @@
+%% TEST-NAME: integ-ntheorem-newtheorem-star-silent-no-track
+%% TEST-PURPOSE: ntheorem \newtheorem* envs are silently not tracked
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-SHARED
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: A \newtheorem* environment (remarkstar) declared under ntheorem but NOT added to \codeptrack is silently ignored by codependent: no atom, no label entity, and no error or warning in the log. Pins existing ntheorem silent-no-track behavior so future changes do not accidentally break it.
+%% TEST-SOURCE: W05-RESOLVER-SILENT
+%% TEST-SECTION: ntheorem unnumbered newtheorem* silent no-track
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-NOT: Package codependent Error
+%% TEST-CDP-NOT-CONTAINS: {remarkstar}
+%% TEST-AUX-NOT-CONTAINS: \codep@lblentity{rem:ntheorem:star}
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,cleveref,codependent
+%% TEST-RERUN: 2
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[amsmath,hyperref,thmmarks]{ntheorem}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem*{remarkstar}{Remark}
+\usepackage{codependent}
+\codepsetup{paragraphs=off, equations=off, proofs=off}
+\codeptrack{theorem}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+\section{Unnumbered}
+\begin{remarkstar}\label{rem:ntheorem:star}
+Unnumbered remark body -- codependent must not track this.
+\end{remarkstar}
+\END
+\end{document}

@@ -1856,17 +1856,14 @@
 }
 
 % \codep@envtrack@missingresolver{env}{backend}
-%   W05-XPARSE-BACKENDS P01 precondition: tracked xparse theorem
-%   environments must expose a numbered counter/resolver.
+%   Silent no-track for unnumbered/starred envs across all backends.
+%   Temporary parity behavior: tcolorbox and keytheorems unnumbered/starred
+%   envs now match the amsthm/ntheorem silent path. A future design wave
+%   will decide whether these envs should track to .cdp and render.
+%   See: project_unnumbered_starred_tracking_future_decision.md
 %% @implements \codeptrack
 %@effect state-only
-\newcommand*{\codep@envtrack@missingresolver}[2]{%
-  \PackageError{codependent}{%
-    Tracked #2 theorem '#1' lacks a numbered counter resolver}{%
-    codependent can track only xparse theorem backends with a usable\space%
-    numbered counter. Use a numbered theorem or remove '#1' from%
-    \MessageBreak \string\codeptrack.}%
-}
+\newcommand*{\codep@envtrack@missingresolver}[2]{}%
 
 % \codep@envtrack@resolvecounter{env}{cs}
 %   Resolve an env name to the counter name codependent should alias.
