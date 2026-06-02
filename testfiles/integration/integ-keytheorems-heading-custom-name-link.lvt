@@ -4,8 +4,8 @@
 %% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: keytheorems declaration aliases heading=, title=, and name= all produce tracked theorem atoms; custom display text is present while appendix links remain object-correct without exact PRINTKIND assertions.
-%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
-%% TEST-SECTION: keytheorems custom display-name link path
+%% TEST-PDF-DEST-EXISTS: titleres\.[0-9]+
+%% TEST-PDF-DEST-EXISTS: nameres\.[0-9]+
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{headingres}

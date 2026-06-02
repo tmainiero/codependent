@@ -4,8 +4,8 @@
 %% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM, B-NUM-SEQ
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: auto counter, number within, use counter, and use counter from boxes produce env-prefixed atom keys from tcolorbox's already-stepped counters without skipped numbers.
-%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P02
-%% TEST-SECTION: tcolorbox counter modes
+%% TEST-PDF-DEST-EXISTS: tcb@cnt@autobox\.2
+%% TEST-PDF-DEST-EXISTS: sharedtcb\.3
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{autobox}
@@ -19,8 +19,8 @@
 %% TEST-PDF-NOT: codependent Error
 %% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
 %% TEST-RERUN: 2
-%% TEST-STABLE-AT: 2
-
+%% TEST-PDF-DEST-EXISTS: tcb@cnt@autobox\.4
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
 \documentclass{article}
 \usepackage[most]{tcolorbox}
 \tcbuselibrary{theorems}

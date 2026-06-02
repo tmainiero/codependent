@@ -11,7 +11,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{outertcb}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{paragraph}
 %% TEST-CDP-NOT-CONTAINS: {innerplain}
-%% TEST-CDP-NOT-CONTAINS: raw inner tcolorbox
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-CDP-COUNT: \codep@cdp@atom = 2
 %% TEST-AUX-CONTAINS: \codep@lblentity{outertcb:target}{outertcb:1.1}
 %% TEST-AUX-NOT-CONTAINS: \codep@lblentity{innerplain:target}

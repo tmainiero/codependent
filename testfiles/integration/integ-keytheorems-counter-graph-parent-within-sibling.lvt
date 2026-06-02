@@ -4,8 +4,8 @@
 %% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-NUM-SHARED
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: keytheorems parent=, numberwithin=, and within= are equivalent section-parent aliases, while sibling= and numberlike= share the counter sequence without env-prefix collisions.
-%% TEST-SOURCE: W05-BACKENDS-RICH-STRESS P01
-%% TEST-SECTION: keytheorems counter graph alias equivalence
+%% TEST-PDF-DEST-EXISTS: parentgraph\.[0-9]+
+%% TEST-PDF-DEST-EXISTS: numberwithingraph\.[0-9]+
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{parentgraph}
@@ -34,7 +34,7 @@
 %% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
 %% TEST-STABLE-AT: 2
-
+%% TEST-PDF-DEST-EXISTS: withingraph\.[0-9]+
 \documentclass{article}
 \usepackage{amsmath,amsthm}
 \usepackage{keytheorems}
