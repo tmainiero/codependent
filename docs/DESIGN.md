@@ -4682,6 +4682,47 @@ path is to add full reversed-replay semantics rather than silently treating
   See [B-COMPAT-THMTOOLS-CONTINUED](BEHAVIOR.md#compatibility-matrix).
 - **hyperref:** optional, detected at load time.
 
+### Backend coverage scope (W05-BACKENDS-RICH-STRESS)
+
+All five tracked backends — amsthm, ntheorem, mathtools, tcolorbox, and
+keytheorems — now have option-depth integration coverage and rich stress
+coverage.
+
+**tcolorbox coverage scope** (added by W05-BACKENDS-RICH-STRESS): breakable
+page-spanning boxes anchor on the theorem-start page; only `nophantom` and
+styles that expand to it are clearing cases that suppress tracking (bare
+`phantom={}` appends nothing and leaves tracking intact); `auto counter`,
+`number within=section`, `use counter`, and `use counter from` counter modes
+are each exercised without double-increment; nested untracked boxes do not
+leak atoms; multiple environments sharing a style key produce distinct
+env-prefixed atom keys. All three tcolorbox variants coexist with the other
+four backends in a single document (exercised in `integ-mixed-three-backends`
+and the corresponding rich stress fixture).
+
+**keytheorems coverage scope** (added by W05-BACKENDS-RICH-STRESS): the
+`heading=`/`title=`/`name=` custom-display keys keep appendix theorem-name
+links intact; `parent=`, `numberwithin=`, and `within=` are alias-equivalent
+parent-counter declarations; `sibling=`/`numberlike=`/`sharenumber=`
+environments share a counter without env-prefix collision; `numbered=no` with
+a custom heading is silent no-track; `style=plain`, `style=definition`, and
+`style=remark` built-in styles produce valid atoms; styles defined and renewed
+via `\newkeytheoremstyle`/`\renewkeytheoremstyle` still capture the posthead
+anchor; the `thmtools-compat` `\declaretheorem` layer produces atoms identical
+to direct `\newkeytheorem`; the `thmtools-compat` `restatable` non-star
+ordinary store path replays inertly.
+
+**Unnumbered/starred environments** are silent no-track across all four
+keytheorems-family backends pending the universal unnumbered-tracking design
+decision (see `project_unnumbered_starred_tracking_future_decision.md`). This
+applies to `numbered=no`, `\newtheorem*`, ntheorem starred forms, and tcolorbox
+starred variants.
+
+**The `store*`/`restatable*` path** (keytheorems native and thmtools-compat)
+errors deliberately. It raises a visible `PackageError` and avoids all
+theorem/label/anchor writes for that occurrence. The ordinary `store=` replay
+path is fully supported. The future upgrade path for `store*` is documented in
+`project_keytheorems_storestar_future_micro_wave.md`.
+
 ### Known limitations
 
 - **keytheorems:** support is waived to a future xparse-environment

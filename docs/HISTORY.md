@@ -1045,3 +1045,7 @@ Deferred follow-on items:
 - Stray atom-number orphans (`5.4`/`5.6`/`5.7` in stress-ta-appendix-gray) — pre-existing render-pathway bug made more visible by dagger removal; 3 firing patterns documented in `~/.claude/projects/.../memory/project_stray_atom_number_after_example.md`.
 - TD-01 mutool link-annotation stripping in layout-parity directive (DORMANT-FIX; harmless after P03 body alignment made fixture/control text identical pre-appendix).
 - Standalone `\newtheorem*{}` (counterless theorem) tracking — currently `\codeptrack` hard-errors; deferred to W05-XPARSE-SUB-EFFECT or own micro-wave.
+
+### W05-BACKENDS-RICH-STRESS (2026-06-01)
+
+Fixture/docs/baseline-only wave. No `.sty` source edits. Deepened option coverage for the two new backends added in W05-XPARSE-BACKENDS: added 17 new integration LVTs (10 keytheorems option/counter/style/compat fixtures, 7 tcolorbox/mixed fixtures including a three-backend mixed document), replaced the six obsolete minimal `stress-backends-*` fixtures in place with rich stress content (equations, cross-section refs, `\autoref`/`\cref`, saturated backref-target assertions, negative assertions), rotated the wire baseline to `testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json` (71 entries), and updated `BEHAVIOR.md`/`DESIGN.md` with option-depth coverage notes. Suite floor: total=252 passed=251 failed=1 pinned-broken=1. No new B-IDs.

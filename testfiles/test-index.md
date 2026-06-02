@@ -166,10 +166,11 @@ Edit fixture headers, not this file.
 | testfiles/unit/test-two-tier-evaluator-postdrain.lvt | LIVE | B-WARN-ENDDOC | Exercise post-drain residual state (commit 36b9fca). |
 | testfiles/unit/test-two-tier-evaluator-predrain.lvt | LIVE | B-ERROR-ENDDOC | Exercise pre-drain fatal state (commit 36b9fca). |
 
-## Integration (66 fixtures)
+## Integration (87 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
+| testfiles/integration/integ-amsthm-newtheorem-star-silent-no-track.lvt | LIVE | B-NUM-SHARED | amsthm \newtheorem* envs are silently not tracked |
 | testfiles/integration/integ-appendix-joint-name-link.lvt | LIVE | B-PROOF-JOINT, B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR | Joint atom in appendix mode: the @begintheorem shim wraps the |
 | testfiles/integration/integ-appendix-layout-parity.lvt | LIVE | B-REND-APPENDIX, B-LINK-APPENDIX-BIDIR | Pre-appendix-section text+bbox must be byte-identical to the |
 | testfiles/integration/integ-appendix-longlist.lvt | LIVE | B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-LINK-APPENDIX-BIDIR | Integration stress test for appendix mode long-list wrapping, |
@@ -189,11 +190,23 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-keytheorems-appendix-name-link-optional-heading.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems optional heading path keeps appendix forward link |
 | testfiles/integration/integ-keytheorems-appendix-name-link-plain.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems plain theorem heading gets appendix forward link |
 | testfiles/integration/integ-keytheorems-appendix-no-orphan-body-anchor.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems appendix entry targets theorem destination not body anchor |
+| testfiles/integration/integ-keytheorems-counter-graph-parent-within-sibling.lvt | LIVE | B-COMPAT-KEYTHEOREMS, B-NUM-SHARED | keytheorems parent numberwithin within and sibling aliases share graph safely |
 | testfiles/integration/integ-keytheorems-getkeytheorem-replay.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems getkeytheorem replay remains inert for codependent tracking |
+| testfiles/integration/integ-keytheorems-heading-custom-name-link.lvt | LIVE | B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR | keytheorems heading title and name aliases keep appendix name links |
+| testfiles/integration/integ-keytheorems-mixed-amsthm-keytheorems.lvt | LIVE | B-COMPAT-KEYTHEOREMS, B-NUM-SHARED | amsthm and keytheorems tracked envs do not leak state |
+| testfiles/integration/integ-keytheorems-numbered-no-heading-silent-no-track.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems numbered=no with custom heading is silent no-track |
+| testfiles/integration/integ-keytheorems-numbered-no-silent-no-track.lvt | LIVE | B-COMPAT-KEYTHEOREMS | explicitly tracking a keytheorems [numbered=no] env is silent no-track |
 | testfiles/integration/integ-keytheorems-posthead-anchor-body-equation.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems posthead capture beats in-body equation anchors |
+| testfiles/integration/integ-keytheorems-renew-style-posthead-survives.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems renewed custom style still captures posthead anchors |
 | testfiles/integration/integ-keytheorems-restated-no-duplicate.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems store replay does not duplicate or overwrite original destination |
+| testfiles/integration/integ-keytheorems-shared-counter-distinct-envs.lvt | LIVE | B-COMPAT-KEYTHEOREMS, B-NUM-SHARED | keytheorems sibling and sharenumber envs keep distinct atom keys |
 | testfiles/integration/integ-keytheorems-store-ordinary-no-regression.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems ordinary store replay has no storestar regression |
 | testfiles/integration/integ-keytheorems-storestar-tracked-errors.lvt | LIVE | B-COMPAT-KEYTHEOREMS-STORESTAR | tracked keytheorems store* raises visible unsupported error |
+| testfiles/integration/integ-keytheorems-style-builtins-posthead.lvt | LIVE | B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR | keytheorems built-in styles keep posthead capture and links |
+| testfiles/integration/integ-keytheorems-thmtools-declaretheorem-compat.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems thmtools declaretheorem compat is tracked |
+| testfiles/integration/integ-keytheorems-thmtools-restatable-star-errors.lvt | LIVE | B-COMPAT-KEYTHEOREMS-STORESTAR | keytheorems thmtools restatable* raises the tracked store* error |
+| testfiles/integration/integ-keytheorems-thmtools-restatable-store-ordinary.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems thmtools restatable ordinary store replays inertly |
+| testfiles/integration/integ-mixed-three-backends.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM, B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR, B-REND-BACKREFSOF | amsthm, keytheorems, and tcolorbox coexist in one document. |
 | testfiles/integration/integ-no-cleveref.lvt | LIVE | B-PASS-ONE | Correct patch-site selection when cleveref is absent. |
 | testfiles/integration/integ-no-hyperref.lvt | LIVE | B-REND-INLINE | Graceful degradation when hyperref is absent. Verifies that |
 | testfiles/integration/integ-no-paragraphs.lvt | LIVE | B-EDGE-PARAOFF-EQ | Integration test with paragraphs=off. Verifies that |
@@ -202,6 +215,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-ntheorem-appendix-name-link-opargs.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem optional-heading path keeps appendix forward link |
 | testfiles/integration/integ-ntheorem-appendix-name-link-plain.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem plain style gets appendix forward link on theorem name |
 | testfiles/integration/integ-ntheorem-appendix-no-backrefs-no-link.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem lifecycle rewrap is gated off when backrefs are none |
+| testfiles/integration/integ-ntheorem-newtheorem-star-silent-no-track.lvt | LIVE | B-NUM-SHARED | ntheorem \newtheorem* envs are silently not tracked |
 | testfiles/integration/integ-ntheorem.lvt | LIVE | B-NUM-SHARED | Verify codependent works with ntheorem as the theorem backend |
 | testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
 | testfiles/integration/integ-proofauto-adjacent-delayed-commit-probe.lvt | LIVE | B-PROOF-ADJ, B-PROOF-SEP, B-PROOF-ADJRULE, B-FRONTEDGE-CAPTURE, B-PROOF-DELAYED-COMMIT | Probe delayed adjacent proof binding across adjacent, same-run, and forward-heading paths. |
@@ -228,8 +242,15 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-tcolorbox-appendix-name-link-optional-heading.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox optional heading path keeps appendix forward link |
 | testfiles/integration/integ-tcolorbox-appendix-name-link-plain.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox plain theorem heading gets appendix forward link |
 | testfiles/integration/integ-tcolorbox-appendix-no-orphan.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox appendix links have no orphan destinations |
+| testfiles/integration/integ-tcolorbox-breakable-page-start-dest.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM, B-LINK-APPENDIX-BIDIR | tcolorbox breakable theorem anchors stay on the start page. |
+| testfiles/integration/integ-tcolorbox-counter-modes-number-within-auto-counter.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM, B-NUM-SEQ | tcolorbox counter modes are captured after one step. |
+| testfiles/integration/integ-tcolorbox-multi-env-shared-style.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM, B-LINK-APPENDIX-BIDIR | Shared tcolorbox styles do not collide across envs. |
+| testfiles/integration/integ-tcolorbox-nested-tracked-untracked.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | Nested untracked tcolorboxes do not leak atoms. |
 | testfiles/integration/integ-tcolorbox-no-double-increment.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox counter capture does not double increment boxes |
+| testfiles/integration/integ-tcolorbox-nophantom-and-clearing-styles.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | Only nophantom-style clearing disables tcolorbox tracking. |
+| testfiles/integration/integ-tcolorbox-phantom-empty-and-cosmetic-options-neutral.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM, B-LINK-APPENDIX-BIDIR | Empty phantom and cosmetic tcolorbox options still track. |
 | testfiles/integration/integ-tcolorbox-phantom-no-atom.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox nophantom tracked box emits warning and no atom |
+| testfiles/integration/integ-tcolorbox-starred-explicit-silent-no-track.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | explicitly tracking a tcolorbox starred env is silent no-track |
 | testfiles/integration/integ-thmtools-continued-generic-hooks.lvt | LIVE | B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST, B-COMPAT-THMTOOLS-CONTINUED | thmtools continued theorem tracks via generic hooks; continued copy gets its own atom. |
 | testfiles/integration/integ-untracked-hyperref-proof.lvt | LIVE | B-PROOF-ADJ | codependent + hyperref loaded, proof env present, NO |
 | testfiles/integration/integ-usedin-reading-order.lvt | LIVE | B-USEDIN-READING-ORDER | Track-2 equation-range sources keep Used-In lists in reader order |
@@ -241,12 +262,12 @@ Edit fixture headers, not this file.
 
 | Path | Status | Render modes | Behavior | Purpose |
 |---|---|---|---|---|
-| testfiles/compiled-examples/stress-backends-keytheorems-appendix.tex | LIVE | appendix, default-color | B-COMPAT-KEYTHEOREMS | keytheorems backend stress fixture (appendix) |
-| testfiles/compiled-examples/stress-backends-keytheorems-inline-gray.tex | LIVE | inline, gray-backrefs | B-COMPAT-KEYTHEOREMS | keytheorems backend stress fixture (inline-gray) |
-| testfiles/compiled-examples/stress-backends-keytheorems-inline.tex | LIVE | inline, default-color | B-COMPAT-KEYTHEOREMS | keytheorems backend stress fixture (inline) |
-| testfiles/compiled-examples/stress-backends-tcolorbox-appendix.tex | LIVE | appendix, default-color | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox backend stress fixture (appendix) |
-| testfiles/compiled-examples/stress-backends-tcolorbox-inline-gray.tex | LIVE | inline, gray-backrefs | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox backend stress fixture (inline-gray) |
-| testfiles/compiled-examples/stress-backends-tcolorbox-inline.tex | LIVE | inline, default-color | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox backend stress fixture (inline) |
+| testfiles/compiled-examples/stress-backends-keytheorems-appendix.tex | LIVE | appendix, default-color | B-COMPAT-KEYTHEOREMS, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN | rich keytheorems backend stress replacement with appendix backrefs. |
+| testfiles/compiled-examples/stress-backends-keytheorems-inline-gray.tex | LIVE | inline, gray-backrefs | B-COMPAT-KEYTHEOREMS, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | rich keytheorems backend stress replacement with inline gray backrefs and style coverage. |
+| testfiles/compiled-examples/stress-backends-keytheorems-inline.tex | LIVE | inline, default-color | B-COMPAT-KEYTHEOREMS, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | rich keytheorems backend stress replacement with inline backrefs. |
+| testfiles/compiled-examples/stress-backends-tcolorbox-appendix.tex | LIVE | appendix, default-color | B-COMPAT-TCOLORBOX-THEOREM, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN | rich tcolorbox backend stress replacement with appendix backrefs and a breakable page-spanning theorem box. |
+| testfiles/compiled-examples/stress-backends-tcolorbox-inline-gray.tex | LIVE | inline, gray-backrefs | B-COMPAT-TCOLORBOX-THEOREM, B-COMPAT-KEYTHEOREMS, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | rich mixed-backend stress replacement with tcolorbox inline gray rendering. |
+| testfiles/compiled-examples/stress-backends-tcolorbox-inline.tex | LIVE | inline, default-color | B-COMPAT-TCOLORBOX-THEOREM, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | rich tcolorbox backend stress replacement with inline backrefs. |
 | testfiles/compiled-examples/stress-ta-appendix-gray.tex | EXPLORATORY | appendix, gray-backrefs, custom-page-format | B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER | Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting. |
 | testfiles/compiled-examples/stress-ta-inline-gray.tex | EXPLORATORY | inline, gray-backrefs | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER | Inline TA stress fixture with gray backrefs. |
 | testfiles/compiled-examples/stress-ta-inline.tex | LIVE | inline, default-color | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER | Inline TA stress fixture using default backref color. |
