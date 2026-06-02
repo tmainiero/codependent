@@ -8,10 +8,10 @@ Compile all census fixtures + 3 stress variants, sha256 their final-pass
 Run under nix develop:
   nix develop --command python3 scripts/capture-wire-baseline.py
       # no-arg self-test: verifies DEFAULT_WAVE resolution without writes
-  nix develop --command python3 scripts/capture-wire-baseline.py --wave W05-XPARSE-VMODE-FIXES
+  nix develop --command python3 scripts/capture-wire-baseline.py --wave W05-BACKENDS-RICH-STRESS
   nix develop --command python3 scripts/capture-wire-baseline.py \\
-      --wave W05-XPARSE-VMODE-FIXES \\
-      --manifest testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json
+      --wave W05-BACKENDS-RICH-STRESS \\
+      --manifest testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json
 """
 
 import argparse
@@ -31,10 +31,10 @@ TESTFILES_DIR = PROJECT_ROOT / "testfiles"
 COMPILED_EXAMPLES_DIR = TESTFILES_DIR / "compiled-examples"
 BASELINE_SIZES = PROJECT_ROOT / ".claude" / "baseline-sizes.json"
 
-# W05-INSTALL-DISCIPLINE-CORE P02 rotates the default wire baseline to the
-# current canonical VMODE-FIXES manifest.  A no-argument invocation self-tests
-# this resolution and exits before writing; pass --wave to capture.
-_DEFAULT_WAVE = "W05-XPARSE-VMODE-FIXES"
+# W05-BACKENDS-RICH-STRESS P05 rotates the default wire baseline to the
+# current canonical rich backend stress manifest.  A no-argument invocation
+# self-tests this resolution and exits before writing; pass --wave to capture.
+_DEFAULT_WAVE = "W05-BACKENDS-RICH-STRESS"
 _DEFAULT_MANIFEST_DIR = PROJECT_ROOT / "testfiles" / "baselines" / _DEFAULT_WAVE
 MANIFEST_DIR = _DEFAULT_MANIFEST_DIR
 MANIFEST_PATH = _DEFAULT_MANIFEST_DIR / "baseline.sha256.json"
@@ -73,6 +73,10 @@ STRESS_VARIANTS = [
 # New backend fixtures that have stable wire output worth pinning but do NOT
 # carry traceability census ratchets (wire baseline and census ratchet are
 # separate gates — see .claude/baseline-sizes.json for census scope).
+#
+# W05-BACKENDS-RICH-STRESS Wave 1 added the option-matrix and mixed-backend
+# integration fixtures below; the final 4 entries are RESOLVER-SILENT parity
+# fixtures that pin starred/numbered=no environments as silent no-track cases.
 EXTRA_INTEGRATION_FIXTURES = [
     "integ-tcolorbox-appendix-name-link-plain",
     "integ-tcolorbox-appendix-name-link-optional-heading",
@@ -87,6 +91,27 @@ EXTRA_INTEGRATION_FIXTURES = [
     "integ-keytheorems-posthead-anchor-body-equation",
     "integ-keytheorems-storestar-tracked-errors",
     "integ-keytheorems-store-ordinary-no-regression",
+    "integ-keytheorems-thmtools-restatable-star-errors",
+    "integ-keytheorems-thmtools-restatable-store-ordinary",
+    "integ-keytheorems-heading-custom-name-link",
+    "integ-keytheorems-counter-graph-parent-within-sibling",
+    "integ-keytheorems-numbered-no-heading-silent-no-track",
+    "integ-keytheorems-style-builtins-posthead",
+    "integ-keytheorems-renew-style-posthead-survives",
+    "integ-keytheorems-shared-counter-distinct-envs",
+    "integ-keytheorems-thmtools-declaretheorem-compat",
+    "integ-keytheorems-mixed-amsthm-keytheorems",
+    "integ-tcolorbox-breakable-page-start-dest",
+    "integ-tcolorbox-nophantom-and-clearing-styles",
+    "integ-tcolorbox-counter-modes-number-within-auto-counter",
+    "integ-tcolorbox-phantom-empty-and-cosmetic-options-neutral",
+    "integ-tcolorbox-nested-tracked-untracked",
+    "integ-tcolorbox-multi-env-shared-style",
+    "integ-mixed-three-backends",
+    "integ-amsthm-newtheorem-star-silent-no-track",
+    "integ-ntheorem-newtheorem-star-silent-no-track",
+    "integ-tcolorbox-starred-explicit-silent-no-track",
+    "integ-keytheorems-numbered-no-silent-no-track",
 ]
 
 
@@ -427,10 +452,10 @@ def main(argv: "list[str] | None" = None) -> int:
         print("DEFAULT_WAVE self-test")
         print(f"Resolved wave: {wave_id}")
         print(f"Manifest path: {MANIFEST_PATH}")
-        if wave_id != "W05-XPARSE-VMODE-FIXES":
+        if wave_id != "W05-BACKENDS-RICH-STRESS":
             print(
                 "ERROR: no-arg DEFAULT_WAVE did not resolve to "
-                "W05-XPARSE-VMODE-FIXES",
+                "W05-BACKENDS-RICH-STRESS",
                 file=sys.stderr,
             )
             return 2

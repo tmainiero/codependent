@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-29T17:08:18.169283+00:00",
+  "captured_at": "2026-06-02T02:23:42.886610+00:00",
   "fixtures": [
     {
       "aux_sha": "e6db37dd5a9bafac175e49f21480783946893593b4f717daa792834eba4b3335",
@@ -188,40 +188,40 @@
       "pdf_objects_sha": "c7bc63d0f33e5c4240a893fa5a1d0711cdc5c98e9f340dc234f820ae32ad3c58"
     },
     {
-      "aux_sha": "5dc1f628f7d493d3acf0feb1583d42309cfccd39455d2924363e5316a6882372",
-      "cdp_sha": "da2a9bec91cff281536a833171de1ad5dd9d3366fd70c6632c7985de02d02e15",
+      "aux_sha": "5d46e5e54d9f520bf1291f7a6d75f0cd3bee02172f0aa26f47bb08d0466af152",
+      "cdp_sha": "2076c9a207c1dc6c8a38fcf27488ccfd75e30a2217b72975a82d08f0d030d16c",
       "name": "stress-backends-tcolorbox-appendix",
-      "pdf_objects_sha": "1b3508efb3a246f6cc1c0d33b92f748a151987ae03016e8da74b5c0f320b2cc9"
+      "pdf_objects_sha": "08be05b886c29a938caeb0df5013595a7721d8de5e8d933f129f43b3c9f3aae7"
     },
     {
-      "aux_sha": "5dc1f628f7d493d3acf0feb1583d42309cfccd39455d2924363e5316a6882372",
-      "cdp_sha": "7ceb068625c6d393e97d11ba4b70e40d7d50f69574ecb44a837f05ece548c8f3",
+      "aux_sha": "02e8735714e0677162ead74a94d66666a49a7887384a7941c840183685832d26",
+      "cdp_sha": "6e7723fa49fa0a87afc5af50f13d4240b81ff01a3ab001733eac060ca25c417b",
       "name": "stress-backends-tcolorbox-inline",
-      "pdf_objects_sha": "c7825060f3310287f7762971a8e8d6c391219269fd2afd8529056b63db550769"
+      "pdf_objects_sha": "90813ee137374cb1e6d22e3bbac2530fc039baf46edf7f1d3de6b8dc90ac2a6f"
     },
     {
-      "aux_sha": "5dc1f628f7d493d3acf0feb1583d42309cfccd39455d2924363e5316a6882372",
-      "cdp_sha": "7687b908e8d5f144bec29da2666ab7f34ad17242b915bfd9ebd6431d9273e9d9",
+      "aux_sha": "c89a3fcb9844b41742d8da2d16d86f49e58f99f0a66c14d5881759469b354e41",
+      "cdp_sha": "b5c4199a4b1bdccd3c952d5ed5b1370ed1dd53995f7360c742aa18ecaf9c376e",
       "name": "stress-backends-tcolorbox-inline-gray",
-      "pdf_objects_sha": "6ba0a4b67489edc992d060561b57ab3247dcb09e188d0e6a8ac213a83a745684"
+      "pdf_objects_sha": "022cfc976de56d147ad2f974f3be0b237d0f09587cbe40960b4477d8977e5c1c"
     },
     {
-      "aux_sha": "8e99b94f0268ab2e12910a11e8a88261a3a9fe3b988fdffcda760caf260c8ba2",
-      "cdp_sha": "c4cb9f0cd205d251e511c276fe8ebaa6733840572625430fad31577e5eb1e9b8",
+      "aux_sha": "32cbf6a5c43befe728f544d698de5141504bb6b95d94bd7bd062210b1954170b",
+      "cdp_sha": "e1dab10233496062ebe7688384d3dcdbea40233a1301e8dc7cd4afa6c1c8e38b",
       "name": "stress-backends-keytheorems-appendix",
-      "pdf_objects_sha": "c0412ee863137d6bbaa34c3ab3758ee9aa18c817010e46618d178199591b36d9"
+      "pdf_objects_sha": "f873ee2035efcf472a411b284da81a176f253a360c7ceef318cec297f7387848"
     },
     {
-      "aux_sha": "8e99b94f0268ab2e12910a11e8a88261a3a9fe3b988fdffcda760caf260c8ba2",
-      "cdp_sha": "4d3318c943155b18cf83560ac59e6e889f97e1d6ccb25ef4fabf45e119209112",
+      "aux_sha": "2f9eab47a957db40d6b312674a9ccb22744d95a0ba805eeb45a60784ee8a412f",
+      "cdp_sha": "19e0dac5521fdf3457a19d6bd3bb596bccad3cb3a750213e0b6e640b15bc6870",
       "name": "stress-backends-keytheorems-inline",
-      "pdf_objects_sha": "0e458030e583e01cf16d779f16fe27859dbbdfe0c689b841270a5497f8493a3e"
+      "pdf_objects_sha": "72055c14823ba41964d29e39878e8b130d0e2f394bc7da0a37579089670b7488"
     },
     {
-      "aux_sha": "8e99b94f0268ab2e12910a11e8a88261a3a9fe3b988fdffcda760caf260c8ba2",
-      "cdp_sha": "95e5662dbab2e7a9db9a1a44c9785fa4136fc3ddb36164089404abc2d5cfb37c",
+      "aux_sha": "31a01cc20b5f89f9253d13c253e020f289c8424f72051c23a011c1be4076aac5",
+      "cdp_sha": "bb609d9b0bcb0010afd349c3fd51a32a96ce94be072dc7e02aa6e206a376aec1",
       "name": "stress-backends-keytheorems-inline-gray",
-      "pdf_objects_sha": "e04677845d5432329831d051fc6bd593463792368bb5ccb148bcd973b589ebc4"
+      "pdf_objects_sha": "afe9717f03162254e1b5e1b36dcbe40425ff22079dcf69d9b54704506d5ec16f"
     },
     {
       "aux_sha": "f43329afceb1d02b1f529a5321cfb67857e05c560bbca93195deb2ff94bc161b",
@@ -300,8 +300,133 @@
       "cdp_sha": "2b20614ac497b9f003dfe94c1cd0d9b6b97be85522cd1a2650e2b46d01bfbe4c",
       "name": "integ-keytheorems-store-ordinary-no-regression",
       "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "c11b9095bba22a04ff04fa43fe49d7b17bbb033276a8422d267434ca545ad106",
+      "cdp_sha": "aede502a33bd3a64cdc8927033272043ee7b41bc010f01ef12058c90631e913e",
+      "name": "integ-keytheorems-thmtools-restatable-star-errors",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "a61936708e444c7946f11efae7ad5ba6cf37bcf89fcf704903a0c13fa83f1734",
+      "cdp_sha": "b797a2cc6cb13062f006504108de1e200b010601270da50a8de9ecf86d314ec3",
+      "name": "integ-keytheorems-thmtools-restatable-store-ordinary",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "d846db5739a48f7e50782ee610b854cd9eda7049e96f516dce970593e4916885",
+      "cdp_sha": "fc68526a3e82a821b76b372f96c513e48a02b269b3467cfc94551d3f3f8d82f0",
+      "name": "integ-keytheorems-heading-custom-name-link",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "71b53044b6518568ab04232b1a71c07ced3b618ca271e837a6bcdb7c2ec3cf5a",
+      "cdp_sha": "ec0eb3e86c9ad9f900bf4f5b80241971d1cf3fc8b2d7b91ce465c8189c4df603",
+      "name": "integ-keytheorems-counter-graph-parent-within-sibling",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "e537cdbbdf08bc19ad9c5ee302c4332b3ec5ed8368497fd15a3c6389609e6eb2",
+      "cdp_sha": "8ca4694f8af99fd950124c1c05f5b32eea1b839fe796e2702f7cf49f36189d68",
+      "name": "integ-keytheorems-numbered-no-heading-silent-no-track",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "82ce146699bb69951736a87d81dcef4d8b227bc68ba5841d70e2ba61a1de4565",
+      "cdp_sha": "0686e70eac6cbda63912e819642b5b2fdabad43c4a53858baa169df59ba40d16",
+      "name": "integ-keytheorems-style-builtins-posthead",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "17b4730ab235d6de4d84dd891d24856cce73c829418b930b9b98bcf21c8a79b4",
+      "cdp_sha": "9aa2d15ac4f23706b8526a48e5b038dedcfb440d96041348717fb0de27b66d82",
+      "name": "integ-keytheorems-renew-style-posthead-survives",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "2043b05002bf386ec0fc57a5ce2892a863a3c6603fd646683f8f317d7c4aa4c8",
+      "cdp_sha": "264d6e705617db5399e2af6e927f80e9343c896ea724d1c2f596780861afa9fc",
+      "name": "integ-keytheorems-shared-counter-distinct-envs",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "91db7692b59a111fdfc6ea34878b2e38a7baa5f6c3bb25837cea18ee1942b1e6",
+      "cdp_sha": "8b64a9f5068fbede2322195f479ddf10060e6584d578f1ff9b3ef50d8d5d5605",
+      "name": "integ-keytheorems-thmtools-declaretheorem-compat",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "1786733ad5e36405a13a25a66b7d30ac5ea5ed076db268426698e9ce2d43e680",
+      "cdp_sha": "fa2597bfee265c5beb5ed573300599234ae9d0b2ddfce6c97e45913db4e2f72f",
+      "name": "integ-keytheorems-mixed-amsthm-keytheorems",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "f087c9cfa5d5d05f5c0f18ff4ed9aa5293d6f05796e30bbd14b75330c2119caf",
+      "cdp_sha": "f066dbb5d104bde877add0889a529d7abb750c7dee05cda6ed2234f23b11a67f",
+      "name": "integ-tcolorbox-breakable-page-start-dest",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "e2906905db74eb3138003378919fd0c9304a4ae00d0559ce15ad235f876158ed",
+      "cdp_sha": "4e6dd7284af04060e5a82ca70f0f3eda352c15cc560597d272415cc0d31229ff",
+      "name": "integ-tcolorbox-nophantom-and-clearing-styles",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "040be0817ff3fcce3ee5b6053521923c65433302c8b69dfb3a7ed75e7a75dd54",
+      "cdp_sha": "750edf7f16433e0720d8d8cc35f9715c486da5e8cf674067d1c06954956d47ac",
+      "name": "integ-tcolorbox-counter-modes-number-within-auto-counter",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "b6aa64e335767d04f683014487ce7646314366732de1df1a2922459921822874",
+      "cdp_sha": "2378ee1ac01ffdd572cf827e59d91c8d68d825148e485608c8ba5c2bfbfa4b00",
+      "name": "integ-tcolorbox-phantom-empty-and-cosmetic-options-neutral",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "f54b45eb495b9e893974cdf7ea90ed52d5f04167abb2aabce5642105be487185",
+      "cdp_sha": "b7dc6fb4ade9f87d91cf614628b9e3d207653ca9c46c4f0042db54d93bc6d8cc",
+      "name": "integ-tcolorbox-nested-tracked-untracked",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "e1a2b24efa2a8fd4e9b4c7895adc5b791b5d9b2bbc6e73642ba487f8d0b86902",
+      "cdp_sha": "b624c04cdab3cf3fcb640dba02b1a9765fd52ce868a391a3554b2e5584f291bd",
+      "name": "integ-tcolorbox-multi-env-shared-style",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "fa64b1102fcb83359da944b2f97ee256a518a58674f3b8c160f22f911f0dc2fb",
+      "cdp_sha": "281ff5f504ba7c7c432cc126cb46f8c0c3b1671865ef87386f47c916bc2c4915",
+      "name": "integ-mixed-three-backends",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "055f995b4901a5d120005c380df62f7ed8cc601d9b58b3efe08a8c20b08ce105",
+      "cdp_sha": "da9d0cffac1b823f0e920fb47a0fe826e81e466911698280a8f2aca5f5d412ed",
+      "name": "integ-amsthm-newtheorem-star-silent-no-track",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "6879db9c570a9e20cbd03c2d400138b8f6fb9cde4b4a2561b8a7f590f5824f4f",
+      "cdp_sha": "6fb664f3a307ca8550e1dde7abd82e3f226eff64993f7109f5aa534cf91c8013",
+      "name": "integ-ntheorem-newtheorem-star-silent-no-track",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "b1a2f7adc3f4b8d12abed4dd772a5ed1bf7f7e9500ec52d761e9f8115b98851a",
+      "cdp_sha": "0e40e55c844d78c398ec27df381a4f1ef6d011b93e1d1d54b447ea770dd224c3",
+      "name": "integ-tcolorbox-starred-explicit-silent-no-track",
+      "pdf_objects_sha": null
+    },
+    {
+      "aux_sha": "eb7d892de313775ac3479cda093204b39f176a79bb918d55df79fa1077b30010",
+      "cdp_sha": "1838f1efe8ef114d451a8f24fbf7080246f3a03d40b991104cba32c9a0b67903",
+      "name": "integ-keytheorems-numbered-no-silent-no-track",
+      "pdf_objects_sha": null
     }
   ],
-  "superseded_by": "W05-BACKENDS-RICH-STRESS",
-  "wave": "W05-XPARSE-BACKENDS"
+  "wave": "W05-BACKENDS-RICH-STRESS"
 }
