@@ -4027,27 +4027,27 @@
 %   One-shot suppression for heading paragraphs.
 %@effect state-only
 \newcommand*{\codep@suppresssectioning}{%
-  \AddToHook{cmd/section/before}[codependent/sectioning]{%
+  \codep@target@install{AddToHook}{cmd/section/before}{state-only}{%
     \codep@closeparagraphifopen%
     \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
-  \AddToHook{cmd/subsection/before}[codependent/sectioning]{%
+  \codep@target@install{AddToHook}{cmd/subsection/before}{state-only}{%
     \codep@closeparagraphifopen%
     \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
-  \AddToHook{cmd/subsubsection/before}[codependent/sectioning]{%
+  \codep@target@install{AddToHook}{cmd/subsubsection/before}{state-only}{%
     \codep@closeparagraphifopen%
     \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
-  \AddToHook{cmd/chapter/before}[codependent/sectioning]{%
+  \codep@target@install{AddToHook}{cmd/chapter/before}{state-only}{%
     \codep@closeparagraphifopen%
     \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
-  \AddToHook{cmd/paragraph/before}[codependent/sectioning]{%
+  \codep@target@install{AddToHook}{cmd/paragraph/before}{state-only}{%
     \codep@closeparagraphifopen%
     \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
-  \AddToHook{cmd/subparagraph/before}[codependent/sectioning]{%
+  \codep@target@install{AddToHook}{cmd/subparagraph/before}{state-only}{%
     \codep@closeparagraphifopen%
     \global\let\codep@pendingresultid\@empty%
     \global\booltrue{codep@sectioning}}%
@@ -4127,11 +4127,11 @@
 \@ifpackageloaded{enumitem}{%
   \codep@wrapenumitemnewlist%
 }{%
-  \AddToHook{package/enumitem/after}[codependent/suppress/enumitem]{%
+  \codep@target@install{AddToHook}{package/enumitem/after}{state-only}{%
     \codep@wrapenumitemnewlist%
   }%
 }%
-\AddToHook{begindocument/before}[codependent/suppress/enumitem]{%
+\codep@target@install{AddToHook}{begindocument/before}{state-only}{%
   \@ifpackageloaded{enumitem}{%
     \codep@wrapenumitemnewlist%
   }{}%
@@ -4141,7 +4141,7 @@
 %   Conditionally suppresses boxed-content environments when
 %   the respective package is loaded.
 %@effect state-only
-\AddToHook{begindocument/before}[codependent/suppress/boxes]{%
+\codep@target@install{AddToHook}{begindocument/before}{state-only}{%
   \@ifpackageloaded{tcolorbox}{%
     % tcolorbox emits a box-closing paragraph at \end{tcolorbox};
     % keep suppression active through AfterEndEnvironment.
@@ -4204,7 +4204,7 @@
 %   Install the top-level para/begin paragraph allocator.
 %@effect state-only
 \newcommand*{\codep@installparahook}{%
-  \AddToHook{para/begin}{%
+  \codep@target@install{AddToHook}{para/begin}{state-only}{%
     \ifbool{codep@tracked}{%
       \codep@proof@emitpendingheadinganchor%
       \global\let\codep@pendingresultid\@empty%
@@ -5582,7 +5582,7 @@
 % begindocument/before so they are live before the .aux read in
 % \begin{document}.
 %@effect state-only
-\AddToHook{begindocument/before}[codependent/backref/install]{%
+\codep@target@install{AddToHook}{begindocument/before}{state-only}{%
   \codep@installnewlabel
   % Swap the providecommand no-ops for the active callbacks.
   \codep@activation@let@install{\codep@atomref}{\codep@atomref@active}%
@@ -5647,7 +5647,7 @@
 % Swap the providecommand no-ops for the active callbacks
 % at begindocument/before, before the .aux read.
 %@effect state-only
-\AddToHook{begindocument/before}[codependent/concept/install]{%
+\codep@target@install{AddToHook}{begindocument/before}{state-only}{%
   \codep@activation@let@install{\codep@concept}{\codep@concept@active}%
   \codep@activation@let@install{\codep@conceptref}{\codep@conceptref@active}%
 }
@@ -5655,14 +5655,14 @@
 % Flush the backref queue AFTER aux has been read.  The aux
 % read happens during the kernel's \document macro before any
 % \AtBeginDocument hook fires, so begindocument/end is safe.
-\AddToHook{begindocument/end}[codependent/backref/flush]{%
+\codep@target@install{AddToHook}{begindocument/end}{state-only}{%
   \codep@flushbrqueue
 }
 
 % Flush the concept pending list AFTER the backref queue
 % flush.  Deferred \codep@resolveconcept calls expand here;
 % the concept map is now complete from the full aux read.
-\AddToHook{begindocument/end}[codependent/concept/flush]{%
+\codep@target@install{AddToHook}{begindocument/end}{state-only}{%
   \codep@conceptpending
   \global\let\codep@conceptpending\@empty
 }
@@ -5859,7 +5859,7 @@
 
 % Install the front-edge wrappers at begindocument/end, AFTER the
 % backref-flush hook so the aux-replay queue is processed first.
-\AddToHook{begindocument/end}[codependent/frontedge/install]{%
+\codep@target@install{AddToHook}{begindocument/end}{state-only}{%
   \codep@installfrontedgerefpatch%
 }%
 \DeclareHookRule{begindocument/end}%
@@ -5881,7 +5881,7 @@
 %   \@empty during replay via \codep@getcurrentownerid).
 %@effect state-only
 \newcommand*{\codep@installparendhook}{%
-  \AddToHook{para/end}{%
+  \codep@target@install{AddToHook}{para/end}{state-only}{%
     \ifbool{codep@tracked}{%
       \ifcodep@paragraphopen%
         \codep@getcurrentatomkey\codep@tmp@parakey%
@@ -5948,7 +5948,7 @@
   \immediate\write\codep@cdpout{%
     \string\codep@cdp@source{\jobname.tex}}%
 }
-\AddToHook{begindocument/before}[codependent/cdp/open]{%
+\codep@target@install{AddToHook}{begindocument/before}{immediate-write}{%
   \if@filesw
     \newwrite\codep@cdpout
     \immediate\openout\codep@cdpout=\jobname.cdp\relax
@@ -6097,7 +6097,7 @@
 }
 
 % Flush deferred sbl writes after the stream opens.
-\AddToHook{begindocument/before}[codependent/cdp/cmddef]{%
+\codep@target@install{AddToHook}{begindocument/before}{state-only}{%
   \codep@cdp@deferred
   \global\let\codep@cdp@deferred\@empty
 }
@@ -6515,7 +6515,7 @@
   \codep@suppresssectioning%
   % Defer section title capture to begindocument/end so that
   % hyperref's \addcontentsline redefinition has already run.
-  \AddToHook{begindocument/end}[codependent/sectitle]{%
+  \codep@target@install{AddToHook}{begindocument/end}{state-only}{%
     \codep@capturesectitle}%
   \codep@suppresscommands%
   \codep@installparahook%
