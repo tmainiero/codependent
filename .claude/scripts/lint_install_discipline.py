@@ -103,6 +103,16 @@ KERNEL_RESET_LIST_EXCEPTION = {
     "target_compact": r"\g@addto@macro\csnamecl@#2\endcsname",
 }
 
+ENDDOC_ORCHESTRATOR_EXCEPTION = {
+    "name": "enddoc-orchestrator-single-registration",
+    "file": "codependent.sty",
+    "line": 6421,
+    "hook": "enddocument",
+    "target": r"\codep@enddoc@orchestrator",
+    "target_compact": r"\AddToHook{enddocument}{\codep@enddoc@orchestrator}",
+    "context": "top-level registration (not inside a macro definition)",
+}
+
 
 @dataclass(frozen=True)
 class Diagnostic:
@@ -282,6 +292,26 @@ def _is_kernel_reset_list_exception(
     return path.name == "pass-named-exception-kernel-reset-list.sty"
 
 
+def _has_exact_enddoc_orchestrator_registration(code: str) -> bool:
+    compact = _compact_contract_code(code)
+    return ENDDOC_ORCHESTRATOR_EXCEPTION["target_compact"] in compact
+
+
+def _is_enddoc_orchestrator_exception(
+    path: Path,
+    line: int,
+    code: str,
+) -> bool:
+    if not _has_exact_enddoc_orchestrator_registration(code):
+        return False
+    if path.resolve() == SOURCE_PATH.resolve():
+        return (
+            line == ENDDOC_ORCHESTRATOR_EXCEPTION["line"]
+            and path.name == ENDDOC_ORCHESTRATOR_EXCEPTION["file"]
+        )
+    return path.name == "pass-named-exception-enddoc-orchestrator.sty"
+
+
 def _has_raw_activation_let(code: str) -> bool:
     direct = re.search(
         r"\\let\\codep@[A-Za-z@]+\\codep@[A-Za-z@]+@active\b",
@@ -307,6 +337,8 @@ def _scan_raw_install_primitives(path: Path, text: str) -> list[Diagnostic]:
             if code[max(0, match.start() - len("\\string")) : match.start()] == "\\string":
                 continue
             primitive = match.group(0)
+            if _is_enddoc_orchestrator_exception(path, line, code):
+                continue
             diagnostics.append(
                 Diagnostic(
                     "WARN",

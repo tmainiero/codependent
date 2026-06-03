@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/fail-raw-enddoc-elsewhere.sty:3: unclassified-raw-install-primitive: raw \AddToHook outside typed installer allowlist; CORE surfaces this as WARN, CONTRACT owns hard closure
