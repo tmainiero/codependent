@@ -30,6 +30,7 @@ Standard library only. No PyYAML, no requests, no third-party deps.
 
 import argparse
 import dataclasses
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import difflib
 import importlib.util
 import json
@@ -240,6 +241,24 @@ def sync_test_index(check: bool = False) -> int:
         sys.stderr.write(f"FATAL: failed to load test-index regenerator: {exc}\n")
         return 2
     return regenerator.regenerate(check=check)
+
+
+def _default_jobs() -> int:
+    """Return the default fixture worker count for this process."""
+    process_cpu_count = getattr(os, "process_cpu_count", None)
+    count = process_cpu_count() if callable(process_cpu_count) else os.cpu_count()
+    return max(1, count or 1)
+
+
+def _parse_jobs(value: str) -> int:
+    """Parse --jobs as a positive integer for argparse."""
+    try:
+        jobs = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--jobs must be a positive integer") from exc
+    if jobs < 1:
+        raise argparse.ArgumentTypeError("--jobs must be >= 1")
+    return jobs
 
 
 @dataclasses.dataclass
@@ -3084,6 +3103,136 @@ def run_fixture(
     return result
 
 
+def _run_fixture_worker(
+    work: "tuple[Fixture, Path, bool, bool, bool]",
+) -> "TestResult":
+    """Process-pool entry point for one fixture run."""
+    fix, engine_bin, keep_temp, verbose, force_census = work
+    return run_fixture(
+        fix,
+        engine_bin,
+        keep_temp,
+        verbose,
+        force_census=force_census,
+    )
+
+
+def _emit_fixture_progress(fix: "Fixture", result: "TestResult", brief: bool) -> None:
+    """Emit the legacy per-fixture progress line unless --brief suppresses it."""
+    if brief:
+        return
+    if result.skipped:
+        sys.stderr.write(f"  {fix.name} ... SKIP\n")
+    elif result.passed:
+        sys.stderr.write(f"  {fix.name} ... PASS ({result.duration_ms}ms)\n")
+    else:
+        marker = " [PINS-KNOWN-BROKEN]" if fix.pins_known_broken else ""
+        sys.stderr.write(f"  {fix.name} ... FAIL{marker} ({result.duration_ms}ms)\n")
+    sys.stderr.flush()
+
+
+def _run_fixtures_sequential(
+    fixtures: "list[Fixture]",
+    engine_bin: Path,
+    keep_temp: bool,
+    verbose: bool,
+    brief: bool,
+    force_census: bool,
+) -> "list[TestResult]":
+    """Run fixtures in discovery order using the legacy single-process path."""
+    results = []
+    for fix in fixtures:
+        if not brief:
+            sys.stderr.write(f"  {fix.name} ...")
+            sys.stderr.flush()
+        result = run_fixture(
+            fix,
+            engine_bin,
+            keep_temp,
+            verbose,
+            force_census=force_census,
+        )
+        if not brief:
+            if result.skipped:
+                sys.stderr.write(" SKIP\n")
+            elif result.passed:
+                sys.stderr.write(f" PASS ({result.duration_ms}ms)\n")
+            else:
+                marker = " [PINS-KNOWN-BROKEN]" if fix.pins_known_broken else ""
+                sys.stderr.write(f" FAIL{marker} ({result.duration_ms}ms)\n")
+        results.append(result)
+    return results
+
+
+def _result_from_worker_exception(fix: "Fixture", exc: BaseException) -> "TestResult":
+    """Convert a worker-process crash into a normal failed fixture result."""
+    return TestResult(
+        fixture=fix,
+        passed=False,
+        failures=[f"worker exception: {type(exc).__name__}: {exc}"],
+    )
+
+
+def _run_fixtures_parallel(
+    fixtures: "list[Fixture]",
+    engine_bin: Path,
+    keep_temp: bool,
+    verbose: bool,
+    brief: bool,
+    force_census: bool,
+    jobs: int,
+) -> "list[TestResult]":
+    """Run fixtures concurrently while preserving discovery order for summary data."""
+    ordered_results: list[TestResult | None] = [None] * len(fixtures)
+    with ProcessPoolExecutor(max_workers=jobs) as executor:
+        future_to_item = {
+            executor.submit(
+                _run_fixture_worker,
+                (fix, engine_bin, keep_temp, verbose, force_census),
+            ): (index, fix)
+            for index, fix in enumerate(fixtures)
+        }
+        for future in as_completed(future_to_item):
+            index, fix = future_to_item[future]
+            try:
+                result = future.result()
+            except Exception as exc:  # pragma: no cover - exercised only on worker crash
+                result = _result_from_worker_exception(fix, exc)
+            ordered_results[index] = result
+            _emit_fixture_progress(fix, result, brief)
+    return [result for result in ordered_results if result is not None]
+
+
+def run_fixtures(
+    fixtures: "list[Fixture]",
+    engine_bin: Path,
+    keep_temp: bool,
+    verbose: bool,
+    brief: bool,
+    force_census: bool,
+    jobs: int,
+) -> "list[TestResult]":
+    """Run the fixture set sequentially or through a process pool."""
+    if jobs == 1 or len(fixtures) == 1:
+        return _run_fixtures_sequential(
+            fixtures,
+            engine_bin,
+            keep_temp,
+            verbose,
+            brief,
+            force_census,
+        )
+    return _run_fixtures_parallel(
+        fixtures,
+        engine_bin,
+        keep_temp,
+        verbose,
+        brief,
+        force_census,
+        jobs,
+    )
+
+
 # ----------------------------------------------------------------------
 # Discovery
 # ----------------------------------------------------------------------
@@ -3375,6 +3524,15 @@ def main():
     parser.add_argument("--integration-only", action="store_true", help="deprecated alias for --integration")
     parser.add_argument("--real-world", action="store_true", help="include real-world arxiv-corpus fixtures")
     parser.add_argument("--full", action="store_true", help="run unit + integration + stress fixtures (default when no kind flag is specified)")
+    parser.add_argument(
+        "--jobs",
+        type=_parse_jobs,
+        default=_default_jobs(),
+        help=(
+            "number of fixture workers to run in parallel "
+            "(default: CPU count, currently %(default)s; use 1 for sequential)"
+        ),
+    )
     parser.add_argument("--check-test-index", action="store_true", help="CI mode: fail if generated testfiles/test-index.md is stale; do not repair it")
     parser.add_argument(
         "--census",
@@ -3500,27 +3658,16 @@ def main():
     sys.stderr.write(f"Discovered {len(fixtures)} fixture(s)\n\n")
 
     # Run.
-    results = []
-    for fix in fixtures:
-        if not args.brief:
-            sys.stderr.write(f"  {fix.name} ...")
-            sys.stderr.flush()
-        result = run_fixture(
-            fix,
-            engine_bin,
-            args.keep_temp,
-            args.verbose,
-            force_census=args.census,
-        )
-        if not args.brief:
-            if result.skipped:
-                sys.stderr.write(" SKIP\n")
-            elif result.passed:
-                sys.stderr.write(f" PASS ({result.duration_ms}ms)\n")
-            else:
-                marker = " [PINS-KNOWN-BROKEN]" if fix.pins_known_broken else ""
-                sys.stderr.write(f" FAIL{marker} ({result.duration_ms}ms)\n")
-        results.append(result)
+    sys.stderr.write(f"Running with {args.jobs} job(s)\n\n")
+    results = run_fixtures(
+        fixtures,
+        engine_bin,
+        args.keep_temp,
+        args.verbose,
+        args.brief,
+        args.census,
+        args.jobs,
+    )
 
     return summarize(results, args.engine, args.verbose, args.brief)
 
