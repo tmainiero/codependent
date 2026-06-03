@@ -1,0 +1,4 @@
+% Raw dynamic command wrapper should not bypass the typed installer.
+\def\fixture#1#2{%
+  \protected\edef#2{\noexpand\fixture@dispatch{#1}}%
+}%

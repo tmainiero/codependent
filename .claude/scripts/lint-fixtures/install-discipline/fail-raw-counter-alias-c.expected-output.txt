@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/fail-raw-counter-alias-c.sty:3: counter-alias-raw-let: raw counter-alias \let\csname c@... is deferred to CONTRACT

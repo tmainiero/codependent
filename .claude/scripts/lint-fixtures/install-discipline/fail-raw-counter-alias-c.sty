@@ -1,0 +1,4 @@
+% Raw counter-register alias should use \codep@counter@alias@install.
+\def\fixture#1{%
+  \expandafter\let\csname c@#1\endcsname\c@atom%
+}%

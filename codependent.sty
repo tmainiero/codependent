@@ -1016,13 +1016,11 @@
   % \codep@basecounter automatically.
   \@ifundefined{c@\codep@basecounter}{}{%
     \setcounter{atom}{\value{\codep@basecounter}}%
-    % Alias: \c@<basecounter> -> \c@atom.
-    \expandafter\let\csname c@\codep@basecounter\endcsname\c@atom%
   }%
   \codep@configuredepth%
-  % Sync base counter display format with atom display format.
+  % Alias base counter register and display format to atom.
   \@ifundefined{c@\codep@basecounter}{}{%
-    \expandafter\let\csname the\codep@basecounter\endcsname\theatom%
+    \codep@counter@alias@install{\codep@basecounter}{atom}%
   }%
 }
 
@@ -1475,6 +1473,8 @@
 \codep@install@kind@allow{theorem-name-link-wrap}{theoremname}%
 \codep@install@kind@allow{lifecycle-rewrap}{lifecyclerewrap}%
 \codep@install@kind@allow{command-wrap}{commandwrap}%
+\codep@install@kind@allow{dynamic-command-wrap}{dynamiccommandwrap}%
+\codep@install@kind@allow{counter-alias}{counteralias}%
 
 % \codep@install@matrix@allow{slot}{effect}
 %   Mark one lifecycle slot/effect pair compatible.
@@ -1557,9 +1557,10 @@
   \ifcsname codep@install@kind@#1\endcsname%
   \else%
     \PackageError{codependent}{%
-      unknown install-kind #1; CORE enum is frozen at 8 members}{%
+      unknown install-kind #1; CORE/CONTRACT enum is frozen at 10 members}{%
       Expected pretocmd, apptocmd, AddToHook, backend-hook, macro-append, %
-      theorem-name-link-wrap, lifecycle-rewrap, or command-wrap.}%
+      theorem-name-link-wrap, lifecycle-rewrap, command-wrap, %
+      dynamic-command-wrap, or counter-alias.}%
   \fi%
 }
 
@@ -1747,6 +1748,17 @@
   }%
 }
 
+% \codep@target@install@dynamiccommandwrap{target}{effect}{replacement}
+%   Dynamic saved-body command wrapper for \protected\edef target installs.
+%% @utility
+%@effect state-only
+\long\def\codep@target@install@dynamiccommandwrap#1#2#3{%
+  \codep@install@settargetname{#1}%
+  \expandafter\let%
+    \csname codep@body@\codep@install@targetname\endcsname#1%
+  \protected\edef#1{#3}%
+}
+
 % \codep@target@install{install-kind}{target}{effect}{replacement-body}
 %   Typed dispatcher for target-level installs.
 %% @utility
@@ -1763,6 +1775,15 @@
     \PackageError{codependent}{install-kind #1 dispatch drift}{%
       Kind passed enum assertion but has no dispatcher branch.}%
   \fi%
+}
+
+% \codep@counter@alias@install{base-counter}{atom-counter}
+%   Alias a user-visible counter register and display macro to atom counter.
+%% @utility
+%@effect state-only
+\newcommand*{\codep@counter@alias@install}[2]{%
+  \expandafter\let\csname c@#1\expandafter\endcsname\csname c@#2\endcsname%
+  \expandafter\let\csname the#1\expandafter\endcsname\csname the#2\endcsname%
 }
 
 % \codep@proof@install@heading{target-cs}{effect}{prepend}{failure}
@@ -6189,9 +6210,7 @@
 %   5. Emit three deferred .cdp cmddef records: kind, key2/val2, src.
 %@effect deferred-write
 \def\codep@definetrackedcmd#1#2#3#4#5{%
-  % 2. Save the original definition.
-  \expandafter\let%
-    \csname codep@body@#1\endcsname#2%
+  % 2-4. Save the original definition and install star dispatch.
   % 3. Define star/nostar dispatch targets.
   \expandafter\edef%
     \csname codep@star@#1\endcsname{%
@@ -6207,7 +6226,7 @@
   %    \protected\edef makes the wrapper robust so it survives
   %    expansion in moving arguments (\section titles, captions,
   %    .aux writes) without premature \@ifstar expansion.
-  \protected\edef#2{%
+  \codep@target@install{dynamic-command-wrap}{#2}{deferred-write}{%
     \noexpand\@ifstar%
       \expandafter\noexpand%
         \csname codep@star@#1\endcsname
@@ -6456,14 +6475,13 @@
       % counter is \c@atom, regardless of declaration order.
       \codep@envtrack@resolvecounter{\codep@tmp@envname}{\codep@tmp@counter}%
       \ifx\codep@tmp@counter\@empty\else%
-        \expandafter\let\csname c@\codep@tmp@counter\endcsname\c@atom%
-        % Also alias the resolved display macro \the<counter> to \theatom.
+        \codep@counter@alias@install{\codep@tmp@counter}{atom}%
+        % Also aliases the resolved display macro \the<counter> to \theatom.
         % When thmtools declares an env with sibling=<base>, it
         % snapshots \the<base> at declaration time.  If codependent
         % later rewires \the<base> to \theatom, the sibling's
         % display macro still has the old format.  tcolorbox theorem
         % envs resolve to their internal tcb@cnt@<env> counter here.
-        \expandafter\let\csname the\codep@tmp@counter\endcsname\theatom%
       \fi%
       \codep@envtrack@resolve{\codep@tmp@envname}%
       \expandafter\codep@envtrack@dispatch%
