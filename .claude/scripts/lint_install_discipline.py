@@ -35,7 +35,7 @@ CORE_BASELINE_DIR = PROJECT_ROOT / "testfiles" / "baselines" / "W05-INSTALL-DISC
 # deferred survivor diagnostics are WARN-only.
 DEFERRED_INSTALL_DIAGNOSTICS_ARE_ERRORS = False
 
-CORE_INSTALL_KINDS = [
+INSTALL_KINDS = [
     "pretocmd",
     "apptocmd",
     "AddToHook",
@@ -44,6 +44,8 @@ CORE_INSTALL_KINDS = [
     "theorem-name-link-wrap",
     "lifecycle-rewrap",
     "command-wrap",
+    "dynamic-command-wrap",
+    "counter-alias",
 ]
 
 RAW_INSTALL_PRIMITIVES = [
@@ -339,21 +341,21 @@ def _check_install_kind_enum(path: Path, text: str, *, required: bool) -> list[D
                     path,
                     1,
                     "install-kind-enum-mismatch",
-                    "missing \\codep@install@kind@allow registration block; expected exactly the 8 CORE install-kinds",
+                    "missing \\codep@install@kind@allow registration block; expected exactly the 10 install-kinds",
                 )
             ]
         return []
 
     kinds = [m.group(1) for m in matches]
-    if kinds == CORE_INSTALL_KINDS:
+    if kinds == INSTALL_KINDS:
         return []
 
     starts = _line_starts(text)
     first_line = _line_for_offset(_line_starts(uncommented), matches[0].start())
-    missing = [kind for kind in CORE_INSTALL_KINDS if kind not in kinds]
-    extra = [kind for kind in kinds if kind not in CORE_INSTALL_KINDS]
+    missing = [kind for kind in INSTALL_KINDS if kind not in kinds]
+    extra = [kind for kind in kinds if kind not in INSTALL_KINDS]
     duplicate = sorted({kind for kind in kinds if kinds.count(kind) > 1})
-    parts = [f"saw {kinds!r}; expected {CORE_INSTALL_KINDS!r}"]
+    parts = [f"saw {kinds!r}; expected {INSTALL_KINDS!r}"]
     if missing:
         parts.append(f"missing={missing!r}")
     if extra:
