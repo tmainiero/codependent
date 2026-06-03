@@ -1457,6 +1457,14 @@
 \codep@install@effect@allow{inline-material}%
 \codep@install@effect@allow{track2-shipout-order-write}%
 
+% \codep@activation@let@install{target}{active-callback}
+%   Activate a package-owned aux callback inside a typed hook body.
+%% @utility
+%@effect state-only
+\newcommand*{\codep@activation@let@install}[2]{%
+  \let#1#2%
+}
+
 % \codep@install@kind@allow{install-kind}{handler-name}
 %   Register one frozen install-kind and its target dispatcher suffix.
 %% @utility
@@ -5577,20 +5585,20 @@
 \AddToHook{begindocument/before}[codependent/backref/install]{%
   \codep@installnewlabel
   % Swap the providecommand no-ops for the active callbacks.
-  \let\codep@atomref\codep@atomref@active
-  \let\codep@lbltype\codep@lbltype@active
+  \codep@activation@let@install{\codep@atomref}{\codep@atomref@active}%
+  \codep@activation@let@install{\codep@lbltype}{\codep@lbltype@active}%
   % Activate P03 in-memory/aux binding readers BEFORE the aux read
   % so cross-run binding + entity metadata records are captured.
-  \let\codep@lblentity\codep@lblentity@active
-  \let\codep@entitymeta\codep@entitymeta@active
-  \let\codep@keymap\codep@keymap@active
-  \let\codep@renderlist\codep@renderlist@active
-  \let\codep@prooftargetmeta\codep@prooftargetmeta@active
-  \let\codep@anchorpage\codep@anchorpage@active
+  \codep@activation@let@install{\codep@lblentity}{\codep@lblentity@active}%
+  \codep@activation@let@install{\codep@entitymeta}{\codep@entitymeta@active}%
+  \codep@activation@let@install{\codep@keymap}{\codep@keymap@active}%
+  \codep@activation@let@install{\codep@renderlist}{\codep@renderlist@active}%
+  \codep@activation@let@install{\codep@prooftargetmeta}{\codep@prooftargetmeta@active}%
+  \codep@activation@let@install{\codep@anchorpage}{\codep@anchorpage@active}%
   % Activate anchormap BEFORE aux read so equation range anchors
   % like \codep@anchormap{equation:4.4--4.5}{codep.eq.3} are not discarded.
   \@ifpackageloaded{hyperref}{%
-    \let\codep@anchormap\codep@anchormap@active
+    \codep@activation@let@install{\codep@anchormap}{\codep@anchormap@active}%
   }{}%
 }
 
@@ -5640,8 +5648,8 @@
 % at begindocument/before, before the .aux read.
 %@effect state-only
 \AddToHook{begindocument/before}[codependent/concept/install]{%
-  \let\codep@concept\codep@concept@active
-  \let\codep@conceptref\codep@conceptref@active
+  \codep@activation@let@install{\codep@concept}{\codep@concept@active}%
+  \codep@activation@let@install{\codep@conceptref}{\codep@conceptref@active}%
 }
 
 % Flush the backref queue AFTER aux has been read.  The aux

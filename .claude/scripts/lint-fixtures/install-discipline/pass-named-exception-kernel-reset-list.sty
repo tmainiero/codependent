@@ -1,0 +1,11 @@
+% Exact kernel-reset-list-rewrite positive fixture.
+\newcommand*{\codep@removefromreset}[2]{%
+  \def\@elt##1{%
+    \def\codep@cur{##1}%
+    \def\codep@tgt{#1}%
+    \ifx\codep@cur\codep@tgt\else
+      \expandafter\g@addto@macro%
+        \csname cl@#2\endcsname{\@elt{##1}}%
+    \fi
+  }%
+}%

@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/fail-raw-kernel-reset-list-elsewhere.sty:3: kernel-reset-list-raw-gaddto-macro: raw kernel reset-list append is CONTRACT-owned until typed handling or an exception lands

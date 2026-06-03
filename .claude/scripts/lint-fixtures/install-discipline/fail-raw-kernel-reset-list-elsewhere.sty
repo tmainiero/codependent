@@ -1,0 +1,5 @@
+% Raw kernel reset-list rewrites need the exact named exception.
+\def\fixture#1{%
+  \expandafter\g@addto@macro%
+    \csname cl@foo\endcsname{\@elt{#1}}%
+}%
