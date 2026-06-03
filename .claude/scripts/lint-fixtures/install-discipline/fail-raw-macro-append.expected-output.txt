@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/fail-raw-macro-append.sty:3: contract-owned-gaddto-macro: raw \g@addto@macro callsite is visible to CORE but CONTRACT owns final classification

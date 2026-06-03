@@ -33,7 +33,7 @@ CORE_BASELINE_DIR = PROJECT_ROOT / "testfiles" / "baselines" / "W05-INSTALL-DISC
 
 # CONTRACT flips this single module-level switch. CORE leaves it False so
 # deferred survivor diagnostics are WARN-only.
-DEFERRED_INSTALL_DIAGNOSTICS_ARE_ERRORS = False
+DEFERRED_INSTALL_DIAGNOSTICS_ARE_ERRORS = True
 
 INSTALL_KINDS = [
     "pretocmd",
@@ -112,6 +112,35 @@ ENDDOC_ORCHESTRATOR_EXCEPTION = {
     "target_compact": r"\AddToHook{enddocument}{\codep@enddoc@orchestrator}",
     "context": "top-level registration (not inside a macro definition)",
 }
+
+
+# Data-append targets that are codep-owned and pass without a typed installer.
+# Rows 1, 3-9 from the rev3 11-row data-append table (row 2 is the
+# kernel-reset-list exception; rows 10-11 use token registers, not g@addto@macro).
+DATA_APPEND_ALLOWLIST = frozenset([
+    r"\codep@subsystems@list",       # row 1: subsystem registry
+    r"codep@unresrefs@",                # row 3: per-proof unresolved ref memory
+    r"\codep@prooftargetmetalist",   # row 4: proof target metadata list
+    r"\codep@refpendinglabels",      # row 5: ref-pending label queue
+    r"codep@refpending@",               # row 6: per-label pending ref queue
+    r"\codep@conceptpending",        # row 7: concept pending resolution queue
+    r"\codep@cdp@deferred",          # row 8: deferred cdp write queue
+    r"\codep@conceptnames",          # row 9: concept name registry
+])
+
+# Lifecycle API macro bodies (W05-XPARSE-SUBSTRATE P01) — raw install primitives
+# inside these dispatcher macros are installer-internal, not raw call sites.
+LIFECYCLE_API_MACROS = [
+    "codep@lifecycle@register@prebegin",
+    "codep@lifecycle@register@postbegin",
+    "codep@lifecycle@register@preend",
+    "codep@lifecycle@register@postend",
+    "codep@lifecycle@register@afterenv",
+]
+
+# Suppress-depth management macro — uses AtBeginEnvironment/AtEndEnvironment
+# to increment/decrement a depth counter; exempt as a named structural pattern.
+SUPPRESSENV_MACRO = "codep@suppressenv"
 
 
 @dataclass(frozen=True)
@@ -324,6 +353,11 @@ def _has_raw_activation_let(code: str) -> bool:
     return bool(direct or csname)
 
 
+
+def _is_lifecycle_or_suppressenv_body(text: str, line: int) -> bool:
+    exempt_macros = LIFECYCLE_API_MACROS + [SUPPRESSENV_MACRO]
+    return any(_line_in_named_macro(text, m, line) for m in exempt_macros)
+
 def _scan_raw_install_primitives(path: Path, text: str) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     lines = text.splitlines()
@@ -331,6 +365,8 @@ def _scan_raw_install_primitives(path: Path, text: str) -> list[Diagnostic]:
     for zero_idx, raw_line in enumerate(lines):
         line = zero_idx + 1
         if _line_in_ranges(line, substrate) or _has_line_allow_annotation(lines, zero_idx):
+            continue
+        if _is_lifecycle_or_suppressenv_body(text, line):
             continue
         code = _strip_comments(raw_line)
         for match in RAW_PRIMITIVE_RE.finditer(code):
@@ -376,15 +412,19 @@ def _scan_contract_survivors(path: Path, text: str) -> list[Diagnostic]:
                     )
                 )
             else:
-                diagnostics.append(
-                    Diagnostic(
-                        "WARN",
-                        path,
-                        line,
-                        "contract-owned-gaddto-macro",
-                        "raw \\g@addto@macro callsite is visible to CORE but CONTRACT owns final classification",
+                compact_window = _compact_contract_code(code_window)
+                if any(target in compact_window for target in DATA_APPEND_ALLOWLIST):
+                    pass  # codep-owned data-append target per rev3 table rows 1, 3-9
+                else:
+                    diagnostics.append(
+                        Diagnostic(
+                            "WARN",
+                            path,
+                            line,
+                            "contract-owned-gaddto-macro",
+                            "raw \\g@addto@macro callsite is visible to CORE but CONTRACT owns final classification",
+                        )
                     )
-                )
 
         compact = re.sub(r"\s+", "", code)
         if "\\protected\\edef#2" in compact:

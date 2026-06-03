@@ -1,0 +1,5 @@
+% Lifecycle API macro body is installer-internal: raw AddToHook inside
+% codep@lifecycle@register@prebegin definition passes the raw-primitive check.
+\newcommand{\codep@lifecycle@register@prebegin}[2]{%
+  \AddToHook{cmd/#1/before}{#2}%
+}

@@ -1,0 +1,1 @@
+WARN: .claude/scripts/lint-fixtures/install-discipline/fail-raw-theorem-name-link-wrap.sty:2: unclassified-raw-install-primitive: raw \pretocmd outside typed installer allowlist; CORE surfaces this as WARN, CONTRACT owns hard closure
