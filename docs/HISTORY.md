@@ -1053,3 +1053,7 @@ Fixture/docs/baseline-only wave. No `.sty` source edits. Deepened option coverag
 ### W05-PRINTKIND-DISPLAY-NAME (2026-06-04)
 
 W05-PRINTKIND-DISPLAY-NAME: appendix labels track user-declared theorem display name across 5 backends; slot #4 contract clarified in `DESIGN.md`; `B-PRINTKIND-DISPLAY-NAME` minted in `BEHAVIOR.md`.
+
+### W05-PRINTKIND-DISPLAY-OVERRIDE (2026-06-04)
+
+W05-PRINTKIND-DISPLAY-OVERRIDE: per-env appendix-display pgfkey override added; render-time only, no wire rotation; B-PRINTKIND-DISPLAY-OVERRIDE minted.

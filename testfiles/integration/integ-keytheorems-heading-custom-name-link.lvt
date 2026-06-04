@@ -1,9 +1,9 @@
 %% TEST-NAME: integ-keytheorems-heading-custom-name-link
-%% TEST-PURPOSE: keytheorems heading title and name aliases keep appendix name links
+%% TEST-PURPOSE: keytheorems heading title and name aliases keep appendix name links; override renders plain label
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR, B-PRINTKIND-DISPLAY-NAME
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: keytheorems declaration aliases heading=, title=, and name= all produce tracked theorem atoms; custom display text is present while appendix links remain object-correct.  Upgraded (PRINTKIND wave): keyfanc env with name={Key Fancy} renders "Key Fancy 1.4" not "Keyfanc 1.4" in appendix.
+%% TEST-WHAT: keytheorems declaration aliases heading=, title=, and name= all produce tracked theorem atoms; custom display text is present while appendix links remain object-correct.  Upgraded (PRINTKIND wave): keyfanc env with name={Key Fancy} renders "Key Fancy 1.4" not "Keyfanc 1.4" in appendix.  Override (DISPLAY-OVERRIDE wave): \codepsetup{appendix-display={keyfanc=Key Plain}} makes the appendix show "Key Plain 1.4" while aux still stores "Key Fancy".
 %% TEST-PDF-DEST-EXISTS: titleres\.[0-9]+
 %% TEST-PDF-DEST-EXISTS: nameres\.[0-9]+
 %% TEST-EXIT: 0
@@ -18,6 +18,7 @@
 %% TEST-AUX-CONTAINS: \codep@atomref{nameres:1.3}{res:heading}
 %% TEST-AUX-CONTAINS: \codep@lblentity{keyfanc:fanc}{keyfanc:1.4}
 %% TEST-AUX-CONTAINS: \codep@atomref{nameres:1.5}{keyfanc:fanc}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{keyfanc:1.4}{theorem}{1.4}{Key Fancy}{}
 %% TEST-PDF-DEST-EXISTS: codep-appendix:headingres:1\.1
 %% TEST-PDF-LINK-DEST: codep-appendix:headingres:1\.1
 %% TEST-PDF-LINK-DEST: headingres\.[0-9]+
@@ -27,7 +28,7 @@
 %% TEST-PDF-STEXT: Title Alias Result
 %% TEST-PDF-STEXT: Name Alias Result
 %% TEST-PDF-NOT: codependent Error
-%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: keyfanc:1.4 = 1.4 Key Fancy
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: keyfanc:1.4 = 1.4 Key Plain
 %% TEST-PDF-STEXT-NOT: Keyfanc 1.4
 %% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
@@ -42,6 +43,7 @@
 \newkeytheorem{keyfanc}[name={Key Fancy},sibling=headingres]
 \usepackage{codependent}
 \codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
+\codepsetup{appendix-display={keyfanc=Key Plain}}
 \codeptrack{headingres,titleres,nameres,keyfanc}
 \usepackage[hypertexnames=false]{hyperref}
 \usepackage{cleveref}

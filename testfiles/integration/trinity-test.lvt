@@ -1,7 +1,7 @@
 %% TEST-NAME: trinity-test
 %% TEST-PURPOSE: Enriched integration fixture combining the trinity-stripped
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP, B-USEDIN-READING-ORDER, B-COMPAT-TCOLORBOX-THEOREM, B-PRINTKIND-DISPLAY-NAME
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP, B-USEDIN-READING-ORDER, B-COMPAT-TCOLORBOX-THEOREM, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Enriched integration fixture combining the trinity-stripped
 %%            scenario with the user's real theorem style (sty-theorems-ta).
@@ -85,6 +85,10 @@
 %% TEST-AUX-CONTAINS: \codep@entitymeta{printkindstress:7.3}{theorem}{7.3}{\textsc  {Printkind Stress}}{}
 %% TEST-PDF-STEXT: Printkind Stress 7\.3
 %% TEST-PDF-STEXT-NOT: Printkindstress 7\.3
+%% W05-PRINTKIND-DISPLAY-OVERRIDE: ta-style decorated env with plain override.
+%% Body heading retains the \thmsymbol glyph (decoration kept by design);
+%% text-only check verifies "Theorem TA 7.5" appears in the PDF.
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: codep-appendix:tadec:7.5 = 7.5 Theorem TA
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%
@@ -336,9 +340,14 @@
 %% Uses numberwithin (not [sibling]) to avoid a thmtools+sibling counter crash (P02 scope gap).
 \declaretheorem[name={\textsc{Printkind Stress}},numberwithin=section]{printkindstress}
 
+%% W05-PRINTKIND-DISPLAY-OVERRIDE stress: ta-style decorated env; override exercises
+%% the appendix-display API.  Uses sibling=theorem (via \makeTheoremEnv 5th arg).
+\makeTheoremEnv{tadec}{Theorem TA}{\thmsymbol}{\thmsymbol}[theorem]
+
 %% ---------- codependent ----------
 \usepackage{codependent}
-\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,trinitybox,printkindstress}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,trinitybox,printkindstress,tadec}
+\codepsetup{appendix-display={tadec=Theorem TA}}
 
 %% ---------- hyperref + cleveref ----------
 \usepackage[hypertexnames=false]{hyperref}
@@ -349,6 +358,7 @@
 \crefname{question}{question}{questions}
 \Crefname{question}{Question}{Questions}
 \crefname{printkindstress}{Printkind Stress}{Printkind Stresses}
+\crefname{tadec}{Theorem TA}{Theorems TA}
 
 %% ---------- Concept-tracked macros ----------
 %% Two macros to exercise def-site / use-site tracking.
@@ -719,6 +729,18 @@ Uses \cref{def:enrichment}.
 
 The above result (\cref{thm:printkindstress}) forces a backref
 and exercises the display-name capture path.
+
+%% --- W05-PRINTKIND-DISPLAY-OVERRIDE: ta-style decorated env with plain override ---
+%% Body heading retains the \thmsymbol glyph decoration by design.
+%% The appendix-display override maps tadec -> "Theorem TA" (plain label).
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY assertion below verifies this text
+%% appears in the PDF (text-only; no destination check).
+\begin{tadec}\label{thm:tadec}
+A ta-style decorated theorem exercising the appendix-display override.
+Uses \cref{def:enrichment}.
+\end{tadec}
+
+The above result (\cref{thm:tadec}) exercises the override path.
 
 \END
 \end{document}

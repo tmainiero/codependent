@@ -3,27 +3,27 @@
 > **If you are a fresh orchestrator, READ ALL OF THIS FILE FIRST.**
 > **DO NOT SKIP. Skipping has caused repeated regressions.**
 
-## One-sentence state (as of 2026-06-03)
+## One-sentence state (as of 2026-06-04)
 
-Post-W05-INSTALL-DISCIPLINE-CONTRACT family SHIPPED + test runner parallelized: HEAD `a86421b` on `xparse-compatibility`; suite `252 total / passed=251 / failed=1 / pinned-broken=1` with exit 0; install discipline is now mechanically enforced (`DEFERRED_INSTALL_DIAGNOSTICS_ARE_ERRORS=True`, 10 install-kinds + 2 named non-install exceptions + 11-row data-append allowlist, 79-site `install-site-inventory.md`); `scripts/run-tests.py` now parallel via `ProcessPoolExecutor` + `--jobs N` flag (default `os.process_cpu_count()` — 8-core wall time 160s, ~3.14× sequential 503s); next action: plan `W05-PRINTKIND-DISPLAY-NAME` (top of queue; unblocks `keytheorems-reuse-semantics`).
+Post-W05-PRINTKIND-DISPLAY-OVERRIDE SHIPPED (render-only, no wire rotation): HEAD is the wave-close commit on `xparse-compatibility`; suite `259 total / passed=258 / failed=1 / pinned-broken=1` with exit 0; appendix-display override (`\codepsetup{appendix-display=<label>}`) lets users name any env's appendix heading independent of the display name or env name, with late-evaluation semantics, across all 5 backends; wire baseline stays `W05-PRINTKIND-DISPLAY-NAME` (render-only wave, no `.aux`/`.cdp` format changes); next action: `W05-BACKENDS-SMOKE-RECLASSIFY` (rename 6 `stress-backends-*` → smoke), then `keytheorems-reuse-semantics`.
 
 ## Next-orchestrator entrypoint (read in order)
 
 1. **This file** — done.
 2. **`~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/MEMORY.md`** — durable findings index. Skim the headline + top 20 entries. Load-bearing entries (marked **LOAD-BEARING**) are non-negotiable.
-3. **`~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_session_pickup_2026_06_03.md`** — most recent session pickup with friction events to action + queue order.
+3. **`~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_session_pickup_2026_06_04.md`** — most recent session pickup (2026-06-04; PRINTKIND-DISPLAY-NAME + OVERRIDE shipped).
 4. **`~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/feedback_surface_acceptance_tier.md`** — LOAD-BEARING brief-discipline policy (L0–L4 surface tiers; choose acceptance checks by change blast-radius; lint-only briefs save ~15 min vs full-suite tax).
-5. **`W05-PRINTKIND-DISPLAY-NAME` planning** — top of queue. Scope: appendix prints title-cased env name (`Tcbstress`) instead of display name (`TBox`); latent across all 5 backends, surfaced in tcolorbox. Scope notes in `~/.claude/projects/.../memory/project_w05_printkind_display_name_future_wave.md`.
+5. **`W05-BACKENDS-SMOKE-RECLASSIFY`** — top of queue. Rename 6 `stress-backends-*` fixtures to smoke classification. Scope in `~/.claude/projects/.../memory/project_w05_backends_smoke_reclassify_future_wave.md`.
 6. **`docs/CONVENTIONS.md`** — coding conventions for `.sty` files (mandatory `@behavior`/`@implements`/`@utility` tagging).
 7. **`docs/BEHAVIOR.md`** — behavioral specification.
 
-## Current suite state (as of HEAD `a86421b`)
+## Current suite state (as of W05-PRINTKIND-DISPLAY-OVERRIDE wave-close)
 
-- `252 total / passed=251 / failed=1 / pinned-broken=1 / real-failures=0 / exit=0`
+- `259 total / passed=258 / failed=1 / pinned-broken=1 / real-failures=0 / exit=0`
 - **Real failures = 0.** The one reported failure is pinned-broken: `test-starred-visible`, deferred via `project_w05_pin1_defer_starred_theorem_numbering.md`.
 - Ratchet: `.traceability-baseline` + `.test-behavior-baseline` + `.claude/baseline-sizes.json` all monotonically shrinking — **must never grow**, never `--update-ratchet` to unblock a growth.
 - Linters: `lint_sty_structural.py`, `lint_install_discipline.py` (ERROR-tier active), `lint_traceability.py`, `lint-tests.sh` all PASS.
-- Wire baseline: `testfiles/baselines/W05-PRINTKIND-DISPLAY-NAME/baseline.sha256.json` (71/71 fixtures, byte-equivalent on aux_sha + pdf_objects_sha; cdp_sha non-deterministic on 4 large fixtures — pre-existing, see findings.md).
+- Wire baseline: `testfiles/baselines/W05-PRINTKIND-DISPLAY-NAME/baseline.sha256.json` (71/71 fixtures; **no rotation for OVERRIDE — render-only wave, no .aux/.cdp format changes**; cdp_sha non-deterministic on 4+ large fixtures; stress-ta-inline-gray pdf_objects_sha differs from baseline due to stress test content update — expected, pre-commit).
 - Wall-time: ~160s on 8-core (`--jobs` default `os.process_cpu_count()`); ~503s with `--jobs 1` (sequential).
 
 ## Verification checkpoint — MANDATORY before any `.sty` edit
@@ -31,7 +31,7 @@ Post-W05-INSTALL-DISCIPLINE-CONTRACT family SHIPPED + test runner parallelized: 
 ```sh
 # 1. Confirm passing baseline (parallel — ~3 min on 8-core)
 nix develop --command python3 scripts/run-tests.py --full 2>&1 | tail -3
-# Expect: TOTAL: 252  passed=251  failed=1  pinned-broken=1
+# Expect: TOTAL: 259  passed=258  failed=1  pinned-broken=1
 
 # 2. Linters all clean (~5 sec total)
 python3 .claude/scripts/lint_sty_structural.py 2>&1 | tail -3
@@ -82,9 +82,10 @@ Typed dispatcher: `\codep@target@install{<install-kind>}{<target>}{<effect>}{<re
 | W05-RICH-STRESS-FOLLOWUP | hardened 4 SUSPECT-MINOR LVTs from Wave 1 audit (line-preserving; wire still 71/71) | DONE 2026-06-02 | `73837ad` |
 | **W05-INSTALL-DISCIPLINE-CONTRACT** | 10 install-kinds + 2 named exceptions + 11-row allowlist + ERROR-mode lint + 79-site inventory | **DONE 2026-06-03** | `f07f01e..0e4b160` (6 commits across 4 sub-waves) |
 | **W05-TEST-RUNNER-PARALLEL** | `scripts/run-tests.py` parallelization (3.14× speedup) | **DONE 2026-06-03** | `a86421b` |
-| **W05-PRINTKIND-DISPLAY-NAME** | appendix prints title-cased env name instead of display name; universal across 5 backends | **NEXT — not yet planned** | — |
-| W05-BACKENDS-SMOKE-RECLASSIFY | rename 6 `stress-backends-*` fixtures from stress→smoke classification | queued | — |
-| keytheorems-reuse-semantics | restate-forward-link rendering + storestar Option C (bundled fix, 4 surfaces) | queued (needs PRINTKIND landed first) | — |
+| **W05-PRINTKIND-DISPLAY-NAME** | appendix prints title-cased env name instead of display name; universal across 5 backends | **DONE 2026-06-04** | `115fdf4` |
+| **W05-PRINTKIND-DISPLAY-OVERRIDE** | `appendix-display=<label>` override key; late-evaluation semantics; 2 unit + 1 integ fixture; **render-only, no wire rotation** | **DONE 2026-06-04** | wave-close commit |
+| W05-BACKENDS-SMOKE-RECLASSIFY | rename 6 `stress-backends-*` fixtures from stress→smoke classification | **NEXT** | — |
+| keytheorems-reuse-semantics | restate-forward-link rendering + storestar Option C (bundled fix, 4 surfaces) | queued | — |
 | universal unnumbered/starred design decision | sign-off on silent-no-track design across all 5 backends | PARKED (awaiting user sign-off) | — |
 | W05-E | `\codepignorethis`, display→atom sidecar, multi-proof ordinal | PARKED | — |
 | W05-F | `enabled=false` toggle, `\ref*` macros | future | — |
@@ -133,7 +134,7 @@ The originally-decomposed `W05-XPARSE-SUB-EFFECT` was absorbed into `W05-INSTALL
 - No big-bang rewrites — wave-based only.
 - No editing `codependent.sty` without running the test suite first.
 - No running tests outside `nix develop`.
-- No declaring a wave done without the current suite floor holding (`252 total / passed=251 / failed=1 / pinned-broken=1`, exit 0 at `a86421b` or later).
+- No declaring a wave done without the current suite floor holding (`259 total / passed=258 / failed=1 / pinned-broken=1`, exit 0 at post-W05-PRINTKIND-DISPLAY-OVERRIDE or later).
 - No "trust me bro" — every test must pass, zero exceptions.
 - No allowlists or new "known-failing" pins (pinned-broken count must monotonically decrease).
 - No `git checkout <file>` / `git restore <file>` without saving a patch first.
@@ -179,7 +180,7 @@ The originally-decomposed `W05-XPARSE-SUB-EFFECT` was absorbed into `W05-INSTALL
 
 ## Test layout
 
-Active fixtures (252 total):
+Active fixtures (259 total):
 
 - `testfiles/unit/*.lvt`: unit fixtures
 - `testfiles/integration/*.lvt`: integration fixtures
@@ -191,7 +192,7 @@ Active fixtures (252 total):
 ```sh
 # 1. Confirm baseline (~3 min parallel)
 nix develop --command python3 scripts/run-tests.py --full 2>&1 | tail -3
-# Expect: TOTAL: 252  passed=251  failed=1  pinned-broken=1
+# Expect: TOTAL: 259  passed=258  failed=1  pinned-broken=1
 
 # 2. Linter state (~5 sec)
 python3 .claude/scripts/lint_sty_structural.py 2>&1 | tail -3
@@ -210,11 +211,10 @@ head -10 ~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/me
 
 ## Active pickup files (in project memory)
 
-- `project_session_pickup_2026_06_03.md` — **CURRENT** (READ FIRST).
-- `project_session_pickup_2026_06_02.md` — pre-CONTRACT; kept for context one generation back.
-- `project_w05_printkind_display_name_future_wave.md` — top of queue; scope notes.
-- `project_w05_backends_smoke_reclassify_future_wave.md` — queued.
-- `project_keytheorems_reuse_semantics_future_wave.md` — queued (needs PRINTKIND landed first).
+- `project_session_pickup_2026_06_04.md` — **CURRENT** (READ FIRST); PRINTKIND-DISPLAY-NAME + OVERRIDE shipped.
+- `project_session_pickup_2026_06_03.md` — pre-PRINTKIND; kept for context one generation back.
+- `project_w05_backends_smoke_reclassify_future_wave.md` — **top of queue**.
+- `project_keytheorems_reuse_semantics_future_wave.md` — queued.
 - `project_unnumbered_starred_tracking_future_decision.md` — PARKED (awaiting user sign-off).
 - `project_w05_e_pickup.md` — PARKED (resume after current queue clears).
 - `project_w05_design_ledger.md` — D1–D4 decisions still authoritative.

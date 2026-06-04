@@ -366,6 +366,27 @@
 %   is unnecessary and would corrupt macro tokens.
 \def\codep@appendix@titlecase#1{#1}%
 
+% \codep@appendixdisplay@splitenv <entity-key>:\codep@stop
+%   Capture the environment prefix before the first colon in an entity key.
+%% @implements \codep@appendixdisplay@resolve
+\def\codep@appendixdisplay@splitenv#1:#2\codep@stop{%
+  \def\codep@tmp@appendixdisplay@env{#1}%
+}%
+
+% \codep@appendixdisplay@resolve{entity-key}{captured-macro}{out-macro}
+%   Resolve the appendix-rendered print kind from a per-env override map,
+%   falling back to the captured entitymeta print-kind macro.
+%% @behavior B-PRINTKIND-DISPLAY-OVERRIDE
+\def\codep@appendixdisplay@resolve#1#2#3{%
+  \expandafter\codep@appendixdisplay@splitenv#1:\codep@stop%
+  \ifcsname codep@appendixdisplay@\codep@tmp@appendixdisplay@env\endcsname%
+    \expandafter\let\expandafter#3%
+      \csname codep@appendixdisplay@\codep@tmp@appendixdisplay@env\endcsname%
+  \else%
+    \let#3#2%
+  \fi%
+}%
+
 % \codep@appendix@emit{prefixedkey}{type}
 %   Emit an appendix entry if P05a's frozen render cache has a
 %   populated payload for this atom.  Reads the entity display,
@@ -387,11 +408,13 @@
       \ifx\codep@tmp@printkind\@empty%
         \def\codep@tmp@printkind{#2}%
       \fi%
+      \codep@appendixdisplay@resolve{#1}{\codep@tmp@printkind}{%
+        \codep@tmp@appendixprintkind}%
       \ifx\codep@tmp@page\@empty%
         \def\codep@tmp@page{?}%
       \fi%
       \codep@appendixentry{#1}{\codep@tmp@display}{%
-        \codep@tmp@printkind}{\codep@tmp@page}{\codep@tmp@rlpayload}%
+        \codep@tmp@appendixprintkind}{\codep@tmp@page}{\codep@tmp@rlpayload}%
     \fi%
   \fi%
 }

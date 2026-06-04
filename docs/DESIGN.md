@@ -917,6 +917,15 @@ version of the environment name); for fixed non-theorem kinds (proof,
 paragraph) it equals the kind tag.  See `[B-PRINTKIND-DISPLAY-NAME]`
 in `docs/BEHAVIOR.md`.
 
+Users may override the appendix-rendered label per environment via
+`\codepsetup{appendix-display={env=Plain Label}}` without touching the
+wire format.  The override fires at appendix render-time only: slot #4 of
+`\codep@entitymeta` continues to carry the captured display name from
+`[B-PRINTKIND-DISPLAY-NAME]`, and `.aux`/`.cdp` content is unaffected.
+This capture-vs-render split allows typeset appendix labels to diverge
+from theorem heading labels without any re-compilation or aux migration.
+See `[B-PRINTKIND-DISPLAY-OVERRIDE]` in `docs/BEHAVIOR.md`.
+
 Page metadata travels in a separate aux record
 
 ```tex

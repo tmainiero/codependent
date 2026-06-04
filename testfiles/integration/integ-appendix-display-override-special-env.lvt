@@ -1,0 +1,70 @@
+%% TEST-NAME: integ-appendix-display-override-special-env
+%% TEST-PURPOSE: appendix-display override works for env names with capitals and underscores; last-write-wins
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-OVERRIDE
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Declares Cap_Box (capital + underscore) and plainlc (all-lowercase) amsthm envs.
+%%            Sets appendix-display={Cap_Box=Wrong Label} then overwrites with
+%%            appendix-display={Cap_Box=Capital Box, plainlc=Plain LC}.
+%%            Last-write-wins: "Wrong Label" must not appear in the PDF; "Capital Box"
+%%            and "Plain LC" must appear as appendix entry labels.
+%%            The aux stores the captured display names from \newtheorem, not the overrides.
+%%            Atom numbering: codependent uses a shared \c@atom counter across all tracked
+%%            envs, so Cap_Box gets 1.1 (first) and plainlc gets 1.2 (second).
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-OVERRIDE P03
+%% TEST-SECTION: appendix-display override special env names + last-write-wins
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-AUX-CONTAINS: \codep@lblentity{capbox:target}{Cap_Box:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{Cap_Box:1.1}{theorem}{1.1}{Cap Box}{}
+%% TEST-AUX-CONTAINS: \codep@lblentity{plainlc:target}{plainlc:1.2}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{plainlc:1.2}{theorem}{1.2}{plain lowercase}{}
+%% TEST-AUX-NOT-CONTAINS: Wrong Label
+%% TEST-PDF-DEST-EXISTS: codep-appendix:Cap_Box:1\.1
+%% TEST-PDF-DEST-EXISTS: codep-appendix:plainlc:1\.2
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: Cap_Box:1.1 = 1.1 Capital Box
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: plainlc:1.2 = 1.2 Plain LC
+%% TEST-PDF-STEXT-NOT: Wrong Label
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\newtheorem{Cap_Box}{Cap Box}[section]
+\newtheorem{plainlc}{plain lowercase}[section]
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{Cap_Box}{cap box}{cap boxes}
+\Crefname{Cap_Box}{Cap Box}{Cap Boxes}
+\crefname{plainlc}{plain lc}{plain lcs}
+\Crefname{plainlc}{Plain LC}{Plain LCs}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+%% First set — will be overwritten by the second \codepsetup (last-write-wins)
+\codepsetup{appendix-display={Cap_Box=Wrong Label}}
+%% Second set wins: Capital Box and Plain LC are the final override labels
+\codepsetup{appendix-display={Cap_Box=Capital Box, plainlc=Plain LC}}
+\codeptrack{Cap_Box,plainlc}
+
+\begin{document}
+\START
+
+\section{Special environment names}
+
+\begin{Cap_Box}\label{capbox:target}
+  Capital-box target with capital-plus-underscore environment name.
+\end{Cap_Box}
+
+\begin{plainlc}\label{plainlc:target}
+  Plain-lowercase target.
+\end{plainlc}
+
+\begin{Cap_Box}\label{capbox:source}
+  This source cites \cref{capbox:target} and \cref{plainlc:target} to force appendix backrefs.
+\end{Cap_Box}
+
+\codepappendix
+\END
+\end{document}

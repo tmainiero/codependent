@@ -1,7 +1,7 @@
 %% TEST-NAME: stress-ta-appendix-gray
 %% TEST-PURPOSE: Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
 %% TEST-STATUS: EXPLORATORY
 %% TEST-RENDER-MODES: appendix, gray-backrefs, custom-page-format
 %% TEST-PDF-PAGES: 7
@@ -23,6 +23,8 @@
 %% Active non-default overrides:
 %%   - line 22: appendix/pagenum-format={##1~\textemdash~p.~##2}
 %%              exercises the API; default is {##1~(p.\@~##2)}
+%%   - appendix-display={tadec=Theorem TA}: plain label override for decorated env
+%%              exercises the override API; default would show the \thmsymbol glyph
 %% (Sentinels: lines tagged %%NONDEFAULT-OVERRIDE%% deviate from package defaults.)
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
@@ -42,11 +44,18 @@
 %% Uses numberwithin (not [sibling]) to avoid a thmtools+sibling counter crash (P02 scope gap).
 \declaretheorem[name={\textsc{Printkind Stress}},numberwithin=section]{printkindstress}
 
+%% W05-PRINTKIND-DISPLAY-OVERRIDE stress: ta-style decorated env whose appendix
+%% label is overridden to the plain string "Theorem TA", stripping the \thmsymbol
+%% glyph from the index row.  Must be declared BEFORE \codeptrack.
+\makeTheoremEnv{tadec}{Theorem TA}{\thmsymbol}{\thmsymbol}[theorem]
+
 %% codependent in appendix mode (W04: exercises appendix bidir + page numbers)
 \usepackage[backrefs=appendix,backref-color=gray]{codependent}
 %% W04-P04: page-number format override — uses non-default value to exercise the API
 \codepsetup{appendix/pagenum-format={##1~\textemdash~p.~##2}}  %%NONDEFAULT-OVERRIDE%%
-\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,printkindstress}
+%% W05-PRINTKIND-DISPLAY-OVERRIDE: plain label override for the decorated tadec env
+\codepsetup{appendix-display={tadec=Theorem TA}}  %%NONDEFAULT-OVERRIDE%%
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,printkindstress,tadec}
 
 %% Multi-file compatibility check: load subfiles and standalone.
 %% These must not conflict with codependent's hooks.
@@ -61,6 +70,7 @@
 \crefname{terminology}{Terminology}{Terminologies}
 \crefname{question}{Question}{Questions}
 \crefname{printkindstress}{Printkind Stress}{Printkind Stresses}
+\crefname{tadec}{Theorem TA}{Theorems TA}
 
 %% ---------- Concept-tracked macros ----------
 \codepnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
@@ -573,6 +583,20 @@ Uses \cref{def:enrichment}.
 
 The above result (\cref{thm:printkindstress}) forces a Dependency Index row
 and exercises the display-name capture path.
+
+%% --- W05-PRINTKIND-DISPLAY-OVERRIDE: ta-style decorated env with plain override ---
+%% Body heading retains the \thmsymbol glyph decoration by design (normal ta-style).
+%% The Dependency Index entry uses the plain override "Theorem TA" without the glyph.
+%% Automated gate: TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY in trinity-test.lvt.
+%% Visual gate: inspect pdf-out/stress-ta-appendix-gray-* and confirm the index
+%% row shows "Theorem TA N.M" without the decoration glyph.
+\begin{tadec}\label{thm:tadec}
+A ta-style decorated theorem whose Dependency Index label uses the plain override.
+Uses \cref{def:enrichment}.
+\end{tadec}
+
+The above result (\cref{thm:tadec}) forces a Dependency Index row
+and exercises the appendix-display override path.
 
 
 %% ====================================================================

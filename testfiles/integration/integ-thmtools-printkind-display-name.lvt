@@ -1,14 +1,15 @@
 %% TEST-NAME: integ-thmtools-printkind-display-name
-%% TEST-PURPOSE: thmtools declaretheorem display name resolved from thmt@original@<env>
+%% TEST-PURPOSE: thmtools declaretheorem display name resolved from thmt@original@<env>; override renders plain label
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: thmtools \declaretheorem[name=TT Fancy Statement,...]{ttfanc} creates
 %%            \thmt@original@ttfanc; the resolver must read from that macro, not the
-%%            \thmt@parsetheoremargs{ttfanc} trampoline.  Appendix must show
-%%            "TT Fancy Statement 1.1" not "Ttfanc 1.1".
-%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-NAME P04
-%% TEST-SECTION: thmtools thmt@original@<env> resolver
+%%            \thmt@parsetheoremargs{ttfanc} trampoline.
+%%            Override: \codepsetup{appendix-display={ttfanc=TT Plain}} makes the
+%%            appendix show "TT Plain 1.1" while aux still stores "TT Fancy Statement".
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-NAME P04; W05-PRINTKIND-DISPLAY-OVERRIDE P03
+%% TEST-SECTION: thmtools thmt@original@<env> resolver + appendix-display override
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-AUX-CONTAINS: \codep@lblentity{ttfanc:target}{ttfanc:1.1}
@@ -16,7 +17,7 @@
 %% TEST-AUX-NOT-CONTAINS: \protect\unhbox
 %% TEST-CDP-NOT-CONTAINS: \protect\unhbox
 %% TEST-PDF-DEST-EXISTS: codep-appendix:ttfanc:1\.1
-%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: ttfanc:1.1 = 1.1 TT Fancy Statement
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: ttfanc:1.1 = 1.1 TT Plain
 %% TEST-PDF-STEXT-NOT: Ttfanc 1.1
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
@@ -32,6 +33,7 @@
 \usepackage{cleveref}
 \usepackage{codependent}
 \codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codepsetup{appendix-display={ttfanc=TT Plain}}
 \codeptrack{ttfanc,ttfancsrc}
 
 \begin{document}

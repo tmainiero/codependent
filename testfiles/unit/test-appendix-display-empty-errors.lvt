@@ -1,0 +1,31 @@
+%% TEST-NAME: test-appendix-display-empty-errors
+%% TEST-PURPOSE: appendix-display rejects empty override labels at setup time
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-OVERRIDE
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: \codepsetup{appendix-display={x=}} emits a fatal package error
+%%            rather than storing an empty appendix label.
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-OVERRIDE P02
+%% TEST-SECTION: appendix-display empty-value error
+%% TEST-EXIT: 1
+%% TEST-EXPECT-PACKAGE-ERROR: empty appendix-display override for env 'x'
+%% TEST-LOG-CONTAINS: Package codependent Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-RERUN: 1
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{x}{Captured Kind}[section]
+\usepackage{codependent}
+\codepsetup{appendix-display={x=}}
+\codeptrack{x}
+
+\begin{document}
+\START
+\section{Empty appendix display}
+\begin{x}
+  This fixture only needs to reach the setup-time package error.
+\end{x}
+\END
+\end{document}

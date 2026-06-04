@@ -1,10 +1,10 @@
 %% TEST-NAME: stress-ta-inline-gray
 %% TEST-PURPOSE: Inline TA stress fixture with gray backrefs.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
 %% TEST-STATUS: EXPLORATORY
 %% TEST-RENDER-MODES: inline, gray-backrefs
-%% TEST-PDF-PAGES: 3
+%% TEST-PDF-PAGES: 4
 %% TEST-PDF-STEXT: Stress fixture inline gray
 %% TEST-PDF-STEXT: (?s)First theorem for inline joint-atom proof.*\{9\.9, 9\.10\}\*
 %% TEST-PDF-STEXT: (?s)Second theorem for inline joint-atom proof.*\{9\.9, 9\.10\}\*
@@ -14,6 +14,11 @@
 
 \def\START{}\def\END{}
 \documentclass{article}
+%% Active non-default overrides:
+%%   - backref-color=gray: gray backrefs (inline-gray variant default)
+%%   - appendix-display={tadec=Theorem TA}: plain label override (inert in inline mode;
+%%     exercises the setup API)
+%% (Sentinels: lines tagged %%NONDEFAULT-OVERRIDE%% deviate from package defaults.)
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
 \usepackage{mathtools}
@@ -27,10 +32,15 @@
 %% read \thmt@original@printkindstress at registration time.
 \declaretheorem[name={\textsc{Printkind Stress}},numberwithin=section]{printkindstress}
 
+%% W05-PRINTKIND-DISPLAY-OVERRIDE stress: ta-style decorated env; override is inert
+%% in inline mode (no appendix to render) but exercises the setup API.
+\makeTheoremEnv{tadec}{Theorem TA}{\thmsymbol}{\thmsymbol}[theorem]
+
 %% codependent with depth=1 (default, matches numberwithin=section)
 \usepackage[backref-style=inline]{codependent}
 \codepsetup{backref-color=gray}
-\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,printkindstress}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,printkindstress,tadec}
+\codepsetup{appendix-display={tadec=Theorem TA}}  %%NONDEFAULT-OVERRIDE%%
 
 \usepackage[hypertexnames=false]{hyperref}
 \usepackage{cleveref}
@@ -40,6 +50,7 @@
 \crefname{terminology}{Terminology}{Terminologies}
 \crefname{question}{Question}{Questions}
 \crefname{printkindstress}{Printkind Stress}{Printkind Stresses}
+\crefname{tadec}{Theorem TA}{Theorems TA}
 
 \title{Stress fixture inline gray}
 \author{Test}
@@ -271,6 +282,15 @@ Uses \cref{def:widget}.
 
 The above result (\cref{thm:printkindstress}) forces a backref
 and exercises the display-name capture path.
+
+%% --- W05-PRINTKIND-DISPLAY-OVERRIDE: ta-style decorated env with plain override ---
+%% Body heading retains the \thmsymbol glyph by design; override is inert in inline mode.
+\begin{tadec}\label{thm:tadec}
+A ta-style decorated theorem exercising the appendix-display setup API.
+Uses \cref{def:widget}.
+\end{tadec}
+
+The above result (\cref{thm:tadec}) exercises the override setup path.
 
 \END
 \end{document}

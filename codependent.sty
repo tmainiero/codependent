@@ -190,9 +190,9 @@
   appendix/pagenum-format/.code = {%
     \codep@setappendixpagenumformat{#1}%
   },%
+  appendix-display/.code={\pgfkeys{/codep/appendix-display/.cd,#1}},%
   margin-font/.store in = \codep@marginfont,%
 }
-
 % Collect all options and forward to pgfkeys.
 %% @utility
 \def\codep@rawopts{}%
@@ -6419,6 +6419,31 @@
 
 
 \AddToHook{enddocument}{\codep@enddoc@orchestrator}
+
+%% W05-P02 appendix-display override helpers (kept after enddoc hook so
+%% install-discipline exact-line exceptions remain stable).
+% \codep@appendixdisplay@store
+%   Store the current pgfkeys appendix label override by theorem environment.
+%% @utility
+\def\codep@appendixdisplay@store{%
+  \edef\codep@tmp@adkey{\pgfkeyscurrentname}%
+  \edef\codep@tmp@adval{%
+    \unexpanded\expandafter{\pgfkeyscurrentvalue}}%
+  \expandafter\ifblank\expandafter{\codep@tmp@adval}{%
+    \PackageError{codependent}{%
+      empty appendix-display override for env '\codep@tmp@adkey'}{%
+      Give appendix-display a non-empty literal label, or remove the key.}%
+  }{%
+    \expandafter\global\expandafter\let%
+      \csname codep@appendixdisplay@\codep@tmp@adkey\endcsname%
+      \codep@tmp@adval%
+  }%
+}%
+
+\pgfkeys{%
+  /codep/appendix-display/.cd,%
+  .unknown/.code={\codep@appendixdisplay@store},%
+}%
 
 %% W05-P02 print-kind display-name helpers (kept after enddoc hook so
 %% install-discipline exact-line exception remains stable).

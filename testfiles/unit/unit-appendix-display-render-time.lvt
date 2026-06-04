@@ -1,0 +1,54 @@
+%% TEST-NAME: unit-appendix-display-render-time
+%% TEST-PURPOSE: appendix-display override is resolved at appendix render time only
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-OVERRIDE
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: Public nested appendix-display syntax stores literal token labels,
+%%            repeated settings are last-write-wins, and entitymeta field #4
+%%            keeps the captured theorem display name rather than the override.
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-OVERRIDE P02
+%% TEST-SECTION: appendix-display render-time resolver
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-AUX-CONTAINS: \codep@entitymeta{x:1.1}{theorem}{1.1}{Captured Kind}{}
+%% TEST-AUX-NOT-CONTAINS: Plain Override
+%% TEST-AUX-NOT-CONTAINS: First Override
+%% TEST-CDP-NOT-CONTAINS: Plain Override
+%% TEST-CDP-NOT-CONTAINS: First Override
+%% TEST-PDF-DEST-EXISTS: codep-appendix:x:1\.1
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: x:1.1 = 1.1 Plain Override
+%% TEST-PDF-STEXT-NOT: First Override
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\newtheorem{x}{Captured Kind}[section]
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{x}{captured kind}{captured kinds}
+\Crefname{x}{Captured Kind}{Captured Kinds}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codepsetup{appendix-display={x=First Override}}
+\codepsetup{appendix-display={x=\textsc{Plain Override}}}
+\codeptrack{x}
+
+\begin{document}
+\START
+
+\section{Render-time override}
+
+\begin{x}\label{x:target}
+  Target theorem whose captured display name remains truthful.
+\end{x}
+
+\begin{x}\label{x:source}
+  Source theorem cites \cref{x:target} so the appendix row is populated.
+\end{x}
+
+\codepappendix
+\END
+\end{document}

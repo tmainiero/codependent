@@ -1,16 +1,17 @@
 %% TEST-NAME: integ-amsthm-printkind-display-name
-%% TEST-PURPOSE: amsthm macro-token display name stored correctly in entitymeta print-kind
+%% TEST-PURPOSE: amsthm macro-token display name stored correctly; appendix-display override renders plain label
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: \textsc{AM Fancy} as theorem display name survives print-kind capture,
 %%            token-safe aux emission, and appendix rendering unchanged.
-%%            Appendix label must be "AM Fancy 1.1" not "Amfanc 1.1".
+%%            Override: \codepsetup{appendix-display={amfanc=AM Plain}} makes the
+%%            appendix show "AM Plain 1.1" while aux still stores \textsc{AM Fancy}.
 %%            Carries the B1 macro-token regression guard for the PRINTKIND wave:
 %%            .aux field #4 must contain the \textsc token sequence, not
 %%            \protect\unhbox box-register debris from raw \xdef expansion.
-%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-NAME P04
-%% TEST-SECTION: amsthm macro-token display-name print-kind
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-NAME P04; W05-PRINTKIND-DISPLAY-OVERRIDE P03
+%% TEST-SECTION: amsthm macro-token display-name print-kind + appendix-display override
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-AUX-CONTAINS: \codep@lblentity{amfanc:target}{amfanc:1.1}
@@ -18,7 +19,7 @@
 %% TEST-AUX-NOT-CONTAINS: \protect\unhbox
 %% TEST-CDP-NOT-CONTAINS: \protect\unhbox
 %% TEST-PDF-DEST-EXISTS: codep-appendix:amfanc:1\.1
-%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: amfanc:1.1 = 1.1 AM Fancy
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: amfanc:1.1 = 1.1 AM Plain
 %% TEST-PDF-STEXT-NOT: Amfanc 1.1
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
@@ -34,6 +35,7 @@
 \Crefname{amfanc}{AM Fancy}{AM Fancy Theorems}
 \usepackage{codependent}
 \codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codepsetup{appendix-display={amfanc=AM Plain}}
 \codeptrack{amfanc}
 
 \begin{document}

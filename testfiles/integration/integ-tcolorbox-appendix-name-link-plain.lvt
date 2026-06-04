@@ -1,21 +1,22 @@
 %% TEST-NAME: integ-tcolorbox-appendix-name-link-plain
-%% TEST-PURPOSE: tcolorbox plain theorem heading gets appendix forward link
+%% TEST-PURPOSE: tcolorbox plain theorem heading gets appendix forward link; override renders plain label
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM, B-PRINTKIND-DISPLAY-NAME
+%% TEST-BEHAVIOR: B-COMPAT-TCOLORBOX-THEOREM, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: tcolorbox plain theorem heading gets appendix forward link.  Exercises the W05 tcolorbox theorem quirks row with PDF and sidecar assertions.  Upgraded (PRINTKIND wave): appendix renders "TBox 1.1" not "Codetcb 1.1" or "Tcbstress 1.1".
-%% TEST-SOURCE: W05-XPARSE-BACKENDS P04; W05-PRINTKIND-DISPLAY-NAME P04
-%% TEST-SECTION: tcolorbox theorem backend parity
+%% TEST-WHAT: tcolorbox plain theorem heading gets appendix forward link.  Exercises the W05 tcolorbox theorem quirks row with PDF and sidecar assertions.  Upgraded (PRINTKIND wave): appendix renders "TBox 1.1" not "Codetcb 1.1" or "Tcbstress 1.1".  Override (DISPLAY-OVERRIDE wave): \codepsetup{appendix-display={codetcb=TBox Override}} makes the appendix show "TBox Override 1.1" while aux still stores "TBox".
+%% TEST-SOURCE: W05-XPARSE-BACKENDS P04; W05-PRINTKIND-DISPLAY-NAME P04; W05-PRINTKIND-DISPLAY-OVERRIDE P03
+%% TEST-SECTION: tcolorbox theorem backend parity + appendix-display override
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{codetcb}
 %% TEST-AUX-CONTAINS: \codep@lblentity{codetcb:target}{codetcb:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{codetcb:1.1}{theorem}{1.1}{TBox}{}
 %% TEST-PDF-DEST-EXISTS: codep-appendix:codetcb:1\.1
 %% TEST-PDF-LINK-DEST: codep-appendix:codetcb:1\.1
 %% TEST-PDF-NO-ORPHAN-LINKS: yes
 %% TEST-PDF-NOT: codependent Error
 %% TEST-AUX-CONTAINS: \codep@atomref{codetcb:1.2}{codetcb:target}
-%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: codetcb:1.1 = 1.1 TBox
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: codetcb:1.1 = 1.1 TBox Override
 %% TEST-PDF-STEXT-NOT: Tcbstress 1.1
 %% TEST-PDF-STEXT-NOT: Codetcb 1.1
 %% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
@@ -29,6 +30,7 @@
 \newtcbtheorem[number within=section]{codetcb}{TBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{codetcb}
 \usepackage{codependent}
 \codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codepsetup{appendix-display={codetcb=TBox Override}}
 \codeptrack{codetcb}
 \usepackage[hypertexnames=false]{hyperref}
 \usepackage{cleveref}

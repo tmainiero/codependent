@@ -1,9 +1,9 @@
 {
   "atomref": {
     "count": [
-      60,
-      60,
-      60
+      62,
+      62,
+      62
     ],
     "keys": [
       [
@@ -32,6 +32,7 @@
         "paragraph:6.3||eq:trinity-tracktwo-second",
         "paragraph:6.3||eq:trinity-tracktwo-third",
         "paragraph:7.4||thm:printkindstress",
+        "paragraph:7.6||thm:tadec",
         "printkindstress:7.3||def:enrichment",
         "proof:a15||lem:adjunction",
         "proof:a18||def:enrichment",
@@ -59,6 +60,7 @@
         "remark:3.4||prop:decompose",
         "remark:3.4||thm:main",
         "remark:3.4||thm:with-eq",
+        "tadec:7.5||def:enrichment",
         "theorem:2.1||def:enrichment",
         "theorem:2.1||term:monoidal",
         "theorem:2.7||def:enrichment",
@@ -94,6 +96,7 @@
         "paragraph:6.3||eq:trinity-tracktwo-second",
         "paragraph:6.3||eq:trinity-tracktwo-third",
         "paragraph:7.4||thm:printkindstress",
+        "paragraph:7.6||thm:tadec",
         "printkindstress:7.3||def:enrichment",
         "proof:a15||lem:adjunction",
         "proof:a18||def:enrichment",
@@ -121,6 +124,7 @@
         "remark:3.4||prop:decompose",
         "remark:3.4||thm:main",
         "remark:3.4||thm:with-eq",
+        "tadec:7.5||def:enrichment",
         "theorem:2.1||def:enrichment",
         "theorem:2.1||term:monoidal",
         "theorem:2.7||def:enrichment",
@@ -156,6 +160,7 @@
         "paragraph:6.3||eq:trinity-tracktwo-second",
         "paragraph:6.3||eq:trinity-tracktwo-third",
         "paragraph:7.4||thm:printkindstress",
+        "paragraph:7.6||thm:tadec",
         "printkindstress:7.3||def:enrichment",
         "proof:a15||lem:adjunction",
         "proof:a18||def:enrichment",
@@ -183,6 +188,7 @@
         "remark:3.4||prop:decompose",
         "remark:3.4||thm:main",
         "remark:3.4||thm:with-eq",
+        "tadec:7.5||def:enrichment",
         "theorem:2.1||def:enrichment",
         "theorem:2.1||term:monoidal",
         "theorem:2.7||def:enrichment",
@@ -201,9 +207,9 @@
   },
   "page_bearing": {
     "count": [
-      107,
-      107,
-      107
+      109,
+      109,
+      109
     ],
     "diff": [
       [
@@ -241,13 +247,17 @@
         "-\\newlabel{thm:autodet-mixedtrk}{{5.7}{3}{}{theorem.70}{}}",
         "+\\newlabel{thm:autodet-mixedtrk@cref}{{[theorem][7][]5.7}{[1][4][]4}{}{}{}}",
         "+\\newlabel{thm:autodet-mixedtrk}{{5.7}{4}{}{theorem.70}{}}",
+        "-\\newlabel{thm:tadec@cref}{{[tadec][5][]7.5}{[1][4][]4}{}{}{}}",
+        "-\\newlabel{thm:tadec}{{7.5}{4}{}{tadec.90}{}}",
         "-\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][3][]4}{}{}{}}",
+        "+\\newlabel{thm:tadec@cref}{{[tadec][5][]7.5}{[1][5][]5}{}{}{}}",
+        "+\\newlabel{thm:tadec}{{7.5}{5}{}{tadec.90}{}}",
         "+\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][4][]4}{}{}{}}"
       ],
       []
     ],
     "diff_count": [
-      36,
+      40,
       0
     ],
     "lines": [
@@ -347,6 +357,8 @@
         "\\newlabel{thm:printkindstress}{{7.3}{4}{}{printkindstress.87}{}}",
         "\\newlabel{thm:strictify@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:strictify}{{3.1}{2}{}{theorem.45}{}}",
+        "\\newlabel{thm:tadec@cref}{{[tadec][5][]7.5}{[1][4][]4}{}{}{}}",
+        "\\newlabel{thm:tadec}{{7.5}{4}{}{tadec.90}{}}",
         "\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][3][]4}{}{}{}}",
         "\\newlabel{thm:trinity-tracktwo-target}{{6.1}{4}{}{theorem.74}{}}",
         "\\newlabel{thm:with-eq@cref}{{[theorem][7][]2.7}{[1][2][]2}{}{}{}}",
@@ -456,6 +468,8 @@
         "\\newlabel{thm:printkindstress}{{7.3}{4}{}{printkindstress.87}{}}",
         "\\newlabel{thm:strictify@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:strictify}{{3.1}{2}{}{theorem.45}{}}",
+        "\\newlabel{thm:tadec@cref}{{[tadec][5][]7.5}{[1][5][]5}{}{}{}}",
+        "\\newlabel{thm:tadec}{{7.5}{5}{}{tadec.90}{}}",
         "\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][4][]4}{}{}{}}",
         "\\newlabel{thm:trinity-tracktwo-target}{{6.1}{4}{}{theorem.74}{}}",
         "\\newlabel{thm:with-eq@cref}{{[theorem][7][]2.7}{[1][2][]2}{}{}{}}",
@@ -565,6 +579,8 @@
         "\\newlabel{thm:printkindstress}{{7.3}{4}{}{printkindstress.87}{}}",
         "\\newlabel{thm:strictify@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:strictify}{{3.1}{2}{}{theorem.45}{}}",
+        "\\newlabel{thm:tadec@cref}{{[tadec][5][]7.5}{[1][5][]5}{}{}{}}",
+        "\\newlabel{thm:tadec}{{7.5}{5}{}{tadec.90}{}}",
         "\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][4][]4}{}{}{}}",
         "\\newlabel{thm:trinity-tracktwo-target}{{6.1}{4}{}{theorem.74}{}}",
         "\\newlabel{thm:with-eq@cref}{{[theorem][7][]2.7}{[1][2][]2}{}{}{}}",
@@ -584,8 +600,8 @@
   "renderlist": {
     "count": [
       0,
-      25,
-      25
+      26,
+      26
     ],
     "keys": [
       [],
@@ -603,6 +619,7 @@
         "proposition:1.3",
         "proposition:2.2",
         "question:1.11",
+        "tadec:7.5",
         "terminology:1.8",
         "theorem:1.2",
         "theorem:2.1",
@@ -630,6 +647,7 @@
         "proposition:1.3",
         "proposition:2.2",
         "question:1.11",
+        "tadec:7.5",
         "terminology:1.8",
         "theorem:1.2",
         "theorem:2.1",
