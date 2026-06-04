@@ -1049,3 +1049,7 @@ Deferred follow-on items:
 ### W05-BACKENDS-RICH-STRESS (2026-06-01)
 
 Fixture/docs/baseline-only wave. No `.sty` source edits. Deepened option coverage for the two new backends added in W05-XPARSE-BACKENDS: added 17 new integration LVTs (10 keytheorems option/counter/style/compat fixtures, 7 tcolorbox/mixed fixtures including a three-backend mixed document), replaced the six obsolete minimal `stress-backends-*` fixtures in place with rich stress content (equations, cross-section refs, `\autoref`/`\cref`, saturated backref-target assertions, negative assertions), rotated the wire baseline to `testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json` (71 entries), and updated `BEHAVIOR.md`/`DESIGN.md` with option-depth coverage notes. Suite floor: total=252 passed=251 failed=1 pinned-broken=1. No new B-IDs.
+
+### W05-PRINTKIND-DISPLAY-NAME (2026-06-04)
+
+W05-PRINTKIND-DISPLAY-NAME: appendix labels track user-declared theorem display name across 5 backends; slot #4 contract clarified in `DESIGN.md`; `B-PRINTKIND-DISPLAY-NAME` minted in `BEHAVIOR.md`.

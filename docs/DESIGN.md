@@ -908,6 +908,15 @@ record
 \codep@entitymeta{key}{kind}{display}{print-kind}{parent-key}
 ```
 
+The five fields carry distinct roles.  Slot #4 (`print-kind`) is the
+human-facing printable kind label used in appendix entries and
+backreference rendering: for theorem backends it is the user-declared
+display name (e.g. `Theorem`, `Proposition`, the exact string passed
+to `\newtheorem` or its backend equivalent — never a title-cased
+version of the environment name); for fixed non-theorem kinds (proof,
+paragraph) it equals the kind tag.  See `[B-PRINTKIND-DISPLAY-NAME]`
+in `docs/BEHAVIOR.md`.
+
 Page metadata travels in a separate aux record
 
 ```tex

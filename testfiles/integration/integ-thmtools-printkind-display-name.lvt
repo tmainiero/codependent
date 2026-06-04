@@ -1,0 +1,52 @@
+%% TEST-NAME: integ-thmtools-printkind-display-name
+%% TEST-PURPOSE: thmtools declaretheorem display name resolved from thmt@original@<env>
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: thmtools \declaretheorem[name=TT Fancy Statement,...]{ttfanc} creates
+%%            \thmt@original@ttfanc; the resolver must read from that macro, not the
+%%            \thmt@parsetheoremargs{ttfanc} trampoline.  Appendix must show
+%%            "TT Fancy Statement 1.1" not "Ttfanc 1.1".
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-NAME P04
+%% TEST-SECTION: thmtools thmt@original@<env> resolver
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-AUX-CONTAINS: \codep@lblentity{ttfanc:target}{ttfanc:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{ttfanc:1.1}{theorem}{1.1}{TT Fancy Statement}{}
+%% TEST-AUX-NOT-CONTAINS: \protect\unhbox
+%% TEST-CDP-NOT-CONTAINS: \protect\unhbox
+%% TEST-PDF-DEST-EXISTS: codep-appendix:ttfanc:1\.1
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: ttfanc:1.1 = 1.1 TT Fancy Statement
+%% TEST-PDF-STEXT-NOT: Ttfanc 1.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: amsmath,amsthm,thmtools,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{thmtools}
+\declaretheorem[name=TT Fancy Statement,numberwithin=section]{ttfanc}
+\newtheorem{ttfancsrc}[ttfanc]{TT Fancy Source}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{ttfanc,ttfancsrc}
+
+\begin{document}
+\START
+
+\section{thmtools display name}
+
+\begin{ttfanc}\label{ttfanc:target}
+  TT Fancy Statement theorem target.
+\end{ttfanc}
+
+\begin{ttfancsrc}\label{ttfancsrc:source}
+  This source cites \ref{ttfanc:target} to force an appendix backref.
+\end{ttfancsrc}
+
+\codepappendix
+\END
+\end{document}

@@ -22,7 +22,7 @@
 %% TEST-AUX-CONTAINS: \codep@lblentity{thm:a}{theorem:1.1}
 %% TEST-AUX-CONTAINS: \codep@lblentity{thm:b}{theorem:2.1}
 %% TEST-AUX-CONTAINS: \codep@lblentity{p:aside}{paragraph:
-%% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:1.1}{theorem}{1.1}{theorem}{}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:1.1}{theorem}{1.1}{Theorem}{}
 %% --- W04-P02 (ix) audit — source authority: bug2-investigator §3:218
 %% --- (verdict: restore-and-extend).  The failed rewrite hard-coded new
 %% --- parent metadata into aux; that deliberate aux-semantic change is
@@ -33,7 +33,7 @@
 %% --- prefixed-key parent slot survives the aux roundtrip (TEST-RERUN: 2).
 %% --- See \codep@graph@getentityparent + capture at \codep@hookproof@end.
 %% TEST-AUX-CONTAINS: \codep@entitymeta{proof:a2}{proof}{1.1*}{proof}{theorem:1.1}
-%% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:2.1}{theorem}{2.1}{theorem}{}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{theorem:2.1}{theorem}{2.1}{Theorem}{}
 %% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:
 %% --- W05-A2: keymap rail removed; separated proof has stable identity proof:a5.
 %% --- \codepproofof{thm:a} binds proof:a5 to theorem:1.1.

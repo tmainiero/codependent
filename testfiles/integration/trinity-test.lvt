@@ -1,7 +1,7 @@
 %% TEST-NAME: trinity-test
 %% TEST-PURPOSE: Enriched integration fixture combining the trinity-stripped
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP, B-USEDIN-READING-ORDER, B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-DISP-EQRANGE, B-LINK-CLICKABLE, B-LINK-ADJ-PROOF, B-LINK-EFFECTIVE-ANCHOR, B-PROOF-ANCHOR-NEAR-HEADING, B-CONC-EDGES, B-CONC-DEFSITE, B-REST-FIRST, B-REST-NODUP, B-USEDIN-READING-ORDER, B-COMPAT-TCOLORBOX-THEOREM, B-PRINTKIND-DISPLAY-NAME
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: Enriched integration fixture combining the trinity-stripped
 %%            scenario with the user's real theorem style (sty-theorems-ta).
@@ -81,6 +81,10 @@
 %% TEST-AUX-CONTAINS: \codep@lblentity{trinitybox:target}{trinitybox:7.1}
 %% TEST-AUX-CONTAINS: \codep@atomref{trinitybox:7.2}{trinitybox:target}
 %% TEST-PDF-STEXT: (?s)Trinity tcolorbox target.*Used in 7\.2\.
+%% W05-PRINTKIND-DISPLAY-NAME: display name captured from \textsc{Printkind Stress}, not env name.
+%% TEST-AUX-CONTAINS: \codep@entitymeta{printkindstress:7.3}{theorem}{7.3}{\textsc  {Printkind Stress}}{}
+%% TEST-PDF-STEXT: Printkind Stress 7\.3
+%% TEST-PDF-STEXT-NOT: Printkindstress 7\.3
 %% TEST-CENSUS: enabled
 %% TEST-CENSUS-PASS: yes
 %%
@@ -326,9 +330,15 @@
 %% ---------- tcolorbox backend extension ----------
 \newtcbtheorem[number within=section]{trinitybox}{TrinityBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{trinitybox}
 
+%% W05-PRINTKIND-DISPLAY-NAME stress: exercises \textsc{} macro-token display-name
+%% capture.  Must be declared BEFORE \codeptrack so the print-kind resolver can
+%% read \thmt@original@printkindstress at registration time.
+%% Uses numberwithin (not [sibling]) to avoid a thmtools+sibling counter crash (P02 scope gap).
+\declaretheorem[name={\textsc{Printkind Stress}},numberwithin=section]{printkindstress}
+
 %% ---------- codependent ----------
 \usepackage{codependent}
-\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,trinitybox}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,trinitybox,printkindstress}
 
 %% ---------- hyperref + cleveref ----------
 \usepackage[hypertexnames=false]{hyperref}
@@ -338,6 +348,7 @@
 \Crefname{terminology}{Terminology}{Terminologies}
 \crefname{question}{question}{questions}
 \Crefname{question}{Question}{Questions}
+\crefname{printkindstress}{Printkind Stress}{Printkind Stresses}
 
 %% ---------- Concept-tracked macros ----------
 %% Two macros to exercise def-site / use-site tracking.
@@ -699,6 +710,15 @@ Trinity tcolorbox target.
 \begin{trinitybox}{Trinity tcolorbox source}{source}
 This tcolorbox source cites \ref{trinitybox:target}.
 \end{trinitybox}
+
+%% --- W05-PRINTKIND-DISPLAY-NAME: display-name capture stress ---
+\begin{printkindstress}\label{thm:printkindstress}
+A stress theorem for the printkind display-name exercise.
+Uses \cref{def:enrichment}.
+\end{printkindstress}
+
+The above result (\cref{thm:printkindstress}) forces a backref
+and exercises the display-name capture path.
 
 \END
 \end{document}

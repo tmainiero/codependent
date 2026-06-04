@@ -1286,12 +1286,13 @@
   \codep@ctxpeekid\codep@thisatomid%
   \codep@hooktheorem@record{#1}%
   \codep@hooktheorem@preparebackref{#1}%
-  % W03-P03: capture entitymeta for this just-closed theorem-rail
-  % entity.  \codep@tmp@num is set by \codep@hooktheorem@record above
+  % W05-P02: capture entitymeta with the user-declared display name as
+  % print-kind; \codep@tmp@num is set by \codep@hooktheorem@record above
   % (via \codep@splitprefix on \codep@outeratom).  Kind is hardcoded
-  % "theorem" (the category); print-kind is the actual env-name.
+  % "theorem" (the category); print-kind is the backend display name.
+  \codep@theorem@printkind@get{#1}{\codep@tmp@printkind}%
   \codep@captureentitymeta{\codep@outeratom}{theorem}%
-    {\codep@tmp@num}{#1}{}%
+    {\codep@tmp@num}{\codep@tmp@printkind}{}%
   \codep@ctxpop{#1}%
   \global\advance\codep@trackeddepth by -1\relax%
   \global\advance\codep@suppressdepth by -1\relax%
@@ -2021,8 +2022,8 @@
 \def\codep@tcb@resetboxstate{%
   \global\codep@tcb@begunfalse%
   \global\codep@tcb@enabledfalse%
-  \global\codep@tcb@materializedfalse%
-  \global\let\codep@tcb@armedenv\@empty%
+  \global\codep@tcb@materializedfalse\global\codep@tcb@titlefoundfalse%
+  \global\let\codep@tcb@armedenv\@empty\global\let\codep@tcb@printkind\@empty%
   \global\let\codep@thmwrap@activeenv\@empty%
 }%
 
@@ -2037,8 +2038,8 @@
   \codep@hooktheorem@begin{#1}%
   \global\codep@tcb@beguntrue%
   \global\codep@tcb@enabledfalse%
-  \global\codep@tcb@materializedfalse%
-  \gdef\codep@tcb@armedenv{#1}%
+  \global\codep@tcb@materializedfalse\global\codep@tcb@titlefoundfalse%
+  \global\let\codep@tcb@printkind\@empty\gdef\codep@tcb@armedenv{#1}%
   \tcbset{phantom={%
     \codep@tcb@materialize{#1}%
     \codep@tcb@canary}}%
@@ -2087,7 +2088,7 @@
 \def\codep@tcb@afteroptions@maybe{%
   \ifx\codep@tcb@armedenv\@empty\else%
     \codep@tcb@ifcanaryTF{%
-      \global\codep@tcb@enabledtrue%
+      \global\codep@tcb@enabledtrue\codep@tcb@captureprintkind{\codep@tcb@armedenv}%
       \global\let\codep@tcb@armedenv\@empty%
     }{%
       \codep@tcb@disable@thisbox%
@@ -2141,9 +2142,9 @@
 \def\codep@tcb@end@outer#1{%
   \codep@ctxpeekid\codep@thisatomid%
   \codep@hooktheorem@record{#1}%
-  \codep@hooktheorem@preparebackref{#1}%
+  \codep@hooktheorem@preparebackref{#1}\codep@theorem@printkind@get{#1}{\codep@tmp@printkind}%
   \codep@captureentitymeta{\codep@outeratom}{theorem}%
-    {\codep@tmp@num}{#1}{}%
+    {\codep@tmp@num}{\codep@tmp@printkind}{}%
   \xdef\codep@pendingresultid{\codep@thisatomid}%
   \xdef\codep@endenv@pendingclear{\codep@outeratom}%
 }%
@@ -4367,16 +4368,13 @@
 
 %% @behavior B-PASS-ONE
 % \codep@entitymeta@active{key}{kind}{display}{print-kind}{parent-key}
-%   Populate per-entity metadata csnames.  Four csnames for O(1)
-%   field access (kind/display/print/parent).  \xdef (not \gdef)
-%   so synchronous same-run callers passing \codep@tmp@num or
-%   \theatom as the display arg get the expanded value stored,
-%   not a dangling reference to the local temp.  Safe on aux-
-%   replay too — args arriving from aux are literal string tokens.
+%   Populate per-entity metadata csnames from aux replay.  The string-ish
+%   fields expand for O(1) value access; print-kind is a token-list field
+%   and is stored without expansion so display-name commands survive replay.
 \def\codep@entitymeta@active#1#2#3#4#5{%
   \expandafter\xdef\csname codep@entity@#1@kind\endcsname{#2}%
   \expandafter\xdef\csname codep@entity@#1@display\endcsname{#3}%
-  \expandafter\xdef\csname codep@entity@#1@print\endcsname{#4}%
+  \expandafter\gdef\csname codep@entity@#1@print\endcsname{#4}%
   \expandafter\xdef\csname codep@entity@#1@parent\endcsname{#5}}
 
 %% @behavior B-PASS-ONE
@@ -4678,27 +4676,23 @@
 %   path the theorem-end/proof-end hooks don't fire during replay
 %   anyway.
 %
-%   Invariant on arg #4 (print-kind): for rails whose env-name is
-%   fixed (proof, paragraph) callers pass the literal kind string;
-%   for the theorem rail callers pass the actual env-name (which
-%   may be lemma, corollary, etc.).  Consumers rendering the
-%   printed kind should therefore read #4 directly and not assume
-%   #4 == #2.
+%   Invariant on arg #4 (print-kind): for fixed non-theorem rails
+%   (proof, paragraph) callers pass the literal kind string; for the theorem
+%   rail callers pass the backend's user-declared display name.
 %% @utility
 \def\codep@captureentitymeta#1#2#3#4#5{%
   \ifnum\codep@replaydepth>0\relax%
   \else%
-    \codep@entitymeta@active{#1}{#2}{#3}{#4}{#5}%
-    % \xdef forces full arg expansion so the accumulator stores
-    % final string values (e.g., "theorem:1.2" or "proof:a7")
-    % rather than the caller's \codep@tmp@* temp macros, whose bindings may have
-    % moved on by enddoc-drain time.  The entry marker
-    % \codep@entitymeta@mark is \protected so previously-stored
-    % entries survive the re-expansion of \codep@entitymetaacc
-    % that \xdef performs on each append.
+    \codep@entitymeta@capture@active{#1}{#2}{#3}{#4}{#5}%
+    % \xdef still expands string fields so the accumulator stores final
+    % values (e.g., "theorem:1.2" or "proof:a7") rather than caller temps.
+    % The existing accumulator is copied under \unexpanded, and field #4 is
+    % appended under \unexpanded after one caller-temp expansion so display
+    % commands (for example \textsc) survive until the protected aux write.
     \xdef\codep@entitymetaacc{%
-      \codep@entitymetaacc%
-      \codep@entitymeta@mark{#1}{#2}{#3}{#4}{#5}}%
+      \unexpanded\expandafter{\codep@entitymetaacc}%
+      \noexpand\codep@entitymeta@mark{#1}{#2}{#3}%
+        {\unexpanded\expandafter{#4}}{#5}}%
   \fi%
 }%
 
@@ -6418,7 +6412,196 @@
 }%
 
 % Single registration — enforced by lint_sty_structural.py.
+
+
+
+
+
+
 \AddToHook{enddocument}{\codep@enddoc@orchestrator}
+
+%% W05-P02 print-kind display-name helpers (kept after enddoc hook so
+%% install-discipline exact-line exception remains stable).
+% \codep@envtrack@printkind@store{env}{display-macro}
+%   Store a declared theorem display name as a token-safe print-kind cache.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@printkind@store}[2]{%
+  \expandafter\xdef\csname codep@envtrack@cfg@#1@print-kind\endcsname{%
+    \unexpanded\expandafter{#2}}%
+}
+
+% \codep@envtrack@printkind@read{env}{macro}
+%   Return the cached static display name, or env-name for generic envs.
+%% @implements \codep@theorem@printkind@get
+%@effect state-only
+\newcommand*{\codep@envtrack@printkind@read}[2]{%
+  \expandafter\let\expandafter#2%
+    \csname codep@envtrack@cfg@#1@print-kind\endcsname%
+  \ifx#2\relax\def#2{#1}\fi%
+}
+
+% \codep@envtrack@printkind@scan <tokens>\@thm{style}{ctr}{name}...
+%   Scanner for amsthm-family and ntheorem declaration macros.
+%% @implements \codeptrack
+%@effect state-only
+\long\def\codep@envtrack@printkind@scan#1\@thm#2#3#4#5\codep@stop{%
+  \def\codep@tmp@printkind{#4}%
+}
+
+% \codep@envtrack@printkind@extract@target{target-cs}{fallback}
+%   Expand one declaration macro body and extract the embedded \@thm name.
+%% @implements \codeptrack
+%@effect state-only
+\long\def\codep@envtrack@printkind@extract@target#1#2{%
+  \def\codep@tmp@printkind{#2}%
+  \expandafter\codep@envtrack@printkind@scan#1\@thm{}{}{#2}\codep@stop%
+}
+
+% \codep@envtrack@printkind@resolve@static{env}
+%   Resolve a static amsthm/thmtools/ntheorem display-name source.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@printkind@resolve@static}[1]{%
+  \def\codep@tmp@printkind{#1}%
+  \@ifundefined{mkheader@#1}{%
+    \@ifundefined{thmt@original@#1}{%
+      \@ifundefined{#1}{}{%
+        \expandafter\codep@envtrack@printkind@extract@target%
+          \csname #1\endcsname{#1}%
+      }%
+    }{%
+      \expandafter\codep@envtrack@printkind@extract@target%
+        \csname thmt@original@#1\endcsname{#1}%
+    }%
+  }{%
+    \expandafter\codep@envtrack@printkind@extract@target%
+      \csname mkheader@#1\endcsname{#1}%
+  }%
+  \codep@envtrack@printkind@store{#1}{\codep@tmp@printkind}%
+}
+
+% \codep@envtrack@printkind@resolve{env}
+%   Route print-kind source selection through the backend descriptor.
+%% @implements \codeptrack
+%@effect state-only
+\newcommand*{\codep@envtrack@printkind@resolve}[1]{%
+  \codep@envtrack@ifkeytheoremsTF{#1}{%
+    \codep@envtrack@config@write{#1}{print-kind-source}{keytheorems}%
+  }{%
+    \codep@envtrack@iftcolorboxTF{#1}{%
+      \codep@envtrack@config@write{#1}{print-kind-source}{tcolorbox}%
+    }{%
+      \codep@envtrack@config@write{#1}{print-kind-source}{static}%
+      \codep@envtrack@printkind@resolve@static{#1}%
+    }%
+  }%
+}
+
+% \codep@theorem@printkind@get{env}{macro}
+%   Resolve the theorem rail's user-facing printable kind label.
+%% @behavior B-PRINTKIND-DISPLAY-NAME
+%@effect state-only
+\def\codep@theorem@printkind@get#1#2{%
+  \codep@envtrack@config@read{#1}{quirks-key}{\codep@tmp@quirks}%
+  \ifx\codep@tmp@quirks\codep@quirks@tcolorboxtheorem%
+    \codep@tcb@printkind@get{#1}{#2}%
+  \else\ifx\codep@tmp@quirks\codep@quirks@keytheorems%
+    \codep@keythms@printkind@get{#1}{#2}%
+  \else%
+    \codep@envtrack@printkind@read{#1}{#2}%
+  \fi\fi%
+}
+
+% tcolorbox print-kind capture state.
+%% @utility
+\let\codep@tcb@printkind\@empty
+%% @utility
+\newif\ifcodep@tcb@titlefound
+%% @utility
+\def\codep@tcb@titlefallbackmarker{\codep@tcb@titlefallbackmarker}%
+%% @utility
+\def\codep@tcb@titlefallbacktail{\codep@tcb@titlefallbackmarker}%
+
+% \codep@tcb@printkind@scan <tokens>\__tcobox_theo_title:nnn{name}{n}{t}
+%   Scanner for tcolorbox's theorem title token list.
+%% @implements \codep@theorem@printkind@get
+%@effect state-only
+\ExplSyntaxOn
+\long\def\codep@tcb@printkind@scan#1\__tcobox_theo_title:nnn#2#3#4#5\codep@stop{%
+  \def\codep@tmp@printkind{#2}%
+  \def\codep@tmp@tail{#5}%
+  \ifx\codep@tmp@tail\codep@tcb@titlefallbacktail%
+    \global\codep@tcb@titlefoundfalse%
+  \else%
+    \global\codep@tcb@titlefoundtrue%
+  \fi%
+}
+\ExplSyntaxOff
+
+% \codep@tcb@captureprintkind{env}
+%   Capture tcolorbox's parsed theorem display name after options are read.
+%% @implements \codep@hooktheorem
+%@effect state-only
+\def\codep@tcb@captureprintkind#1{%
+  \global\codep@tcb@titlefoundfalse%
+  \def\codep@tmp@printkind{#1}%
+  \@ifundefined{kvtcb@title}{%
+    \PackageWarning{codependent}{%
+      tcolorbox theorem adapter could not find \string\kvtcb@title;%
+      \space print-kind display-name capture fell back to env name}%
+  }{%
+    \expandafter\codep@tcb@printkind@scan\kvtcb@title%
+      \csname __tcobox_theo_title:nnn\endcsname{#1}{}{}%
+      \codep@tcb@titlefallbackmarker\codep@stop%
+    \ifcodep@tcb@titlefound\else%
+      \PackageWarning{codependent}{%
+        tcolorbox theorem adapter could not find the theorem title%
+        \space payload; print-kind display-name capture fell back to env name}%
+    \fi%
+  }%
+  \xdef\codep@tcb@printkind{\unexpanded\expandafter{\codep@tmp@printkind}}%
+}%
+
+% \codep@tcb@printkind@get{env}{macro}
+%   Return the current tcolorbox theorem display name captured after options.
+%% @implements \codep@theorem@printkind@get
+%@effect state-only
+\def\codep@tcb@printkind@get#1#2{%
+  \ifx\codep@tcb@printkind\@empty%
+    \def#2{#1}%
+  \else%
+    \let#2\codep@tcb@printkind%
+  \fi%
+}
+
+% \codep@keythms@printkind@get{env}{macro}
+%   Look up keytheorems' declaration-time printable theorem name property.
+%% @implements \codep@theorem@printkind@get
+%@effect state-only
+\ExplSyntaxOn
+\def\codep@keythms@printkind@get#1#2{%
+  \def#2{#1}%
+  \cs_if_exist:NT \g__keythms_thmnames_prop%
+    {%
+      \prop_get:NnNTF \g__keythms_thmnames_prop {#1} \l_tmpa_tl%
+        { \tl_set_eq:NN #2 \l_tmpa_tl }%
+        { }%
+    }%
+}
+\ExplSyntaxOff
+
+% \codep@entitymeta@capture@active{key}{kind}{display}{print-kind}{parent}
+%   Same-run entitymeta table populate with token-safe print-kind capture.
+%% @behavior B-PRINTKIND-DISPLAY-NAME
+%@effect state-only
+\def\codep@entitymeta@capture@active#1#2#3#4#5{%
+  \expandafter\xdef\csname codep@entity@#1@kind\endcsname{#2}%
+  \expandafter\xdef\csname codep@entity@#1@display\endcsname{#3}%
+  \expandafter\xdef\csname codep@entity@#1@print\endcsname{%
+    \unexpanded\expandafter{#4}}%
+  \expandafter\xdef\csname codep@entity@#1@parent\endcsname{#5}}
+
 
 %% ===================================================================
 %% Section 10: User-facing API
@@ -6491,7 +6674,7 @@
         % display macro still has the old format.  tcolorbox theorem
         % envs resolve to their internal tcb@cnt@<env> counter here.
       \fi%
-      \codep@envtrack@resolve{\codep@tmp@envname}%
+      \codep@envtrack@resolve{\codep@tmp@envname}\codep@envtrack@printkind@resolve{\codep@tmp@envname}%
       \expandafter\codep@envtrack@dispatch%
         \expandafter{\codep@tmp@envname}%
       % Auto-register starred variant (amsthm creates foo*).
@@ -6500,7 +6683,7 @@
         \codep@starred%
       }{}{%
         \codep@envtrack@ifnumberedresolverTF{\codep@starred}{%
-          \codep@envtrack@resolve{\codep@starred}%
+          \codep@envtrack@resolve{\codep@starred}\codep@envtrack@printkind@resolve{\codep@starred}%
           \expandafter\codep@envtrack@dispatch%
             \expandafter{\codep@starred}%
         }{}%

@@ -1,0 +1,49 @@
+%% TEST-NAME: unit-printkind-token-safety
+%% TEST-PURPOSE: Preserve macro theorem display names in entitymeta print-kind.
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: An amsthm theorem display name containing \textsc survives
+%%            same-run graph storage and enddoc .aux entitymeta emission.
+%% TEST-SOURCE: .claude/comms/W05-PRINTKIND-planner-report-r6.md W05-P02
+%% TEST-SECTION: docs/DESIGN.md entitymeta slot #4 print-kind contract
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-LOG-CONTAINS: CODEP-PRINTKIND-SAME-RUN:.*\\textsc
+%% TEST-LOG-CONTAINS: CODEP-PRINTKIND-SAME-RUN:.*TT Safe
+%% TEST-LOG-NOT: CODEP-PRINTKIND-SAME-RUN:.*\\protect\\unhbox
+%% TEST-AUX-CONTAINS: \codep@lblentity{ttsafe:probe}{ttsafe:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{ttsafe:1.1}{theorem}{1.1}{\textsc  {TT Safe}}{}
+%% TEST-AUX-NOT-CONTAINS: \protect\unhbox
+%% TEST-CDP-NOT-CONTAINS: \protect\unhbox
+%% TEST-PDF-CONTAINS: TT Safe
+%% TEST-PDF-NOT: Ttsafe
+%% TEST-RERUN: 2
+%%
+%% Negative assertions reject the low-level box-register debris that raw
+%% \xdef print-kind capture produced for fragile display-name commands.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{ttsafe}{\textsc{TT Safe}}[section]
+\usepackage{codependent}
+\codeptrack{ttsafe}
+
+\makeatletter
+\AtEndDocument{%%
+  \codep@graph@getprintkind{ttsafe:1.1}{\ttsafe@printkind}%%
+  \typeout{CODEP-PRINTKIND-SAME-RUN: \meaning\ttsafe@printkind}%%
+}%%
+\makeatother
+
+\begin{document}
+\START
+
+\section{Token probe}
+
+\begin{ttsafe}\label{ttsafe:probe}
+  content
+\end{ttsafe}
+
+\END
+\end{document}

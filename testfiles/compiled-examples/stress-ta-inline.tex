@@ -1,13 +1,16 @@
 %% TEST-NAME: stress-ta-inline
 %% TEST-PURPOSE: Inline TA stress fixture using default backref color.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME
 %% TEST-STATUS: LIVE
 %% TEST-RENDER-MODES: inline, default-color
 %% TEST-PDF-PAGES: 3
 %% TEST-PDF-STEXT: Stress fixture inline default
 %% TEST-PDF-STEXT: (?s)First theorem for inline joint-atom proof.*\{9\.9, 9\.10\}\*
 %% TEST-PDF-STEXT: (?s)Second theorem for inline joint-atom proof.*\{9\.9, 9\.10\}\*
+%% W05-PRINTKIND-DISPLAY-NAME: inline Used-In must show "Printkind Stress 9.12", not "Printkindstress 9.12".
+%% TEST-PDF-STEXT: Printkind Stress 9\.12
+%% TEST-PDF-STEXT-NOT: Printkindstress 9\.12
 
 \def\START{}\def\END{}
 \documentclass{article}
@@ -19,9 +22,14 @@
 %% Load the real theorem style from the monograph
 \usepackage{sty-theorems-ta}
 
+%% W05-PRINTKIND-DISPLAY-NAME stress: exercises \textsc{} macro-token display-name
+%% capture.  Must be declared BEFORE \codeptrack so the print-kind resolver can
+%% read \thmt@original@printkindstress at registration time.
+\declaretheorem[name={\textsc{Printkind Stress}},numberwithin=section]{printkindstress}
+
 %% codependent with depth=1 (default, matches numberwithin=section)
 \usepackage[backref-style=inline]{codependent}
-\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,printkindstress}
 
 \usepackage[hypertexnames=false]{hyperref}
 \usepackage{cleveref}
@@ -30,6 +38,7 @@
 \crefname{notation}{Notation}{Notations}
 \crefname{terminology}{Terminology}{Terminologies}
 \crefname{question}{Question}{Questions}
+\crefname{printkindstress}{Printkind Stress}{Printkind Stresses}
 
 \title{Stress fixture inline default}
 \author{Test}
@@ -252,6 +261,15 @@ We give a joint proof of both inline theorems above.
 Both follow from \cref{def:gadget} and \cref{lem:technical} by a unified
 inline-mode argument.
 \end{proof}
+
+%% --- W05-PRINTKIND-DISPLAY-NAME: display-name capture stress ---
+\begin{printkindstress}\label{thm:printkindstress}
+A stress theorem for the printkind display-name exercise.
+Uses \cref{def:widget}.
+\end{printkindstress}
+
+The above result (\cref{thm:printkindstress}) forces a backref
+and exercises the display-name capture path.
 
 \END
 \end{document}

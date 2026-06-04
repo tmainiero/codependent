@@ -1,7 +1,7 @@
 %% TEST-NAME: stress-ta-appendix-gray
 %% TEST-PURPOSE: Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME
 %% TEST-STATUS: EXPLORATORY
 %% TEST-RENDER-MODES: appendix, gray-backrefs, custom-page-format
 %% TEST-PDF-PAGES: 7
@@ -14,6 +14,9 @@
 %%
 %% Dependency Index contains the joint atom identifier {9.9, 9.10}*
 %% TEST-PDF-STEXT: \{9\.9, 9\.10\}\*
+%% W05-PRINTKIND-DISPLAY-NAME: display name in appendix index must be "Printkind Stress", not "Printkindstress".
+%% TEST-PDF-STEXT: Printkind Stress 9\.12 &#x2014; p\. 6
+%% TEST-PDF-STEXT-NOT: Printkindstress
 
 \def\START{}\def\END{}
 \documentclass{article}
@@ -33,11 +36,17 @@
 \usepackage{sty-theorems-ta}  % loads amsthm, thmtools, xparse, fontawesome, xcolor
 \usepackage{thm-restate}
 
+%% W05-PRINTKIND-DISPLAY-NAME stress: exercises \textsc{} macro-token display-name
+%% capture.  Must be declared BEFORE \codeptrack so the print-kind resolver can
+%% read \thmt@original@printkindstress at registration time.
+%% Uses numberwithin (not [sibling]) to avoid a thmtools+sibling counter crash (P02 scope gap).
+\declaretheorem[name={\textsc{Printkind Stress}},numberwithin=section]{printkindstress}
+
 %% codependent in appendix mode (W04: exercises appendix bidir + page numbers)
 \usepackage[backrefs=appendix,backref-color=gray]{codependent}
 %% W04-P04: page-number format override — uses non-default value to exercise the API
 \codepsetup{appendix/pagenum-format={##1~\textemdash~p.~##2}}  %%NONDEFAULT-OVERRIDE%%
-\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question}
+\codeptrack{theorem,proposition,lemma,corollary,definition,notation,terminology,example,remark,question,printkindstress}
 
 %% Multi-file compatibility check: load subfiles and standalone.
 %% These must not conflict with codependent's hooks.
@@ -51,6 +60,7 @@
 \crefname{notation}{Notation}{Notations}
 \crefname{terminology}{Terminology}{Terminologies}
 \crefname{question}{Question}{Questions}
+\crefname{printkindstress}{Printkind Stress}{Printkind Stresses}
 
 %% ---------- Concept-tracked macros ----------
 \codepnewcommand{\Funct}[2]{\mathrm{#1}\colon #2}
@@ -552,6 +562,17 @@ We give a joint proof of both theorems above.
 Both follow from \cref{def:enrichment} and \cref{lem:trace-cyclic}
 by a unified monoidal argument.
 \end{proof}
+
+%% --- W05-PRINTKIND-DISPLAY-NAME: display-name capture stress ---
+%% env name is "printkindstress"; display name is \textsc{Printkind Stress}.
+%% After the fix: appendix shows "Printkind Stress N.M" not "Printkindstress N.M".
+\begin{printkindstress}\label{thm:printkindstress}
+A stress theorem for the printkind display-name exercise.
+Uses \cref{def:enrichment}.
+\end{printkindstress}
+
+The above result (\cref{thm:printkindstress}) forces a Dependency Index row
+and exercises the display-name capture path.
 
 
 %% ====================================================================

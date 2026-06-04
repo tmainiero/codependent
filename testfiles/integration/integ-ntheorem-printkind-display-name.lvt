@@ -1,0 +1,53 @@
+%% TEST-NAME: integ-ntheorem-printkind-display-name
+%% TEST-PURPOSE: ntheorem plain-text display name appears in appendix as stored print-kind
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: ntheorem newtheorem declaration "NT Odd Result" is captured as the
+%%            entitymeta print-kind and rendered in the appendix label unchanged.
+%%            Appendix must show "NT Odd Result 1.1" not "Ntoddres 1.1".
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-NAME P04
+%% TEST-SECTION: ntheorem backend display-name print-kind
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-AUX-CONTAINS: \codep@lblentity{ntoddres:target}{ntoddres:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{ntoddres:1.1}{theorem}{1.1}{NT Odd Result}{}
+%% TEST-AUX-NOT-CONTAINS: \protect\unhbox
+%% TEST-CDP-NOT-CONTAINS: \protect\unhbox
+%% TEST-PDF-DEST-EXISTS: codep-appendix:ntoddres:1\.1
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: ntoddres:1.1 = 1.1 NT Odd Result
+%% TEST-PDF-STEXT-NOT: Ntoddres 1.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: amsmath,ntheorem,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[amsmath,hyperref]{ntheorem}
+\newtheorem{ntoddres}{NT Odd Result}[section]
+\newtheorem{ntoddrefsrc}[ntoddres]{NT Odd Source}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{ntoddres}{NT Odd Result}{NT Odd Results}
+\Crefname{ntoddres}{NT Odd Result}{NT Odd Results}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{ntoddres,ntoddrefsrc}
+
+\begin{document}
+\START
+
+\section{ntheorem display name}
+
+\begin{ntoddres}\label{ntoddres:target}
+  NT Odd Result theorem target.
+\end{ntoddres}
+
+\begin{ntoddrefsrc}\label{ntoddrefsrc:source}
+  This source cites \cref{ntoddres:target} to force an appendix backref.
+\end{ntoddrefsrc}
+
+\codepappendix
+\END
+\end{document}

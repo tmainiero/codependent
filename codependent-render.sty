@@ -360,19 +360,11 @@
 
 %% @implements \codepappendix
 % \codep@appendix@titlecase{text}
-%   Uppercase the first token of a lower-case print-kind.
-\def\codep@appendix@titlecase#1{%
-  \edef\codep@tmp@appendixkind{#1}%
-  \expandafter\codep@appendix@titlecase@aux%
-    \codep@tmp@appendixkind\@nil%
-}%
-
-%% @implements \codepappendix
-% \codep@appendix@titlecase@aux
-%   Worker for \codep@appendix@titlecase.
-\def\codep@appendix@titlecase@aux#1#2\@nil{%
-  \uppercase{#1}#2%
-}%
+%   Identity helper. Kept for call-site compatibility with the appendix entry
+%   renderer (:425). The capture layer now stores the user-declared display
+%   name in slot #4 (see B-PRINTKIND-DISPLAY-NAME), so renderer-side casing
+%   is unnecessary and would corrupt macro tokens.
+\def\codep@appendix@titlecase#1{#1}%
 
 % \codep@appendix@emit{prefixedkey}{type}
 %   Emit an appendix entry if P05a's frozen render cache has a

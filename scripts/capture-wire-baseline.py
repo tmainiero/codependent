@@ -8,10 +8,10 @@ Compile all census fixtures + 3 stress variants, sha256 their final-pass
 Run under nix develop:
   nix develop --command python3 scripts/capture-wire-baseline.py
       # no-arg self-test: verifies DEFAULT_WAVE resolution without writes
-  nix develop --command python3 scripts/capture-wire-baseline.py --wave W05-BACKENDS-RICH-STRESS
+  nix develop --command python3 scripts/capture-wire-baseline.py --wave W05-PRINTKIND-DISPLAY-NAME
   nix develop --command python3 scripts/capture-wire-baseline.py \\
-      --wave W05-BACKENDS-RICH-STRESS \\
-      --manifest testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json
+      --wave W05-PRINTKIND-DISPLAY-NAME \\
+      --manifest testfiles/baselines/W05-PRINTKIND-DISPLAY-NAME/baseline.sha256.json
 """
 
 import argparse
@@ -31,10 +31,10 @@ TESTFILES_DIR = PROJECT_ROOT / "testfiles"
 COMPILED_EXAMPLES_DIR = TESTFILES_DIR / "compiled-examples"
 BASELINE_SIZES = PROJECT_ROOT / ".claude" / "baseline-sizes.json"
 
-# W05-BACKENDS-RICH-STRESS P05 rotates the default wire baseline to the
-# current canonical rich backend stress manifest.  A no-argument invocation
+# W05-PRINTKIND-DISPLAY-NAME P06 rotates the default wire baseline to the
+# current canonical printkind display-name manifest.  A no-argument invocation
 # self-tests this resolution and exits before writing; pass --wave to capture.
-_DEFAULT_WAVE = "W05-BACKENDS-RICH-STRESS"
+_DEFAULT_WAVE = "W05-PRINTKIND-DISPLAY-NAME"
 _DEFAULT_MANIFEST_DIR = PROJECT_ROOT / "testfiles" / "baselines" / _DEFAULT_WAVE
 MANIFEST_DIR = _DEFAULT_MANIFEST_DIR
 MANIFEST_PATH = _DEFAULT_MANIFEST_DIR / "baseline.sha256.json"
@@ -452,10 +452,10 @@ def main(argv: "list[str] | None" = None) -> int:
         print("DEFAULT_WAVE self-test")
         print(f"Resolved wave: {wave_id}")
         print(f"Manifest path: {MANIFEST_PATH}")
-        if wave_id != "W05-BACKENDS-RICH-STRESS":
+        if wave_id != "W05-PRINTKIND-DISPLAY-NAME":
             print(
                 "ERROR: no-arg DEFAULT_WAVE did not resolve to "
-                "W05-BACKENDS-RICH-STRESS",
+                "W05-PRINTKIND-DISPLAY-NAME",
                 file=sys.stderr,
             )
             return 2

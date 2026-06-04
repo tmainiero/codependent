@@ -23,7 +23,7 @@ Post-W05-INSTALL-DISCIPLINE-CONTRACT family SHIPPED + test runner parallelized: 
 - **Real failures = 0.** The one reported failure is pinned-broken: `test-starred-visible`, deferred via `project_w05_pin1_defer_starred_theorem_numbering.md`.
 - Ratchet: `.traceability-baseline` + `.test-behavior-baseline` + `.claude/baseline-sizes.json` all monotonically shrinking — **must never grow**, never `--update-ratchet` to unblock a growth.
 - Linters: `lint_sty_structural.py`, `lint_install_discipline.py` (ERROR-tier active), `lint_traceability.py`, `lint-tests.sh` all PASS.
-- Wire baseline: `testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json` (71/71 fixtures, byte-equivalent).
+- Wire baseline: `testfiles/baselines/W05-PRINTKIND-DISPLAY-NAME/baseline.sha256.json` (71/71 fixtures, byte-equivalent on aux_sha + pdf_objects_sha; cdp_sha non-deterministic on 4 large fixtures — pre-existing, see findings.md).
 - Wall-time: ~160s on 8-core (`--jobs` default `os.process_cpu_count()`); ~503s with `--jobs 1` (sequential).
 
 ## Verification checkpoint — MANDATORY before any `.sty` edit
@@ -41,7 +41,7 @@ python3 .claude/scripts/lint_traceability.py 2>&1 | tail -3
 
 # 3. Wire baseline byte-equivalence (~6 min)
 nix develop --command python3 scripts/verify-wire-baseline.py \
-  --manifest testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json 2>&1 | tail -3
+  --manifest testfiles/baselines/W05-PRINTKIND-DISPLAY-NAME/baseline.sha256.json 2>&1 | tail -3
 
 # 4. nix flake check (CI mirror)
 nix flake check 2>&1 | tail -3
@@ -121,7 +121,7 @@ The originally-decomposed `W05-XPARSE-SUB-EFFECT` was absorbed into `W05-INSTALL
 - **Baselines monotonically shrink** — never `--update-ratchet` to unblock a growth.
 - **Unique output filenames** for `agent-dispatch.sh`.
 - **Branch before agent edits** — `git checkout -b <wave>-wip`. Every fix is a commit. No working-tree-only state.
-- **Wire-format diff after every `.sty` change** — `scripts/verify-wire-baseline.py --manifest testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json` (current wave baseline).
+- **Wire-format diff after every `.sty` change** — `scripts/verify-wire-baseline.py --manifest testfiles/baselines/W05-PRINTKIND-DISPLAY-NAME/baseline.sha256.json` (current wave baseline).
 - **Install-discipline lint is ERROR-tier** — any raw install primitive outside the typed substrate or named exception is a HARD failure. The 79-site `install-site-inventory.md` is the authoritative inventory.
 - **GPT dispatch includes old function bodies** — spec describes target; old code describes current behavior; both required.
 - **`kpsewhich` is FORBIDDEN on NixOS** — returns false negatives. Use compile-probes.
@@ -158,11 +158,12 @@ The originally-decomposed `W05-XPARSE-SUB-EFFECT` was absorbed into `W05-INSTALL
 | `docs/SCALING.md` | 10k-atom scale probe results + engine ceiling notes |
 | `docs/COOKBOOK.md` | Worked notes for custom placement of `\codepbackrefs` |
 | `scripts/run-tests.py` | Test runner (parallel by default; `--jobs N` flag) |
-| `scripts/verify-wire-baseline.py` | Wire-format verifier; `--manifest <path>` selects manifest (current default: W05-BACKENDS-RICH-STRESS) |
+| `scripts/verify-wire-baseline.py` | Wire-format verifier; `--manifest <path>` selects manifest (current default: W05-PRINTKIND-DISPLAY-NAME) |
 | `scripts/capture-wire-baseline.py` | Wire-format baseline capture; `--wave <id>` + `--manifest <path>` |
 | `scripts/build-stress-pdf.sh` | Standalone stress PDF builder for visual review |
 | `testfiles/test-index.md` | Generated test index |
-| `testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json` | Wire-format gate (current shipped manifest; 71 fixtures) |
+| `testfiles/baselines/W05-PRINTKIND-DISPLAY-NAME/baseline.sha256.json` | Wire-format gate (current shipped manifest) |
+| `testfiles/baselines/W05-BACKENDS-RICH-STRESS/baseline.sha256.json` | HISTORICAL; superseded_by W05-PRINTKIND-DISPLAY-NAME |
 | `testfiles/baselines/W05-XPARSE-BACKENDS/baseline.sha256.json` | HISTORICAL; superseded_by W05-BACKENDS-RICH-STRESS |
 | `testfiles/baselines/W05-XPARSE-VMODE-FIXES/baseline.sha256.json` | HISTORICAL; superseded_by W05-XPARSE-BACKENDS |
 | `.claude/scripts/lint_sty_structural.py` | Structural TeX linter |

@@ -1,9 +1,9 @@
 %% TEST-NAME: integ-keytheorems-heading-custom-name-link
 %% TEST-PURPOSE: keytheorems heading title and name aliases keep appendix name links
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR
+%% TEST-BEHAVIOR: B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR, B-PRINTKIND-DISPLAY-NAME
 %% TEST-STATUS: LIVE
-%% TEST-WHAT: keytheorems declaration aliases heading=, title=, and name= all produce tracked theorem atoms; custom display text is present while appendix links remain object-correct without exact PRINTKIND assertions.
+%% TEST-WHAT: keytheorems declaration aliases heading=, title=, and name= all produce tracked theorem atoms; custom display text is present while appendix links remain object-correct.  Upgraded (PRINTKIND wave): keyfanc env with name={Key Fancy} renders "Key Fancy 1.4" not "Keyfanc 1.4" in appendix.
 %% TEST-PDF-DEST-EXISTS: titleres\.[0-9]+
 %% TEST-PDF-DEST-EXISTS: nameres\.[0-9]+
 %% TEST-EXIT: 0
@@ -11,10 +11,13 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.1}{headingres}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.2}{titleres}
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{1.3}{nameres}
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{1.4}{keyfanc}
 %% TEST-AUX-CONTAINS: \codep@lblentity{res:heading}{headingres:1.1}
 %% TEST-AUX-CONTAINS: \codep@lblentity{res:title}{titleres:1.2}
 %% TEST-AUX-CONTAINS: \codep@lblentity{res:name-source}{nameres:1.3}
 %% TEST-AUX-CONTAINS: \codep@atomref{nameres:1.3}{res:heading}
+%% TEST-AUX-CONTAINS: \codep@lblentity{keyfanc:fanc}{keyfanc:1.4}
+%% TEST-AUX-CONTAINS: \codep@atomref{nameres:1.5}{keyfanc:fanc}
 %% TEST-PDF-DEST-EXISTS: codep-appendix:headingres:1\.1
 %% TEST-PDF-LINK-DEST: codep-appendix:headingres:1\.1
 %% TEST-PDF-LINK-DEST: headingres\.[0-9]+
@@ -24,6 +27,8 @@
 %% TEST-PDF-STEXT: Title Alias Result
 %% TEST-PDF-STEXT: Name Alias Result
 %% TEST-PDF-NOT: codependent Error
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: keyfanc:1.4 = 1.4 Key Fancy
+%% TEST-PDF-STEXT-NOT: Keyfanc 1.4
 %% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
 %% TEST-RERUN: 3
 %% TEST-STABLE-AT: 2
@@ -34,9 +39,10 @@
 \newkeytheorem{headingres}[heading=Heading Alias Result,numberwithin=section]
 \newkeytheorem{titleres}[title=Title Alias Result,sibling=headingres]
 \newkeytheorem{nameres}[name=Name Alias Result,sibling=headingres]
+\newkeytheorem{keyfanc}[name={Key Fancy},sibling=headingres]
 \usepackage{codependent}
 \codepsetup{backrefs=appendix, paragraphs=off, equations=outer, proofs=off}
-\codeptrack{headingres,titleres,nameres}
+\codeptrack{headingres,titleres,nameres,keyfanc}
 \usepackage[hypertexnames=false]{hyperref}
 \usepackage{cleveref}
 \crefname{headingres}{heading result}{heading results}
@@ -45,6 +51,8 @@
 \Crefname{titleres}{Title Result}{Title Results}
 \crefname{nameres}{name result}{name results}
 \Crefname{nameres}{Name Result}{Name Results}
+\crefname{keyfanc}{key fancy}{key fancy theorems}
+\Crefname{keyfanc}{Key Fancy}{Key Fancy Theorems}
 \begin{document}
 \START
 \section{Custom displays}
@@ -59,6 +67,14 @@ The title alias also creates a tracked theorem atom.
 
 \begin{nameres}\label{res:name-source}
 The name alias source cites the heading alias target \cref{res:heading}.
+\end{nameres}
+
+\begin{keyfanc}\label{keyfanc:fanc}
+Key Fancy theorem target with display name from name= keytheorems option.
+\end{keyfanc}
+
+\begin{nameres}\label{res:key-source}
+This source cites \cref{keyfanc:fanc} to force an appendix backref for keyfanc.
 \end{nameres}
 
 \codepappendix

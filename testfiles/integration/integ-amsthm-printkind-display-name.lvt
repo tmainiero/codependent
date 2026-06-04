@@ -1,0 +1,54 @@
+%% TEST-NAME: integ-amsthm-printkind-display-name
+%% TEST-PURPOSE: amsthm macro-token display name stored correctly in entitymeta print-kind
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-PRINTKIND-DISPLAY-NAME
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: \textsc{AM Fancy} as theorem display name survives print-kind capture,
+%%            token-safe aux emission, and appendix rendering unchanged.
+%%            Appendix label must be "AM Fancy 1.1" not "Amfanc 1.1".
+%%            Carries the B1 macro-token regression guard for the PRINTKIND wave:
+%%            .aux field #4 must contain the \textsc token sequence, not
+%%            \protect\unhbox box-register debris from raw \xdef expansion.
+%% TEST-SOURCE: W05-PRINTKIND-DISPLAY-NAME P04
+%% TEST-SECTION: amsthm macro-token display-name print-kind
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-AUX-CONTAINS: \codep@lblentity{amfanc:target}{amfanc:1.1}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{amfanc:1.1}{theorem}{1.1}{\textsc  {AM Fancy}}{}
+%% TEST-AUX-NOT-CONTAINS: \protect\unhbox
+%% TEST-CDP-NOT-CONTAINS: \protect\unhbox
+%% TEST-PDF-DEST-EXISTS: codep-appendix:amfanc:1\.1
+%% TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY: amfanc:1.1 = 1.1 AM Fancy
+%% TEST-PDF-STEXT-NOT: Amfanc 1.1
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: amsmath,amsthm,hyperref,cleveref,codependent
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\newtheorem{amfanc}{\textsc{AM Fancy}}[section]
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\crefname{amfanc}{am fancy}{am fancy theorems}
+\Crefname{amfanc}{AM Fancy}{AM Fancy Theorems}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=off, equations=off, proofs=off}
+\codeptrack{amfanc}
+
+\begin{document}
+\START
+
+\section{Macro-token display name}
+
+\begin{amfanc}\label{amfanc:target}
+  AM Fancy theorem target with macro-token display name.
+\end{amfanc}
+
+\begin{amfanc}\label{amfanc:source}
+  This source cites \cref{amfanc:target} to force an appendix backref.
+\end{amfanc}
+
+\codepappendix
+\END
+\end{document}

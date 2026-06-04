@@ -1,9 +1,9 @@
 {
   "atomref": {
     "count": [
-      58,
-      58,
-      58
+      60,
+      60,
+      60
     ],
     "keys": [
       [
@@ -31,6 +31,8 @@
         "paragraph:6.3||eq:trinity-tracktwo-first",
         "paragraph:6.3||eq:trinity-tracktwo-second",
         "paragraph:6.3||eq:trinity-tracktwo-third",
+        "paragraph:7.4||thm:printkindstress",
+        "printkindstress:7.3||def:enrichment",
         "proof:a15||lem:adjunction",
         "proof:a18||def:enrichment",
         "proof:a18||prop:square",
@@ -91,6 +93,8 @@
         "paragraph:6.3||eq:trinity-tracktwo-first",
         "paragraph:6.3||eq:trinity-tracktwo-second",
         "paragraph:6.3||eq:trinity-tracktwo-third",
+        "paragraph:7.4||thm:printkindstress",
+        "printkindstress:7.3||def:enrichment",
         "proof:a15||lem:adjunction",
         "proof:a18||def:enrichment",
         "proof:a18||prop:square",
@@ -151,6 +155,8 @@
         "paragraph:6.3||eq:trinity-tracktwo-first",
         "paragraph:6.3||eq:trinity-tracktwo-second",
         "paragraph:6.3||eq:trinity-tracktwo-third",
+        "paragraph:7.4||thm:printkindstress",
+        "printkindstress:7.3||def:enrichment",
         "proof:a15||lem:adjunction",
         "proof:a18||def:enrichment",
         "proof:a18||prop:square",
@@ -195,9 +201,9 @@
   },
   "page_bearing": {
     "count": [
-      105,
-      105,
-      105
+      107,
+      107,
+      107
     ],
     "diff": [
       [
@@ -337,6 +343,8 @@
         "\\newlabel{thm:coherence}{{2.1}{1}{}{theorem.25}{}}",
         "\\newlabel{thm:main@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
         "\\newlabel{thm:main}{{1.2}{1}{}{theorem.4}{}}",
+        "\\newlabel{thm:printkindstress@cref}{{[printkindstress][3][7]7.3}{[1][4][]4}{}{}{}}",
+        "\\newlabel{thm:printkindstress}{{7.3}{4}{}{printkindstress.87}{}}",
         "\\newlabel{thm:strictify@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:strictify}{{3.1}{2}{}{theorem.45}{}}",
         "\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][3][]4}{}{}{}}",
@@ -444,6 +452,8 @@
         "\\newlabel{thm:coherence}{{2.1}{1}{}{theorem.25}{}}",
         "\\newlabel{thm:main@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
         "\\newlabel{thm:main}{{1.2}{1}{}{theorem.4}{}}",
+        "\\newlabel{thm:printkindstress@cref}{{[printkindstress][3][7]7.3}{[1][4][]4}{}{}{}}",
+        "\\newlabel{thm:printkindstress}{{7.3}{4}{}{printkindstress.87}{}}",
         "\\newlabel{thm:strictify@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:strictify}{{3.1}{2}{}{theorem.45}{}}",
         "\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][4][]4}{}{}{}}",
@@ -551,6 +561,8 @@
         "\\newlabel{thm:coherence}{{2.1}{1}{}{theorem.25}{}}",
         "\\newlabel{thm:main@cref}{{[theorem][2][]1.2}{[1][1][]1}{}{}{}}",
         "\\newlabel{thm:main}{{1.2}{1}{}{theorem.4}{}}",
+        "\\newlabel{thm:printkindstress@cref}{{[printkindstress][3][7]7.3}{[1][4][]4}{}{}{}}",
+        "\\newlabel{thm:printkindstress}{{7.3}{4}{}{printkindstress.87}{}}",
         "\\newlabel{thm:strictify@cref}{{[theorem][1][]3.1}{[1][2][]2}{}{}{}}",
         "\\newlabel{thm:strictify}{{3.1}{2}{}{theorem.45}{}}",
         "\\newlabel{thm:trinity-tracktwo-target@cref}{{[theorem][1][]6.1}{[1][4][]4}{}{}{}}",
@@ -572,8 +584,8 @@
   "renderlist": {
     "count": [
       0,
-      24,
-      24
+      25,
+      25
     ],
     "keys": [
       [],
@@ -587,6 +599,7 @@
         "lemma:2.3",
         "notation:1.7",
         "paragraph:4.3",
+        "printkindstress:7.3",
         "proposition:1.3",
         "proposition:2.2",
         "question:1.11",
@@ -613,6 +626,7 @@
         "lemma:2.3",
         "notation:1.7",
         "paragraph:4.3",
+        "printkindstress:7.3",
         "proposition:1.3",
         "proposition:2.2",
         "question:1.11",
