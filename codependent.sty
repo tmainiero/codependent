@@ -579,7 +579,7 @@
 \def\codep@allocatomid#1#2{%
   \global\advance\codep@atomid by 1\relax
   \xdef#1{a\the\codep@atomid}%
-  \expandafter\xdef\csname codep@atomkind@#1\endcsname{#2}%
+  \csxdef{codep@atomkind@#1}{#2}%
 }%
 
 %% @utility
@@ -588,7 +588,7 @@
 \def\codep@alloctargetid#1#2{%
   \global\advance\codep@targetid by 1\relax
   \xdef#1{q\the\codep@targetid}%
-  \expandafter\xdef\csname codep@targetkind@#1\endcsname{#2}%
+  \csxdef{codep@targetkind@#1}{#2}%
 }%
 
 %% @utility
@@ -596,9 +596,8 @@
 %   Push one source context entry onto the global stack.
 \def\codep@ctxpush#1#2{%
   \global\advance\codep@ctxdepth by 1\relax%
-  \expandafter\xdef\csname codep@ctxid@\the\codep@ctxdepth\endcsname{#1}%
-  \expandafter\xdef%
-    \csname codep@ctxkind@\the\codep@ctxdepth\endcsname{#2}%
+  \csxdef{codep@ctxid@\the\codep@ctxdepth}{#1}%
+  \csxdef{codep@ctxkind@\the\codep@ctxdepth}{#2}%
 }%
 
 %% @utility
@@ -653,10 +652,10 @@
 % \codep@atomsetkey{atom-id}{prefixed-key}
 %   Persist the legacy prefixed key derived for this atom.
 \def\codep@atomsetkey#1#2{%
-  \expandafter\xdef\csname codep@atomkey@#1\endcsname{#2}%
-  \expandafter\xdef\csname codep@idbykey@#2\endcsname{#1}%
+  \csxdef{codep@atomkey@#1}{#2}%
+  \csxdef{codep@idbykey@#2}{#1}%
   \expandafter\codep@splitprefix#2\@nil%
-  \expandafter\xdef\csname codep@atomdisplay@#1\endcsname{%
+  \csxdef{codep@atomdisplay@#1}{%
     \codep@tmp@num}%
 }%
 
@@ -804,13 +803,13 @@
       \ifx\codep@eq@lbltype@pending\@empty%
         \codep@getcurrentatomkind\codep@tmp@labelkind%
         \ifx\codep@tmp@labelkind\@empty\else%
-          \expandafter\gdef\csname codep@ltype@#1\endcsname{%
+          \csgdef{codep@ltype@#1}{%
             \codep@tmp@labelkind}%
           \protected@write\@auxout{}{%
             \string\codep@lbltype{#1}{\codep@tmp@labelkind}}%
         \fi%
       \else%
-        \expandafter\gdef\csname codep@ltype@#1\endcsname{%
+        \csgdef{codep@ltype@#1}{%
           \codep@eq@lbltype@pending}%
         \protected@write\@auxout{}{%
           \string\codep@lbltype{#1}{\codep@eq@lbltype@pending}}%
@@ -825,9 +824,9 @@
         % atom-key string, not a reference to \codep@tmp@lblentity
         % whose binding is local to this \codep@recordlabelowner
         % call and is undefined outside.
-        \expandafter\xdef\csname codep@lblentity@#1\endcsname{%
+        \csxdef{codep@lblentity@#1}{%
           \codep@tmp@lblentity}%
-        \expandafter\gdef\csname codep@lblentity@samerun@#1\endcsname{1}%
+        \csgdef{codep@lblentity@samerun@#1}{1}%
         \protected@write\@auxout{}{%
           \string\codep@lblentity{#1}{\codep@tmp@lblentity}}%
       \fi%
@@ -874,10 +873,10 @@
 %% @implements \codep@bindproofparent
 \def\codep@proof@markparent#1#2{%
   \ifcsundef{codep@proofparent@#1}{%
-    \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
+    \csxdef{codep@proofparent@#1}{#2}%
   }{%
     \ifcsempty{codep@proofparent@#1}{%
-      \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
+      \csxdef{codep@proofparent@#1}{#2}%
     }{}%
   }%
 }%
@@ -900,7 +899,7 @@
       \fi%
       \codep@proof@identitykey{#1}{\codep@tmp@overrideproofkey}%
       \codep@prooftargetmeta@clear{\codep@tmp@overrideproofkey}%
-      \expandafter\xdef\csname codep@proofparent@#1\endcsname{}%
+      \csxdef{codep@proofparent@#1}{}%
       \global\expandafter\let%
         \csname codep@proofheadingoverride@#1\endcsname\@empty%
     }{}%
@@ -911,7 +910,7 @@
 %   Record the adjacent target displaced by proof-heading attribution.
 %% @implements \codep@bindproofparent
 \def\codep@proof@suppressadjacenttarget#1#2{%
-  \expandafter\xdef\csname codep@proofsuppressadjacent@#1\endcsname{#2}%
+  \csxdef{codep@proofsuppressadjacent@#1}{#2}%
 }%
 
 % \codep@proof@ifadjacenttargetsuppressed{label}{then}{else}
@@ -1107,11 +1106,10 @@
 %% @behavior B-REND-APPENDIX
 \def\codep@registeratom#1#2{%
   \global\advance\codep@atomcount by 1\relax
-  \expandafter\xdef\csname codep@atom@\the\codep@atomcount\endcsname{%
+  \csxdef{codep@atom@\the\codep@atomcount}{%
     {#1}{#2}}%
   % Store current section number for appendix grouping.
-  \expandafter\xdef%
-    \csname codep@atom@sec@\the\codep@atomcount\endcsname{%
+  \csxdef{codep@atom@sec@\the\codep@atomcount}{%
     \codep@cursecnum}%
 }%
 
@@ -1196,8 +1194,7 @@
         \ifx\codep@tmp@anchorkey\@empty\else%
           \codep@writeanchormap{\codep@tmp@anchorkey}%
           \codep@writeanchorpagecurrent{\codep@tmp@anchorkey}%
-          \expandafter\xdef\csname codep@theoremanchorwritten@%
-            \codep@thisatomid\endcsname{1}%
+          \csxdef{codep@theoremanchorwritten@\codep@thisatomid}{1}%
         \fi%
       }{}%
     \fi%
@@ -1434,7 +1431,7 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@slot@allow}[2]{%
-  \expandafter\gdef\csname codep@install@slot@#1\endcsname{#2}%
+  \csgdef{codep@install@slot@#1}{#2}%
 }
 
 \codep@install@slot@allow{pre-begin}{prebegin}%
@@ -1448,7 +1445,7 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@effect@allow}[1]{%
-  \expandafter\gdef\csname codep@install@effect@#1\endcsname{1}%
+  \csgdef{codep@install@effect@#1}{1}%
 }
 
 \codep@install@effect@allow{state-only}%
@@ -1471,7 +1468,7 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@kind@allow}[2]{%
-  \expandafter\gdef\csname codep@install@kind@#1\endcsname{#2}%
+  \csgdef{codep@install@kind@#1}{#2}%
 }
 
 \codep@install@kind@allow{pretocmd}{pretocmd}%
@@ -1490,7 +1487,7 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@matrix@allow}[2]{%
-  \expandafter\gdef\csname codep@install@effectslot@#1@#2\endcsname{1}%
+  \csgdef{codep@install@effectslot@#1@#2}{1}%
 }
 
 %% Compat matrix for lifecycle slot/effect assertions.
@@ -1814,7 +1811,7 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@envtrack@config@write}[3]{%
-  \expandafter\def\csname codep@envtrack@cfg@#1@#2\endcsname{#3}%
+  \csdef{codep@envtrack@cfg@#1@#2}{#3}%
 }
 
 % \codep@envtrack@config@read{env}{field}{cs}
@@ -2282,7 +2279,7 @@
         \codep@tcb@end{#1}}%
       \codep@target@install{AddToHook}{env/#1/after}{state-only}{%
         \codep@tcb@after{#1}}%
-      \expandafter\gdef\csname codep@tcb@patched@#1\endcsname{1}%
+      \csgdef{codep@tcb@patched@#1}{1}%
     }%
   }%
 }%
@@ -2494,7 +2491,7 @@
       \codep@keythms@restated{#1}}%
     \codep@target@install{AddToHook}{env/#1/end}{inline-material}{%
       \codep@keythms@end{#1}}%
-    \expandafter\gdef\csname codep@keythms@patched@#1\endcsname{1}%
+    \csgdef{codep@keythms@patched@#1}{1}%
   }%
 }%
 
@@ -2948,7 +2945,7 @@
     \count@=\csname codep@autoproofof@headsuppress@#1\endcsname\relax%
   }%
   \advance\count@ by 1\relax%
-  \expandafter\xdef\csname codep@autoproofof@headsuppress@#1\endcsname{%
+  \csxdef{codep@autoproofof@headsuppress@#1}{%
     \the\count@}%
 }%
 
@@ -2963,7 +2960,7 @@
     \count@=\csname codep@autoproofof@headsuppress@#1\endcsname\relax%
     \ifnum\count@>0\relax%
       \advance\count@ by -1\relax%
-      \expandafter\xdef\csname codep@autoproofof@headsuppress@#1\endcsname{%
+      \csxdef{codep@autoproofof@headsuppress@#1}{%
         \the\count@}%
       #2%
     \else%
@@ -3059,7 +3056,7 @@
   \codep@proofof@attribcount@get{#1}{\codep@tmp@proofofcount}%
   \count@=\codep@tmp@proofofcount\relax%
   \advance\count@ by 1\relax%
-  \expandafter\xdef\csname codep@proofof@attribcount@#1\endcsname{%
+  \csxdef{codep@proofof@attribcount@#1}{%
     \the\count@}%
 }%
 
@@ -3095,8 +3092,7 @@
 %% @implements \codep@hookproof
 \def\codep@autoproofof@markseen#1{%
   \ifx\codep@currentproofid\@empty\else%
-    \expandafter\gdef\csname codep@autoproofof@seen@%
-      \codep@currentproofid\endcsname{1}%
+    \csgdef{codep@autoproofof@seen@\codep@currentproofid}{1}%
   \fi%
 }%
 
@@ -3108,7 +3104,7 @@
     \PackageWarning{codependent}{Automatic proof-heading detection for\space%
       '#1' was disabled by a proof environment redefinition;\space%
       use explicit \string\codepproofof\space for affected proofs}%
-    \expandafter\gdef\csname codep@autoproofof@warned@#1\endcsname{1}%
+    \csgdef{codep@autoproofof@warned@#1}{1}%
   }{}%
 }%
 
@@ -3154,8 +3150,7 @@
         \PackageWarning{codependent}{Automatic proof-heading detection\space%
           unavailable: could not patch proof's optional-heading body;\space%
           use explicit \string\codepproofof\space for separated proofs}%
-        \expandafter\gdef%
-          \csname codep@autoproofof@warned@proof\endcsname{1}%
+        \csgdef{codep@autoproofof@warned@proof}{1}%
       }%
     }%
   }%
@@ -3169,28 +3164,28 @@
 % \codep@proofstatesave{proof-id}
 %   Save the outer proof state under the nested proof-id.
 \def\codep@proofstatesave#1{%
-  \expandafter\xdef\csname codep@savedproofid@#1\endcsname{%
+  \csxdef{codep@savedproofid@#1}{%
     \codep@currentproofid}%
   \ifcodep@proofdisplaypending%
-    \expandafter\gdef\csname codep@savedproofpending@#1\endcsname{1}%
+    \csgdef{codep@savedproofpending@#1}{1}%
   \else%
-    \expandafter\gdef\csname codep@savedproofpending@#1\endcsname{0}%
+    \csgdef{codep@savedproofpending@#1}{0}%
   \fi%
   \ifcodep@autoproofof@eligible%
-    \expandafter\gdef\csname codep@savedproofautoeligible@#1\endcsname{1}%
+    \csgdef{codep@savedproofautoeligible@#1}{1}%
   \else%
-    \expandafter\gdef\csname codep@savedproofautoeligible@#1\endcsname{0}%
+    \csgdef{codep@savedproofautoeligible@#1}{0}%
   \fi%
   \ifcodep@proof@adjcommit@needed%
-    \expandafter\gdef\csname codep@savedproofadjcommit@#1\endcsname{1}%
+    \csgdef{codep@savedproofadjcommit@#1}{1}%
   \else%
-    \expandafter\gdef\csname codep@savedproofadjcommit@#1\endcsname{0}%
+    \csgdef{codep@savedproofadjcommit@#1}{0}%
   \fi%
-  \expandafter\xdef\csname codep@savedproofbind@#1\endcsname{%
+  \csxdef{codep@savedproofbind@#1}{%
     \codep@pendingproofbind}%
-  \expandafter\xdef\csname codep@savedproofadjkey@#1\endcsname{%
+  \csxdef{codep@savedproofadjkey@#1}{%
     \codep@proofadj@pendinganchormapkey}%
-  \expandafter\xdef\csname codep@savedproofadjanchor@#1\endcsname{%
+  \csxdef{codep@savedproofadjanchor@#1}{%
     \codep@proofadj@pendinganchormapanchor}%
   \global\codep@proofneststack=\expandafter{%
     \the\codep@proofneststack{\codep@currentproofid}}%
@@ -3362,7 +3357,7 @@
   \@ifpackageloaded{hyperref}{%
     \codep@proof@beginanchorname{#1}{\codep@tmp@proofbeginanchor}%
     \codep@emit@destination{\codep@tmp@proofbeginanchor}%
-    \expandafter\xdef\csname codep@proofbeginanchor@#1\endcsname{%
+    \csxdef{codep@proofbeginanchor@#1}{%
       \codep@tmp@proofbeginanchor}%
   }{}%
 }%
@@ -3383,13 +3378,9 @@
         \codep@proof@beginanchorname{\codep@tmp@headingproofid}{%
           \codep@tmp@proofbeginanchor}%
         \ifx\codep@tmp@proofbeginanchor\@empty\else%
-          \expandafter\xdef%
-            \csname codep@proofbeginanchor@%
-              \codep@tmp@headingproofid\endcsname{%
+          \csxdef{codep@proofbeginanchor@\codep@tmp@headingproofid}{%
                 \codep@tmp@proofbeginanchor}%
-          \expandafter\xdef%
-            \csname codep@proofpendingheadinganchor@%
-              \codep@tmp@headingproofid\endcsname{%
+          \csxdef{codep@proofpendingheadinganchor@\codep@tmp@headingproofid}{%
                 \codep@tmp@proofbeginanchor}%
         \fi%
       }{}%
@@ -3442,7 +3433,7 @@
 %   keep the proof-start page rather than the resolution page.
 \newcommand*{\codep@proof@capturebeginpage}[1]{%
   \edef\codep@tmp@proofbeginpage{\thepage}%
-  \expandafter\xdef\csname codep@proofbeginpage@#1\endcsname{%
+  \csxdef{codep@proofbeginpage@#1}{%
     \codep@tmp@proofbeginpage}%
 }%
 
@@ -3503,16 +3494,11 @@
   \codep@atomgetkey{\codep@pendingresultid}{\codep@tmp@adjtargetkey}%
   \codep@atomgetdisplay{\codep@pendingresultid}{\codep@tmp@adjtargetdisplay}%
   % see @behavior B-PROOF-DELAYED-COMMIT on this macro.
-  \expandafter\xdef\csname codep@adjcandidate@%
-    \codep@currentproofid\endcsname{\codep@pendingresultid}%
-  \expandafter\xdef\csname codep@adjcandidate@target@%
-    \codep@currentproofid\endcsname{\codep@tmp@adjtargetkey}%
-  \expandafter\xdef\csname codep@adjcandidate@display@%
-    \codep@currentproofid\endcsname{\codep@tmp@adjtargetdisplay}%
-  \expandafter\xdef\csname codep@proofadjtarget@%
-    \codep@currentproofid\endcsname{\codep@tmp@adjtargetkey}%
-  \expandafter\xdef\csname codep@proofadjdisplay@%
-    \codep@currentproofid\endcsname{\codep@tmp@adjtargetdisplay}%
+  \csxdef{codep@adjcandidate@\codep@currentproofid}{\codep@pendingresultid}%
+  \csxdef{codep@adjcandidate@target@\codep@currentproofid}{\codep@tmp@adjtargetkey}%
+  \csxdef{codep@adjcandidate@display@\codep@currentproofid}{\codep@tmp@adjtargetdisplay}%
+  \csxdef{codep@proofadjtarget@\codep@currentproofid}{\codep@tmp@adjtargetkey}%
+  \csxdef{codep@proofadjdisplay@\codep@currentproofid}{\codep@tmp@adjtargetdisplay}%
   \global\codep@proof@adjcommit@neededtrue%
   \codep@atomgetkey{\codep@currentproofid}{\codep@tmp@proofkey}%
   \global\let\codep@proofadj@pendinganchormapkey\@empty%
@@ -3799,7 +3785,7 @@
 %% @utility
 \def\codep@unresref@rememberref#1#2{%
   \ifcsundef{codep@unresrefs@#1}{%
-    \expandafter\gdef\csname codep@unresrefs@#1\endcsname{}%
+    \csgdef{codep@unresrefs@#1}{}%
   }{}%
   \expandafter\g@addto@macro\csname codep@unresrefs@#1\endcsname{%
     \do{#2}}%
@@ -3856,8 +3842,7 @@
   \fi%
   % Write anchormap entry using dedicated block anchor.
   \@ifpackageloaded{hyperref}{%
-    \expandafter\xdef%
-      \csname codep@anchor@\codep@eqatom\endcsname%
+    \csxdef{codep@anchor@\codep@eqatom}%
       {\codep@eq@anchor}%
     \if@filesw%
       \protected@write\@auxout{}{%
@@ -4265,7 +4250,7 @@
 % lookup table from aux records.
 %% @implements \codep@installnewlabel
 \def\codep@lbltype@active#1#2{%
-  \expandafter\gdef\csname codep@ltype@#1\endcsname{#2}}
+  \csgdef{codep@ltype@#1}{#2}}
 
 % Pass-1 safety: \codep@anchormap records atom→hyperref anchor
 % mappings.  No-op until hyperref is detected at begindocument/before.
@@ -4278,13 +4263,13 @@
 % read, so equation range anchors are not silently discarded.
 %% @implements \codep@hooktheorem
 \def\codep@anchormap@active#1#2{%
-  \expandafter\gdef\csname codep@anchor@#1\endcsname{#2}}
+  \csgdef{codep@anchor@#1}{#2}}
 
 %% @behavior B-PASS-ONE
 % \codep@anchorpage@active{key}{page}
 %   Populate the in-memory anchor-start-page table from aux.
 \def\codep@anchorpage@active#1#2{%
-  \expandafter\xdef\csname codep@anchorpage@#1\endcsname{#2}}
+  \csxdef{codep@anchorpage@#1}{#2}}
 
 % \codep@writeanchormap{atomnum}
 %   Write an atom→anchor aux record.  No-op by default; activated
@@ -4298,7 +4283,7 @@
 %   Persist an explicit key→anchor mapping.
 \newcommand*{\codep@writeanchormapvalue}[2]{%
   \edef\codep@tmp@anchorval{#2}%
-  \expandafter\xdef\csname codep@anchor@#1\endcsname{%
+  \csxdef{codep@anchor@#1}{%
     \codep@tmp@anchorval}%
   \if@filesw%
     \immediate\write\@auxout{%
@@ -4364,7 +4349,7 @@
 %   aux record.  Cross-run side; same-run populate happens
 %   synchronously at \codep@recordlabelowner time.
 \def\codep@lblentity@active#1#2{%
-  \expandafter\gdef\csname codep@lblentity@#1\endcsname{#2}}
+  \csgdef{codep@lblentity@#1}{#2}}
 
 %% @behavior B-PASS-ONE
 % \codep@entitymeta@active{key}{kind}{display}{print-kind}{parent-key}
@@ -4372,10 +4357,10 @@
 %   fields expand for O(1) value access; print-kind is a token-list field
 %   and is stored without expansion so display-name commands survive replay.
 \def\codep@entitymeta@active#1#2#3#4#5{%
-  \expandafter\xdef\csname codep@entity@#1@kind\endcsname{#2}%
-  \expandafter\xdef\csname codep@entity@#1@display\endcsname{#3}%
-  \expandafter\gdef\csname codep@entity@#1@print\endcsname{#4}%
-  \expandafter\xdef\csname codep@entity@#1@parent\endcsname{#5}}
+  \csxdef{codep@entity@#1@kind}{#2}%
+  \csxdef{codep@entity@#1@display}{#3}%
+  \csgdef{codep@entity@#1@print}{#4}%
+  \csxdef{codep@entity@#1@parent}{#5}}
 
 %% @behavior B-PASS-ONE
 % \codep@keymap@active{old-key}{new-key}
@@ -4384,8 +4369,8 @@
 %   keys through the latest rebound key and so rebound proof keys
 %   can alias back to their pre-rebind proof-begin anchor key.
 \def\codep@keymap@active#1#2{%
-  \expandafter\xdef\csname codep@keymap@#1\endcsname{#2}%
-  \expandafter\xdef\csname codep@anchoralias@#2\endcsname{#1}}
+  \csxdef{codep@keymap@#1}{#2}%
+  \csxdef{codep@anchoralias@#2}{#1}}
 
 %% @utility
 % \codep@keymap@record{old-key}{new-key}
@@ -4409,7 +4394,7 @@
 %   which Moment-1 also populates synchronously (see
 %   \codep@render@refresh).
   \def\codep@renderlist@active#1#2#3{%
-    \expandafter\gdef\csname codep@rendered@#1\endcsname{#3}}
+    \csgdef{codep@rendered@#1}{#3}}
 
   %% @utility
   % \codep@csv@count{csv}{macro}
@@ -4472,11 +4457,11 @@
   % \codep@prooftargetmeta@active{proof-key}{target-keys}{target-displays}{marker}
   %   Hydrate proof target-list metadata from aux.
   \def\codep@prooftargetmeta@active#1#2#3#4{%
-    \expandafter\xdef\csname codep@prooftargetkeys@#1\endcsname{#2}%
-    \expandafter\xdef\csname codep@prooftargetdisplays@#1\endcsname{#3}%
-    \expandafter\xdef\csname codep@prooftargetmarker@#1\endcsname{#4}%
+    \csxdef{codep@prooftargetkeys@#1}{#2}%
+    \csxdef{codep@prooftargetdisplays@#1}{#3}%
+    \csxdef{codep@prooftargetmarker@#1}{#4}%
     \codep@csv@count{#2}{\codep@tmp@prooftargetcount}%
-    \expandafter\xdef\csname codep@prooftargetcount@#1\endcsname{%
+    \csxdef{codep@prooftargetcount@#1}{%
       \codep@tmp@prooftargetcount}%
     \codep@prooftargetmeta@touch{#1}%
   }%
@@ -4794,7 +4779,7 @@
   \ifnum\codep@replaydepth>0\relax%
   \else%
     \ifcsundef{codep@refpending@#3}{%
-      \expandafter\xdef\csname codep@refpending@#3\endcsname{%
+      \csxdef{codep@refpending@#3}{%
         \noexpand#1{#2}{\unexpanded{#3}}{\unexpanded{#4}}}%
       \g@addto@macro\codep@refpendinglabels{\do{#3}}%
     }{%
@@ -4957,8 +4942,7 @@
 %% @behavior B-EDGE-PROOF-ANY
 \def\codep@recordbr#1#2{%
   \global\advance\codep@brid by 1\relax
-  \expandafter\xdef%
-    \csname codep@brq@\the\codep@brid\endcsname{%
+  \csxdef{codep@brq@\the\codep@brid}{%
       \noexpand\codep@processbr{#2}{#1}%
     }%
 }
@@ -5081,20 +5065,15 @@
       % Append a new linked-list node.
       \ifcsundef{%
           codep@brcount@\codep@tmp@tgt}{%
-        \global\expandafter\def%
-          \csname codep@brcount@\codep@tmp@tgt\endcsname{0}%
+        \csgdef{codep@brcount@\codep@tmp@tgt}{0}%
       }{}%
       \edef\codep@tmp@k{%
         \csname codep@brcount@\codep@tmp@tgt\endcsname}%
       \count@=\codep@tmp@k\relax
       \advance\count@ by 1\relax
-      \expandafter\xdef%
-        \csname codep@brcount@\codep@tmp@tgt\endcsname
+      \csxdef{codep@brcount@\codep@tmp@tgt}%
         {\the\count@}%
-      \expandafter\xdef%
-        \csname%
-          codep@brnode@\codep@tmp@tgt @\the\count@%
-        \endcsname
+      \csxdef{codep@brnode@\codep@tmp@tgt @\the\count@}%
         {\codep@tmp@src}%
     \fi
   \fi
@@ -5413,14 +5392,12 @@
   \edef\codep@tmp@anchordisp{#3}%
   \edef\codep@tmp@anchorval{#4}%
   \ifx\codep@tmp@anchorltype\@empty%
-    \expandafter\xdef%
-      \csname codep@anchor@\codep@tmp@anchordisp\endcsname{%
+    \csxdef{codep@anchor@\codep@tmp@anchordisp}{%
         \codep@tmp@anchorval}%
   \else%
     \edef\codep@tmp@prefixed{%
       \codep@tmp@anchorltype:\codep@tmp@anchordisp}%
-    \expandafter\xdef%
-      \csname codep@anchor@\codep@tmp@prefixed\endcsname{%
+    \csxdef{codep@anchor@\codep@tmp@prefixed}{%
         \codep@tmp@anchorval}%
   \fi%
 }%
@@ -5493,8 +5470,7 @@
         \codep@orig@newlabelxx%
           {##1}{##2}{##3}{##4}{##5}{##6}%
         % ##2 is already the display number for the 6-arg form.
-        \expandafter\gdef%
-          \csname codep@lblnum@##1\endcsname{##2}%
+        \csgdef{codep@lblnum@##1}{##2}%
         % ##5 is the hyperref anchor name; store reverse mapping
         % using prefixed key if type is known.
         \codep@ifcrefkey{##1}{}{%
@@ -5530,7 +5506,7 @@
 }
 %% @implements \codep@extractlblnum
 \def\codep@extractlblnum@ii#1#2{%
-  \expandafter\gdef\csname codep@lblnum@#2\endcsname{#1}%
+  \csgdef{codep@lblnum@#2}{#1}%
 }
 
 %% @utility
@@ -5606,8 +5582,7 @@
 %   Populate the concept def-site map.  Per J3, silently
 %   overwrite on duplicate aux records (stale prior-run).
 \def\codep@concept@active#1#2{%
-  \expandafter\gdef%
-    \csname codep@conceptdef@#1\endcsname{#2}%
+  \csgdef{codep@conceptdef@#1}{#2}%
 }
 
 %% @behavior B-CONC-FWDREF
@@ -6005,7 +5980,7 @@
       \edef\codep@tmp@labelkey{#1}%
       \in@{thmt@@}{\codep@tmp@labelkey}%
       \ifin@\else%
-        \expandafter\xdef\csname codep@lblnum@#1\endcsname{\@currentlabel}%
+        \csxdef{codep@lblnum@#1}{\@currentlabel}%
         \@ifpackageloaded{hyperref}{%
           \ifx\@currentHref\@empty\else%
             \ifcsundef{codep@ltype@#1}{%
@@ -6114,8 +6089,7 @@
     % No atom context (footnote, caption, orphan): silent no-op.
   \else%
     \ifcsundef{codep@concept@#1}%
-      {\expandafter\xdef%
-         \csname codep@concept@#1\endcsname%
+      {\csxdef{codep@concept@#1}%
          {\codep@tmp@conceptatom}%
        \if@filesw%
          \immediate\write\@auxout{%
@@ -6149,8 +6123,7 @@
   \ifx\codep@tmp@conceptatom\@empty\else%
     % Register concept name for end-document missing-def scan.
     \ifcsundef{codep@conceptused@#1}{%
-      \expandafter\gdef%
-        \csname codep@conceptused@#1\endcsname{1}%
+      \csgdef{codep@conceptused@#1}{1}%
       \g@addto@macro\codep@conceptnames{\do{#1}}%
     }{}%
     \if@filesw%
@@ -6452,7 +6425,7 @@
 %% @implements \codeptrack
 %@effect state-only
 \newcommand*{\codep@envtrack@printkind@store}[2]{%
-  \expandafter\xdef\csname codep@envtrack@cfg@#1@print-kind\endcsname{%
+  \csxdef{codep@envtrack@cfg@#1@print-kind}{%
     \unexpanded\expandafter{#2}}%
 }
 
@@ -6621,11 +6594,11 @@
 %% @behavior B-PRINTKIND-DISPLAY-NAME
 %@effect state-only
 \def\codep@entitymeta@capture@active#1#2#3#4#5{%
-  \expandafter\xdef\csname codep@entity@#1@kind\endcsname{#2}%
-  \expandafter\xdef\csname codep@entity@#1@display\endcsname{#3}%
-  \expandafter\xdef\csname codep@entity@#1@print\endcsname{%
+  \csxdef{codep@entity@#1@kind}{#2}%
+  \csxdef{codep@entity@#1@display}{#3}%
+  \csxdef{codep@entity@#1@print}{%
     \unexpanded\expandafter{#4}}%
-  \expandafter\xdef\csname codep@entity@#1@parent\endcsname{#5}}
+  \csxdef{codep@entity@#1@parent}{#5}}
 
 
 %% ===================================================================
@@ -6768,8 +6741,7 @@
         \string\codepbackrefs\space called outside any tracked atom%
         \space--- no refs emitted}%
     \else%
-      \expandafter\xdef%
-        \csname codep@manuallyemitted@\codep@tmp@manualkey\endcsname{1}%
+      \csxdef{codep@manuallyemitted@\codep@tmp@manualkey}{1}%
       \codep@render@manual@emit{\codep@tmp@manualkey}%
     \fi%
   \fi%
@@ -7151,7 +7123,7 @@
 \AtBeginDocument{%
   \@ifpackageloaded{hyperref}{%
     \renewcommand*{\codep@writeanchormap}[1]{%
-      \expandafter\xdef\csname codep@anchor@#1\endcsname{\@currentHref}%
+      \csxdef{codep@anchor@#1}{\@currentHref}%
       \if@filesw%
         \protected@write\@auxout{}{%
           \string\codep@anchormap{#1}{\@currentHref}}%

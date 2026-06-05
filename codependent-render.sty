@@ -195,11 +195,11 @@
       % the xdef body, which would defeat the freeze (next-run
       % replay has no \codep@br@<key> binding).
       \ifnum\codep@replaydepth=0\relax%
-        \expandafter\xdef\csname codep@rendered@#1\endcsname{%
+        \csxdef{codep@rendered@#1}{%
           \expandafter\expandafter\expandafter\unexpanded%
           \expandafter\expandafter\expandafter{%
             \csname codep@br@#1\endcsname}}%
-        \expandafter\gdef\csname codep@rlflag@#1\endcsname{}%
+        \csgdef{codep@rlflag@#1}{}%
       \fi%
     }%
   }{}%
