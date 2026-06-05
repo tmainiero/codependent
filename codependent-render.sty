@@ -163,7 +163,7 @@
     % token string (display text, or \hyperlink{anchor}{display}
     % wrappers when hyperref is loaded — produced by
     % collapsebr@cb's anchor+display lookup at collapse time).
-    % \@ifundefined cannot distinguish \@empty from real data
+    % \ifcsundef cannot distinguish \@empty from real data
     % (collapsebr always defines the csname), so use \ifx against
     % \@empty instead.
     \expandafter\ifx\csname codep@br@#1\endcsname\@empty%
@@ -247,7 +247,7 @@
   \ifx\codep@backrefcolor\@empty%
     #1%
   \else
-    \@ifundefined{textcolor}{#1}{\textcolor{\codep@backrefcolor}{#1}}%
+    \ifcsundef{textcolor}{#1}{\textcolor{\codep@backrefcolor}{#1}}%
   \fi}
 
 % \codep@renderbackref{reflist}
