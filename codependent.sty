@@ -551,7 +551,7 @@
 % \codep@manuallyemitted@clear@key{atomkey}
 %   Globally undefine \codep@manuallyemitted@<atomkey>.  The csname
 %   form must use \@undefined (not \relax) so that subsequent
-%   \ifcsname tests at auto-flush sites correctly return false.
+%   \ifcsdef tests at auto-flush sites correctly return false.
 %   Mirrors the undef idioms in \codep@ctxpop and
 %   \codep@proofstaterestore.
 %% @utility
@@ -876,9 +876,9 @@
   \ifcsundef{codep@proofparent@#1}{%
     \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
   }{%
-    \expandafter\ifx\csname codep@proofparent@#1\endcsname\@empty%
+    \ifcsempty{codep@proofparent@#1}{%
       \expandafter\xdef\csname codep@proofparent@#1\endcsname{#2}%
-    \fi%
+    }{}%
   }%
 }%
 
@@ -1214,7 +1214,7 @@
   \codep@closeparagraphifopen%
   \global\let\codep@pendingresultid\@empty%
   \gdef\codep@thmwrap@activeenv{#1}%
-  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+  \ifcsequal{c@\codep@basecounter}{c@atom}{%
     \global\advance\codep@trackeddepth by 1\relax%
     \global\advance\codep@suppressdepth by 1\relax%
     \ifnum\codep@trackeddepth>1\relax%
@@ -1225,10 +1225,10 @@
       \codep@allocatomid{\codep@thisatomid}{#1}%
       \codep@ctxpush{\codep@thisatomid}{#1}%
     \fi%
-  \else%
+  }{%
     \global\advance\codep@replaydepth by 1\relax%
     \global\advance\codep@suppressdepth by 1\relax%
-  \fi%
+  }%
 }%
 
 %% @behavior B-NUM-STARRED
@@ -1307,17 +1307,17 @@
 %   End-hook body: unwind replay, nested, or outer theorem state.
 %@effect immediate-write
 \def\codep@hooktheorem@end#1{%
-  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+  \ifcsequal{c@\codep@basecounter}{c@atom}{%
     \ifnum\codep@trackeddepth>1\relax%
       \global\advance\codep@trackeddepth by -1\relax%
       \global\advance\codep@suppressdepth by -1\relax%
     \else%
       \codep@hooktheorem@end@outer{#1}%
     \fi%
-  \else%
+  }{%
     \global\advance\codep@replaydepth by -1\relax%
     \global\advance\codep@suppressdepth by -1\relax%
-  \fi%
+  }%
 }%
 
 % \codep@hooktheorem@afterend{envname}
@@ -1537,11 +1537,11 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@assert@known@slot}[1]{%
-  \ifcsname codep@install@slot@#1\endcsname%
-  \else%
+  \ifcsdef{codep@install@slot@#1}{%
+  }{%
     \PackageError{codependent}{unknown lifecycle slot #1}{%
       Expected one of pre-begin, post-begin, pre-end, post-end, after-env.}%
-  \fi%
+  }%
 }
 
 % \codep@install@assert@known@effect{effect}
@@ -1549,13 +1549,13 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@assert@known@effect}[1]{%
-  \ifcsname codep@install@effect@#1\endcsname%
-  \else%
+  \ifcsdef{codep@install@effect@#1}{%
+  }{%
     \PackageError{codependent}{unknown install effect #1}{%
       Expected state-only, immediate-write, deferred-write, %
       zero-visible-destination, inline-material, or the Track-2 %
       shipout-order write typed exception.}%
-  \fi%
+  }%
 }
 
 % \codep@install@assert@known@kind{install-kind}
@@ -1563,14 +1563,14 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@assert@known@kind}[1]{%
-  \ifcsname codep@install@kind@#1\endcsname%
-  \else%
+  \ifcsdef{codep@install@kind@#1}{%
+  }{%
     \PackageError{codependent}{%
       unknown install-kind #1; CORE/CONTRACT enum is frozen at 10 members}{%
       Expected pretocmd, apptocmd, AddToHook, backend-hook, macro-append, %
       theorem-name-link-wrap, lifecycle-rewrap, command-wrap, %
       dynamic-command-wrap, or counter-alias.}%
-  \fi%
+  }%
 }
 
 % \codep@install@assert@compatible{slot}{effect}
@@ -1578,14 +1578,14 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@assert@compatible}[2]{%
-  \ifcsname codep@install@effectslot@#1@#2\endcsname%
-  \else%
+  \ifcsdef{codep@install@effectslot@#1@#2}{%
+  }{%
     \PackageError{codependent}{%
       effect #2 incompatible with slot #1; see compat matrix}{%
       The lifecycle compat matrix forbids after-env immediate/deferred %
       writes and inline material; use the typed Track-2 exception only %
       for the equation-range dispatcher.}%
-  \fi%
+  }%
 }
 
 % \codep@hook@install@register{register-name}{slot}{env}{callback}
@@ -1642,13 +1642,13 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@install@saveoriginal@named}[3]{%
-  \ifcsname #2\endcsname%
+  \ifcsdef{#2}{%
     \PackageWarning{codependent}{%
       typed installer already saved original for \string#1; skipping reinstall}%
-  \else%
+  }{%
     \global\expandafter\let\csname #2\endcsname#1%
     #3%
-  \fi%
+  }%
 }
 
 % \codep@install@saveoriginal@auto{target}{replacement}
@@ -1777,13 +1777,13 @@
   \codep@install@assert@known@effect{#3}%
   \edef\codep@install@handlername{%
     \csname codep@install@kind@#1\endcsname}%
-  \ifcsname codep@target@install@\codep@install@handlername\endcsname%
+  \ifcsdef{codep@target@install@\codep@install@handlername}{%
     \csname codep@target@install@\codep@install@handlername\endcsname%
       {#2}{#3}{#4}%
-  \else%
+  }{%
     \PackageError{codependent}{install-kind #1 dispatch drift}{%
       Kind passed enum assertion but has no dispatcher branch.}%
-  \fi%
+  }%
 }
 
 % \codep@counter@alias@install{base-counter}{atom-counter}
@@ -1831,11 +1831,11 @@
 %@effect state-only
 \newcommand*{\codep@envtrack@ifkeytheoremsTF}[3]{%
   \@ifpackageloaded{keytheorems}{%
-    \ifcsname keythms_orig_#1\endcsname%
+    \ifcsdef{keythms_orig_#1}{%
       #2%
-    \else%
+    }{%
       #3%
-    \fi%
+    }%
   }{#3}%
 }
 
@@ -1845,11 +1845,11 @@
 %@effect state-only
 \newcommand*{\codep@envtrack@iftcolorboxTF}[3]{%
   \@ifpackageloaded{tcolorbox}{%
-    \ifcsname tcb@opt@#1\endcsname%
+    \ifcsdef{tcb@opt@#1}{%
       #2%
-    \else%
+    }{%
       #3%
-    \fi%
+    }%
   }{#3}%
 }
 
@@ -1869,18 +1869,18 @@
 %@effect state-only
 \newcommand*{\codep@envtrack@ifnumberedresolverTF}[3]{%
   \codep@envtrack@ifkeytheoremsTF{#1}{%
-    \ifcsname c@#1\endcsname%
+    \ifcsdef{c@#1}{%
       #2%
-    \else%
+    }{%
       #3%
-    \fi%
+    }%
   }{%
     \codep@envtrack@iftcolorboxTF{#1}{%
-      \ifcsname tcb@cnt@#1\endcsname%
+      \ifcsdef{tcb@cnt@#1}{%
         #2%
-      \else%
+      }{%
         #3%
-      \fi%
+      }%
     }{#2}%
   }%
 }
@@ -1902,22 +1902,22 @@
 \newcommand*{\codep@envtrack@resolvecounter}[2]{%
   \let#2\@empty%
   \codep@envtrack@ifkeytheoremsTF{#1}{%
-    \ifcsname c@#1\endcsname%
+    \ifcsdef{c@#1}{%
       \edef#2{#1}%
-    \else%
+    }{%
       \codep@envtrack@missingresolver{#1}{keytheorems}%
-    \fi%
+    }%
   }{%
     \codep@envtrack@iftcolorboxTF{#1}{%
-      \ifcsname tcb@cnt@#1\endcsname%
+      \ifcsdef{tcb@cnt@#1}{%
         \edef#2{tcb@cnt@#1}%
-      \else%
+      }{%
         \codep@envtrack@missingresolver{#1}{tcolorbox}%
-      \fi%
+      }%
     }{%
-      \ifcsname c@#1\endcsname%
+      \ifcsdef{c@#1}{%
         \edef#2{#1}%
-      \fi%
+      }{}%
     }%
   }%
 }
@@ -2155,12 +2155,12 @@
 %@effect inline-material
 \def\codep@tcb@end#1{%
   \ifcodep@tcb@materialized%
-    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+    \ifcsequal{c@\codep@basecounter}{c@atom}{%
       \ifnum\codep@trackeddepth>1\relax%
       \else%
         \codep@tcb@end@outer{#1}%
       \fi%
-    \fi%
+    }{}%
   \fi%
 }%
 
@@ -2170,7 +2170,7 @@
 %@effect state-only
 \def\codep@tcb@after#1{%
   \ifcodep@tcb@begun%
-    \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+    \ifcsequal{c@\codep@basecounter}{c@atom}{%
       \ifnum\codep@trackeddepth>1\relax%
         \global\advance\codep@trackeddepth by -1\relax%
         \global\advance\codep@suppressdepth by -1\relax%
@@ -2184,10 +2184,10 @@
           \global\let\codep@pendingresultid\@empty%
         \fi%
       \fi%
-    \else%
+    }{%
       \global\advance\codep@replaydepth by -1\relax%
       \global\advance\codep@suppressdepth by -1\relax%
-    \fi%
+    }%
   \fi%
   \codep@tcb@resetboxstate%
 }%
@@ -2268,8 +2268,8 @@
 %% @implements \codep@hooktheorem
 %@effect state-only
 \def\codep@tcb@env@install#1{%
-  \ifcsname codep@tcb@patched@#1\endcsname%
-  \else%
+  \ifcsdef{codep@tcb@patched@#1}{%
+  }{%
     \ifcsundef{#1}{%
       \PackageError{codependent}{%
         Tracked tcolorbox theorem environment '#1' is undefined}{%
@@ -2284,7 +2284,7 @@
         \codep@tcb@after{#1}}%
       \expandafter\gdef\csname codep@tcb@patched@#1\endcsname{1}%
     }%
-  \fi%
+  }%
 }%
 
 % \codep@hooktheorem@tcolorbox{env}
@@ -2365,11 +2365,11 @@
   \global\codep@keythms@beguntrue%
   \global\codep@keythms@storestarerrorfalse%
   \global\codep@keythms@materializedfalse%
-  \expandafter\ifx\csname c@\codep@basecounter\endcsname\c@atom%
+  \ifcsequal{c@\codep@basecounter}{c@atom}{%
     \global\codep@keythms@begintrackedtrue%
-  \else%
+  }{%
     \global\codep@keythms@begintrackedfalse%
-  \fi%
+  }%
   \codep@hooktheorem@begin{#1}%
 }%
 
@@ -2482,8 +2482,8 @@
 %% @implements \codep@hooktheorem
 %@effect state-only
 \def\codep@keythms@env@install#1{%
-  \ifcsname codep@keythms@patched@#1\endcsname%
-  \else%
+  \ifcsdef{codep@keythms@patched@#1}{%
+  }{%
     \codep@target@install{AddToHook}{env/#1/begin}{state-only}{%
       \codep@keythms@begin{#1}}%
     \codep@target@install{backend-hook}{keytheorems/#1/prehead}{state-only}{%
@@ -2495,7 +2495,7 @@
     \codep@target@install{AddToHook}{env/#1/end}{inline-material}{%
       \codep@keythms@end{#1}}%
     \expandafter\gdef\csname codep@keythms@patched@#1\endcsname{1}%
-  \fi%
+  }%
 }%
 
 % \codep@hooktheorem@keytheorems{env}
@@ -4737,15 +4737,15 @@
 %   flushes at enddoc drain time, independent of shipout timing.
 %% @implements \codep@renderlist@emit@all
 \def\codep@renderlist@emit@one#1#2{%
-  \ifcsname codep@rlflag@#1\endcsname%
-    \ifcsname codep@rendered@#1\endcsname%
+  \ifcsdef{codep@rlflag@#1}{%
+    \ifcsdef{codep@rendered@#1}{%
       \immediate\write\@auxout{%
         \string\codep@renderlist{#1}{inline}{%
           \expandafter\expandafter\expandafter\unexpanded%
           \expandafter\expandafter\expandafter{%
             \csname codep@rendered@#1\endcsname}}}%
-    \fi%
-  \fi%
+    }{}%
+  }{}%
 }%
 
 % \codep@renderlist@emit@all
@@ -5769,7 +5769,7 @@
 %   Install front-edge wrappers for the 12 user-level ref primitives.
 %   Called at begindocument/end after nameref, hyperref, and cleveref
 %   have installed their final definitions; our wrappers wrap whatever
-%   is live at that point.  Every install is guarded by \ifcsname so
+%   is live at that point.  Every install is guarded by \ifcsdef so
 %   absent commands (e.g. \cref when cleveref not loaded) are silently
 %   skipped.  All wrappers are \protected so they survive \protected@edef
 %   in moving args (captions, section titles, TOC entries).
@@ -5786,68 +5786,68 @@
 %@effect inline-material
 \def\codep@installfrontedgerefpatch{%
   %% ---- \ref and \ref* ----
-  \ifcsname ref\endcsname%
+  \ifcsdef{ref}{%
     \codep@target@install{command-wrap}{\ref}{inline-material}{%
       \protected\def\ref{%
         \@ifstar{\codep@fe@single@star\codep@orig@ref}%
                 {\codep@fe@single@nostar\codep@orig@ref}%
       }%
     }%
-  \fi%
+  }{}%
   %% ---- \pageref and \pageref* ----
-  \ifcsname pageref\endcsname%
+  \ifcsdef{pageref}{%
     \codep@target@install{command-wrap}{\pageref}{inline-material}{%
       \protected\def\pageref{%
         \@ifstar{\codep@fe@single@star\codep@orig@pageref}%
                 {\codep@fe@single@nostar\codep@orig@pageref}%
       }%
     }%
-  \fi%
+  }{}%
   %% ---- \Ref and \Ref* (nameref) ----
-  \ifcsname Ref\endcsname%
+  \ifcsdef{Ref}{%
     \codep@target@install{command-wrap}{\Ref}{inline-material}{%
       \protected\def\Ref{%
         \@ifstar{\codep@fe@single@star\codep@orig@Ref}%
                 {\codep@fe@single@nostar\codep@orig@Ref}%
       }%
     }%
-  \fi%
+  }{}%
   %% ---- \cref and \cref* (cleveref) ----
-  \ifcsname cref\endcsname%
+  \ifcsdef{cref}{%
     \codep@target@install{command-wrap}{\cref}{inline-material}{%
       \protected\def\cref{%
         \@ifstar{\codep@fe@csv@star\codep@orig@cref}%
                 {\codep@fe@csv@nostar\codep@orig@cref}%
       }%
     }%
-  \fi%
+  }{}%
   %% ---- \Cref and \Cref* (cleveref) ----
-  \ifcsname Cref\endcsname%
+  \ifcsdef{Cref}{%
     \codep@target@install{command-wrap}{\Cref}{inline-material}{%
       \protected\def\Cref{%
         \@ifstar{\codep@fe@csv@star\codep@orig@Cref}%
                 {\codep@fe@csv@nostar\codep@orig@Cref}%
       }%
     }%
-  \fi%
+  }{}%
   %% ---- \labelcref and \labelcref* (cleveref) ----
-  \ifcsname labelcref\endcsname%
+  \ifcsdef{labelcref}{%
     \codep@target@install{command-wrap}{\labelcref}{inline-material}{%
       \protected\def\labelcref{%
         \@ifstar{\codep@fe@csv@star\codep@orig@labelcref}%
                 {\codep@fe@csv@nostar\codep@orig@labelcref}%
       }%
     }%
-  \fi%
+  }{}%
   %% ---- \autoref and \autoref* (hyperref) ----
-  \ifcsname autoref\endcsname%
+  \ifcsdef{autoref}{%
     \codep@target@install{command-wrap}{\autoref}{inline-material}{%
       \protected\def\autoref{%
         \@ifstar{\codep@fe@single@star\codep@orig@autoref}%
                 {\codep@fe@single@nostar\codep@orig@autoref}%
       }%
     }%
-  \fi%
+  }{}%
 }%
 
 % Install the front-edge wrappers at begindocument/end, AFTER the
@@ -6785,22 +6785,22 @@
 \newcommand*{\codepbackrefsof}[1]{%
   \begingroup%
     \def\codep@tmp@backrefsoflabel{#1}%
-    \ifcsname codep@lblentity@\codep@tmp@backrefsoflabel\endcsname%
+    \ifcsdef{codep@lblentity@\codep@tmp@backrefsoflabel}{%
       \edef\codep@tmp@backrefsofkey{%
         \csname codep@lblentity@\codep@tmp@backrefsoflabel\endcsname}%
-    \else%
-      \ifcsname codep@lblnum@\codep@tmp@backrefsoflabel\endcsname%
-        \ifcsname codep@ltype@\codep@tmp@backrefsoflabel\endcsname%
+    }{%
+      \ifcsdef{codep@lblnum@\codep@tmp@backrefsoflabel}{%
+        \ifcsdef{codep@ltype@\codep@tmp@backrefsoflabel}{%
           \edef\codep@tmp@backrefsofkey{%
             \csname codep@ltype@\codep@tmp@backrefsoflabel\endcsname%
             :\csname codep@lblnum@\codep@tmp@backrefsoflabel\endcsname}%
-        \else%
+        }{%
           \let\codep@tmp@backrefsofkey\relax%
-        \fi%
-      \else%
+        }%
+      }{%
         \let\codep@tmp@backrefsofkey\relax%
-      \fi%
-    \fi%
+      }%
+    }%
     \ifx\codep@tmp@backrefsofkey\relax%
       \PackageWarning{codependent}{%
         \string\codepbackrefsof: unknown label '#1' %

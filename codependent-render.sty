@@ -164,9 +164,9 @@
     % wrappers when hyperref is loaded — produced by
     % collapsebr@cb's anchor+display lookup at collapse time).
     % \ifcsundef cannot distinguish \@empty from real data
-    % (collapsebr always defines the csname), so use \ifx against
-    % \@empty instead.
-    \expandafter\ifx\csname codep@br@#1\endcsname\@empty%
+    % (collapsebr always defines the csname), so use \ifcsempty
+    % for the empty-macro test.
+    \ifcsempty{codep@br@#1}{%
       % No refs to this target (collapsed to \@empty): clear cache.
       % Replay-guarded: atom may re-populate refs in same run,
       % so cache must be cleared outside replay depth to allow
@@ -175,7 +175,7 @@
         \global\expandafter\let\csname codep@rendered@#1\endcsname\@undefined%
         \global\expandafter\let\csname codep@rlflag@#1\endcsname\@undefined%
       \fi%
-    \else
+    }{%
       % P05a Moment 1: freeze the collapsed payload into
       % \codep@rendered@<key>, and mark the atom "touched this
       % run" via \codep@rlflag@<key> so the enddoc walker knows
@@ -201,7 +201,7 @@
             \csname codep@br@#1\endcsname}}%
         \expandafter\gdef\csname codep@rlflag@#1\endcsname{}%
       \fi%
-    \fi
+    }%
   }{}%
 }
 
@@ -214,13 +214,13 @@
 %% @behavior B-DISP-THM
 \def\codep@render@flushbackref#1{%
   \ifboolexpr{bool {codep@backrefs} and not bool {codep@appendix}}{%
-    \ifcsname codep@rendered@#1\endcsname%
+    \ifcsdef{codep@rendered@#1}{%
       \expandafter\let\expandafter\codep@tmp@flushed%
         \csname codep@rendered@#1\endcsname%
       \ifx\codep@tmp@flushed\@empty\else
         \codep@renderbackref{\codep@tmp@flushed}%
       \fi
-    \fi
+    }{}%
   }{}%
 }
 
@@ -379,12 +379,12 @@
 %% @behavior B-PRINTKIND-DISPLAY-OVERRIDE
 \def\codep@appendixdisplay@resolve#1#2#3{%
   \expandafter\codep@appendixdisplay@splitenv#1:\codep@stop%
-  \ifcsname codep@appendixdisplay@\codep@tmp@appendixdisplay@env\endcsname%
+  \ifcsdef{codep@appendixdisplay@\codep@tmp@appendixdisplay@env}{%
     \expandafter\let\expandafter#3%
       \csname codep@appendixdisplay@\codep@tmp@appendixdisplay@env\endcsname%
-  \else%
+  }{%
     \let#3#2%
-  \fi%
+  }%
 }%
 
 % \codep@appendix@emit{prefixedkey}{type}
@@ -394,9 +394,9 @@
 %   the P05a Moment-1/Moment-3 cache (\codep@rendered@<key>).
 %% @implements \codepappendix
 \def\codep@appendix@emit#1#2{%
-  \ifcsname codep@rendered@#1\endcsname%
-    \expandafter\ifx\csname codep@rendered@#1\endcsname\@empty%
-    \else%
+  \ifcsdef{codep@rendered@#1}{%
+    \ifcsempty{codep@rendered@#1}{%
+    }{%
       \expandafter\let\expandafter\codep@tmp@rlpayload%
         \csname codep@rendered@#1\endcsname%
       \codep@graph@getentitydisplay{#1}{\codep@tmp@display}%
@@ -415,8 +415,8 @@
       \fi%
       \codep@appendixentry{#1}{\codep@tmp@display}{%
         \codep@tmp@appendixprintkind}{\codep@tmp@page}{\codep@tmp@rlpayload}%
-    \fi%
-  \fi%
+    }%
+  }{}%
 }
 
 % Appendix rendering helpers.
@@ -510,11 +510,11 @@
 %% @implements \codep@hooktheorem
 \def\codep@render@thm@preparebackref#1{%
   \codep@subsystem@recordtotal{backref-render}%
-  \ifcsname codep@manuallyemitted@\codep@outeratom\endcsname%
-  \else%
+  \ifcsdef{codep@manuallyemitted@\codep@outeratom}{%
+  }{%
     \codep@render@refresh{\codep@outeratom}%
     \codep@render@flushbackref{\codep@outeratom}%
-  \fi%
+  }%
 }%
 
 % \codep@render@thm@afterend{envname}
@@ -534,11 +534,11 @@
 %% @implements \codep@hookproof
 \def\codep@render@proof@end{%
   \codep@proof@identitykey{\codep@currentproofid}{\codep@tmp@proofkey}%
-  \ifcsname codep@manuallyemitted@\codep@tmp@proofkey\endcsname%
-  \else%
+  \ifcsdef{codep@manuallyemitted@\codep@tmp@proofkey}{%
+  }{%
     \codep@render@refresh{\codep@tmp@proofkey}%
     \codep@render@flushbackref{\codep@tmp@proofkey}%
-  \fi%
+  }%
 }%
 
 % \codep@render@proof@afterend
