@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import ast
 import difflib
+import functools
 import re
 import sys
 from dataclasses import dataclass
@@ -285,6 +286,12 @@ def _compact_contract_code(text: str) -> str:
     return re.sub(r"\s+", "", text)
 
 
+@functools.lru_cache(maxsize=8)
+def _compact_uncommented_file(text: str) -> str:
+    stripped = "\n".join(_strip_comments(line) for line in text.splitlines())
+    return _compact_contract_code(stripped)
+
+
 def _line_in_named_macro(text: str, macro_name: str, line: int) -> bool:
     span = _macro_line_span(text, macro_name)
     if span is None:
@@ -313,8 +320,7 @@ def _is_kernel_reset_list_exception(
             return False
         # Content + macro anchoring already passed above; assert global uniqueness so
         # adding a second matching site doesn't silently inherit the exception.
-        stripped = "\n".join(_strip_comments(l) for l in text.splitlines())
-        compact_full_file = _compact_contract_code(stripped)
+        compact_full_file = _compact_uncommented_file(text)
         if compact_full_file.count(KERNEL_RESET_LIST_EXCEPTION["target_compact"]) != 1:
             return False
         return True
@@ -342,8 +348,7 @@ def _is_enddoc_orchestrator_exception(
         # Content anchoring already passed above; assert global uniqueness so
         # adding a second matching site doesn't silently inherit the exception.
         raw = full_text or path.read_text()
-        stripped = "\n".join(_strip_comments(l) for l in raw.splitlines())
-        compact_full_file = _compact_contract_code(stripped)
+        compact_full_file = _compact_uncommented_file(raw)
         if compact_full_file.count(ENDDOC_ORCHESTRATOR_EXCEPTION["target_compact"]) != 1:
             return False
         return True
