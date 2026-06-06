@@ -556,8 +556,7 @@
 %   \codep@proofstaterestore.
 %% @utility
 \def\codep@manuallyemitted@clear@key#1{%
-  \global\expandafter\let%
-    \csname codep@manuallyemitted@#1\endcsname\@undefined%
+  \csgundef{codep@manuallyemitted@#1}%
 }%
 
 %% ===================================================================
@@ -616,10 +615,8 @@
       \PackageError{codependent}{Context stack mismatch on '#1'}{%
         Expected to pop '#1' but found '\codep@tmp@ctxkind'.}%
     \fi%
-    \global\expandafter\let%
-      \csname codep@ctxid@\the\codep@ctxdepth\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@ctxkind@\the\codep@ctxdepth\endcsname\@undefined%
+    \csgundef{codep@ctxid@\the\codep@ctxdepth}%
+    \csgundef{codep@ctxkind@\the\codep@ctxdepth}%
     \global\advance\codep@ctxdepth by -1\relax%
   \fi%
 }%
@@ -631,8 +628,7 @@
   \ifnum\codep@ctxdepth<1\relax%
     \let#1\@empty%
   \else%
-    \expandafter\let\expandafter#1%
-      \csname codep@ctxid@\the\codep@ctxdepth\endcsname%
+    \letcs#1{codep@ctxid@\the\codep@ctxdepth}%
   \fi%
 }%
 
@@ -643,8 +639,7 @@
   \ifnum\codep@ctxdepth<1\relax%
     \let#1\@empty%
   \else%
-    \expandafter\let\expandafter#1%
-      \csname codep@ctxkind@\the\codep@ctxdepth\endcsname%
+    \letcs#1{codep@ctxkind@\the\codep@ctxdepth}%
   \fi%
 }%
 
@@ -669,7 +664,7 @@
     \ifcsundef{codep@atomkey@#1}{%
       \let#2\@empty%
     }{%
-      \expandafter\let\expandafter#2\csname codep@atomkey@#1\endcsname%
+      \letcs#2{codep@atomkey@#1}%
     }%
   \fi%
 }%
@@ -684,8 +679,7 @@
     \ifcsundef{codep@atomdisplay@#1}{%
       \let#2\@empty%
     }{%
-      \expandafter\let\expandafter#2%
-        \csname codep@atomdisplay@#1\endcsname%
+      \letcs#2{codep@atomdisplay@#1}%
     }%
   \fi%
 }%
@@ -700,7 +694,7 @@
     \ifcsundef{codep@atomkind@#1}{%
       \let#2\@empty%
     }{%
-      \expandafter\let\expandafter#2\csname codep@atomkind@#1\endcsname%
+      \letcs#2{codep@atomkind@#1}%
     }%
   \fi%
 }%
@@ -712,7 +706,7 @@
   \ifcsundef{codep@idbykey@#1}{%
     \let#2\@empty%
   }{%
-    \expandafter\let\expandafter#2\csname codep@idbykey@#1\endcsname%
+    \letcs#2{codep@idbykey@#1}%
   }%
 }%
 
@@ -900,8 +894,7 @@
       \codep@proof@identitykey{#1}{\codep@tmp@overrideproofkey}%
       \codep@prooftargetmeta@clear{\codep@tmp@overrideproofkey}%
       \csxdef{codep@proofparent@#1}{}%
-      \global\expandafter\let%
-        \csname codep@proofheadingoverride@#1\endcsname\@empty%
+      \global\cslet{codep@proofheadingoverride@#1}\@empty%
     }{}%
   }%
 }%
@@ -983,10 +976,8 @@
   \ifcsundef{@removefromreset}{%
     % Manual: rewrite \cl@parent without #1.
     \begingroup
-      \expandafter\let\expandafter\codep@resetlist%
-        \csname cl@#2\endcsname%
-      \expandafter\global\expandafter\let%
-        \csname cl@#2\endcsname\@empty%
+      \letcs\codep@resetlist{cl@#2}%
+      \global\cslet{cl@#2}\@empty%
       \def\@elt##1{%
         \def\codep@cur{##1}%
         \def\codep@tgt{#1}%
@@ -1643,7 +1634,7 @@
     \PackageWarning{codependent}{%
       typed installer already saved original for \string#1; skipping reinstall}%
   }{%
-    \global\expandafter\let\csname #2\endcsname#1%
+    \global\cslet{#2}#1%
     #3%
   }%
 }
@@ -1760,8 +1751,7 @@
 %@effect state-only
 \long\def\codep@target@install@dynamiccommandwrap#1#2#3{%
   \codep@install@settargetname{#1}%
-  \expandafter\let%
-    \csname codep@body@\codep@install@targetname\endcsname#1%
+  \cslet{codep@body@\codep@install@targetname}#1%
   \protected\edef#1{#3}%
 }
 
@@ -1788,8 +1778,8 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@counter@alias@install}[2]{%
-  \expandafter\let\csname c@#1\expandafter\endcsname\csname c@#2\endcsname%
-  \expandafter\let\csname the#1\expandafter\endcsname\csname the#2\endcsname%
+  \csletcs{c@#1}{c@#2}%
+  \csletcs{the#1}{the#2}%
 }
 
 % \codep@proof@install@heading{target-cs}{effect}{prepend}{failure}
@@ -1819,7 +1809,7 @@
 %% @utility
 %@effect state-only
 \newcommand*{\codep@envtrack@config@read}[3]{%
-  \expandafter\let\expandafter#3\csname codep@envtrack@cfg@#1@#2\endcsname%
+  \letcs#3{codep@envtrack@cfg@#1@#2}%
 }
 
 % \codep@envtrack@ifkeytheoremsTF{env}{true}{false}
@@ -3115,8 +3105,7 @@
   \ifcsundef{codep@autoproofof@seen@#2}{%
     \codep@autoproofof@warnclobbered{#1}%
   }{%
-    \global\expandafter\let%
-      \csname codep@autoproofof@seen@#2\endcsname\@undefined%
+    \csgundef{codep@autoproofof@seen@#2}%
   }%
 }%
 
@@ -3205,8 +3194,7 @@
     \global\let\codep@proofadj@pendinganchormapkey\@empty%
     \global\let\codep@proofadj@pendinganchormapanchor\@empty%
   }{%
-    \global\expandafter\let\expandafter\codep@currentproofid%
-      \csname codep@savedproofid@#1\endcsname%
+    \global\letcs\codep@currentproofid{codep@savedproofid@#1}%
     \edef\codep@tmp@proofpending{%
       \csname codep@savedproofpending@#1\endcsname}%
     \def\codep@tmp@proofone{1}%
@@ -3229,28 +3217,16 @@
     \else%
       \global\codep@proof@adjcommit@neededfalse%
     \fi%
-    \global\expandafter\let\expandafter\codep@pendingproofbind%
-      \csname codep@savedproofbind@#1\endcsname%
-    \global\expandafter\let\expandafter%
-      \codep@proofadj@pendinganchormapkey%
-      \csname codep@savedproofadjkey@#1\endcsname%
-    \global\expandafter\let\expandafter%
-      \codep@proofadj@pendinganchormapanchor%
-      \csname codep@savedproofadjanchor@#1\endcsname%
-    \global\expandafter\let%
-      \csname codep@savedproofid@#1\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@savedproofpending@#1\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@savedproofautoeligible@#1\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@savedproofadjcommit@#1\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@savedproofbind@#1\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@savedproofadjkey@#1\endcsname\@undefined%
-    \global\expandafter\let%
-      \csname codep@savedproofadjanchor@#1\endcsname\@undefined%
+    \global\letcs\codep@pendingproofbind{codep@savedproofbind@#1}%
+    \global\letcs\codep@proofadj@pendinganchormapkey{codep@savedproofadjkey@#1}%
+    \global\letcs\codep@proofadj@pendinganchormapanchor{codep@savedproofadjanchor@#1}%
+    \csgundef{codep@savedproofid@#1}%
+    \csgundef{codep@savedproofpending@#1}%
+    \csgundef{codep@savedproofautoeligible@#1}%
+    \csgundef{codep@savedproofadjcommit@#1}%
+    \csgundef{codep@savedproofbind@#1}%
+    \csgundef{codep@savedproofadjkey@#1}%
+    \csgundef{codep@savedproofadjanchor@#1}%
   }%
 }%
 
@@ -3768,8 +3744,7 @@
 \def\codep@dedupwrite#1#2{%
   \ifcsundef{%
       codep@arw@#1@#2}{%
-    \global\expandafter\let%
-      \csname codep@arw@#1@#2\endcsname\@empty%
+    \global\cslet{codep@arw@#1@#2}\@empty%
     \codep@ifunresrefkey{#1}{%
       \codep@unresref@rememberref{#1}{#2}%
     }{%
@@ -4087,8 +4062,7 @@
   \endgroup
   \xdef\codep@cursecnum{\thesection}%
   \global\let\codep@cursectitle\codep@tmp@result%
-  \global\expandafter\let%
-    \csname codep@sectitle@\thesection\endcsname\codep@tmp@result%
+  \global\cslet{codep@sectitle@\thesection}\codep@tmp@result%
 }%
 
 % Auto-suppress enumitem \newlist environments.
@@ -4473,8 +4447,7 @@
     \ifcsundef{codep@prooftargetkeys@#1}{%
       \let#2\@empty%
     }{%
-      \expandafter\let\expandafter#2%
-        \csname codep@prooftargetkeys@#1\endcsname%
+      \letcs#2{codep@prooftargetkeys@#1}%
     }%
   }%
 
@@ -4485,8 +4458,7 @@
     \ifcsundef{codep@prooftargetdisplays@#1}{%
       \let#2\@empty%
     }{%
-      \expandafter\let\expandafter#2%
-        \csname codep@prooftargetdisplays@#1\endcsname%
+      \letcs#2{codep@prooftargetdisplays@#1}%
     }%
   }%
 
@@ -4497,8 +4469,7 @@
     \ifcsundef{codep@prooftargetmarker@#1}{%
       \def#2{*}%
     }{%
-      \expandafter\let\expandafter#2%
-        \csname codep@prooftargetmarker@#1\endcsname%
+      \letcs#2{codep@prooftargetmarker@#1}%
     }%
   }%
 
@@ -4509,8 +4480,7 @@
     \ifcsundef{codep@prooftargetcount@#1}{%
       \def#2{0}%
     }{%
-      \expandafter\let\expandafter#2%
-        \csname codep@prooftargetcount@#1\endcsname%
+      \letcs#2{codep@prooftargetcount@#1}%
     }%
   }%
 
@@ -4519,8 +4489,7 @@
   %   Add proof-key once to the enddoc metadata emission list.
   \def\codep@prooftargetmeta@touch#1{%
     \ifcsundef{codep@prooftargettouched@#1}{%
-      \global\expandafter\let%
-        \csname codep@prooftargettouched@#1\endcsname\@empty%
+      \global\cslet{codep@prooftargettouched@#1}\@empty%
       \edef\codep@tmp@prooftargettouch{\noexpand\do{#1}}%
       \expandafter\g@addto@macro\expandafter\codep@prooftargetmetalist%
         \expandafter{\codep@tmp@prooftargettouch}%
@@ -4604,8 +4573,7 @@
     \codep@prooftargetmeta@getkeys{#1}{\codep@tmp@cdpproofkeys}%
     \ifx\codep@tmp@cdpproofkeys\@empty\else%
       \ifcsundef{codep@cdpproofwritten@#1}{%
-        \global\expandafter\let%
-          \csname codep@cdpproofwritten@#1\endcsname\@empty%
+        \global\cslet{codep@cdpproofwritten@#1}\@empty%
         \codep@prooftargetmeta@getdisplays{#1}{%
           \codep@tmp@cdpproofdisplays}%
         \codep@prooftargetmeta@getmarker{#1}{%
@@ -4801,8 +4769,7 @@
 \def\codep@drainrefpending#1{%
   \ifcsundef{codep@refpending@#1}{}{%
     \csname codep@refpending@#1\endcsname%
-    \global\expandafter\let%
-      \csname codep@refpending@#1\endcsname\@undefined%
+    \csgundef{codep@refpending@#1}%
   }%
 }%
 
@@ -4883,8 +4850,7 @@
     \codep@writeatomref@do{#1}%
   \else%
     \ifcsundef{codep@arw@pending@#1}{%
-      \global\expandafter\let%
-        \csname codep@arw@pending@#1\endcsname\@empty%
+      \global\cslet{codep@arw@pending@#1}\@empty%
       \global\codep@eqpendguards=\expandafter{%
         \the\codep@eqpendguards%
         \global\expandafter\let%
@@ -5059,9 +5025,7 @@
     \ifx\codep@tmp@last\codep@tmp@src%
       % Consecutive duplicate: skip.
     \else
-      \global\expandafter\let%
-        \csname codep@brlast@\codep@tmp@tgt\endcsname%
-        \codep@tmp@src%
+      \global\cslet{codep@brlast@\codep@tmp@tgt}\codep@tmp@src%
       % Append a new linked-list node.
       \ifcsundef{%
           codep@brcount@\codep@tmp@tgt}{%
@@ -5152,7 +5116,7 @@
   \ifcsundef{codep@keymap@#1}{%
     \edef#2{#1}%
   }{%
-    \expandafter\let\expandafter#2\csname codep@keymap@#1\endcsname%
+    \letcs#2{codep@keymap@#1}%
   }%
 }%
 
@@ -5249,12 +5213,10 @@
       \ifcsundef{codep@anchor@\codep@tmp@graphkey}{%
         \let#2\@empty%
       }{%
-        \expandafter\let\expandafter#2%
-          \csname codep@anchor@\codep@tmp@graphkey\endcsname%
+        \letcs#2{codep@anchor@\codep@tmp@graphkey}%
       }%
     }{%
-      \expandafter\let\expandafter#2%
-        \csname codep@anchor@#1\endcsname%
+      \letcs#2{codep@anchor@#1}%
     }%
   }{%
     \edef\codep@tmp@graphalias{%
@@ -6407,9 +6369,7 @@
       empty appendix-display override for env '\codep@tmp@adkey'}{%
       Give appendix-display a non-empty literal label, or remove the key.}%
   }{%
-    \expandafter\global\expandafter\let%
-      \csname codep@appendixdisplay@\codep@tmp@adkey\endcsname%
-      \codep@tmp@adval%
+    \global\cslet{codep@appendixdisplay@\codep@tmp@adkey}\codep@tmp@adval%
   }%
 }%
 

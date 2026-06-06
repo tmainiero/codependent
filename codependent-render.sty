@@ -131,11 +131,9 @@
     \def\codep@tmp@acc{}%
     \codep@graph@foreachref{#1}{\codep@collapsebr@cb}%
     \ifx\codep@tmp@acc\@empty%
-      \global\expandafter\let%
-        \csname codep@br@#1\endcsname\@empty%
+      \global\cslet{codep@br@#1}\@empty%
     \else%
-      \global\expandafter\let%
-        \csname codep@br@#1\endcsname\codep@tmp@acc%
+      \global\cslet{codep@br@#1}\codep@tmp@acc%
     \fi%
   \endgroup%
 }
@@ -172,8 +170,8 @@
       % so cache must be cleared outside replay depth to allow
       % fresh collapse on next refresh call.
       \ifnum\codep@replaydepth=0\relax%
-        \global\expandafter\let\csname codep@rendered@#1\endcsname\@undefined%
-        \global\expandafter\let\csname codep@rlflag@#1\endcsname\@undefined%
+        \csgundef{codep@rendered@#1}%
+        \csgundef{codep@rlflag@#1}%
       \fi%
     }{%
       % P05a Moment 1: freeze the collapsed payload into
@@ -215,8 +213,7 @@
 \def\codep@render@flushbackref#1{%
   \ifboolexpr{bool {codep@backrefs} and not bool {codep@appendix}}{%
     \ifcsdef{codep@rendered@#1}{%
-      \expandafter\let\expandafter\codep@tmp@flushed%
-        \csname codep@rendered@#1\endcsname%
+      \letcs\codep@tmp@flushed{codep@rendered@#1}%
       \ifx\codep@tmp@flushed\@empty\else
         \codep@renderbackref{\codep@tmp@flushed}%
       \fi
@@ -380,8 +377,7 @@
 \def\codep@appendixdisplay@resolve#1#2#3{%
   \expandafter\codep@appendixdisplay@splitenv#1:\codep@stop%
   \ifcsdef{codep@appendixdisplay@\codep@tmp@appendixdisplay@env}{%
-    \expandafter\let\expandafter#3%
-      \csname codep@appendixdisplay@\codep@tmp@appendixdisplay@env\endcsname%
+    \letcs#3{codep@appendixdisplay@\codep@tmp@appendixdisplay@env}%
   }{%
     \let#3#2%
   }%
@@ -397,8 +393,7 @@
   \ifcsdef{codep@rendered@#1}{%
     \ifcsempty{codep@rendered@#1}{%
     }{%
-      \expandafter\let\expandafter\codep@tmp@rlpayload%
-        \csname codep@rendered@#1\endcsname%
+      \letcs\codep@tmp@rlpayload{codep@rendered@#1}%
       \codep@graph@getentitydisplay{#1}{\codep@tmp@display}%
       \codep@graph@getprintkind{#1}{\codep@tmp@printkind}%
       \codep@graph@getanchorpage{#1}{\codep@tmp@page}%
