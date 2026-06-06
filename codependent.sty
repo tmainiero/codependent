@@ -609,7 +609,7 @@
       closing '#1'.}%
   \else%
     \edef\codep@tmp@ctxkind{%
-      \csname codep@ctxkind@\the\codep@ctxdepth\endcsname}%
+      \csuse{codep@ctxkind@\the\codep@ctxdepth}}%
     \def\codep@tmp@expected{#1}%
     \ifx\codep@tmp@ctxkind\codep@tmp@expected\else%
       \PackageError{codependent}{Context stack mismatch on '#1'}{%
@@ -882,12 +882,12 @@
 \def\codep@proof@maybeheadingoverrideadjacent#1#2#3{%
   \ifcsundef{codep@proofadjtarget@#1}{}{%
     \ifcsundef{codep@proofheadingoverride@#1}{%
-      \edef\codep@tmp@adjtarget{\csname codep@proofadjtarget@#1\endcsname}%
+      \edef\codep@tmp@adjtarget{\csuse{codep@proofadjtarget@#1}}%
       \edef\codep@tmp@headingtarget{#2}%
       \ifx\codep@tmp@adjtarget\codep@tmp@headingtarget\else%
         \ifbool{codep@warnattributionconflicts}{%
           \PackageWarning{codependent}{auto-attribution to #3\space%
-            supersedes adjacent \csname codep@proofadjdisplay@#1\endcsname}%
+            supersedes adjacent \csuse{codep@proofadjdisplay@#1}}%
         }{}%
         \codep@proof@suppressadjacenttarget{#1}{\codep@tmp@adjtarget}%
       \fi%
@@ -922,9 +922,9 @@
         #3%
       }{%
         \edef\codep@tmp@suppressadjacent{%
-          \csname codep@proofsuppressadjacent@%
-            \codep@currentproofid\endcsname}%
-        \edef\codep@tmp@suppresstarget{\csname codep@lblentity@#1\endcsname}%
+          \csuse{codep@proofsuppressadjacent@%
+            \codep@currentproofid}}%
+        \edef\codep@tmp@suppresstarget{\csuse{codep@lblentity@#1}}%
         \ifx\codep@tmp@suppressadjacent\codep@tmp@suppresstarget%
           #2%
         \else%
@@ -1613,7 +1613,7 @@
   \codep@install@assert@known@effect{#3}%
   \codep@install@assert@compatible{#1}{#3}%
   \edef\codep@install@registername{%
-    \csname codep@install@slot@#1\endcsname}%
+    \csuse{codep@install@slot@#1}}%
   \codep@hook@install@register{\codep@install@registername}{#1}{#2}{#4}%
 }
 
@@ -1763,9 +1763,9 @@
   \codep@install@assert@known@kind{#1}%
   \codep@install@assert@known@effect{#3}%
   \edef\codep@install@handlername{%
-    \csname codep@install@kind@#1\endcsname}%
+    \csuse{codep@install@kind@#1}}%
   \ifcsdef{codep@target@install@\codep@install@handlername}{%
-    \csname codep@target@install@\codep@install@handlername\endcsname%
+    \csuse{codep@target@install@\codep@install@handlername}%
       {#2}{#3}{#4}%
   }{%
     \PackageError{codependent}{install-kind #1 dispatch drift}{%
@@ -2204,7 +2204,7 @@
 %@effect inline-material
 \def\codep@tcb@thmwrap@title#1#2#3{%
   \codep@thmwrap@wrapname{#1}{\codep@tmp@wrappedthmname}%
-  \csname codep@orig@__tcobox_theo_title:nnn\endcsname%
+  \csuse{codep@orig@__tcobox_theo_title:nnn}%
     {\codep@tmp@wrappedthmname}{#2}{#3}%
   \global\let\codep@thmwrap@activeenv\@empty%
 }%
@@ -2321,7 +2321,7 @@
 \def\codep@keythms@ifrestatingTF#1#2{%
   \ifcsundef{IfRestatingTF}{%
     \ifcsundef{keythms_if_restating:TF}{#2}{%
-      \csname keythms_if_restating:TF\endcsname{#1}{#2}}%
+      \csuse{keythms_if_restating:TF}{#1}{#2}}%
   }{%
     \IfRestatingTF{#1}{#2}%
   }%
@@ -2932,7 +2932,7 @@
       codep@autoproofof@headsuppress@#1}{%
     \count@=0\relax%
   }{%
-    \count@=\csname codep@autoproofof@headsuppress@#1\endcsname\relax%
+    \count@=\csuse{codep@autoproofof@headsuppress@#1}\relax%
   }%
   \advance\count@ by 1\relax%
   \csxdef{codep@autoproofof@headsuppress@#1}{%
@@ -2947,7 +2947,7 @@
       codep@autoproofof@headsuppress@#1}{%
     #3%
   }{%
-    \count@=\csname codep@autoproofof@headsuppress@#1\endcsname\relax%
+    \count@=\csuse{codep@autoproofof@headsuppress@#1}\relax%
     \ifnum\count@>0\relax%
       \advance\count@ by -1\relax%
       \csxdef{codep@autoproofof@headsuppress@#1}{%
@@ -3034,7 +3034,7 @@
         codep@proofof@attribcount@#1}{%
       \def#2{0}%
     }{%
-      \edef#2{\csname codep@proofof@attribcount@#1\endcsname}%
+      \edef#2{\csuse{codep@proofof@attribcount@#1}}%
     }%
   \fi%
 }%
@@ -3196,7 +3196,7 @@
   }{%
     \global\letcs\codep@currentproofid{codep@savedproofid@#1}%
     \edef\codep@tmp@proofpending{%
-      \csname codep@savedproofpending@#1\endcsname}%
+      \csuse{codep@savedproofpending@#1}}%
     \def\codep@tmp@proofone{1}%
     \ifx\codep@tmp@proofpending\codep@tmp@proofone%
       \global\codep@proofdisplaypendingtrue%
@@ -3204,14 +3204,14 @@
       \global\codep@proofdisplaypendingfalse%
     \fi%
     \edef\codep@tmp@proofautoeligible{%
-      \csname codep@savedproofautoeligible@#1\endcsname}%
+      \csuse{codep@savedproofautoeligible@#1}}%
     \ifx\codep@tmp@proofautoeligible\codep@tmp@proofone%
       \global\codep@autoproofof@eligibletrue%
     \else%
       \global\codep@autoproofof@eligiblefalse%
     \fi%
     \edef\codep@tmp@proofadjcommit{%
-      \csname codep@savedproofadjcommit@#1\endcsname}%
+      \csuse{codep@savedproofadjcommit@#1}}%
     \ifx\codep@tmp@proofadjcommit\codep@tmp@proofone%
       \global\codep@proof@adjcommit@neededtrue%
     \else%
@@ -3376,8 +3376,8 @@
         \codep@tmp@pendingproofid}{%
     }{%
       \edef\codep@tmp@pendingproofanchor{%
-        \csname codep@proofpendingheadinganchor@%
-          \codep@tmp@pendingproofid\endcsname}%
+        \csuse{codep@proofpendingheadinganchor@%
+          \codep@tmp@pendingproofid}}%
       \ifx\codep@tmp@pendingproofanchor\@empty\else%
         \@ifpackageloaded{hyperref}{%
           \codep@emit@destination{\codep@tmp@pendingproofanchor}%
@@ -3398,7 +3398,7 @@
     \codep@proof@beginanchorname{#1}{\codep@tmp@proofanchor}%
   }{%
     \edef\codep@tmp@proofanchor{%
-      \csname codep@proofbeginanchor@#1\endcsname}%
+      \csuse{codep@proofbeginanchor@#1}}%
   }%
   \codep@writeanchormapvalue{#2}{\codep@tmp@proofanchor}%
 }%
@@ -3422,7 +3422,7 @@
     \codep@writeanchorpagecurrent{#2}%
   }{%
     \edef\codep@tmp@proofpage{%
-      \csname codep@proofbeginpage@#1\endcsname}%
+      \csuse{codep@proofbeginpage@#1}}%
     \codep@writeanchorpage{#2}{\codep@tmp@proofpage}%
   }%
 }%
@@ -3531,7 +3531,7 @@
     }{%
       \edef\codep@tmp@adjproofid{\codep@currentproofid}%
       \edef\codep@tmp@adjtargetid{%
-        \csname codep@adjcandidate@\codep@tmp@adjproofid\endcsname}%
+        \csuse{codep@adjcandidate@\codep@tmp@adjproofid}}%
       \codep@proof@adjacent@commit{%
         \codep@tmp@adjproofid}{\codep@tmp@adjtargetid}%
     }%
@@ -3783,7 +3783,7 @@
       \def\codep@tmp@unresreffinal{#2}%
       \def\do##1{%
         \codep@dedupwrite{\codep@tmp@unresreffinal}{##1}}%
-      \csname codep@unresrefs@#1\endcsname%
+      \csuse{codep@unresrefs@#1}%
     \endgroup%
   }%
 }%
@@ -4768,7 +4768,7 @@
 %% @utility
 \def\codep@drainrefpending#1{%
   \ifcsundef{codep@refpending@#1}{}{%
-    \csname codep@refpending@#1\endcsname%
+    \csuse{codep@refpending@#1}%
     \csgundef{codep@refpending@#1}%
   }%
 }%
@@ -4923,7 +4923,7 @@
     \loop%
       \ifnum\count@<\codep@brid%
         \advance\count@ by 1\relax
-        \csname codep@brq@\the\count@\endcsname
+        \csuse{codep@brq@\the\count@}
         \global\expandafter\let%
           \csname codep@brq@\the\count@\endcsname\relax
     \repeat%
@@ -5014,14 +5014,14 @@
     \ifcsundef{codep@keymap@\codep@tmp@src}{%
     }{%
       \edef\codep@tmp@src{%
-        \csname codep@keymap@\codep@tmp@src\endcsname}%
+        \csuse{codep@keymap@\codep@tmp@src}}%
     }%
   }{}%
   % Self-ref guard (REVIEW_C finding #10).
   \ifx\codep@tmp@src\codep@tmp@tgt\else
     % Dedup against previous append for this target.
     \edef\codep@tmp@last{%
-      \csname codep@brlast@\codep@tmp@tgt\endcsname}%
+      \csuse{codep@brlast@\codep@tmp@tgt}}%
     \ifx\codep@tmp@last\codep@tmp@src%
       % Consecutive duplicate: skip.
     \else
@@ -5032,7 +5032,7 @@
         \csgdef{codep@brcount@\codep@tmp@tgt}{0}%
       }{}%
       \edef\codep@tmp@k{%
-        \csname codep@brcount@\codep@tmp@tgt\endcsname}%
+        \csuse{codep@brcount@\codep@tmp@tgt}}%
       \count@=\codep@tmp@k\relax
       \advance\count@ by 1\relax
       \csxdef{codep@brcount@\codep@tmp@tgt}%
@@ -5063,17 +5063,17 @@
       % Unknown target: silently drop.
     }{%
       \ifcsundef{codep@ltype@#1}{%
-        \edef\codep@tmp@tgt{\csname codep@lblnum@#1\endcsname}%
+        \edef\codep@tmp@tgt{\csuse{codep@lblnum@#1}}%
       }{%
         \edef\codep@tmp@tgt{%
-          \csname codep@ltype@#1\endcsname
-          :\csname codep@lblnum@#1\endcsname}%
+          \csuse{codep@ltype@#1}
+          :\csuse{codep@lblnum@#1}}%
       }%
       \edef\codep@tmp@src{#2}%
       \codep@appendbr@core%
     }%
   }{%
-    \edef\codep@tmp@tgt{\csname codep@lblentity@#1\endcsname}%
+    \edef\codep@tmp@tgt{\csuse{codep@lblentity@#1}}%
     \edef\codep@tmp@src{#2}%
     \codep@appendbr@core%
   }%
@@ -5220,7 +5220,7 @@
     }%
   }{%
     \edef\codep@tmp@graphalias{%
-      \csname codep@anchoralias@#1\endcsname}%
+      \csuse{codep@anchoralias@#1}}%
     \codep@graph@getanchor{\codep@tmp@graphalias}{#2}%
   }%
 }%
@@ -5291,13 +5291,13 @@
 %   #2{source-key} for each.  #2 is a macro that takes one arg.
 \def\codep@graph@foreachref#1#2{%
   \ifcsundef{codep@brcount@#1}{}{%
-    \edef\codep@tmp@n{\csname codep@brcount@#1\endcsname}%
+    \edef\codep@tmp@n{\csuse{codep@brcount@#1}}%
     \count@=\z@%
     \loop%
       \ifnum\count@<\codep@tmp@n%
         \advance\count@ by 1\relax%
         \edef\codep@tmp@node{%
-          \csname codep@brnode@#1@\the\count@\endcsname}%
+          \csuse{codep@brnode@#1@\the\count@}}%
         \expandafter#2\expandafter{\codep@tmp@node}%
     \repeat%
   }%
@@ -5372,13 +5372,13 @@
       % Resolve atom number first, then define the anchor mapping
       % using the prefixed key (type:number).
       \protected@edef\codep@tmp@num{%
-        \csname codep@lblnum@#2\endcsname}%
+        \csuse{codep@lblnum@#2}}%
       % Build prefixed key from type map if available.
       \ifcsundef{codep@ltype@#2}{%
         \let\codep@tmp@anchorltype\@empty%
       }{%
         \edef\codep@tmp@anchorltype{%
-          \csname codep@ltype@#2\endcsname}%
+          \csuse{codep@ltype@#2}}%
       }%
       \codep@writeanchoreff{#2}{\codep@tmp@anchorltype}%
         {\codep@tmp@num}{#1}%
@@ -5442,7 +5442,7 @@
               \let\codep@tmp@anchorltype\@empty%
             }{%
               \edef\codep@tmp@anchorltype{%
-                \csname codep@ltype@##1\endcsname}%
+                \csuse{codep@ltype@##1}}%
             }%
             \codep@writeanchoreff{##1}{\codep@tmp@anchorltype}{##2}{##5}%
           \fi%
@@ -5948,7 +5948,7 @@
             \ifcsundef{codep@ltype@#1}{%
               \let\codep@tmp@labeltype\@empty%
             }{%
-              \edef\codep@tmp@labeltype{\csname codep@ltype@#1\endcsname}%
+              \edef\codep@tmp@labeltype{\csuse{codep@ltype@#1}}%
             }%
             \codep@writeanchoreff{#1}{\codep@tmp@labeltype}%
               {\@currentlabel}{\@currentHref}%
@@ -6062,7 +6062,7 @@
       }%
       {\PackageError{codependent}%
         {\string\\#1* defined at atoms\space%
-         \csname codep@concept@#1\endcsname\space and\space%
+         \csuse{codep@concept@#1}\space and\space%
          \codep@tmp@conceptatom}%
         {Exactly one definition site is permitted per\space%
          concept.  Use \string\\#1\space (without star)\space%
@@ -6719,13 +6719,13 @@
     \def\codep@tmp@backrefsoflabel{#1}%
     \ifcsdef{codep@lblentity@\codep@tmp@backrefsoflabel}{%
       \edef\codep@tmp@backrefsofkey{%
-        \csname codep@lblentity@\codep@tmp@backrefsoflabel\endcsname}%
+        \csuse{codep@lblentity@\codep@tmp@backrefsoflabel}}%
     }{%
       \ifcsdef{codep@lblnum@\codep@tmp@backrefsoflabel}{%
         \ifcsdef{codep@ltype@\codep@tmp@backrefsoflabel}{%
           \edef\codep@tmp@backrefsofkey{%
-            \csname codep@ltype@\codep@tmp@backrefsoflabel\endcsname%
-            :\csname codep@lblnum@\codep@tmp@backrefsoflabel\endcsname}%
+            \csuse{codep@ltype@\codep@tmp@backrefsoflabel}%
+            :\csuse{codep@lblnum@\codep@tmp@backrefsoflabel}}%
         }{%
           \let\codep@tmp@backrefsofkey\relax%
         }%
@@ -6846,27 +6846,27 @@
   \def\codep@tmp@one{1}%
   \ifx\codep@tmp@autoflag\codep@tmp@one%
     \ifcsundef{codep@lblentity@#3}{}{%
-      \edef\codep@tmp@proofentity{\csname codep@lblentity@#3\endcsname}%
+      \edef\codep@tmp@proofentity{\csuse{codep@lblentity@#3}}%
       \edef\codep@tmp@proofdispcs{%
         codep@entity@\codep@tmp@proofentity @display}%
       \ifcsundef{\codep@tmp@proofdispcs}{}{%
         \edef\codep@tmp@proofdisp{%
-          \csname\codep@tmp@proofdispcs\endcsname}%
+          \csuse{\codep@tmp@proofdispcs}}%
       }%
     }%
   \else%
     \ifcsundef{codep@lblnum@#3}{%
       \ifcsundef{codep@lblentity@#3}{}{%
-        \edef\codep@tmp@proofentity{\csname codep@lblentity@#3\endcsname}%
+        \edef\codep@tmp@proofentity{\csuse{codep@lblentity@#3}}%
         \edef\codep@tmp@proofdispcs{%
           codep@entity@\codep@tmp@proofentity @display}%
         \ifcsundef{\codep@tmp@proofdispcs}{}{%
           \edef\codep@tmp@proofdisp{%
-            \csname\codep@tmp@proofdispcs\endcsname}%
+            \csuse{\codep@tmp@proofdispcs}}%
         }%
       }%
     }{%
-      \edef\codep@tmp@proofdisp{\csname codep@lblnum@#3\endcsname}%
+      \edef\codep@tmp@proofdisp{\csuse{codep@lblnum@#3}}%
     }%
   \fi%
   \ifx\codep@tmp@proofdisp\@empty\else%
@@ -6883,7 +6883,7 @@
       \edef\codep@tmp@proofparentval{theorem:\codep@tmp@proofdisp}%
     }{%
       \edef\codep@tmp@proofparentval{%
-        \csname codep@lblentity@#3\endcsname}%
+        \csuse{codep@lblentity@#3}}%
     }%
     \ifx\codep@tmp@autoflag\codep@tmp@one%
       \codep@proof@maybeheadingoverrideadjacent{#2}{%
