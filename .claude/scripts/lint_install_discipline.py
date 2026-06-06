@@ -97,8 +97,6 @@ PENDING_ERROR_OWNERS = {
 KERNEL_RESET_LIST_EXCEPTION = {
     "name": "kernel-reset-list-rewrite",
     "file": "codependent.sty",
-    "line_start": 995,
-    "line_end": 996,
     "macro": "codep@removefromreset",
     "target_compact": r"\g@addto@macro\csnamecl@#2\endcsname",
 }
@@ -106,7 +104,6 @@ KERNEL_RESET_LIST_EXCEPTION = {
 ENDDOC_ORCHESTRATOR_EXCEPTION = {
     "name": "enddoc-orchestrator-single-registration",
     "file": "codependent.sty",
-    "line": 6421,
     "hook": "enddocument",
     "target": r"\codep@enddoc@orchestrator",
     "target_compact": r"\AddToHook{enddocument}{\codep@enddoc@orchestrator}",
@@ -312,10 +309,15 @@ def _is_kernel_reset_list_exception(
     if not _line_in_named_macro(text, KERNEL_RESET_LIST_EXCEPTION["macro"], line):
         return False
     if path.resolve() == SOURCE_PATH.resolve():
-        return (
-            line == KERNEL_RESET_LIST_EXCEPTION["line_start"]
-            and path.name == KERNEL_RESET_LIST_EXCEPTION["file"]
-        )
+        if path.name != KERNEL_RESET_LIST_EXCEPTION["file"]:
+            return False
+        # Content + macro anchoring already passed above; assert global uniqueness so
+        # adding a second matching site doesn't silently inherit the exception.
+        stripped = "\n".join(_strip_comments(l) for l in text.splitlines())
+        compact_full_file = _compact_contract_code(stripped)
+        if compact_full_file.count(KERNEL_RESET_LIST_EXCEPTION["target_compact"]) != 1:
+            return False
+        return True
     # Synthetic positive fixture mirrors the exact macro/target shape without
     # padding hundreds of blank lines just to reproduce source line 995.
     return path.name == "pass-named-exception-kernel-reset-list.sty"
@@ -330,14 +332,21 @@ def _is_enddoc_orchestrator_exception(
     path: Path,
     line: int,
     code: str,
+    full_text: str = "",
 ) -> bool:
     if not _has_exact_enddoc_orchestrator_registration(code):
         return False
     if path.resolve() == SOURCE_PATH.resolve():
-        return (
-            line == ENDDOC_ORCHESTRATOR_EXCEPTION["line"]
-            and path.name == ENDDOC_ORCHESTRATOR_EXCEPTION["file"]
-        )
+        if path.name != ENDDOC_ORCHESTRATOR_EXCEPTION["file"]:
+            return False
+        # Content anchoring already passed above; assert global uniqueness so
+        # adding a second matching site doesn't silently inherit the exception.
+        raw = full_text or path.read_text()
+        stripped = "\n".join(_strip_comments(l) for l in raw.splitlines())
+        compact_full_file = _compact_contract_code(stripped)
+        if compact_full_file.count(ENDDOC_ORCHESTRATOR_EXCEPTION["target_compact"]) != 1:
+            return False
+        return True
     return path.name == "pass-named-exception-enddoc-orchestrator.sty"
 
 
@@ -373,7 +382,7 @@ def _scan_raw_install_primitives(path: Path, text: str) -> list[Diagnostic]:
             if code[max(0, match.start() - len("\\string")) : match.start()] == "\\string":
                 continue
             primitive = match.group(0)
-            if _is_enddoc_orchestrator_exception(path, line, code):
+            if _is_enddoc_orchestrator_exception(path, line, code, text):
                 continue
             diagnostics.append(
                 Diagnostic(
