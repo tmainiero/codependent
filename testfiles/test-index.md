@@ -262,7 +262,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-tcolorbox-phantom-no-atom.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox nophantom tracked box emits warning and no atom |
 | testfiles/integration/integ-tcolorbox-starred-explicit-silent-no-track.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | explicitly tracking a tcolorbox starred env is silent no-track |
 | testfiles/integration/integ-thmtools-continued-generic-hooks.lvt | LIVE | B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST, B-COMPAT-THMTOOLS-CONTINUED | thmtools continued theorem tracks via generic hooks; continued copy gets its own atom. |
-| testfiles/integration/integ-thmtools-para-teardown-no-orphan.lvt | LIVE | B-NUM-PARA, B-SUPP-TRACKED | thmtools paragraphs=on teardown does not create orphan paragraph atom |
+| testfiles/integration/integ-thmtools-para-teardown-no-orphan.lvt | LIVE | B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED | thmtools paragraphs=on teardown does not create orphan paragraph atom |
 | testfiles/integration/integ-thmtools-printkind-display-name.lvt | LIVE | B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE | thmtools declaretheorem display name resolved from thmt@original@<env>; override renders plain label |
 | testfiles/integration/integ-untracked-hyperref-proof.lvt | LIVE | B-PROOF-ADJ | codependent + hyperref loaded, proof env present, NO |
 | testfiles/integration/integ-usedin-reading-order.lvt | LIVE | B-USEDIN-READING-ORDER | Track-2 equation-range sources keep Used-In lists in reader order |
