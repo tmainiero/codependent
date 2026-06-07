@@ -30,3 +30,8 @@ Five fixtures were added by W05-PARA-ORPHAN-FIX and appear here for the first ti
 - `integ-tcolorbox-para-teardown-no-orphan` — P04, tcolorbox backend
 - `integ-thmtools-para-teardown-no-orphan` — P04, thmtools backend (has live nested-close block)
 - `integ-ntheorem-para-teardown-no-orphan` — P04, ntheorem backend
+
+## 2026-06-07 — P03c re-rotation
+Stress fixtures' visible-marker tokens (`ORPHAN-*`) were stripped in commit `31f6fff`.
+Re-captured manifest reflects post-cleanup PDF text + source-line metadata for the 3 stress fixtures.
+No fixture-set additions; no new allowlist entries.

@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-07T05:03:07.676536+00:00",
+  "captured_at": "2026-06-07T16:31:02.158970+00:00",
   "fixtures": [
     {
       "aux_sha": "d5bcd2da457f7b2d8c9e8085a2886b6199344e90224431a00ba18a2f1bce7977",
@@ -171,21 +171,21 @@
     },
     {
       "aux_sha": "67ec3243742782409302ecd46e36c92498520d453ca20c8a32d45935aa018592",
-      "cdp_sha": "bcb05b6872a3e459483237e60a1f63785ade57624d8365f3e25f89bd8d3f4585",
+      "cdp_sha": "047ca7951ed108c4d4778d724ef902513afe3d411bba3b04ba1d736157167c7f",
       "name": "stress-ta-appendix-gray",
-      "pdf_objects_sha": "e75d15b8c1c50edcb784d2aea507ccddc1a4e6cf3a9cbe92d18071a1b6cdf780"
+      "pdf_objects_sha": "f420c41ed2c58503898064b8e81f4da99e4da7762217eb06b0c30176ae525864"
     },
     {
       "aux_sha": "17f866aca90dfc500a7f4a5290c383cd11db7de7974f5c77b9f114a95dbd9265",
       "cdp_sha": "b7facfb997064d6b0c8154bd71e00786cfc2d0e3a1643dccb0999fb458624cc2",
       "name": "stress-ta-inline",
-      "pdf_objects_sha": "7d30fee9dbf92771271219f4b1892a6e5d3ea0f8e9bd45e8f943833703e496e3"
+      "pdf_objects_sha": "8b232e5e4fa6f7e14092ddeaf77cb44ab9bd619fedb2ecb5d9c98f57b73f0242"
     },
     {
       "aux_sha": "83c8fed34451d0d73c4951f37149bc9d1a9fdd25f427205aca0f2a414c7d9822",
       "cdp_sha": "3f13519d8bb2ea978cb0e09bb1d77e57ae39691651523a9ec6b3425402d4a622",
       "name": "stress-ta-inline-gray",
-      "pdf_objects_sha": "61c615fe9355809a9f4ead6f6e27f31659a9797ad11eb275a1f851ab1a39b0d3"
+      "pdf_objects_sha": "84be778954212ed0651b8a3e908d19618d022a084be9fdb26ff7ad121fa2df47"
     },
     {
       "aux_sha": "5f9170d7d89b55be3502ea5b017347936ee2c54ac7118968de74200fd7bf5658",
