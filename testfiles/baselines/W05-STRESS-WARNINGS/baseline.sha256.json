@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-07T16:31:02.158970+00:00",
+  "captured_at": "2026-06-07T17:48:50.671412+00:00",
   "fixtures": [
     {
       "aux_sha": "d5bcd2da457f7b2d8c9e8085a2886b6199344e90224431a00ba18a2f1bce7977",
@@ -170,22 +170,22 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "67ec3243742782409302ecd46e36c92498520d453ca20c8a32d45935aa018592",
-      "cdp_sha": "047ca7951ed108c4d4778d724ef902513afe3d411bba3b04ba1d736157167c7f",
+      "aux_sha": "0a9794171e49e5ad5b55f4f4bbf23eea866674ffa0b411d6d0046fab8144bf51",
+      "cdp_sha": "961b9ba13b21b30146c57922adad97a7eeddce622ebcd94c09ff32879b88d9d8",
       "name": "stress-ta-appendix-gray",
-      "pdf_objects_sha": "f420c41ed2c58503898064b8e81f4da99e4da7762217eb06b0c30176ae525864"
+      "pdf_objects_sha": "ebf42bb56f834d8afd3681f88d9cfcd1041a907e43e27e9fe75b4577b3afd10a"
     },
     {
       "aux_sha": "17f866aca90dfc500a7f4a5290c383cd11db7de7974f5c77b9f114a95dbd9265",
-      "cdp_sha": "b7facfb997064d6b0c8154bd71e00786cfc2d0e3a1643dccb0999fb458624cc2",
+      "cdp_sha": "3dc0f322c4517c34e928b14ce0ff598be994442d61c3cc9ded8e62d68c85d377",
       "name": "stress-ta-inline",
-      "pdf_objects_sha": "8b232e5e4fa6f7e14092ddeaf77cb44ab9bd619fedb2ecb5d9c98f57b73f0242"
+      "pdf_objects_sha": "a3fc7c2d668f8b79503c0859661d0a87f08561d617582b4e1b22ade8a74740d5"
     },
     {
       "aux_sha": "83c8fed34451d0d73c4951f37149bc9d1a9fdd25f427205aca0f2a414c7d9822",
-      "cdp_sha": "3f13519d8bb2ea978cb0e09bb1d77e57ae39691651523a9ec6b3425402d4a622",
+      "cdp_sha": "b4adf5a5be368cc4c69671a857568878254995dd5d90f782500acf21422b72c3",
       "name": "stress-ta-inline-gray",
-      "pdf_objects_sha": "84be778954212ed0651b8a3e908d19618d022a084be9fdb26ff7ad121fa2df47"
+      "pdf_objects_sha": "cd3557451822fa2884c1c4fecc5bdae1012522a78ffa5eb41cf9059aed753414"
     },
     {
       "aux_sha": "5f9170d7d89b55be3502ea5b017347936ee2c54ac7118968de74200fd7bf5658",
@@ -458,6 +458,5 @@
       "pdf_objects_sha": null
     }
   ],
-  "wave": "W05-PARA-ORPHAN-FIX",
-  "superseded_by": "W05-STRESS-WARNINGS"
+  "wave": "W05-STRESS-WARNINGS"
 }

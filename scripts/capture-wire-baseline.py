@@ -31,10 +31,10 @@ TESTFILES_DIR = PROJECT_ROOT / "testfiles"
 COMPILED_EXAMPLES_DIR = TESTFILES_DIR / "compiled-examples"
 BASELINE_SIZES = PROJECT_ROOT / ".claude" / "baseline-sizes.json"
 
-# W05-PARA-ORPHAN-FIX P05 rotates the default wire baseline to the
-# current canonical para-orphan-fix manifest.  A no-argument invocation
+# W05-STRESS-WARNINGS P02 rotates the default wire baseline to the
+# current canonical stress-warnings manifest.  A no-argument invocation
 # self-tests this resolution and exits before writing; pass --wave to capture.
-_DEFAULT_WAVE = "W05-PARA-ORPHAN-FIX"
+_DEFAULT_WAVE = "W05-STRESS-WARNINGS"
 _DEFAULT_MANIFEST_DIR = PROJECT_ROOT / "testfiles" / "baselines" / _DEFAULT_WAVE
 MANIFEST_DIR = _DEFAULT_MANIFEST_DIR
 MANIFEST_PATH = _DEFAULT_MANIFEST_DIR / "baseline.sha256.json"
@@ -458,10 +458,10 @@ def main(argv: "list[str] | None" = None) -> int:
         print("DEFAULT_WAVE self-test")
         print(f"Resolved wave: {wave_id}")
         print(f"Manifest path: {MANIFEST_PATH}")
-        if wave_id != "W05-PARA-ORPHAN-FIX":
+        if wave_id != "W05-STRESS-WARNINGS":
             print(
                 "ERROR: no-arg DEFAULT_WAVE did not resolve to "
-                "W05-PARA-ORPHAN-FIX",
+                "W05-STRESS-WARNINGS",
                 file=sys.stderr,
             )
             return 2
