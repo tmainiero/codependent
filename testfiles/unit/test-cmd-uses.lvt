@@ -43,9 +43,8 @@
 % expansion runs.
 \section{The $\Hom{X}{Y}$ functor}
 
-A paragraph with three uses: $\Hom{X}{Y}$, $\Hom{Y}{Z}$,
-and the composite $\Hom{X}{Z}$. Three use records for atom
-1.1 are expected.
+Three uses: $\Hom{X}{Y}$, $\Hom{Y}{Z}$,
+and $\Hom{X}{Z}$. Three use records for atom 1.1.
 
 \END
 \end{document}

@@ -265,7 +265,7 @@ A commutative diagram illustrates the module splitting:
 
 \begin{proof}[Proof of \cref{thm:noether}]
   \codepproofof*{thm:noether}%
-  By induction on the number of generators, using
+  By induction on generators, using
   \cref{lem:pid-noetherian,def:noetherian} and the fact
   (\cref{thm:hilbert-basis}) that $\Ring{R}[x_1,\ldots,x_n]$ is
   Noetherian.

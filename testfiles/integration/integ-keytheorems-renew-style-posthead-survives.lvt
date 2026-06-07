@@ -52,7 +52,7 @@ The renewed-style theorem opens before this body equation.
 \end{renewedstyled}
 
 \begin{renewedsource}\label{renewed:source}
-This source cites the renewed-style target \cref{renewed:target}.
+Source cites renewed-style target \cref{renewed:target}.
 \end{renewedsource}
 
 \codepappendix

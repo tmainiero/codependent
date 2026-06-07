@@ -333,7 +333,7 @@ Also (properties of the metric, cf.\ \cref{def:topspace}):
   is bounded.  Uses \cref{cor:heine-borel} and \cref{lem:bounded}.
 \end{proof}
 
-A cross-section paragraph referencing \cref{def:topspace}, \cref{def:metric},
+This paragraph references \cref{def:topspace}, \cref{def:metric},
 \cref{rem:hausdorff}, \cref{thm:compact-closed}, and \cref{cor:heine-borel}
 to force graph edges from this paragraph atom to atoms in §1 and §2.
 

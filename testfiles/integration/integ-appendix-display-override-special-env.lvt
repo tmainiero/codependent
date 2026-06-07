@@ -54,7 +54,7 @@
 \section{Special environment names}
 
 \begin{Cap_Box}\label{capbox:target}
-  Capital-box target with capital-plus-underscore environment name.
+  Capital-box target.
 \end{Cap_Box}
 
 \begin{plainlc}\label{plainlc:target}

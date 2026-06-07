@@ -644,7 +644,7 @@ We give a unified proof of both results.
 
 \begin{proof}[Proof of \cref{thm:autodet-joint-x,thm:autodet-joint-y}]
   Both targets are tracked atoms; after P02 this yields two independent
-  cdp@proof records (best-effort serial).
+  cdp@proof records.
   Uses \cref{def:enrichment}.
 \end{proof}
 

@@ -68,7 +68,7 @@
 %% Case (iii): mixed tracked theorem + section.  The theorem is a deferred
 %% tracked entity and gets the only unresref slot; the section is dropped.
 \begin{proof}[Proof of \cref{thm:gate-mixed,sec:gate-deferred}]
-  The mixed proof body is intentionally small.
+  Intentionally small mixed proof body.
 \end{proof}
 
 \begin{theorem}\label{thm:gate-mixed}

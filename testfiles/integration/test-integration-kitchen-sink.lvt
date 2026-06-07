@@ -170,7 +170,7 @@ This test must not emit a duplicate sbl atom record for the
 restated theorem, and must not attribute backrefs to the wrong
 prior atom.
 
-A final trailing paragraph mentioning \Cref{thm:main} and
+A final paragraph mentioning \Cref{thm:main} and
 \cref{prop:one,def:cat} (cleveref multi-label form).
 
 \END
