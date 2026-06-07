@@ -33,7 +33,7 @@
   Definition atom introducing $\Hom*{X}{Y}$.
 \end{theorem}
 
-\section{Heading use of $\Hom{A}{B}$}
+\section{Heading use of \texorpdfstring{$\Hom{A}{B}$}{Hom(A, B)}}
 
 Caption test starts here.\footnote{Footnote use of $\Hom{B}{C}$.}
 

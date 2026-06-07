@@ -31,8 +31,8 @@
 %% pin this to exactly one each.
 
 \documentclass{article}
-\usepackage{thmtools}
 \usepackage{amsthm}
+\usepackage{thmtools}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{codependent}
 \codeptrack{theorem}

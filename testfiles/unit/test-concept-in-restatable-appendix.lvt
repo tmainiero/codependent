@@ -50,10 +50,10 @@
 %% detection and error, or register a second def site.
 
 \documentclass{article}
+\usepackage{amsthm}
 \usepackage{thmtools}
 \usepackage{hyperref}
 \usepackage{cleveref}
-\usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{codependent}
 \codeptrack{theorem}

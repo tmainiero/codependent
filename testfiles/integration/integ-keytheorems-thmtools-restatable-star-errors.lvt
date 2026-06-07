@@ -19,7 +19,7 @@
 %% TEST-AUX-NOT-CONTAINS: \codep@lblentity{thm:restatable-star}
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
-%% TEST-RERUN: 1
+%% TEST-RERUN: 2
 
 \documentclass{article}
 \usepackage{amsmath,amsthm}

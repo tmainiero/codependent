@@ -17,8 +17,8 @@
 %% TEST-RERUN: 2
 
 \documentclass{article}
-\usepackage{thmtools}
 \usepackage{amsthm}
+\usepackage{thmtools}
 \usepackage{hyperref}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{codependent}

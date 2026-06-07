@@ -27,6 +27,7 @@
 %% TEST-STABLE-AT: 2
 
 \documentclass{article}
+\usepackage[T1]{fontenc}
 \usepackage{amsmath,amsthm}
 \newtheorem{amfanc}{\textsc{AM Fancy}}[section]
 \usepackage[hypertexnames=false]{hyperref}

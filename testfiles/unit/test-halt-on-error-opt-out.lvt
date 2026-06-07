@@ -15,7 +15,7 @@
 %% TEST-EXPECT-PACKAGE-ERROR: all operations in at least one subsystem failed
 %% TEST-LOG-NOT: Undefined control sequence
 %% TEST-PACKAGES: amsthm,hyperref,codependent
-%% TEST-RERUN: 1
+%% TEST-RERUN: 2
 %% TEST-PDF-NOT: Used in
 %%
 %% Synthetically trigger a fatal orchestrator error. The runner receives

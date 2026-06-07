@@ -19,7 +19,7 @@
 %% TEST-PACKAGES: amsthm,hyperref,codependent
 %% TEST-AUX-NOT-CONTAINS: codep@renderlist
 %% TEST-AUX-NOT-CONTAINS: codep@entitymeta
-%% TEST-RERUN: 1
+%% TEST-RERUN: 2
 %%
 %% Synthetically set fatal pre-drain state. Orchestrator detects this,
 %% halts, and does NOT flush renderlist or entitymeta records. The .aux

@@ -29,10 +29,10 @@
 %% skip the entire hook body.
 
 \documentclass{article}
+\usepackage{amsthm}
 \usepackage{thmtools}
 \usepackage{hyperref}
 \usepackage{cleveref}
-\usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{codependent}
 \codeptrack{theorem}

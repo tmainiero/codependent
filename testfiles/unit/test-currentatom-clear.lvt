@@ -16,7 +16,7 @@
 %% TEST-CDP-CONTAINS: \codep@cdp@end{OK}
 %% TEST-AUX-NOT-CONTAINS: \codep@atomref{theorem:1.1.2}{thm:A}
 %% TEST-PACKAGES: hyperref,amsthm,codependent
-%% TEST-RERUN: 2
+%% TEST-RERUN: 3
 %%
 %% Current codependent.sty (v0.1, lines 244-255 area) sets
 %% \codep@currentatom on theorem-begin and on para/begin but

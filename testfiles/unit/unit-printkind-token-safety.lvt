@@ -24,6 +24,7 @@
 %% \xdef print-kind capture produced for fragile display-name commands.
 
 \documentclass{article}
+\usepackage[T1]{fontenc}
 \usepackage{amsthm}
 \newtheorem{ttsafe}{\textsc{TT Safe}}[section]
 \usepackage{codependent}

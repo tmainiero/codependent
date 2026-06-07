@@ -33,9 +33,9 @@
 %% \ref{thm:A} too, but no new atom is created for the restate.
 
 \documentclass{article}
+\usepackage{amsthm}
 \usepackage{thmtools}
 \usepackage{hyperref}
-\usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{codependent}
 \codeptrack{theorem}

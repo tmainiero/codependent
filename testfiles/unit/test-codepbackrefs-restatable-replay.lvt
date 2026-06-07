@@ -28,10 +28,10 @@
 %% atom record (§8a.5.a guard), and MUST NOT re-flush.
 
 \documentclass{article}
+\usepackage{amsthm}
 \usepackage{thmtools}
 \usepackage{hyperref}
 \usepackage{cleveref}
-\usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{codependent}
 \codeptrack{theorem}

@@ -20,7 +20,7 @@
 %% TEST-AUX-CONTAINS: \codep@lblentity{thm:target}{theorem:1.1}
 %% TEST-AUX-CONTAINS: \codep@lblentity{thm:later}{theorem:1.2}
 %% TEST-PACKAGES: amsthm,codependent
-%% TEST-RERUN: 1
+%% TEST-RERUN: 2
 %%
 %% Forward-ref scenario: the \codepproofof call happens textually
 %% BEFORE the \label it references.  Under pre-P03 code this would

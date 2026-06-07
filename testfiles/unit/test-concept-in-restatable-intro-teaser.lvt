@@ -32,10 +32,10 @@
 %% Assertions verify that ONLY 2.1 is recorded as the def site.
 
 \documentclass{article}
+\usepackage{amsthm}
 \usepackage{thmtools}
 \usepackage{hyperref}
 \usepackage{cleveref}
-\usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
 \usepackage{codependent}
 \codeptrack{theorem}
