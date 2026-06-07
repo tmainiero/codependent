@@ -1281,6 +1281,7 @@
   \codep@theorem@printkind@get{#1}{\codep@tmp@printkind}%
   \codep@captureentitymeta{\codep@outeratom}{theorem}%
     {\codep@tmp@num}{\codep@tmp@printkind}{}%
+  \codep@teardownpara@suppress@begin{\codep@outeratom}%
   \codep@ctxpop{#1}%
   \global\advance\codep@trackeddepth by -1\relax%
   \global\advance\codep@suppressdepth by -1\relax%
@@ -1343,6 +1344,57 @@
       \global\let\codep@endenv@pendingclear\@empty%
     \fi%
   \fi%
+}%
+
+% \codep@teardownpara@suppressdepth
+%   Tracks open teardown-para suppression windows.  Opened by
+%   \codep@hooktheorem@end@outer (outer theorem end only); closed by
+%   \codep@teardownpara@suppress@end@outer@clear at cmd/end#1/after
+%   or env/#1/after.  Suppresses para/begin side effects while backend
+%   end material is still being processed after theorem teardown.
+%% @utility
+%@effect state-only
+\newcount\codep@teardownpara@suppressdepth%
+\let\codep@teardownpara@pendingclear\@empty%
+
+% \codep@teardownpara@suppress@begin{outer-atom}
+%   Open one teardown-para suppression window.  Called from
+%   \codep@hooktheorem@end@outer only; must not be called from
+%   inner-env ends or replay paths.
+%% @utility
+%@effect state-only
+\def\codep@teardownpara@suppress@begin#1{%
+  \global\advance\codep@teardownpara@suppressdepth by 1\relax%
+  \xdef\codep@teardownpara@pendingclear{#1}%
+}%
+
+% \codep@teardownpara@suppress@end@outer@clear
+%   Close one teardown-para suppression window.  Outer-only and
+%   positive-only: inert during replay, inert when pending-clear is
+%   empty, decrements depth only when positive, always empties
+%   pending-clear after consuming it.
+%% @utility
+%@effect state-only
+\def\codep@teardownpara@suppress@end@outer@clear{%
+  \ifnum\codep@replaydepth=0\relax%
+    \ifx\codep@teardownpara@pendingclear\@empty\else%
+      \ifnum\codep@teardownpara@suppressdepth>0\relax%
+        \global\advance\codep@teardownpara@suppressdepth by -1\relax%
+      \fi%
+      \global\let\codep@teardownpara@pendingclear\@empty%
+    \fi%
+  \fi%
+}%
+
+% \codep@theorem@end@postclear
+%   Combined postclear for cmd/end#1/after and env/#1/after sites.
+%   Clears both the manually-emitted pending flag and the teardown-para
+%   suppression window opened by \codep@hooktheorem@end@outer.
+%% @utility
+%@effect state-only
+\def\codep@theorem@end@postclear{%
+  \codep@manuallyemitted@end@outer@clear%
+  \codep@teardownpara@suppress@end@outer@clear%
 }%
 
 %% ===================================================================
@@ -2481,6 +2533,8 @@
       \codep@keythms@restated{#1}}%
     \codep@target@install{AddToHook}{env/#1/end}{inline-material}{%
       \codep@keythms@end{#1}}%
+    \codep@target@install{AddToHook}{env/#1/after}{state-only}{%
+      \codep@theorem@end@postclear}%
     \csgdef{codep@keythms@patched@#1}{1}%
   }%
 }%
@@ -2510,6 +2564,8 @@
       \codep@hooktheorem@begin{#1}}%
     \codep@target@install{AddToHook}{env/#1/end}{immediate-write}{%
       \codep@hooktheorem@end{#1}}%
+    \codep@target@install{AddToHook}{env/#1/after}{state-only}{%
+      \codep@theorem@end@postclear}%
   \fi\fi%
 }
 
@@ -2544,7 +2600,7 @@
   \codep@lifecycle@register@postbegin{#1}{\codep@hooktheorem@after{#1}}%
   \codep@lifecycle@register@preend{#1}{\codep@hooktheorem@end{#1}}%
   \codep@lifecycle@register@afterenv{#1}{\codep@hooktheorem@afterend{#1}}%
-  \codep@lifecycle@register@postend{#1}{\codep@manuallyemitted@end@outer@clear}%
+  \codep@lifecycle@register@postend{#1}{\codep@theorem@end@postclear}%
 }
 
 %% @implements \codep@hooktheorem
@@ -4166,26 +4222,28 @@
 \newcommand*{\codep@installparahook}{%
   \codep@target@install{AddToHook}{para/begin}{state-only}{%
     \ifbool{codep@tracked}{%
-      \codep@proof@emitpendingheadinganchor%
-      \global\let\codep@pendingresultid\@empty%
-      \ifcodep@proofdisplaypending%
-        \codep@ctxpeekkind\codep@tmp@ctxkind%
-        \def\codep@tmp@proofkind{proof}%
-        \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
-          \codep@proof@materialize%
+      \ifnum\codep@teardownpara@suppressdepth>0\relax\else%
+        \codep@proof@emitpendingheadinganchor%
+        \global\let\codep@pendingresultid\@empty%
+        \ifcodep@proofdisplaypending%
+          \codep@ctxpeekkind\codep@tmp@ctxkind%
+          \def\codep@tmp@proofkind{proof}%
+          \ifx\codep@tmp@ctxkind\codep@tmp@proofkind%
+            \codep@proof@materialize%
+          \fi%
         \fi%
+        \ifbool{codep@sectioning}{%
+          \global\boolfalse{codep@sectioning}%
+        }{%
+          \ifbool{codep@paragraphs}{%
+            \ifnum\codep@suppressdepth>0\relax%
+            \else\ifnum\codep@ctxdepth>0\relax%
+            \else%
+              \codep@parahook@paragraph%
+            \fi\fi%
+          }{}%
+        }%
       \fi%
-      \ifbool{codep@sectioning}{%
-        \global\boolfalse{codep@sectioning}%
-      }{%
-        \ifbool{codep@paragraphs}{%
-          \ifnum\codep@suppressdepth>0\relax%
-          \else\ifnum\codep@ctxdepth>0\relax%
-          \else%
-            \codep@parahook@paragraph%
-          \fi\fi%
-        }{}%
-      }%
     }{}%
   }%
 }%
