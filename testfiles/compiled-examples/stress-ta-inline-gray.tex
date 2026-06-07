@@ -13,6 +13,8 @@
 %% TEST-PDF-STEXT-NOT: Printkindstress 9\.12
 %%
 %% W05-PARA-ORPHAN-FIX P03: §4.1 list-ending lemma teardown must not produce orphan paragraph:4.2
+%% Empirically verified non-vacuous: pre-P01 (68daade) cdp shows \codep@cdp@atom{4.2}{paragraph};
+%% assertions fail on 68daade, pass at HEAD.
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{4.2}{paragraph}
 %% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:4.2}{paragraph}{4.2}{paragraph}{}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:4.2}
@@ -20,6 +22,8 @@
 %%  content and qed, so marker→number→♡ always matches. CDP/AUX negatives above are primary.)
 %%
 %% W05-PARA-ORPHAN-FIX P03: §4.3 nested-close definition teardown must not produce orphan paragraph:4.5
+%% Empirically verified non-vacuous: pre-P01 (68daade) cdp shows \codep@cdp@atom{4.5}{paragraph};
+%% assertions fail on 68daade, pass at HEAD.
 %% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{4.5}{paragraph}
 %% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:4.5}{paragraph}{4.5}{paragraph}{}
 %% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:4.5}
