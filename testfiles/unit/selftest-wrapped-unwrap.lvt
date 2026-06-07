@@ -1,0 +1,27 @@
+%% TEST-NAME: selftest-wrapped-unwrap
+%% TEST-WHAT: Runner no-wrap env keeps long warning on one line; regex matches normalized block
+%% TEST-PURPOSE: Verify that max_print_line=10000 prevents log soft-wrap so warning regex can match
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
+%% TEST-EXIT: 0
+%% TEST-RERUN: 1
+%% TEST-PACKAGES: codependent
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-CONTAINS: LaTeX2e
+%% TEST-REQUIRES-WARNING: must not wrap.*no-wrap compile environment
+%% reason: selftest: with max_print_line=10000 the warning stays on one line; regex matches the normalized single-line block
+
+\documentclass{article}
+\usepackage{codependent}
+\makeatletter
+\AtBeginDocument{%
+  \PackageWarning{wraptest}{This is a deliberately long warning that must not wrap under the runner no-wrap compile environment}}
+\makeatother
+
+\begin{document}
+\START
+Hello.
+\END
+\end{document}

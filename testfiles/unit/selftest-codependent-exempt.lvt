@@ -1,0 +1,25 @@
+%% TEST-NAME: selftest-codependent-exempt
+%% TEST-WHAT: Package codependent Warning blocks are exempt from the global gate; no declaration needed
+%% TEST-PURPOSE: Verify that Package codependent Warning blocks bypass the undeclared-warning gate
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-WARN-ATTR-CONFLICTS
+%% TEST-STATUS: LIVE
+%% TEST-EXIT: 0
+%% TEST-RERUN: 1
+%% TEST-PACKAGES: codependent
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-CONTAINS: LaTeX2e
+
+\documentclass{article}
+\usepackage{codependent}
+\makeatletter
+\AtBeginDocument{%
+  \PackageWarning{codependent}{selftest gate exemption check -- codependent warnings are exempt}}
+\makeatother
+
+\begin{document}
+\START
+Hello.
+\END
+\end{document}

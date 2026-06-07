@@ -1,0 +1,24 @@
+%% TEST-NAME: selftest-requires-stale-fails
+%% TEST-WHAT: TEST-REQUIRES-WARNING directive for a never-emitted warning fails the fixture
+%% TEST-PURPOSE: Verify that a stale TEST-REQUIRES-WARNING (regex never matches) fails the runner gate
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
+%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-EXIT: 0
+%% TEST-RERUN: 1
+%% TEST-PACKAGES: codependent
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-CONTAINS: LaTeX2e
+%% TEST-REQUIRES-WARNING: xyzzy_never_emitted_selftest_marker_12345
+%% reason: selftest: this regex never matches any emitted warning; fixture fails to verify gate works
+
+\documentclass{article}
+\usepackage{codependent}
+
+\begin{document}
+\START
+Hello.
+\END
+\end{document}

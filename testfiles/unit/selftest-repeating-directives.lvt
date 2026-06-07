@@ -1,0 +1,30 @@
+%% TEST-NAME: selftest-repeating-directives
+%% TEST-WHAT: Two TEST-REQUIRES-WARNING directives both accumulate and both must match
+%% TEST-PURPOSE: Verify REPEATING_KEYS registration accumulates multiple REQUIRES directives
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
+%% TEST-EXIT: 0
+%% TEST-RERUN: 1
+%% TEST-PACKAGES: codependent
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-CONTAINS: LaTeX2e
+%% TEST-REQUIRES-WARNING: selftest-first-repeating-warning
+%% reason: selftest: first REQUIRES directive; REPEATING_KEYS must accumulate both
+%% TEST-REQUIRES-WARNING: selftest-second-repeating-warning
+%% reason: selftest: second REQUIRES directive; both must match or fixture fails
+
+\documentclass{article}
+\usepackage{codependent}
+\makeatletter
+\AtBeginDocument{%
+  \PackageWarning{pkg1}{selftest-first-repeating-warning}%
+  \PackageWarning{pkg2}{selftest-second-repeating-warning}}
+\makeatother
+
+\begin{document}
+\START
+Hello.
+\END
+\end{document}

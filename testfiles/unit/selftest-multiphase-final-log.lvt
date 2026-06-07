@@ -1,0 +1,31 @@
+%% TEST-NAME: selftest-multiphase-final-log
+%% TEST-WHAT: Warning gate reads only the final-pass log; intermediate-pass warnings do not fail
+%% TEST-PURPOSE: Verify gate uses final-pass log only; pass-1 warnings absent from pass-2 log do not fail
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
+%% TEST-EXIT: 0
+%% TEST-RERUN: 2
+%% TEST-PACKAGES: amsthm,codependent
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-CONTAINS: LaTeX2e
+%% selftest: forward reference resolved on pass 2; pass 1 emits Reference-undefined and
+%%           Label(s)-may-have-changed warnings, but pass 2 final log is clean.
+%%           Gate reads pass 2 log only; no declarations needed.
+
+\documentclass{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+\usepackage{codependent}
+\codeptrack{theorem}
+
+\begin{document}
+\START
+By Theorem~\ref{thm:selftest-multi}.
+
+\begin{theorem}\label{thm:selftest-multi}
+Target theorem for forward-reference resolution test.
+\end{theorem}
+\END
+\end{document}

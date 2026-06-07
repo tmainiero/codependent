@@ -1,0 +1,29 @@
+%% TEST-NAME: selftest-requires-matches-passes
+%% TEST-WHAT: TEST-REQUIRES-WARNING matching an emitted warning passes the fixture
+%% TEST-PURPOSE: Verify that a TEST-REQUIRES-WARNING regex matching a final-log block passes the gate
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
+%% TEST-EXIT: 0
+%% TEST-RERUN: 1
+%% TEST-PACKAGES: codependent
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-CONTAINS: LaTeX2e
+%% selftest: intentional undefined reference; ALLOW-UNDEFINED-REFS suppresses existing check
+%% TEST-ALLOW-UNDEFINED-REFS: yes
+%% TEST-REQUIRES-WARNING: Reference.*selftest-reqmatch-target.*undefined
+%% reason: selftest: fixture emits this LaTeX undefined-ref warning; REQUIRES must match and pass
+%% TEST-TOLERATES-WARNING: There were undefined references
+%% reason: selftest: summary warning intrinsic to single-pass undefined-reference test
+%% TEST-TOLERATES-WARNING: Label\(s\) may have changed
+%% reason: selftest: convergence artifact intrinsic to single-pass forward-reference behavior
+
+\documentclass{article}
+\usepackage{codependent}
+
+\begin{document}
+\START
+\ref{selftest-reqmatch-target}
+\END
+\end{document}

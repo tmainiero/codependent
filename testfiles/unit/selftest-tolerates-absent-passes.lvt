@@ -1,0 +1,23 @@
+%% TEST-NAME: selftest-tolerates-absent-passes
+%% TEST-WHAT: TEST-TOLERATES-WARNING for a warning that never appears; absence does not fail
+%% TEST-PURPOSE: Verify that TOLERATES absence is OK; gate does not fail when tolerated warning absent
+%% TEST-KIND: unit
+%% TEST-BEHAVIOR: B-PASS-ONE
+%% TEST-STATUS: LIVE
+%% TEST-EXIT: 0
+%% TEST-RERUN: 1
+%% TEST-PACKAGES: codependent
+%% TEST-LOG-NOT: codependent.*Error
+%% TEST-LOG-NOT: Undefined control sequence
+%% TEST-LOG-CONTAINS: LaTeX2e
+%% TEST-TOLERATES-WARNING: Package nonexistent Warning:.*selftest_absent_marker
+%% reason: selftest: this warning is never emitted; TOLERATES must pass even when absent
+
+\documentclass{article}
+\usepackage{codependent}
+
+\begin{document}
+\START
+Hello.
+\END
+\end{document}

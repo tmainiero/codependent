@@ -126,6 +126,9 @@ METADATA_KEYS = {
     # Package error/warning assertions
     "TEST-EXPECT-PACKAGE-WARNING": "expect_package_warning",  # may repeat; regex on "Package codependent Warning:" line
     "TEST-EXPECT-PACKAGE-ERROR": "expect_package_error",      # may repeat; regex on "Package codependent Error:" line; also drops -halt-on-error
+    # Warning-gate directives (W05-WARNING-HYGIENE-P01)
+    "TEST-REQUIRES-WARNING": "requires_warning",   # may repeat; regex that MUST match ≥1 final-log warning block
+    "TEST-TOLERATES-WARNING": "tolerates_warning", # may repeat; regex that exempts matching blocks from gate; absence OK
     # Appendix entry assertions (require appendix mode, P05)
     "TEST-PDF-APPENDIX-ENTRY": "pdf_appendix_entry",           # may repeat; "<atom-key> = <display-number> [<printed-kind>]"; requires hyperref + named dest
     "TEST-PDF-APPENDIX-ENTRY-TEXT-ONLY": "pdf_appendix_entry_text_only",  # may repeat; same format; text-only (no dest check)
@@ -161,6 +164,7 @@ REPEATING_KEYS = {
     "pdf_link_y_near", "pdf_link_y_between", "pdf_dest_page",
     "expect_package_warning", "expect_package_error",
     "pdf_appendix_entry", "pdf_appendix_entry_text_only",
+    "requires_warning", "tolerates_warning",
 }
 
 # No-op definitions for l3build regression-test markers.  l3build provides
@@ -315,6 +319,9 @@ class Fixture:
     # Package error/warning assertions
     expect_package_warning: list = dataclasses.field(default_factory=list)
     expect_package_error: list = dataclasses.field(default_factory=list)
+    # Warning-gate directives (W05-WARNING-HYGIENE-P01)
+    requires_warning: list = dataclasses.field(default_factory=list)
+    tolerates_warning: list = dataclasses.field(default_factory=list)
     # Appendix entry assertions (P05 appendix mode)
     pdf_appendix_entry: list = dataclasses.field(default_factory=list)
     pdf_appendix_entry_text_only: list = dataclasses.field(default_factory=list)
@@ -344,128 +351,151 @@ def parse_fixture(path: Path) -> Fixture:
     header_re = re.compile(
         r"^%{1,2}\s+(TEST-[A-Z0-9-]+)(?:\[(cold|warm|warm_changed)\])?:\s*(.*)$"
     )
+    reason_re = re.compile(r"^%%\s+reason:\s*(\S.*)$")
     with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            if not line.startswith("%"):
-                # First non-metadata line ends the header. We allow blank
-                # comment lines but stop on actual LaTeX content.
-                if line.strip().startswith("\\") or not line.strip().startswith("%"):
-                    break
-                continue
-            m = header_re.match(line)
-            if not m:
-                continue
-            key = m.group(1)
-            phase = m.group(2)   # None or "cold" / "warm" / "warm_changed"
-            value = m.group(3).strip()
-            attr = METADATA_KEYS.get(key)
-            if attr is None:
-                continue
+        raw_lines = f.readlines()
+    idx = 0
+    while idx < len(raw_lines):
+        line = raw_lines[idx].rstrip("\n")
+        idx += 1
+        if not line.startswith("%"):
+            # First non-metadata line ends the header. We allow blank
+            # comment lines but stop on actual LaTeX content.
+            if line.strip().startswith("\\") or not line.strip().startswith("%"):
+                break
+            continue
+        m = header_re.match(line)
+        if not m:
+            continue
+        key = m.group(1)
+        phase = m.group(2)   # None or "cold" / "warm" / "warm_changed"
+        value = m.group(3).strip()
+        attr = METADATA_KEYS.get(key)
+        if attr is None:
+            continue
 
-            # Phase-qualified directive: store in phase_assertions dict.
-            if phase is not None:
-                ph = fix.phase_assertions.setdefault(phase, {})
-                if attr in REPEATING_KEYS:
-                    ph.setdefault(attr, []).append(value)
-                elif attr == "stable_at":
-                    try:
-                        ph["stable_at"] = int(value)
-                    except ValueError:
-                        pass
+        # Warning directives require an immediately-adjacent %% reason: line.
+        if attr in {"requires_warning", "tolerates_warning"}:
+            if idx < len(raw_lines):
+                next_raw = raw_lines[idx].rstrip("\n")
+                rm = reason_re.match(next_raw)
+                if rm:
+                    idx += 1  # consume reason line
                 else:
-                    ph[attr] = value
-                continue
+                    if not fix.parse_error:
+                        fix.parse_error = (
+                            f"{key}: missing or non-adjacent '%% reason:' line "
+                            f"(next line: {next_raw[:60]!r})"
+                        )
+            else:
+                if not fix.parse_error:
+                    fix.parse_error = f"{key}: missing reason line (directive at end of file)"
+            getattr(fix, attr).append(value)
+            continue
 
-            # Unqualified directive: existing handling.
-            if attr == "exit_code":
-                try:
-                    fix.exit_code = int(value)
-                except ValueError:
-                    pass
-            elif attr == "pdf_links":
-                try:
-                    fix.pdf_links = int(value)
-                except ValueError:
-                    pass
-            elif attr == "pdf_link_count":
-                try:
-                    fix.pdf_link_count = int(value)
-                except ValueError:
-                    pass
-            elif attr == "pdf_pages":
-                try:
-                    fix.pdf_pages = int(value)
-                except ValueError:
-                    pass
-            elif attr == "atoms_min":
-                try:
-                    fix.atoms_min = int(value)
-                except ValueError:
-                    pass
-            elif attr == "rerun":
-                try:
-                    fix.rerun = int(value)
-                except ValueError:
-                    pass
-            elif attr == "pass_count_cold":
-                try:
-                    fix.pass_count_cold = int(value)
-                    if fix.pass_count_cold > MAX_PASS_COUNTS["cold"]:
-                        fix.parse_error = (
-                            f"TEST-PASS-COUNT-COLD: {fix.pass_count_cold} exceeds "
-                            f"max {MAX_PASS_COUNTS['cold']} "
-                            f"(see .claude/baseline-sizes.json max_pass_count_cold)"
-                        )
-                except ValueError:
-                    pass
-            elif attr == "pass_count_warm":
-                try:
-                    fix.pass_count_warm = int(value)
-                    if fix.pass_count_warm > MAX_PASS_COUNTS["warm"]:
-                        fix.parse_error = (
-                            f"TEST-PASS-COUNT-WARM: {fix.pass_count_warm} exceeds "
-                            f"max {MAX_PASS_COUNTS['warm']} "
-                            f"(see .claude/baseline-sizes.json max_pass_count_warm)"
-                        )
-                except ValueError:
-                    pass
-            elif attr == "pass_count_warm_changed":
-                try:
-                    fix.pass_count_warm_changed = int(value)
-                    if fix.pass_count_warm_changed > MAX_PASS_COUNTS["warm_changed"]:
-                        fix.parse_error = (
-                            f"TEST-PASS-COUNT-WARM-CHANGED: {fix.pass_count_warm_changed} "
-                            f"exceeds max {MAX_PASS_COUNTS['warm_changed']} "
-                            f"(see .claude/baseline-sizes.json max_pass_count_warm_changed)"
-                        )
-                except ValueError:
-                    pass
+        # Phase-qualified directive: store in phase_assertions dict.
+        if phase is not None:
+            ph = fix.phase_assertions.setdefault(phase, {})
+            if attr in REPEATING_KEYS:
+                ph.setdefault(attr, []).append(value)
             elif attr == "stable_at":
                 try:
-                    fix.stable_at = int(value)
+                    ph["stable_at"] = int(value)
                 except ValueError:
                     pass
-            elif attr == "packages":
-                fix.packages = [p.strip() for p in value.split(",") if p.strip()]
-            elif attr == "behavior_ids":
-                fix.behavior_ids = [b.strip() for b in value.split(",") if b.strip()]
-            elif attr == "pins_known_broken":
-                fix.pins_known_broken = value.lower() in ("yes", "true", "1")
-            elif attr == "pdf_no_orphan_links":
-                fix.pdf_no_orphan_links = value.lower() in ("yes", "true", "1")
-            elif attr == "pdf_all_backrefs_linked":
-                fix.pdf_all_backrefs_linked = value.lower() in ("yes", "true", "1")
-            elif attr == "pdf_backref_sources_rendered":
-                fix.pdf_backref_sources_rendered = value.lower() in ("yes", "true", "1")
-            elif attr == "allow_undefined_refs":
-                fix.allow_undefined_refs = value.lower() in ("yes", "true", "1")
-            elif attr in {"census", "census_pass"}:
-                setattr(fix, attr, value.lower() in ("yes", "true", "1", "enabled", "on"))
-            elif attr in REPEATING_KEYS:
-                getattr(fix, attr).append(value)
             else:
-                setattr(fix, attr, value)
+                ph[attr] = value
+            continue
+
+        # Unqualified directive: existing handling.
+        if attr == "exit_code":
+            try:
+                fix.exit_code = int(value)
+            except ValueError:
+                pass
+        elif attr == "pdf_links":
+            try:
+                fix.pdf_links = int(value)
+            except ValueError:
+                pass
+        elif attr == "pdf_link_count":
+            try:
+                fix.pdf_link_count = int(value)
+            except ValueError:
+                pass
+        elif attr == "pdf_pages":
+            try:
+                fix.pdf_pages = int(value)
+            except ValueError:
+                pass
+        elif attr == "atoms_min":
+            try:
+                fix.atoms_min = int(value)
+            except ValueError:
+                pass
+        elif attr == "rerun":
+            try:
+                fix.rerun = int(value)
+            except ValueError:
+                pass
+        elif attr == "pass_count_cold":
+            try:
+                fix.pass_count_cold = int(value)
+                if fix.pass_count_cold > MAX_PASS_COUNTS["cold"]:
+                    fix.parse_error = (
+                        f"TEST-PASS-COUNT-COLD: {fix.pass_count_cold} exceeds "
+                        f"max {MAX_PASS_COUNTS['cold']} "
+                        f"(see .claude/baseline-sizes.json max_pass_count_cold)"
+                    )
+            except ValueError:
+                pass
+        elif attr == "pass_count_warm":
+            try:
+                fix.pass_count_warm = int(value)
+                if fix.pass_count_warm > MAX_PASS_COUNTS["warm"]:
+                    fix.parse_error = (
+                        f"TEST-PASS-COUNT-WARM: {fix.pass_count_warm} exceeds "
+                        f"max {MAX_PASS_COUNTS['warm']} "
+                        f"(see .claude/baseline-sizes.json max_pass_count_warm)"
+                    )
+            except ValueError:
+                pass
+        elif attr == "pass_count_warm_changed":
+            try:
+                fix.pass_count_warm_changed = int(value)
+                if fix.pass_count_warm_changed > MAX_PASS_COUNTS["warm_changed"]:
+                    fix.parse_error = (
+                        f"TEST-PASS-COUNT-WARM-CHANGED: {fix.pass_count_warm_changed} "
+                        f"exceeds max {MAX_PASS_COUNTS['warm_changed']} "
+                        f"(see .claude/baseline-sizes.json max_pass_count_warm_changed)"
+                    )
+            except ValueError:
+                pass
+        elif attr == "stable_at":
+            try:
+                fix.stable_at = int(value)
+            except ValueError:
+                pass
+        elif attr == "packages":
+            fix.packages = [p.strip() for p in value.split(",") if p.strip()]
+        elif attr == "behavior_ids":
+            fix.behavior_ids = [b.strip() for b in value.split(",") if b.strip()]
+        elif attr == "pins_known_broken":
+            fix.pins_known_broken = value.lower() in ("yes", "true", "1")
+        elif attr == "pdf_no_orphan_links":
+            fix.pdf_no_orphan_links = value.lower() in ("yes", "true", "1")
+        elif attr == "pdf_all_backrefs_linked":
+            fix.pdf_all_backrefs_linked = value.lower() in ("yes", "true", "1")
+        elif attr == "pdf_backref_sources_rendered":
+            fix.pdf_backref_sources_rendered = value.lower() in ("yes", "true", "1")
+        elif attr == "allow_undefined_refs":
+            fix.allow_undefined_refs = value.lower() in ("yes", "true", "1")
+        elif attr in {"census", "census_pass"}:
+            setattr(fix, attr, value.lower() in ("yes", "true", "1", "enabled", "on"))
+        elif attr in REPEATING_KEYS:
+            getattr(fix, attr).append(value)
+        else:
+            setattr(fix, attr, value)
 
     if fix.pdf_appendix_entry and fix.pdf_appendix_entry_text_only:
         fix.parse_error = (
@@ -2005,6 +2035,23 @@ def _is_multi_phase(fix: "Fixture") -> bool:
     )
 
 
+def _no_wrap_tex_env() -> dict:
+    """Return a subprocess env with TeX log no-wrap settings.
+
+    max_print_line=10000 prevents soft-wrapping of long warning lines.
+    error_line=254 and half_error_line=238 are the supported high-value pair
+    that keeps TeX internal constants intact (10000 would abort with
+    "my internal constants have been clobbered").
+    """
+    env = os.environ.copy()
+    env.update({
+        "max_print_line": "10000",
+        "error_line": "254",
+        "half_error_line": "238",
+    })
+    return env
+
+
 def _run_phase_compiles(
     fix: "Fixture",
     result: "TestResult",
@@ -2027,6 +2074,7 @@ def _run_phase_compiles(
                 capture_output=True,
                 text=True,
                 timeout=120,
+                env=_no_wrap_tex_env(),
             )
             last_exit = proc.returncode
             if verbose:
@@ -2058,6 +2106,7 @@ def _check_convergence(
             capture_output=True,
             text=True,
             timeout=120,
+            env=_no_wrap_tex_env(),
         )
         if verbose:
             sys.stderr.write(f"  [{phase}] convergence pass: exit {proc.returncode}\n")
@@ -2972,6 +3021,128 @@ class TestResult:
     log_excerpt: str = ""
 
 
+# ----------------------------------------------------------------------
+# Warning-block extraction and gate (W05-WARNING-HYGIENE-P01)
+# ----------------------------------------------------------------------
+
+# Anchor patterns that start a warning block in a TeX log.
+_WARNING_ANCHOR_RES = [
+    re.compile(r"^LaTeX Warning:"),
+    re.compile(r"^LaTeX Font Warning:"),
+    re.compile(r"^Package \S+ Warning:"),
+    re.compile(r"^Class \S+ Warning:"),
+    re.compile(r"^Overfull \\hbox"),
+    re.compile(r"^Label\(s\) may have changed"),
+    re.compile(r"^Package rerunfilecheck Warning:"),
+]
+
+# Continuation prefixes emitted by LaTeX packages on continuation lines.
+# e.g. "(hyperref)" or "(Font)" at the start of continuation lines.
+_CONTINUATION_PREFIX_RE = re.compile(r"^\([A-Za-z][A-Za-z0-9@./_-]*\)\s*")
+
+_CODEPENDENT_EXEMPT_PREFIX = "Package codependent Warning:"
+
+
+def _is_warning_anchor(line: str) -> bool:
+    return any(p.match(line) for p in _WARNING_ANCHOR_RES)
+
+
+def _normalize_warning_block(lines: list) -> str:
+    """Join block lines into a single normalized string.
+
+    Strips continuation prefixes like (hyperref), (Font), (pkg), collapses
+    whitespace to one space, and trims.
+    """
+    parts = []
+    for raw in lines:
+        cleaned = _CONTINUATION_PREFIX_RE.sub("", raw).strip()
+        if cleaned:
+            parts.append(cleaned)
+    return re.sub(r"\s+", " ", " ".join(parts)).strip()
+
+
+def _extract_warning_blocks(log_text: str) -> list:
+    """Extract normalized non-blank warning blocks from a TeX log."""
+    blocks = []
+    current: list = []
+    for line in log_text.splitlines():
+        stripped = line.rstrip()
+        if _is_warning_anchor(stripped):
+            if current:
+                block = _normalize_warning_block(current)
+                if block:
+                    blocks.append(block)
+            current = [stripped]
+        elif current:
+            if stripped == "":
+                block = _normalize_warning_block(current)
+                if block:
+                    blocks.append(block)
+                current = []
+            else:
+                current.append(stripped)
+    if current:
+        block = _normalize_warning_block(current)
+        if block:
+            blocks.append(block)
+    return blocks
+
+
+def _run_warning_gate(fix: "Fixture", result: "TestResult", tmp_path: Path) -> None:
+    """Run the final-log warning gate: all non-codependent blocks must be declared.
+
+    - TEST-REQUIRES-WARNING: regex must match ≥1 block (absence fails fixture).
+    - TEST-TOLERATES-WARNING: matching blocks are exempted; absence is OK.
+    - Undeclared non-codependent blocks always fail the fixture.
+    - Package codependent Warning: blocks are globally exempt.
+    """
+    log_file = tmp_path / f"{fix.name}.log"
+    if not log_file.exists():
+        return
+
+    log_text = log_file.read_text(encoding="utf-8", errors="replace")
+    blocks = _extract_warning_blocks(log_text)
+    non_codep = [b for b in blocks if not b.startswith(_CODEPENDENT_EXEMPT_PREFIX)]
+
+    # REQUIRES: each regex must match at least one block.
+    for pat in fix.requires_warning:
+        try:
+            compiled = re.compile(pat)
+        except re.error as exc:
+            result.failures.append(
+                f"warning-gate: TEST-REQUIRES-WARNING: invalid regex {pat!r}: {exc}"
+            )
+            continue
+        if not any(compiled.search(b) for b in non_codep):
+            result.failures.append(
+                f"warning-gate: TEST-REQUIRES-WARNING: {pat!r} "
+                f"did not match any warning block in the final log"
+            )
+
+    # Global gate: every non-codependent block must match a declared directive.
+    for block in non_codep:
+        matched = False
+        for pat in fix.requires_warning:
+            try:
+                if re.search(pat, block):
+                    matched = True
+                    break
+            except re.error:
+                pass
+        if not matched:
+            for pat in fix.tolerates_warning:
+                try:
+                    if re.search(pat, block):
+                        matched = True
+                        break
+                except re.error:
+                    pass
+        if not matched:
+            result.failures.append(
+                f"warning-gate: undeclared warning block in final log: {block[:120]!r}"
+            )
+
+
 def _is_direct_stress_fixture(fix: "Fixture") -> bool:
     return fix.path.suffix == ".tex" and fix.kind == "stress"
 
@@ -3003,6 +3174,7 @@ def _run_stress_fixture(
             capture_output=True,
             text=True,
             timeout=300,
+            env=_no_wrap_tex_env(),
         )
     except subprocess.TimeoutExpired:
         result.failures.append("latexmk stress compile: TIMEOUT after 300s")
@@ -3064,6 +3236,7 @@ def run_fixture(
                     try:
                         proc = subprocess.run(
                             cmd, cwd=tmp_path, capture_output=True, text=True, timeout=120,
+                            env=_no_wrap_tex_env(),
                         )
                     except subprocess.TimeoutExpired:
                         result.failures.append(f"pass {pass_num}: TIMEOUT after 120s")
@@ -3075,6 +3248,9 @@ def run_fixture(
 
                 last_exit = run_log[-1][2] if run_log else -1
                 _run_assertions(fix, result, tmp_path, last_exit, prefix="", engine_bin=engine_bin)
+
+        # Warning gate: runs once against the final-phase log, after all compilations.
+        _run_warning_gate(fix, result, tmp_path)
 
         if keep_temp:
             persistent = TESTFILES_DIR / "tmp" / fix.name
