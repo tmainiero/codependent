@@ -1,7 +1,7 @@
 %% TEST-NAME: stress-ta-inline
 %% TEST-PURPOSE: Inline TA stress fixture using default backref color.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE, B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED
 %% TEST-STATUS: LIVE
 %% TEST-RENDER-MODES: inline, default-color
 %% TEST-PDF-PAGES: 4
@@ -11,6 +11,18 @@
 %% W05-PRINTKIND-DISPLAY-NAME: inline Used-In must show "Printkind Stress 9.12", not "Printkindstress 9.12".
 %% TEST-PDF-STEXT: Printkind Stress 9\.12
 %% TEST-PDF-STEXT-NOT: Printkindstress 9\.12
+%%
+%% W05-PARA-ORPHAN-FIX P03: §4.1 list-ending lemma teardown must not produce orphan paragraph:4.2
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{4.2}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:4.2}{paragraph}{4.2}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:4.2}
+%% (SText-NOT for list-ending omitted: in inline mode, lemma inline backrefs render between list
+%%  content and qed, so marker→number→♡ always matches. CDP/AUX negatives above are primary.)
+%%
+%% W05-PARA-ORPHAN-FIX P03: §4.3 nested-close definition teardown must not produce orphan paragraph:4.5
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{4.5}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:4.5}{paragraph}{4.5}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:4.5}
 
 \def\START{}\def\END{}
 \documentclass{article}
@@ -184,6 +196,39 @@ Stress reverse row references: \ref{eq:stress-tracktwo-third},
 A theorem-source citation encountered after the align cites
 \cref{thm:stress-tracktwo-target}.
 \end{corollary}
+
+
+%% ====================================================================
+%%  Section 4: Teardown orphan parity (W05-PARA-ORPHAN-FIX P03)
+%%  Exercises list-ending tracked-env teardown and nested-close teardown.
+%%  Without the P01 \codep@teardownpara@suppressdepth guard, para/begin
+%%  fires during backend qed placement and allocates orphan atoms 4.2 and 4.5.
+%% ====================================================================
+\section{Teardown orphan parity}
+\label{sec:orphan-inline}
+
+%% 4.1: List-ending lemma — orphan paragraph:4.2 would appear without P01 guard.
+\begin{lemma}\label{lem:orphan-inline-list}
+The following hold for teardown stress:
+\begin{itemize}
+  \item First fact about the setup.
+  \item ORPHAN-INLINE-MARK-LIST
+\end{itemize}
+\end{lemma}
+
+%% 4.3 (without bug) / 4.4 (with bug): Nested tracked env.
+%% After fix: definition=4.2, example=4.3; orphan paragraph:4.5 absent.
+\begin{definition}\label{def:orphan-inline-nested}
+Outer definition for nested-close teardown stress.
+\begin{example}\label{ex:orphan-inline-nested}
+Inner example. ORPHAN-INLINE-MARK-NESTED
+\end{example}
+\end{definition}
+
+\begin{theorem}\label{thm:orphan-inline-after}
+After both teardown scenarios.
+References \cref{lem:orphan-inline-list} and \cref{def:orphan-inline-nested}.
+\end{theorem}
 
 
 %% ====================================================================

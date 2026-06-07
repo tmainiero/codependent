@@ -169,7 +169,7 @@ Edit fixture headers, not this file.
 | testfiles/unit/unit-appendix-display-render-time.lvt | LIVE | B-PRINTKIND-DISPLAY-OVERRIDE | appendix-display override is resolved at appendix render time only |
 | testfiles/unit/unit-printkind-token-safety.lvt | LIVE | B-PRINTKIND-DISPLAY-NAME | Preserve macro theorem display names in entitymeta print-kind. |
 
-## Integration (91 fixtures)
+## Integration (96 fixtures)
 
 | Path | Status | Behavior | Purpose |
 |---|---|---|---|
@@ -201,6 +201,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-keytheorems-mixed-amsthm-keytheorems.lvt | LIVE | B-COMPAT-KEYTHEOREMS, B-NUM-SHARED | amsthm and keytheorems tracked envs do not leak state |
 | testfiles/integration/integ-keytheorems-numbered-no-heading-silent-no-track.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems numbered=no with custom heading is silent no-track |
 | testfiles/integration/integ-keytheorems-numbered-no-silent-no-track.lvt | LIVE | B-COMPAT-KEYTHEOREMS | explicitly tracking a keytheorems [numbered=no] env is silent no-track |
+| testfiles/integration/integ-keytheorems-para-teardown-no-orphan.lvt | LIVE | B-NUM-PARA, B-SUPP-TRACKED, B-COMPAT-KEYTHEOREMS | keytheorems paragraphs=on teardown does not create orphan paragraph atom |
 | testfiles/integration/integ-keytheorems-posthead-anchor-body-equation.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems posthead capture beats in-body equation anchors |
 | testfiles/integration/integ-keytheorems-renew-style-posthead-survives.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems renewed custom style still captures posthead anchors |
 | testfiles/integration/integ-keytheorems-restated-no-duplicate.lvt | LIVE | B-COMPAT-KEYTHEOREMS | keytheorems store replay does not duplicate or overwrite original destination |
@@ -214,6 +215,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-mixed-three-backends.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM, B-COMPAT-KEYTHEOREMS, B-LINK-APPENDIX-BIDIR, B-REND-BACKREFSOF | amsthm, keytheorems, and tcolorbox coexist in one document. |
 | testfiles/integration/integ-no-cleveref.lvt | LIVE | B-PASS-ONE | Correct patch-site selection when cleveref is absent. |
 | testfiles/integration/integ-no-hyperref.lvt | LIVE | B-REND-INLINE | Graceful degradation when hyperref is absent. Verifies that |
+| testfiles/integration/integ-no-orphan-para-after-tracked-env.lvt | LIVE | B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED, B-PROOF-ADJ, B-PROOF-ADJRULE | Theorem teardown must not allocate spurious paragraph atoms after |
 | testfiles/integration/integ-no-paragraphs.lvt | LIVE | B-EDGE-PARAOFF-EQ | Integration test with paragraphs=off. Verifies that |
 | testfiles/integration/integ-ntheorem-appendix-name-link-break-after-load.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem break style chosen after codependent load keeps name link |
 | testfiles/integration/integ-ntheorem-appendix-name-link-custom-style.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem custom post-load style rewraps both heading signatures |
@@ -221,6 +223,7 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-ntheorem-appendix-name-link-plain.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem plain style gets appendix forward link on theorem name |
 | testfiles/integration/integ-ntheorem-appendix-no-backrefs-no-link.lvt | LIVE | B-LINK-APPENDIX-BIDIR | ntheorem lifecycle rewrap is gated off when backrefs are none |
 | testfiles/integration/integ-ntheorem-newtheorem-star-silent-no-track.lvt | LIVE | B-NUM-SHARED | ntheorem \newtheorem* envs are silently not tracked |
+| testfiles/integration/integ-ntheorem-para-teardown-no-orphan.lvt | LIVE | B-NUM-PARA, B-SUPP-TRACKED | ntheorem paragraphs=on teardown does not create orphan paragraph atom |
 | testfiles/integration/integ-ntheorem-printkind-display-name.lvt | LIVE | B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE | ntheorem plain-text display name appears in appendix as stored print-kind; override renders plain label |
 | testfiles/integration/integ-ntheorem.lvt | LIVE | B-NUM-SHARED | Verify codependent works with ntheorem as the theorem backend |
 | testfiles/integration/integ-proof-link-target.lvt | LIVE | B-LINK-PROOF-DEST, B-PROOF-ANCHOR-NEAR-HEADING | Proof-atom link target: clicking N.M* in a "Used in" list |
@@ -254,10 +257,12 @@ Edit fixture headers, not this file.
 | testfiles/integration/integ-tcolorbox-nested-tracked-untracked.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | Nested untracked tcolorboxes do not leak atoms. |
 | testfiles/integration/integ-tcolorbox-no-double-increment.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox counter capture does not double increment boxes |
 | testfiles/integration/integ-tcolorbox-nophantom-and-clearing-styles.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | Only nophantom-style clearing disables tcolorbox tracking. |
+| testfiles/integration/integ-tcolorbox-para-teardown-no-orphan.lvt | LIVE | B-NUM-PARA, B-SUPP-TRACKED, B-COMPAT-TCOLORBOX-THEOREM | tcolorbox paragraphs=on teardown does not create orphan paragraph atom |
 | testfiles/integration/integ-tcolorbox-phantom-empty-and-cosmetic-options-neutral.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM, B-LINK-APPENDIX-BIDIR | Empty phantom and cosmetic tcolorbox options still track. |
 | testfiles/integration/integ-tcolorbox-phantom-no-atom.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | tcolorbox nophantom tracked box emits warning and no atom |
 | testfiles/integration/integ-tcolorbox-starred-explicit-silent-no-track.lvt | LIVE | B-COMPAT-TCOLORBOX-THEOREM | explicitly tracking a tcolorbox starred env is silent no-track |
 | testfiles/integration/integ-thmtools-continued-generic-hooks.lvt | LIVE | B-NUM-SHARED, B-PROOF-ADJ, B-PROOF-ADJRULE, B-LINK-ADJ-PROOF, B-LINK-NO-ORPHAN, B-LINK-PROOF-DEST, B-COMPAT-THMTOOLS-CONTINUED | thmtools continued theorem tracks via generic hooks; continued copy gets its own atom. |
+| testfiles/integration/integ-thmtools-para-teardown-no-orphan.lvt | LIVE | B-NUM-PARA, B-SUPP-TRACKED | thmtools paragraphs=on teardown does not create orphan paragraph atom |
 | testfiles/integration/integ-thmtools-printkind-display-name.lvt | LIVE | B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE | thmtools declaretheorem display name resolved from thmt@original@<env>; override renders plain label |
 | testfiles/integration/integ-untracked-hyperref-proof.lvt | LIVE | B-PROOF-ADJ | codependent + hyperref loaded, proof env present, NO |
 | testfiles/integration/integ-usedin-reading-order.lvt | LIVE | B-USEDIN-READING-ORDER | Track-2 equation-range sources keep Used-In lists in reader order |
@@ -275,6 +280,6 @@ Edit fixture headers, not this file.
 | testfiles/compiled-examples/stress-backends-tcolorbox-appendix.tex | LIVE | appendix, default-color | B-COMPAT-TCOLORBOX-THEOREM, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN | rich tcolorbox backend stress replacement with appendix backrefs and a breakable page-spanning theorem box. |
 | testfiles/compiled-examples/stress-backends-tcolorbox-inline-gray.tex | LIVE | inline, gray-backrefs | B-COMPAT-TCOLORBOX-THEOREM, B-COMPAT-KEYTHEOREMS, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | rich mixed-backend stress replacement with tcolorbox inline gray rendering. |
 | testfiles/compiled-examples/stress-backends-tcolorbox-inline.tex | LIVE | inline, default-color | B-COMPAT-TCOLORBOX-THEOREM, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN | rich tcolorbox backend stress replacement with inline backrefs. |
-| testfiles/compiled-examples/stress-ta-appendix-gray.tex | EXPLORATORY | appendix, gray-backrefs, custom-page-format | B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE | Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting. |
-| testfiles/compiled-examples/stress-ta-inline-gray.tex | EXPLORATORY | inline, gray-backrefs | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE | Inline TA stress fixture with gray backrefs. |
-| testfiles/compiled-examples/stress-ta-inline.tex | LIVE | inline, default-color | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE | Inline TA stress fixture using default backref color. |
+| testfiles/compiled-examples/stress-ta-appendix-gray.tex | EXPLORATORY | appendix, gray-backrefs, custom-page-format | B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE, B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED | Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting. |
+| testfiles/compiled-examples/stress-ta-inline-gray.tex | EXPLORATORY | inline, gray-backrefs | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE, B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED | Inline TA stress fixture with gray backrefs. |
+| testfiles/compiled-examples/stress-ta-inline.tex | LIVE | inline, default-color | B-NUM-SHARED, B-REND-INLINE, B-LINK-CLICKABLE, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE, B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED | Inline TA stress fixture using default backref color. |

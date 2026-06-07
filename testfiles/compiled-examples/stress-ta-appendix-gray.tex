@@ -1,7 +1,7 @@
 %% TEST-NAME: stress-ta-appendix-gray
 %% TEST-PURPOSE: Appendix-mode TA stress fixture with gray backrefs and custom page-number formatting.
 %% TEST-KIND: stress
-%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE
+%% TEST-BEHAVIOR: B-NUM-SHARED, B-REND-APPENDIX, B-LINK-CLICKABLE, B-LINK-APPENDIX-BIDIR, B-LINK-NO-ORPHAN, B-USEDIN-READING-ORDER, B-PRINTKIND-DISPLAY-NAME, B-PRINTKIND-DISPLAY-OVERRIDE, B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED
 %% TEST-STATUS: EXPLORATORY
 %% TEST-RENDER-MODES: appendix, gray-backrefs, custom-page-format
 %% TEST-PDF-PAGES: 7
@@ -17,6 +17,18 @@
 %% W05-PRINTKIND-DISPLAY-NAME: display name in appendix index must be "Printkind Stress", not "Printkindstress".
 %% TEST-PDF-STEXT: Printkind Stress 9\.12 &#x2014; p\. 6
 %% TEST-PDF-STEXT-NOT: Printkindstress
+%%
+%% W05-PARA-ORPHAN-FIX P03: §5.3 list-ending lemma teardown must not produce orphan paragraph:5.4
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{5.4}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:5.4}{paragraph}{5.4}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:5.4}
+%% SText: no orphan atom number rendered between list marker and lemma qed (♡ U+2661)
+%% TEST-PDF-STEXT-NOT: (?s)text=".*ORPHAN-APPX-ENDLIST-MARK.*".*text="[0-9]+\.[0-9]+".*text="&#x2661;"
+%%
+%% W05-PARA-ORPHAN-FIX P03: §5.5 nested-close definition teardown must not produce orphan paragraph:5.7
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{5.7}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:5.7}{paragraph}{5.7}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:5.7}
 
 \def\START{}\def\END{}
 \documentclass{article}
@@ -412,7 +424,7 @@ The following are examples of rigid monoidal categories:
 \begin{itemize}
   \item $\catname{Vect}_k$ — finite-dimensional vector spaces (\cref{ex:vect}).
   \item $\catname{Rep}(G)$ — representations of a finite group $G$.
-  \item $\catname{Hilb}_{\mathrm{fd}}$ — finite-dimensional Hilbert spaces.
+  \item $\catname{Hilb}_{\mathrm{fd}}$ — finite-dimensional Hilbert spaces. ORPHAN-APPX-ENDLIST-MARK
 \end{itemize}
 \end{lemma}
 
