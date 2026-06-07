@@ -11,7 +11,19 @@
 %%            P01 guard to tcolorbox.
 %%            Section 1: list-ending codetcb:1.1; if bug present, orphan would be 1.2.
 %%            Section 2: codetcb:2.1 followed by real paragraph:2.2.
-%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04
+%% NESTED-CLOSE WAIVER: Option B.
+%%   Nested tcolorbox theorem environments are exempt from the nested-close
+%%   section added to the other three backend fixtures.  The tcolorbox adapter
+%%   pops \codep@suppressdepth in \codep@tcb@after (env/#1/after), which fires
+%%   AFTER all tcolorbox box-closing material, including the full lifecycle of
+%%   any inner box.  Consequently suppressdepth remains > 0 throughout the outer
+%%   box teardown whether or not an inner box was present: the para/begin
+%%   allocator is suppressed by the codep@suppressdepth > 0 branch
+%%   (codependent.sty:4239), not by teardownpara@suppressdepth.  A nested-close
+%%   section would therefore PASS on both pre-P01 and post-P01 .sty, providing
+%%   no failure-proof coverage and obscuring the passing-control nature of this
+%%   fixture.
+%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04 + P04b (waiver documented)
 %% TEST-SECTION: tcolorbox backend teardown correctness (passing control)
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence

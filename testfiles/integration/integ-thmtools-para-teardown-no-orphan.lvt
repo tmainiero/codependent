@@ -1,7 +1,7 @@
 %% TEST-NAME: integ-thmtools-para-teardown-no-orphan
 %% TEST-PURPOSE: thmtools paragraphs=on teardown does not create orphan paragraph atom
 %% TEST-KIND: integration
-%% TEST-BEHAVIOR: B-NUM-PARA, B-SUPP-TRACKED
+%% TEST-BEHAVIOR: B-NUM-PARA, B-SUPP-TRACKED, B-NUM-NESTED, B-EDGE-NESTED
 %% TEST-STATUS: LIVE
 %% TEST-WHAT: With paragraphs=on, ending a thmtools theorem must not allocate a spurious
 %%            paragraph atom. Thmtools uses the legacy cmd-hook route (resolves through
@@ -14,7 +14,11 @@
 %%            placement -- caught by CDP-NOT-CONTAINS.
 %%            Failure mode B (P01 missing legacy cmd/after wire): over-suppression -- caught
 %%            by CDP-CONTAINS for real paragraph:2.2.
-%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04
+%%            Section 3 tests nested-close: outer definition:3.1 wrapping example:3.2.
+%%            Pre-P01: outer definition teardown fires qed placement after suppressdepth=0,
+%%            allocating orphan paragraph:3.3.  P01 holds teardownpara@suppressdepth open
+%%            until cmd/end#1/after fires, suppressing the orphan.
+%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04 + P04b (nested-close)
 %% TEST-SECTION: thmtools legacy cmd-hook teardown correctness
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
@@ -34,6 +38,11 @@
 %% Section 2 real paragraph: must be allocated (no over-suppression)
 %% TEST-CDP-CONTAINS: \codep@cdp@atom{2.2}{paragraph}
 %% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:2.2}{paragraph}{2.2}{paragraph}{}
+%%
+%% Section 3 nested-close: outer definition:3.1 wrapping example:3.2; orphan would be paragraph:3.3
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{3.3}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:3.3}{paragraph}{3.3}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:3.3}
 
 \documentclass{article}
 \usepackage[T1]{fontenc}
@@ -42,14 +51,18 @@
 \declaretheoremstyle[qed=$\heartsuit$]{qedlemstyle}
 \declaretheorem[name=Theorem,numberwithin=section]{theorem}
 \declaretheorem[name=Lemma,style=qedlemstyle,sibling=theorem]{lemma}
+\declaretheorem[name=Definition,style=qedlemstyle,sibling=theorem]{definition}
+\declaretheorem[name=Example,style=qedlemstyle,sibling=theorem]{example}
 \providecommand*{\theoremautorefname}{Theorem}
 \providecommand*{\lemmaautorefname}{Lemma}
+\providecommand*{\definitionautorefname}{Definition}
+\providecommand*{\exampleautorefname}{Example}
 \usepackage[hypertexnames=false]{hyperref}
 \hypersetup{colorlinks=true,linkcolor=blue}
 \usepackage{cleveref}
 \usepackage{codependent}
 \codepsetup{backrefs=appendix, paragraphs=on, equations=off, proofs=off}
-\codeptrack{theorem,lemma}
+\codeptrack{theorem,lemma,definition,example}
 \begin{document}
 \START
 
@@ -68,6 +81,19 @@
 \end{lemma}
 
 Real paragraph after blank line.
+
+\section{Nested tracked environments}
+
+\begin{definition}\label{defn:thmtools-3.1}
+  Outer definition containing a nested example.
+  \begin{example}\label{ex:thmtools-3.2}
+    Inner example inside the outer definition.
+  \end{example}
+\end{definition}
+
+\begin{theorem}\label{thm:thmtools-3.3}
+  Follows the nested close. \cref{defn:thmtools-3.1} and \cref{ex:thmtools-3.2}.
+\end{theorem}
 
 \codepappendix
 \END

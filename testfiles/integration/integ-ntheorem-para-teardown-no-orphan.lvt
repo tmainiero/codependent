@@ -12,7 +12,15 @@
 %%            end material -- caught by CDP-NOT-CONTAINS.
 %%            Failure mode B (P01 missing legacy cmd/after wire): suppress window stays open;
 %%            real paragraph:2.2 suppressed -- caught by CDP-CONTAINS.
-%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04
+%% NESTED-CLOSE WAIVER: Option B.
+%%   Ntheorem's default theorem style does not place a qed= symbol via \hfill\qed{};
+%%   therefore the backend teardown does not fire para/begin after suppressdepth drops
+%%   to 0.  Empirically confirmed (P04b worktree at 68daade): compiling a nested
+%%   definition:3.1 > example:3.2 > theorem:3.3 layout with pre-P01 .sty produces
+%%   no paragraph:3.3 entry in the CDP sidecar.  Adding a nested-close section would
+%%   thus produce a vacuous assertion that passes both pre-P01 and post-P01, obscuring
+%%   the per-backend coverage intent rather than providing failure-proof value.
+%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04 + P04b (waiver documented)
 %% TEST-SECTION: ntheorem legacy cmd-hook teardown correctness
 %% TEST-EXIT: 0
 %% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
