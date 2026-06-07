@@ -507,7 +507,7 @@ By \cref{def:trace} and the cyclic property \cref{lem:trace-cyclic}.
 %% def:enrichment.  After P02: unresref:<N> allocates at scan time; body
 %% cite migrates to proof:9.2 at drain.  No unresref: survives to final cdp.
 \begin{proof}[Proof of \cref{thm:s9-forward-late}]
-By \cref{def:enrichment} and monoidal coherence (\cref{thm:coherence}).
+By \cref{def:enrichment,thm:coherence}.
 \end{proof}
 
 %% thm:s9-forward-late is defined AFTER its proof (forward-ref target).
@@ -579,8 +579,7 @@ Follows from \cref{lem:trace-cyclic}.
 We give a joint proof of both theorems above.
 
 \begin{proof}[Proof of \cref{thm:s9-jatom-x,thm:s9-jatom-y}]
-Both follow from \cref{def:enrichment} and \cref{lem:trace-cyclic}
-by a unified monoidal argument.
+By \cref{def:enrichment,lem:trace-cyclic}, both follow.
 \end{proof}
 
 %% --- W05-PRINTKIND-DISPLAY-NAME: display-name capture stress ---
