@@ -1,0 +1,74 @@
+%% TEST-NAME: integ-thmtools-para-teardown-no-orphan
+%% TEST-PURPOSE: thmtools paragraphs=on teardown does not create orphan paragraph atom
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-PARA, B-SUPP-TRACKED
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: With paragraphs=on, ending a thmtools theorem must not allocate a spurious
+%%            paragraph atom. Thmtools uses the legacy cmd-hook route (resolves through
+%%            \codep@hooktheorem via codependent.sty:1946-1953, 2520-2524, 2542-2547).
+%%            The qed=$\heartsuit$ style causes \hfill\qed{} placement that fires para/begin
+%%            after \codep@hooktheorem@end@outer pops suppressdepth to 0 on HEAD.
+%%            P01 wires cmd/end#1/after for legacy backends to clear
+%%            \codep@teardownpara@suppressdepth after all backend end material has fired.
+%%            Failure mode A (HEAD, no P01): orphan paragraph:1.2 allocated during qed
+%%            placement -- caught by CDP-NOT-CONTAINS.
+%%            Failure mode B (P01 missing legacy cmd/after wire): over-suppression -- caught
+%%            by CDP-CONTAINS for real paragraph:2.2.
+%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04
+%% TEST-SECTION: thmtools legacy cmd-hook teardown correctness
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: amsmath,amssymb,amsthm,thmtools,hyperref,cleveref,codependent
+%%
+%% Section 1 teardown: list-ending lemma:1.1 (qed style); orphan would be paragraph:1.2
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:1.2}{paragraph}{1.2}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:1.2}
+%%
+%% Section 1 SText: no orphan number between list end and next-section heading
+%% TEST-PDF-STEXT-NOT: (?s)text=".*THMTOOLS-LIST-END-MARKER.*".*text="1\.2".*text="Real paragraph control"
+%%
+%% Section 2 real paragraph: must be allocated (no over-suppression)
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.2}{paragraph}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:2.2}{paragraph}{2.2}{paragraph}{}
+
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{thmtools}
+\declaretheoremstyle[qed=$\heartsuit$]{qedlemstyle}
+\declaretheorem[name=Theorem,numberwithin=section]{theorem}
+\declaretheorem[name=Lemma,style=qedlemstyle,sibling=theorem]{lemma}
+\providecommand*{\theoremautorefname}{Theorem}
+\providecommand*{\lemmaautorefname}{Lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+\usepackage{cleveref}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=on, equations=off, proofs=off}
+\codeptrack{theorem,lemma}
+\begin{document}
+\START
+
+\section{Thmtools list teardown}
+
+\begin{lemma}\label{lem:thmtools-first}
+  Lemma ending in a list:
+  \begin{itemize}
+    \item THMTOOLS-LIST-END-MARKER last item.
+  \end{itemize}
+\end{lemma}
+\section{Real paragraph control}
+
+\begin{lemma}\label{lem:thmtools-real}
+  Lemma for real-paragraph control. \cref{lem:thmtools-first}.
+\end{lemma}
+
+Real paragraph after blank line.
+
+\codepappendix
+\END
+\end{document}

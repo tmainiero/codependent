@@ -1,0 +1,67 @@
+%% TEST-NAME: integ-keytheorems-para-teardown-no-orphan
+%% TEST-PURPOSE: keytheorems paragraphs=on teardown does not create orphan paragraph atom
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-PARA, B-SUPP-TRACKED, B-COMPAT-KEYTHEOREMS
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: With paragraphs=on, ending a keytheorems theorem must not allocate a spurious
+%%            paragraph atom during teardown. P01 opens \codep@teardownpara@suppressdepth in
+%%            \codep@hooktheorem@end@outer; P01 keytheorems wire (env/#1/after) clears it after
+%%            all keytheorems end-hook material fires. Two failure modes caught:
+%%            Failure mode A (HEAD, no P01): orphan paragraph:1.2 allocated during backend
+%%            teardown -- caught by CDP-NOT-CONTAINS.
+%%            Failure mode B (P01 missing keytheorems env/#1/after wire): suppress window
+%%            stays open; real paragraph:2.2 after blank line is suppressed -- caught by
+%%            CDP-CONTAINS.
+%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04
+%% TEST-SECTION: keytheorems backend teardown correctness
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
+%%
+%% Section 1 teardown: list-ending lemma:1.1; orphan would be paragraph:1.2
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:1.2}{paragraph}{1.2}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:1.2}
+%%
+%% Section 1 SText: no orphan number between list end and next-section heading
+%% TEST-PDF-STEXT-NOT: (?s)text=".*KEYTHM-LIST-END-MARKER.*".*text="1\.2".*text="Real paragraph control"
+%%
+%% Section 2 real paragraph: must be allocated (no over-suppression from stuck window)
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.2}{paragraph}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:2.2}{paragraph}{2.2}{paragraph}{}
+
+\documentclass{article}
+\usepackage{amsmath,amsthm}
+\usepackage{keytheorems}
+\newkeytheorem{theorem}[name=Theorem,numberwithin=section]
+\newkeytheorem{lemma}[name=Lemma,sibling=theorem]
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=on, equations=off, proofs=off}
+\codeptrack{theorem,lemma}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+
+\section{Keytheorems list teardown}
+
+\begin{lemma}\label{lem:keythm-first}
+  Lemma ending in a list:
+  \begin{itemize}
+    \item KEYTHM-LIST-END-MARKER last item.
+  \end{itemize}
+\end{lemma}
+\section{Real paragraph control}
+
+\begin{lemma}\label{lem:keythm-real}
+  Lemma for real-paragraph control. \cref{lem:keythm-first}.
+\end{lemma}
+
+Real paragraph after blank line.
+
+\codepappendix
+\END
+\end{document}

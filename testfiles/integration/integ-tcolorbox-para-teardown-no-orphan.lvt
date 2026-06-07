@@ -1,0 +1,65 @@
+%% TEST-NAME: integ-tcolorbox-para-teardown-no-orphan
+%% TEST-PURPOSE: tcolorbox paragraphs=on teardown does not create orphan paragraph atom
+%% TEST-KIND: integration
+%% TEST-BEHAVIOR: B-NUM-PARA, B-SUPP-TRACKED, B-COMPAT-TCOLORBOX-THEOREM
+%% TEST-STATUS: LIVE
+%% TEST-WHAT: PASSING CONTROL. The tcolorbox adapter delays its pop to \codep@tcb@after
+%%            (codependent.sty:2154-2179, installed at 2268-2271), which already subsumes
+%%            the paragraph-orphan bug fixed by P01 for other backends. This fixture must
+%%            PASS on HEAD and continue to PASS after P01. A failure here is a new
+%%            tcolorbox-specific adapter regression, not a reason to apply the generic
+%%            P01 guard to tcolorbox.
+%%            Section 1: list-ending codetcb:1.1; if bug present, orphan would be 1.2.
+%%            Section 2: codetcb:2.1 followed by real paragraph:2.2.
+%% TEST-SOURCE: W05-PARA-ORPHAN-FIX P04
+%% TEST-SECTION: tcolorbox backend teardown correctness (passing control)
+%% TEST-EXIT: 0
+%% TEST-LOG-NOT: codependent.*Error|Undefined control sequence
+%% TEST-RERUN: 3
+%% TEST-STABLE-AT: 2
+%% TEST-PDF-NO-ORPHAN-LINKS: yes
+%% TEST-PACKAGES: tcolorbox,hyperref,cleveref,codependent
+%%
+%% Section 1 teardown: list-ending codetcb:1.1; orphan would be paragraph:1.2
+%% TEST-CDP-NOT-CONTAINS: \codep@cdp@atom{1.2}{paragraph}
+%% TEST-AUX-NOT-CONTAINS: \codep@entitymeta{paragraph:1.2}{paragraph}{1.2}{paragraph}{}
+%% TEST-AUX-NOT-CONTAINS: \codep@anchormap{paragraph:1.2}
+%%
+%% Section 1 SText: no orphan number between list end and next-section heading
+%% TEST-PDF-STEXT-NOT: (?s)text=".*TCB-LIST-END-MARKER.*".*text="1\.2".*text="Real paragraph control"
+%%
+%% Section 2 real paragraph: must be allocated
+%% TEST-CDP-CONTAINS: \codep@cdp@atom{2.2}{paragraph}
+%% TEST-AUX-CONTAINS: \codep@entitymeta{paragraph:2.2}{paragraph}{2.2}{paragraph}{}
+
+\documentclass{article}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+\newtcbtheorem[number within=section]{codetcb}{TBox}{colback=blue!3,colframe=blue!50!black,fonttitle=\bfseries}{codetcb}
+\usepackage{codependent}
+\codepsetup{backrefs=appendix, paragraphs=on, equations=off, proofs=off}
+\codeptrack{codetcb}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{cleveref}
+\begin{document}
+\START
+
+\section{Tcolorbox list teardown}
+
+\begin{codetcb}{Teardown test box}{tcb-first}
+  Box ending in a list:
+  \begin{itemize}
+    \item TCB-LIST-END-MARKER last item.
+  \end{itemize}
+\end{codetcb}
+\section{Real paragraph control}
+
+\begin{codetcb}{Real paragraph control box}{tcb-real}
+  Box for real-paragraph control. \ref{codetcb:tcb-first}.
+\end{codetcb}
+
+Real paragraph after blank line.
+
+\codepappendix
+\END
+\end{document}
