@@ -29,3 +29,20 @@ All 76 fixtures match.
 ## Supersedes
 
 W05-PARA-ORPHAN-FIX (marked superseded_by in that manifest)
+
+## 2026-06-08 — W05-WARNING-HYGIENE rotation
+
+Fixtures changed by P02/P03/P04/P05 typography + rerun + annotation edits.
+
+Allowed delta list:
+- trinity-test (aux_sha): P02 edited trinity-test.lvt content (line-shortening for overfull \hbox)
+- stress-backends-tcolorbox-appendix (cdp_sha, pdf_objects_sha): P03 edited compiled-examples .tex source (rerun convergence)
+- stress-backends-tcolorbox-inline (cdp_sha, pdf_objects_sha): P03 edited compiled-examples .tex source (rerun convergence)
+
+Unenumerated deltas: none.
+
+Post-rotation verify: All 76 fixtures match.
+
+## Supersedes
+
+Previous W05-STRESS-WARNINGS capture (captured_at 2026-06-07T17:48:50.671412+00:00).

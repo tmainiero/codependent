@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-07T17:48:50.671412+00:00",
+  "captured_at": "2026-06-08T18:29:45.102410+00:00",
   "fixtures": [
     {
       "aux_sha": "d5bcd2da457f7b2d8c9e8085a2886b6199344e90224431a00ba18a2f1bce7977",
@@ -164,7 +164,7 @@
       "pdf_objects_sha": null
     },
     {
-      "aux_sha": "987601381c0c31fdf45b11d307aed3f10bf1349323c7009cb86a2f128a40c9c0",
+      "aux_sha": "2a7801203364e755f50d44b1328b06e18819bfe599a2dbeee8ce7733b90122c3",
       "cdp_sha": "4abb8a81f5cc5bcdfac633c1c7927603118b1056d05e6ced9c35fde6da88c6a1",
       "name": "trinity-test",
       "pdf_objects_sha": null
@@ -189,15 +189,15 @@
     },
     {
       "aux_sha": "5f9170d7d89b55be3502ea5b017347936ee2c54ac7118968de74200fd7bf5658",
-      "cdp_sha": "2076c9a207c1dc6c8a38fcf27488ccfd75e30a2217b72975a82d08f0d030d16c",
+      "cdp_sha": "2abe624168c3ea1dad25c35a1694d9cf9d0a4365e8a908bc96b6dc214072aad3",
       "name": "stress-backends-tcolorbox-appendix",
-      "pdf_objects_sha": "5c7422917f04dd9306a06877166817760ae2c007f504810c7c8894bdd4905976"
+      "pdf_objects_sha": "55b8ed9f6a99c5bc9540e9b4521e823abd3755d31d3bb8eee10a2b76d4130e4c"
     },
     {
       "aux_sha": "d9e1ec0be188ae068307c8d179ba1a3253c9d34e28cd995af3a2c739bac57902",
-      "cdp_sha": "6e7723fa49fa0a87afc5af50f13d4240b81ff01a3ab001733eac060ca25c417b",
+      "cdp_sha": "1c7b1fc3b3d4573645794c38b6ba6ec99e85c5f9dc1d7e848dc4bb217d3600a2",
       "name": "stress-backends-tcolorbox-inline",
-      "pdf_objects_sha": "90813ee137374cb1e6d22e3bbac2530fc039baf46edf7f1d3de6b8dc90ac2a6f"
+      "pdf_objects_sha": "e2c842238d866f32cfc9155845a3cb0419d043733dd156f7d757a4f05d4124e5"
     },
     {
       "aux_sha": "0a122a8a6790bb6b36ee45c53243b8722bfd1950b608f29bb50245ab299e3c42",
