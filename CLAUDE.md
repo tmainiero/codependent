@@ -95,6 +95,7 @@ Where things go. **If your file doesn't fit here, ask before creating a new top-
 - Credit Pavlov's dpmac (GPLv3) — see `docs/CREDITS.md`
 - **Every new `.lvt` test must have `TEST-BEHAVIOR: B-X[, B-Y]` header** citing real IDs from `docs/BEHAVIOR.md` (enforced by `lint_traceability.py`). Grandfathered tests live in `.test-behavior-baseline`.
 - Baselines are monotonically shrinking — `lint_traceability.py` fails if any grew. To lock in a legitimate shrinkage: `--update-ratchet`. Do NOT `--update-ratchet` to unblock a growth.
+- `.claude/baseline-warning-annotations.json` is the warning-annotation ratchet, owned exclusively by `.claude/scripts/lint_fixture_warnings.py`. Shrink-only; do not use `lint_traceability.py --update-ratchet` for warning annotations.
 - **Manual LaTeX compiles**: use `latexmk` (reads `.latexmkrc`) or `pdflatex -output-directory=texbuild`; never leave build artifacts in the repo root. If they accumulate, run `scripts/clean-build.sh`.
 
 ## Testing policy

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "requires_warning_count": 10,
+  "tolerates_warning_count": 25,
+  "per_fixture": {
+    "testfiles/integration/integ-keytheorems-storestar-tracked-errors.lvt": {
+      "requires": 0,
+      "tolerates": 1
+    },
+    "testfiles/integration/integ-keytheorems-thmtools-restatable-star-errors.lvt": {
+      "requires": 0,
+      "tolerates": 1
+    },
+    "testfiles/integration/integ-proofauto-autoref-undefined.lvt": {
+      "requires": 1,
+      "tolerates": 1
+    },
+    "testfiles/unit/test-frontedge-labelcref-forward.lvt": {
+      "requires": 1,
+      "tolerates": 3
+    },
+    "testfiles/unit/test-frontedge-nameref-absent.lvt": {
+      "requires": 0,
+      "tolerates": 1
+    },
+    "testfiles/unit/test-frontedge-unresolved.lvt": {
+      "requires": 1,
+      "tolerates": 2
+    },
+    "testfiles/unit/test-pass-single-no-backrefs.lvt": {
+      "requires": 1,
+      "tolerates": 3
+    },
+    "testfiles/unit/test-setref-autoref.lvt": {
+      "requires": 1,
+      "tolerates": 3
+    },
+    "testfiles/unit/test-setref-cleveref.lvt": {
+      "requires": 2,
+      "tolerates": 3
+    },
+    "testfiles/unit/test-setref-eqref.lvt": {
+      "requires": 1,
+      "tolerates": 2
+    },
+    "testfiles/unit/test-setref-kernel-ref.lvt": {
+      "requires": 1,
+      "tolerates": 2
+    },
+    "testfiles/unit/test-setref-refstar.lvt": {
+      "requires": 1,
+      "tolerates": 3
+    }
+  }
+}
