@@ -19,6 +19,8 @@
 %% TEST-PDF-NOT: Used in
 %% TEST-PACKAGES: amsmath,amsthm,keytheorems,hyperref,cleveref,codependent
 %% TEST-RERUN: 2
+%% TEST-TOLERATES-WARNING: Package keytheorems Warning: 'store\*=future' only makes sense
+%% reason: keytheorems emits this warning when store* is called before \getkeytheorem; it is collateral to the codependent PackageError under test and cannot be suppressed without altering the behavior being asserted
 
 \documentclass{article}
 \usepackage{amsmath,amsthm}

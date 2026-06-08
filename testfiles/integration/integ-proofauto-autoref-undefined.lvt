@@ -40,6 +40,11 @@
 %% confirms the no-keymap (no-resolution) behaviour; TEST-CDP-NOT-CONTAINS:
 %% unresref: confirms the .cdp is clean.
 %%
+%% TEST-REQUIRES-WARNING: Reference.*thm:never-defined.*undefined
+%% reason: fixture exercises a truly undefined autoref label (case a); undefined-ref warning is the observable oracle confirming the never-defined label path
+%% TEST-TOLERATES-WARNING: There were undefined references
+%% reason: summary consequence of the required undefined-label oracle in case (a); intrinsic to the multi-pass fixture when a permanently undefined label is present
+%%
 \documentclass{article}
 
 \usepackage[T1]{fontenc}

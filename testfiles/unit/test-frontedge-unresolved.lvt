@@ -32,6 +32,12 @@
 %%
 %% TEST-RERUN: 1 — single pass, so we directly observe the pass-1
 %% aux output before the second pass would add more records.
+%% TEST-REQUIRES-WARNING: Reference.*thm:MISSING.*undefined
+%% reason: fixture exercises single-pass unresolved-reference capture; undefined-ref warning confirms the front-edge path fires on a permanently missing label
+%% TEST-TOLERATES-WARNING: There were undefined references
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
+%% TEST-TOLERATES-WARNING: Package rerunfilecheck Warning: File `test-frontedge-unresolved\.out' has changed
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
 
 \documentclass{article}
 \usepackage{hyperref}

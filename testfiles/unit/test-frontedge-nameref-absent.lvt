@@ -20,6 +20,8 @@
 %% Commit-3 waiver pin: \nameref is not wrapped at the user-command
 %% layer, and the old \@setref backend wrapper is gone. Name-based refs
 %% still render normally, but they no longer contribute atomref edges.
+%% TEST-TOLERATES-WARNING: Package hyperref Warning: Suppressing empty link
+%% reason: nameref waiver leaves hyperref without a link target; the empty-link warning is collateral to the absent-atomref behavior under test
 
 \documentclass{article}
 \usepackage{hyperref}

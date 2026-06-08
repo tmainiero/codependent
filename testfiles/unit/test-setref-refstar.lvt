@@ -24,6 +24,14 @@
 %% unresolved on the only pass. That concern stays covered by
 %% test-frontedge-refstar.lvt. Here we only pin that front-edge capture
 %% still writes the edge when the backend wrappers are gone.
+%% TEST-REQUIRES-WARNING: Reference.*thm:later.*undefined
+%% reason: fixture exercises single-pass forward-reference capture via \ref*; undefined-ref warning confirms front-edge capture before backend resolution
+%% TEST-TOLERATES-WARNING: There were undefined references
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
+%% TEST-TOLERATES-WARNING: Label\(s\) may have changed
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
+%% TEST-TOLERATES-WARNING: Package rerunfilecheck Warning: File `test-setref-refstar\.out' has changed
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
 
 \documentclass{article}
 \usepackage{hyperref}

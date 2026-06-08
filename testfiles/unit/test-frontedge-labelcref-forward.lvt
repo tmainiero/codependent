@@ -26,6 +26,14 @@
 %% aux contents.  The wrapper fires \codep@frontedge@emit{thm:later}
 %% BEFORE calling the saved \labelcref, so the atomref record is written
 %% regardless of whether the target is resolved.
+%% TEST-REQUIRES-WARNING: Reference.*thm:later.*undefined
+%% reason: fixture exercises single-pass forward-reference capture; undefined-ref warning confirms the front-edge path fires before the target resolves
+%% TEST-TOLERATES-WARNING: There were undefined references
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
+%% TEST-TOLERATES-WARNING: Label\(s\) may have changed
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
+%% TEST-TOLERATES-WARNING: Package rerunfilecheck Warning: File `test-frontedge-labelcref-forward\.out' has changed
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
 
 \documentclass{article}
 \usepackage{hyperref}

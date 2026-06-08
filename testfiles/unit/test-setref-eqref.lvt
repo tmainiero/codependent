@@ -24,6 +24,12 @@
 %% front-edge path alone: the theorem cites an equation declared later
 %% in the document, so the old resolved-backend callsites cannot be the
 %% source of the aux edge.
+%% TEST-REQUIRES-WARNING: Reference.*eq:later.*undefined
+%% reason: fixture exercises single-pass forward-reference capture via \eqref; undefined-ref warning confirms front-edge capture before equation label resolves
+%% TEST-TOLERATES-WARNING: There were undefined references
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
+%% TEST-TOLERATES-WARNING: Label\(s\) may have changed
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
 
 \documentclass{article}
 \usepackage{amsmath}

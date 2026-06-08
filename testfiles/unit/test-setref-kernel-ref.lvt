@@ -24,6 +24,12 @@
 %% later in the same run, so the old resolved-backend path cannot be
 %% the source of the aux record. If the atomref is present here, the
 %% front-edge wrapper is carrying the load by itself.
+%% TEST-REQUIRES-WARNING: Reference.*thm:later.*undefined
+%% reason: fixture exercises single-pass forward-reference capture via plain \ref; undefined-ref warning confirms front-edge capture before backend resolution
+%% TEST-TOLERATES-WARNING: There were undefined references
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
+%% TEST-TOLERATES-WARNING: Label\(s\) may have changed
+%% reason: fixture exercises single-pass forward-reference behavior; convergence artifacts are intrinsic to the test phase
 
 \documentclass{article}
 \usepackage{amsthm}
