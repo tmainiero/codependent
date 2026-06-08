@@ -26,7 +26,7 @@ need to commit an otherwise-ignored path.
 ## Build & Test
 
 ```sh
-nix develop --command python3 scripts/run-tests.py   # full suite (94 tests) — MUST use nix develop
+nix develop --command python3 scripts/run-tests.py   # full suite (272 tests) — MUST use nix develop
 nix develop --command python3 scripts/run-tests.py --filter X  # subset
 nix develop --command python3 scripts/run-tests.py --unit         # unit only
 nix develop --command python3 scripts/run-tests.py --integration  # integration only
@@ -49,7 +49,7 @@ python3 .claude/scripts/lint_traceability.py           # behavioral traceability
 - `docs/BEHAVIOR.md` — behavioral specification (83 testable statements with [B-XXX] IDs)
 - `docs/IMPLEMENTATION_PICKUP.md` — mandatory reading gate for new agents
 - `docs/CONVENTIONS.md` — coding conventions (including traceability tagging)
-- `scripts/run-tests.py` — custom test runner (28 assertion types)
+- `scripts/run-tests.py` — custom test runner (30 assertion types)
 - `.traceability-baseline` — pre-rewrite unclassified macros/uncovered behaviors (shrinks to zero)
 - `.test-behavior-baseline` — 14 tests grandfathered from `TEST-BEHAVIOR:` rule (shrinks to zero)
 - `.claude/paths.toml` — single source of truth for machine-read doc paths; consult before hardcoding
