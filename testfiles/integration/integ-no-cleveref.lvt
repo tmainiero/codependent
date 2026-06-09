@@ -37,7 +37,7 @@
 %% TEST-CENSUS-PASS: yes
 %% TEST-PDF-LINKS: 2
 %% TEST-PDF-OBJECTS: /Subtype.?/Link
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-PINS-KNOWN-BROKEN: no
 %% NOTE: TEST-PDF-ALL-BACKREFS-LINKED not enabled as a green assertion.
 %% The no-cleveref path has a known linking gap: starred proof atoms
 %% (2.2*, 2.3*) and some references via \ref lack hyperlinks.

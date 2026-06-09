@@ -3547,6 +3547,8 @@ def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool
     failed = sum(1 for r in results if not r.passed and not r.skipped)
     skipped = sum(1 for r in results if r.skipped)
     pinned_broken = sum(1 for r in results if r.fixture.pins_known_broken and not r.passed)
+    pinned_total = sum(1 for r in results if r.fixture.pins_known_broken)
+    stale_pins = pinned_total - pinned_broken
 
     if brief:
         print("=" * 72)
@@ -3640,7 +3642,7 @@ def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool
     print(
         f"TOTAL: {total}  passed={passed}  failed={failed}  "
         f"skipped={skipped}  pinned-broken={pinned_broken}  "
-        f"no-pdf-assertions={n_no_pdf}"
+        f"stale-pins={stale_pins}  no-pdf-assertions={n_no_pdf}"
     )
     print("=" * 72)
 
@@ -3653,6 +3655,19 @@ def summarize(results: list[TestResult], engine: str, verbose: bool, brief: bool
             f"design, and will need to be "
             f"rewritten when the underlying issue is fixed."
         )
+
+    if stale_pins > 0:
+        print(
+            f"\nWARNING: {stale_pins} fixture(s) set pins_known_broken=yes but currently passing."
+        )
+        for r in results:
+            if not r.fixture.pins_known_broken or not r.passed:
+                continue
+            try:
+                rel_path = r.fixture.path.relative_to(PROJECT_ROOT)
+            except ValueError:
+                rel_path = r.fixture.path
+            print(f"  - {rel_path}: pins_known_broken=yes but currently passing")
 
     if n_no_pdf > 0:
         print(

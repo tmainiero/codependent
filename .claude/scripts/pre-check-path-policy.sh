@@ -43,6 +43,21 @@ case "$path" in
   *) rel="$path" ;;
 esac
 
+# BLOCK: direct writes to harness-state paths under .claude/.
+# Only .claude/comms/ and .claude/agent_memory/ are open for direct writes.
+case "$rel" in
+  .claude/comms/* | .claude/agent_memory/*) ;;
+  .claude/*)
+    cat >&2 <<EOF
+pre-check-path-policy: BLOCKED write to $rel
+  Direct Write/Edit on harness-state paths is disabled.
+  Allowed: .claude/comms/ and .claude/agent_memory/
+  Bypass: orchestrator applies a patch via \`git apply\`.
+EOF
+    exit 1
+    ;;
+esac
+
 # Allowlist — canonical copy in CLAUDE.md ("Directory Map").
 allowed=(
   "codependent.sty"

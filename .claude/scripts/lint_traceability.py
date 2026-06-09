@@ -738,6 +738,7 @@ RATCHET_KEYS = (
     ".traceability-baseline.unclassified_macros",
     ".traceability-baseline.uncovered_behaviors",
     ".test-behavior-baseline",
+    "pinned_total",
 )
 CENSUS_MEASURE_KEYS = (
     "atomref_gap",
@@ -756,10 +757,23 @@ def _count_traceability_baseline_sections(path: str) -> tuple:
 def compute_baseline_sizes() -> Dict[str, int]:
     n_macros, n_bids = _count_traceability_baseline_sections(BASELINE_FILE)
     exempt = load_test_behavior_baseline(TEST_BEHAVIOR_BASELINE)
+    pinned_total = 0
+    for lvt in find_lvt_files():
+        with open(lvt, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.startswith("%%"):
+                    stripped = line.strip()
+                    if stripped and not stripped.startswith("%"):
+                        break
+                    continue
+                if "TEST-PINS-KNOWN-BROKEN: yes" in line:
+                    pinned_total += 1
+                    break
     return {
         ".traceability-baseline.unclassified_macros": n_macros,
         ".traceability-baseline.uncovered_behaviors": n_bids,
         ".test-behavior-baseline": len(exempt),
+        "pinned_total": pinned_total,
     }
 
 

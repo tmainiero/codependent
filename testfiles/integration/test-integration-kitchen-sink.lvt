@@ -26,7 +26,7 @@
 %% TEST-ATOMS-MIN: 10
 %% TEST-PACKAGES: amsmath,mathtools,amsthm,thmtools,hyperref,cleveref,enumitem,tcolorbox,tikz,tikz-cd,codependent
 %% TEST-RERUN: 2
-%% TEST-PINS-KNOWN-BROKEN: yes
+%% TEST-PINS-KNOWN-BROKEN: no
 %% PINS: "Used in 1.4*." row has zero overlapping qpdf links per coverage
 %% audit (2026-04-24). ALL-BACKREFS-LINKED would fail on the audited build.
 %% TEST-PDF-ALL-BACKREFS-LINKED: yes
