@@ -5,7 +5,7 @@
 
 ## One-sentence state (as of 2026-06-08)
 
-Post-W05-WARNING-HYGIENE SHIPPED (warning oracle + ratchet; no wire rotation): HEAD is `26bc5b5` on `xparse-compatibility`; suite `272 total / passed=269 / failed=3 / pinned-broken=3` with exit 0; W05-WARNING-HYGIENE added `TEST-REQUIRES-WARNING:` / `TEST-TOLERATES-WARNING:` directives + zero-undeclared-non-codependent-warnings gate + `lint_fixture_warnings.py` ratchet; W05-PARA-ORPHAN-FIX eliminated spurious paragraph-atom allocation during theorem teardown (`\codep@teardownpara@suppressdepth` guard, 9 commits, suite floor raised from 263+1 to 269+1); W05-STRESS-WARNINGS cleared overfull \hbox warnings on 3 stress fixtures (wire baseline rotated to `W05-STRESS-WARNINGS`); pinned-broken=3 split is 1 pre-existing (`test-starred-visible`) + 2 new selftest expected-fail fixtures; next action: `W05-BACKENDS-SMOKE-RECLASSIFY` (rename 6 `stress-backends-*` → smoke).
+Post-W05-WARNING-HYGIENE SHIPPED (warning oracle + ratchet; no wire rotation): HEAD is `ddb0a17` on `xparse-compatibility`; suite `272 total / passed=269 / failed=3 / pinned-broken=3` with exit 0; W05-WARNING-HYGIENE added `TEST-REQUIRES-WARNING:` / `TEST-TOLERATES-WARNING:` directives + zero-undeclared-non-codependent-warnings gate + `lint_fixture_warnings.py` ratchet; W05-PARA-ORPHAN-FIX eliminated spurious paragraph-atom allocation during theorem teardown (`\codep@teardownpara@suppressdepth` guard, 9 commits, suite floor raised from 263+1 to 269+1); W05-STRESS-WARNINGS cleared overfull \hbox warnings on 3 stress fixtures (wire baseline rotated to `W05-STRESS-WARNINGS`); pinned-broken=3 split is 1 pre-existing (`test-starred-visible`) + 2 new selftest expected-fail fixtures; next action: `W05-BACKENDS-SMOKE-RECLASSIFY` (rename 6 `stress-backends-*` → smoke).
 
 ## Next-orchestrator entrypoint (read in order)
 
@@ -50,7 +50,7 @@ nix develop --command python3 scripts/verify-wire-baseline.py \
 nix flake check 2>&1 | tail -3
 
 # 5. Confirm branch + HEAD
-git rev-parse HEAD              # 26bc5b5 or later
+git rev-parse HEAD              # ddb0a17 or later
 git rev-parse --abbrev-ref HEAD # xparse-compatibility
 ```
 
@@ -102,7 +102,7 @@ Every fixture that emits a non-codependent warning MUST declare it. Two directiv
 | **W05-TEST-RUNNER-PARALLEL** | `scripts/run-tests.py` parallelization (3.14× speedup) | **DONE 2026-06-03** | `a86421b` |
 | **W05-PRINTKIND-DISPLAY-NAME** | appendix prints title-cased env name instead of display name; universal across 5 backends | **DONE 2026-06-04** | `115fdf4` |
 | **W05-PRINTKIND-DISPLAY-OVERRIDE** | `appendix-display=<label>` override key; late-evaluation semantics; 2 unit + 1 integ fixture; **render-only, no wire rotation** | **DONE 2026-06-04** | `eaf0ce9` |
-| **W05-HYGIENE-ETOOLBOX-IDIOMS** | 318 etoolbox idiom conversions, LOC −73, structural hygiene | **DONE 2026-06-06** | `68daade` (9 commits) |
+| **W05-HYGIENE-ETOOLBOX-IDIOMS** | 318 etoolbox idiom conversions, LOC −73, structural hygiene | **DONE 2026-06-06** | `3d5f4db` (9 commits) |
 | **W05-PARA-ORPHAN-FIX** | `\codep@teardownpara@suppressdepth` guard; eliminates spurious paragraph-atom allocation during theorem teardown; suite 263+1 → 269+1 | **DONE 2026-06-08** | 9 commits |
 | **W05-STRESS-WARNINGS** | overfull \hbox warnings cleared on 3 stress fixtures via content shortening; wire baseline rotated to W05-STRESS-WARNINGS | **DONE 2026-06-08** | 2 commits |
 | **W05-WARNING-HYGIENE** | TEST-REQUIRES-WARNING + TEST-TOLERATES-WARNING directives; zero-undeclared gate; lint_fixture_warnings.py ratchet; 37 fixtures cleaned + 12 annotated; max_print_line=10000 runner env | **DONE 2026-06-08** | 6 commits |
@@ -116,15 +116,15 @@ Every fixture that emits a non-codependent warning MUST declare it. Two directiv
 
 | Wave | What | Tag/commit |
 |------|------|-----------|
-| W01–W04 | Phase 3 graph redesign (state machine → atom IDs, .aux/.cdp v2, render barrier) | various, pre-770ad46 |
+| W01–W04 | Phase 3 graph redesign (state machine → atom IDs, .aux/.cdp v2, render barrier) | various, pre-d773dc7 |
 | W05-HYG2 | Hygiene + vendored stress fixtures | DONE |
 | W05-A1+RENAME | `pproof:` → `unresref:` rename | DONE |
-| W05-A2 | Joint-proof atom-identity refactor (D1+D2) | `e3ef8bc..666575d` |
-| W05-DEBT | Retire `proof:<display>` alias + named anchor-offset dim | `770ad46` |
-| W05-C | D3 delayed-commit refactor + thmtools-continued | `87c01db` |
-| W05-DOCS | behavior-ID minting, DESIGN atomic update, CODEMAP stub | `a0c04b7` |
-| W05-PIN1 | Pin-burndown: 10 pinned-broken → 1 remaining pin | `b12deca` |
-| W05-TEST-HYG | Purged root-level v0.1 stubs and `.tlg` siblings | `2bbe790` |
+| W05-A2 | Joint-proof atom-identity refactor (D1+D2) | `ed4e2e1..e9b5389` |
+| W05-DEBT | Retire `proof:<display>` alias + named anchor-offset dim | `d773dc7` |
+| W05-C | D3 delayed-commit refactor + thmtools-continued | `0000000` |
+| W05-DOCS | behavior-ID minting, DESIGN atomic update, CODEMAP stub | `40ee7d8` |
+| W05-PIN1 | Pin-burndown: 10 pinned-broken → 1 remaining pin | `9ffad7e` |
+| W05-TEST-HYG | Purged root-level v0.1 stubs and `.tlg` siblings | `68a034e` |
 | W05-LINT-HARDEN | Linter hardening | DONE |
 | W05-TAGSWEEP | Macro classification sweep (ratchet shrink to 0) | DONE 2026-05-22 |
 | W05-D | Queue retirement, `\codepbackrefsof`, 10k-atom scale probe | `6f7c839..ee05da9` |

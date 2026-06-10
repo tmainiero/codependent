@@ -653,7 +653,7 @@ When the proof-heading scanner (`\codep@autoproofof@routeforward`) encounters a 
 
 2. **Deferred forward-ref**: the label has neither `\codep@lblnum` nor `\codep@lblentity` at scan time.  The scanner cannot tell whether a tracked theorem with this label will be defined later in the document.  A placeholder `unresref:<N>` key is allocated.  A resolver is queued onto Q3 (`\AtEndDocument`) so the final attribution can be written once the full `.aux` is available.
 
-3. **Section-only label**: the label has `\codep@lblnum` but no `\codep@lblentity`.  The tracked-entity gate (installed in W05-A1 P03, commit `3cddc8d`) detects this before allocation: no `unresref:` key is written, no attribution is attempted.
+3. **Section-only label**: the label has `\codep@lblnum` but no `\codep@lblentity`.  The tracked-entity gate (installed in W05-A1 P03, commit `242da35`) detects this before allocation: no `unresref:` key is written, no attribution is attempted.
 
 The `unresref:<N>` namespace is **internal and ephemeral**: every allocated key should be resolved or silently discarded before the `.cdp` is finalised.
 
