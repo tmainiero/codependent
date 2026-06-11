@@ -3,6 +3,12 @@
 > **If you are a fresh orchestrator, READ ALL OF THIS FILE FIRST.**
 > **DO NOT SKIP. Skipping has caused repeated regressions.**
 
+> **[2026-06-09 SCOPE-LOCK NOTICE]** As of 2026-06-09 the project is committed to an **L3 REWRITE** on branch `l3-rewrite` (not yet created — pending W0). The body of this doc below describes the pre-rewrite W05-* state on the now-merged `xparse-compatibility` → `main` line; treat it as historical reference. For any new orchestration work, **READ FIRST**:
+> - `~/.claude/projects/-home-cornholio-Documents-research-ai-codependent/memory/project_l3_rewrite_architecture.md` (locked architectural decisions across 8 dispatched explorations)
+> - MEMORY.md preamble (current `HEAD`, current `main`, immediate NEXT ACTION = 1-day Haskell spike)
+>
+> Branch line below (`xparse-compatibility`) is no longer current — that branch was fast-forwarded into `main` and deleted on 2026-06-09. Current branch is `main`. Suite-state counts in the one-sentence-state below predate the L3 scope-lock; the implementation pipeline is now W0-tooling-lift, not `W05-BACKENDS-SMOKE-RECLASSIFY`.
+
 ## One-sentence state (as of 2026-06-08)
 
 Post-W05-WARNING-HYGIENE SHIPPED (warning oracle + ratchet; no wire rotation): HEAD is `ddb0a17` on `xparse-compatibility`; suite `272 total / passed=269 / failed=3 / pinned-broken=3` with exit 0; W05-WARNING-HYGIENE added `TEST-REQUIRES-WARNING:` / `TEST-TOLERATES-WARNING:` directives + zero-undeclared-non-codependent-warnings gate + `lint_fixture_warnings.py` ratchet; W05-PARA-ORPHAN-FIX eliminated spurious paragraph-atom allocation during theorem teardown (`\codep@teardownpara@suppressdepth` guard, 9 commits, suite floor raised from 263+1 to 269+1); W05-STRESS-WARNINGS cleared overfull \hbox warnings on 3 stress fixtures (wire baseline rotated to `W05-STRESS-WARNINGS`); pinned-broken=3 split is 1 pre-existing (`test-starred-visible`) + 2 new selftest expected-fail fixtures; next action: `W05-BACKENDS-SMOKE-RECLASSIFY` (rename 6 `stress-backends-*` → smoke).
